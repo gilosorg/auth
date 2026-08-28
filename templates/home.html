@@ -1,0 +1,4130 @@
+<!DOCTYPE html>
+<html lang="en">
+
+{{ template "common/head" . }}
+
+
+<style>
+
+    main {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    header {
+        display: flex;
+        justify-content: center;
+        margin-bottom: 16px;
+    }
+
+    .header-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+        max-width: 1200px;
+    }
+
+    .header-left {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        min-width: 120px;
+    }
+
+    .header-left span {
+        font-size: 18px;
+        font-weight: 600;
+        color: var(--text);
+    }
+
+    .header-left img {
+        height: 24px;
+    }
+
+    .header-right {
+        position: relative;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        justify-content: flex-end;
+        min-width: 120px;
+    }
+
+    .profile-circle {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: var(--primary-gradient);
+        color: var(--primary-contrast);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: transform 0.2s ease, filter 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .profile-circle:hover {
+        filter: brightness(1.1);
+        transform: scale(1.05);
+        box-shadow: 0 4px 12px var(--primary-glow);
+    }
+
+    .profile-circle img {
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        object-fit: cover;
+    }
+
+    .icon-upload-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 16px;
+        padding: 16px;
+    }
+
+    .icon-preview-large {
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        background: var(--primary-gradient);
+        color: var(--primary-contrast);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 40px;
+        font-weight: 600;
+        overflow: hidden;
+        box-shadow: var(--card-shadow);
+    }
+
+    .icon-preview-large img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.3s ease;
+    }
+
+    .icon-preview-large:hover img {
+        transform: scale(1.1);
+    }
+
+    .icon-edit-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.4);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        color: white;
+    }
+
+    .icon-preview-large:hover .icon-edit-overlay {
+        opacity: 1;
+    }
+
+    .profile-card-info {
+        text-align: center;
+        margin-top: 12px;
+    }
+
+    .profile-card-name {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--text);
+        margin-bottom: 4px;
+    }
+
+    .profile-card-handle {
+        font-size: 0.875rem;
+        color: var(--text-muted);
+        opacity: 0.8;
+    }
+
+    .crop-container {
+        width: 100%;
+        max-width: 500px;
+        height: 400px;
+        margin: 0 auto;
+        background-color: var(--slate-100);
+        border-radius: 12px;
+        overflow: hidden;
+        position: relative;
+    }
+
+    #crop-image {
+        max-width: 100%;
+        display: block;
+    }
+
+    .dropdown {
+        display: none;
+        position: absolute;
+        right: 0;
+        top: 40px;
+        background: var(--card-bg);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border-radius: 12px;
+        border: none;
+        box-shadow: var(--card-shadow-hover);
+        z-index: 10;
+        min-width: 150px;
+    }
+
+    .dropdown.active {
+        display: block;
+    }
+
+    .dropdown a {
+        display: block;
+        padding: 8px 16px;
+        color: var(--text);
+        text-decoration: none;
+        font-size: 14px;
+        transition: background-color 0.2s ease;
+        border-radius: 0;
+    }
+
+    .dropdown a:first-child {
+        border-top-left-radius: 8px;
+        border-top-right-radius: 8px;
+    }
+
+    .dropdown a:last-child {
+        border-bottom-left-radius: 8px;
+        border-bottom-right-radius: 8px;
+    }
+
+    .dropdown a:hover {
+        background-color: var(--slate-200);
+    }
+
+    .tabs {
+        display: flex;
+        justify-content: center;
+        margin-bottom: 16px;
+    }
+
+    .tab {
+        padding: 8px 16px;
+        cursor: pointer;
+        border-bottom: 2px solid transparent;
+        color: var(--slate-500);
+        font-weight: 500;
+    }
+
+    .tab.active {
+        border-bottom: 2px solid var(--primary);
+        color: var(--text);
+    }
+
+    /* Desktop: Tabs in appbar center */
+    .header-center {
+        display: none;
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+    }
+
+    .header-center .tabs {
+        margin-bottom: 0;
+    }
+
+    @media (min-width: 768px) {
+        .header-container {
+            position: relative;
+        }
+        .header-center {
+            display: flex;
+        }
+        .tabs-mobile {
+            display: none;
+        }
+    }
+
+    /* Mobile: Tabs below header */
+    @media (max-width: 767px) {
+        .header-center {
+            display: none;
+        }
+        .tabs-mobile {
+            display: flex;
+        }
+    }
+
+    .content {
+        width: 100%;
+        max-width: 1200px;
+        background-color: transparent;
+        box-shadow: none;
+        padding: 0;
+    }
+
+    /* Responsive Grid for Sessions and Clients */
+    .items-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 16px;
+        width: 100%;
+    }
+
+    /* Tablet: 2 columns */
+    @media (min-width: 640px) {
+        .items-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+
+    /* Desktop: 3 columns */
+    @media (min-width: 1024px) {
+        .items-grid {
+            grid-template-columns: repeat(3, 1fr);
+        }
+    }
+
+    /* Profile Grid - Responsive layout for profile cards */
+    .profile-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 16px;
+        width: 100%;
+    }
+
+    /* Tablet: 2 columns for profile */
+    @media (min-width: 640px) {
+        .profile-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+
+    /* Desktop: 2 columns for profile (keeps cards readable) */
+    @media (min-width: 1024px) {
+        .profile-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+
+    /* Profile section card styling within the grid */
+    .profile-grid .section {
+        display: flex;
+        flex-direction: column;
+        margin-bottom: 0;
+        height: 100%;
+    }
+
+    .profile-grid .section form {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .profile-grid .section .section-header {
+        margin-bottom: 12px;
+    }
+
+    /* Ensure inputs inside profile cards are properly sized */
+    .profile-grid .section input[type="text"],
+    .profile-grid .section input[type="password"],
+    .profile-grid .section input[type="email"],
+    .profile-grid .section input[type="tel"] {
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .profile-grid .section .input-group {
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .profile-grid .section .input-with-switch {
+        width: 100%;
+    }
+
+    .profile-grid .section .input-with-switch input {
+        width: 100%;
+    }
+
+    /* Grid section card styling */
+    .items-grid .section {
+        display: flex;
+        flex-direction: column;
+        margin-bottom: 0;
+        height: 100%;
+    }
+
+    .items-grid .section .action-buttons {
+        margin-top: auto;
+        padding-top: 16px;
+    }
+
+    .items-grid .section p {
+        word-break: break-all;
+    }
+
+    /* Load More Container */
+    .load-more-container {
+        display: flex;
+        justify-content: center;
+        padding: 24px 0;
+        width: 100%;
+    }
+
+    .load-more-btn {
+        background-color: var(--slate-100);
+        color: var(--text);
+        padding: 12px 32px;
+        border-radius: 12px;
+        font-size: 14px;
+        font-weight: 500;
+        border: 2px solid var(--slate-200);
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .load-more-btn:hover:not(:disabled) {
+        background-color: var(--slate-200);
+        transform: scale(1.02);
+    }
+
+    .load-more-btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+
+    .no-more-text {
+        color: var(--slate-500);
+        font-size: 14px;
+        text-align: center;
+        padding: 16px 0;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 48px 24px;
+        color: var(--slate-500);
+    }
+
+    .section {
+        background: var(--card-bg);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border-radius: 16px;
+        padding: 24px;
+        margin-bottom: 24px;
+        border: none;
+        box-shadow: var(--card-shadow);
+        transition: box-shadow 0.3s ease, transform 0.3s ease, z-index 0.3s ease;
+        position: relative;
+        z-index: 1;
+    }
+
+    .section:focus-within {
+        z-index: 50;
+    }
+
+    .section:hover {
+        box-shadow: var(--card-shadow-hover);
+        transform: translateY(-2px);
+    }
+
+    .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 16px;
+    }
+
+    .section h3 {
+        font-size: 18px;
+        font-weight: 600;
+        color: var(--text);
+        margin: 0;
+    }
+
+    .section p {
+        font-size: 14px;
+        color: var(--text-secondary);
+        margin-bottom: 4px;
+    }
+
+    .section form {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .input-group {
+        display: flex;
+        gap: 16px;
+        align-items: center;
+    }
+
+    .input-group input {
+        flex: 1;
+    }
+
+    .mfa-totp-group {
+        justify-content: space-between;
+    }
+
+    @media (max-width: 768px) {
+        .input-group {
+            flex-direction: column;
+            gap: 16px;
+        }
+    }
+
+    .section input[type="text"],
+    .section input[type="password"],
+    .section input[type="email"],
+    .section input[type="tel"] {
+        padding: 12px;
+        border: 2px solid var(--slate-200);
+        border-radius: 12px;
+        background-color: var(--slate-100);
+        color: var(--text);
+        outline: none;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+        caret-color: var(--primary);
+    }
+
+    .section input[type="text"]:hover,
+    .section input[type="password"]:hover,
+    .section input[type="email"]:hover,
+    .section input[type="tel"]:hover {
+        border-color: var(--slate-300);
+    }
+
+    .section input[type="text"]:focus,
+    .section input[type="password"]:focus,
+    .section input[type="email"]:focus,
+    .section input[type="tel"]:focus {
+        outline: none;
+        border-color: var(--primary);
+    }
+
+    .section label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 14px;
+        color: var(--text);
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 8px;
+        margin-top: 8px;
+    }
+
+    button {
+        background: var(--primary-gradient);
+        color: var(--primary-contrast);
+        padding: 8px 12px;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
+        border: none;
+    }
+
+    button:hover:not(:disabled) {
+        filter: brightness(1.1);
+        transform: translateY(-1px);
+        box-shadow: 0 6px 20px var(--primary-glow);
+    }
+
+    button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    button.bg-gray {
+        background: var(--slate-200);
+        color: var(--text-secondary);
+    }
+
+    button.bg-gray:hover:not(:disabled) {
+        background: var(--slate-300);
+        box-shadow: none;
+        filter: none;
+    }
+
+    button.bg-red {
+        background: linear-gradient(135deg, #EF4444 0%, #DC2626 50%, #B91C1C 100%);
+        color: #ffffff;
+    }
+
+    button.bg-red:hover:not(:disabled) {
+        filter: brightness(1.1);
+    }
+
+    .new-client-btn {
+        background: var(--primary-gradient);
+        color: var(--primary-contrast);
+        width: 32px;
+        height: 32px;
+        border-radius: 9999px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: transform 0.2s ease, filter 0.2s ease, box-shadow 0.2s ease;
+        font-size: 20px;
+    }
+
+    .new-client-btn::after {
+        content: "+";
+    }
+
+    .new-client-btn:hover {
+        filter: brightness(1.1);
+        transform: scale(1.05);
+        box-shadow: 0 4px 16px var(--primary-glow);
+    }
+
+    .countdown-container {
+        font-size: 12px;
+        color: var(--text-secondary);
+        margin-top: 8px;
+        display: none;
+        align-items: center;
+        gap: 4px;
+        justify-content: center;
+    }
+
+    .countdown-timer {
+        font-weight: 600;
+        color: var(--primary);
+    }
+
+    .new-client-btn.hidden {
+        display: none;
+    }
+
+    @media (min-width: 768px) {
+        .new-client-btn {
+            border-radius: 9999px;
+            width: auto;
+            height: 32px;
+            padding: 0 12px;
+            font-size: 14px;
+        }
+
+        .new-client-btn::after {
+            content: "New Client";
+        }
+    }
+
+    .modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+    }
+
+    .modal.active {
+        display: flex;
+    }
+
+    .modal-content {
+        background: var(--card-bg-solid);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        padding: 0;
+        border-radius: 16px;
+        border: none;
+        box-shadow: var(--card-shadow-hover);
+        width: 100%;
+        max-width: 520px;
+        max-height: 85vh;
+        display: flex;
+        flex-direction: column;
+        margin: 16px;
+    }
+
+    .modal-content h2 {
+        color: var(--text);
+        font-size: 18px;
+        font-weight: 600;
+        padding: 20px 24px 16px;
+        margin: 0;
+        border-bottom: 1px solid var(--slate-200);
+        flex-shrink: 0;
+    }
+
+    .modal-content form {
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        flex: 1;
+    }
+
+    .modal-form-body {
+        padding: 20px 24px;
+        overflow-y: auto;
+        flex: 1;
+    }
+
+    .form-field {
+        margin-bottom: 16px;
+    }
+
+    .form-field:last-child {
+        margin-bottom: 0;
+    }
+
+    .form-field > label {
+        display: block;
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--text-secondary);
+        margin-bottom: 6px;
+        letter-spacing: 0.01em;
+    }
+
+    /* Modals without a form get direct padding */
+    .modal-content > p,
+    .modal-content > .qr-card,
+    .modal-content > input,
+    .modal-content > .modal-buttons:only-child {
+        margin-left: 24px;
+        margin-right: 24px;
+    }
+
+    .modal-content > p {
+        margin-top: 0;
+        padding-top: 16px;
+    }
+
+    .modal-content > input {
+        margin-bottom: 0;
+    }
+
+    #totp-modal .modal-content {
+        max-width: 420px;
+    }
+
+    #totp-modal .modal-form-body {
+        text-align: center;
+    }
+
+    #totp-modal .modal-form-body > p {
+        text-align: left;
+        margin: 0 0 20px 0;
+        font-size: 14px;
+        color: var(--text-secondary);
+        line-height: 1.5;
+    }
+
+    .qr-card {
+        background: var(--white);
+        border-radius: 16px;
+        padding: 20px;
+        display: inline-block;
+        margin: 0 auto 16px;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+        border: 1px solid var(--slate-200);
+    }
+
+    .qr-card img {
+        width: 200px;
+        height: 200px;
+        display: block;
+        image-rendering: pixelated;
+    }
+
+    .totp-secret {
+        font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+        font-size: 12px;
+        color: var(--text-secondary);
+        background: var(--slate-100);
+        padding: 8px 14px;
+        border-radius: 8px;
+        margin: 0 0 20px 0;
+        letter-spacing: 1.5px;
+        word-break: break-all;
+        user-select: all;
+        cursor: pointer;
+        border: 1px solid var(--slate-200);
+    }
+
+    /* OTP separated digit inputs */
+    .otp-container {
+        display: flex;
+        gap: 8px;
+        justify-content: center;
+        padding: 4px 0;
+        width: 100%;
+    }
+
+    .otp-digit {
+        width: 46px !important;
+        height: 52px !important;
+        font-size: 20px;
+        font-weight: 600;
+        text-align: center;
+        border: 2px solid var(--slate-200);
+        border-radius: 10px;
+        background-color: var(--slate-100);
+        color: var(--text);
+        outline: none;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.1s ease;
+        line-height: 52px;
+        padding: 0;
+        box-sizing: border-box;
+        -webkit-appearance: none;
+        -moz-appearance: textfield;
+        caret-color: var(--primary);
+    }
+
+    .otp-digit:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        transform: scale(1.04);
+    }
+
+    .otp-digit.filled {
+        border-color: var(--primary);
+        background: rgba(99, 102, 241, 0.04);
+    }
+
+    .otp-digit.error {
+        border-color: #ef4444;
+    }
+
+    .otp-digit::-webkit-inner-spin-button,
+    .otp-digit::-webkit-outer-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+
+    /* OTP group styling for contact verify */
+    .otp-group {
+        margin-bottom: 16px;
+    }
+
+    .otp-group label {
+        display: block;
+        font-size: 14px;
+        color: var(--text);
+        margin-bottom: 8px;
+        font-weight: 500;
+    }
+
+    .countdown-container {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 12px;
+        color: var(--text-muted);
+        margin-top: 10px;
+        justify-content: center;
+    }
+
+    .countdown-timer {
+        font-weight: 600;
+        color: var(--primary);
+        font-variant-numeric: tabular-nums;
+    }
+
+    .resend-link {
+        font-size: 12px;
+        color: var(--primary);
+        text-decoration: none;
+        display: inline-block;
+        margin-top: 6px;
+    }
+
+    .resend-link:hover {
+        text-decoration: underline;
+    }
+
+    .otp-group .message {
+        font-size: 12px;
+        margin-top: 6px;
+        min-height: 16px;
+        color: #ef4444;
+    }
+
+    /* Contact verify modal */
+    #contact-verify-modal .modal-content {
+        max-width: 440px;
+    }
+
+    #contact-verify-modal .modal-form-body > p {
+        font-size: 14px;
+        color: var(--text-secondary);
+        margin: 0 0 20px 0;
+        line-height: 1.5;
+    }
+
+    @media (max-width: 480px) {
+        .otp-digit {
+            width: 40px !important;
+            height: 46px !important;
+            font-size: 18px;
+        }
+        .otp-container {
+            gap: 6px;
+        }
+    }
+
+    .modal-content label {
+        display: block;
+        font-size: 14px;
+        color: var(--text);
+        margin-bottom: 4px;
+    }
+
+    .modal-content input,
+    .modal-content select,
+    .modal-content textarea {
+        width: 100%;
+        padding: 10px 12px;
+        border: 2px solid var(--slate-200);
+        border-radius: 10px;
+        background-color: var(--slate-100);
+        color: var(--text);
+        outline: none;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        caret-color: var(--primary);
+        font-size: 14px;
+    }
+
+    .modal-content input:hover,
+    .modal-content select:hover {
+        border-color: var(--slate-300);
+    }
+
+    .modal-content input:focus,
+    .modal-content select:focus {
+        outline: none;
+        border-color: var(--primary);
+    }
+
+    .scopes {
+        margin-bottom: 16px;
+    }
+
+    .scope-option {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 8px;
+    }
+
+    .scope-option label:not(.toggle-switch) {
+        font-size: 14px;
+        color: var(--text);
+        flex: 1;
+    }
+
+    .scope-required-toggle {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 11px;
+        color: var(--text-muted);
+    }
+
+    .scope-required-toggle.disabled {
+        opacity: 0.3;
+        pointer-events: none;
+    }
+
+    .modal-buttons {
+        display: flex;
+        gap: 8px;
+        padding: 16px 24px;
+        border-top: 1px solid var(--slate-200);
+        flex-shrink: 0;
+        justify-content: flex-end;
+    }
+
+    .modal-buttons button {
+        min-width: 80px;
+    }
+
+    /* ─── Smart Deletion System ──────────────────────────────── */
+
+    .deletion-pending-banner {
+        background: linear-gradient(135deg, rgba(239, 68, 68, 0.08) 0%, rgba(239, 68, 68, 0.04) 100%);
+        border: 1px solid rgba(239, 68, 68, 0.2);
+        border-radius: 12px;
+        padding: 20px;
+    }
+
+    .deletion-pending-header {
+        display: flex;
+        align-items: flex-start;
+        gap: 14px;
+        margin-bottom: 18px;
+    }
+
+    .deletion-pending-icon {
+        flex-shrink: 0;
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(239, 68, 68, 0.12);
+        border-radius: 10px;
+        color: #ef4444;
+    }
+
+    .deletion-pending-title {
+        font-size: 15px;
+        font-weight: 600;
+        color: #ef4444;
+        margin: 0 0 4px;
+    }
+
+    .deletion-pending-subtitle {
+        font-size: 13px;
+        color: var(--text-secondary);
+        margin: 0;
+        line-height: 1.4;
+    }
+
+    .deletion-progress-container {
+        margin-bottom: 14px;
+    }
+
+    .deletion-progress-bar {
+        width: 100%;
+        height: 6px;
+        background: rgba(239, 68, 68, 0.1);
+        border-radius: 3px;
+        overflow: hidden;
+    }
+
+    .deletion-progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #ef4444, #dc2626);
+        border-radius: 3px;
+        transition: width 0.6s ease;
+    }
+
+    .deletion-progress-label {
+        display: flex;
+        justify-content: flex-end;
+        margin-top: 6px;
+    }
+
+    .deletion-days-count {
+        font-size: 13px;
+        font-weight: 600;
+        color: #ef4444;
+    }
+
+    .deletion-pending-meta {
+        font-size: 12px;
+        color: var(--text-muted);
+        margin-bottom: 12px;
+        padding: 8px 12px;
+        background: rgba(0, 0, 0, 0.03);
+        border-radius: 8px;
+    }
+
+    .deletion-grace-info {
+        font-size: 12px;
+        color: var(--text-muted);
+        line-height: 1.5;
+        margin: 0 0 16px;
+    }
+
+    .deletion-cancel-btn {
+        width: 100%;
+        padding: 10px 16px;
+        border: 1px solid var(--slate-300);
+        border-radius: 8px;
+        background: var(--card-bg-solid);
+        color: var(--text);
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .deletion-cancel-btn:hover {
+        background: var(--slate-100);
+        border-color: var(--slate-400);
+    }
+
+    /* Delete modal warning banner */
+    .deletion-modal-warning {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        padding: 14px;
+        background: rgba(239, 68, 68, 0.06);
+        border: 1px solid rgba(239, 68, 68, 0.15);
+        border-radius: 10px;
+        margin-bottom: 20px;
+        color: #ef4444;
+    }
+
+    .deletion-modal-warning svg {
+        flex-shrink: 0;
+        margin-top: 1px;
+    }
+
+    .deletion-modal-warning p {
+        font-size: 13px;
+        color: var(--text-secondary);
+        margin: 0;
+        line-height: 1.5;
+    }
+
+    /* Deletion reason radio list */
+    .deletion-reason-list {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .deletion-reason-option {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 14px;
+        border: 1px solid var(--slate-200);
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        font-size: 13px;
+        color: var(--text);
+    }
+
+    .deletion-reason-option:hover {
+        background: var(--slate-50);
+        border-color: var(--slate-300);
+    }
+
+    .deletion-reason-option input[type="radio"] {
+        width: 16px;
+        height: 16px;
+        margin: 0;
+        accent-color: #ef4444;
+        flex-shrink: 0;
+    }
+
+    .deletion-reason-option input[type="radio"]:checked + span {
+        font-weight: 500;
+    }
+
+    .deletion-reason-option:has(input:checked) {
+        background: rgba(239, 68, 68, 0.04);
+        border-color: rgba(239, 68, 68, 0.3);
+    }
+
+    .badge {
+        background-color: var(--green-50);
+        color: var(--green-700);
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-size: 12px;
+        margin-left: 8px;
+    }
+
+    .copy-icon {
+        cursor: pointer;
+        margin-left: 8px;
+        font-size: 16px;
+    }
+
+    .input-with-switch {
+        position: relative;
+    }
+
+    .input-with-switch input {
+        width: 100%;
+        padding-right: 60px;
+    }
+
+    .input-with-switch .toggle-switch {
+        position: absolute;
+        right: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+    }
+
+    #totp-qr {
+        width: 100%;
+        max-width: 256px;
+        display: block;
+        margin: 0 auto;
+    }
+
+    #totp-secret {
+        text-align: center;
+        font-size: 14px;
+        color: var(--text);
+        margin-top: 8px;
+        margin-bottom: 0;
+    }
+
+    .qr-card {
+        background-color: var(--slate-100);
+        border-radius: 12px;
+        padding: 16px;
+        margin: 16px 0;
+        text-align: center;
+    }
+
+    .modal-content p {
+        font-size: 14px;
+        color: var(--text-secondary);
+        margin-bottom: 16px;
+    }
+
+    .otp-group {
+        margin-bottom: 16px;
+    }
+
+    .otp-group label {
+        display: block;
+        margin-bottom: 8px;
+    }
+
+    .otp-group input {
+        width: 100%;
+        margin-bottom: 8px;
+    }
+
+    .otp-group .resend-link {
+        color: var(--primary);
+        font-size: 12px;
+        cursor: pointer;
+    }
+
+    .otp-group .resend-link:hover {
+        color: var(--primary-dark);
+    }
+
+    .otp-group .message {
+        font-size: 12px;
+        color: var(--red-500);
+        margin-top: 4px;
+    }
+
+    /* ===== Card Row Styling for Sessions/Clients ===== */
+    .card-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 16px;
+    }
+
+    .card-header h3 {
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .card-body {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .card-row {
+        display: flex;
+        align-items: flex-start;
+        gap: 8px;
+        font-size: 13px;
+        line-height: 1.4;
+    }
+
+    .card-label {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        color: var(--text-muted);
+        min-width: 90px;
+        flex-shrink: 0;
+    }
+
+    .card-label svg {
+        width: 14px;
+        height: 14px;
+        opacity: 0.7;
+        flex-shrink: 0;
+    }
+
+    .card-value {
+        color: var(--text);
+        word-break: break-all;
+    }
+
+    .redirect-uri-pill {
+        font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+        font-size: 12px;
+        background: var(--slate-100);
+        padding: 2px 8px;
+        border-radius: 4px;
+        margin: 2px 0;
+        word-break: break-all;
+    }
+
+    /* Dynamic Redirect URI List */
+    .uri-list-container {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+    }
+
+    .uri-list-container > label {
+        display: block;
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--text-secondary);
+        margin-bottom: 8px;
+        letter-spacing: 0.01em;
+    }
+
+    .uri-row {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-bottom: 6px;
+        animation: uriFadeIn 0.2s ease;
+    }
+
+    @keyframes uriFadeIn {
+        from { opacity: 0; transform: translateY(-4px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .uri-row input[type="text"] {
+        flex: 1;
+        margin: 0 !important;
+        padding: 8px 10px !important;
+        font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+        font-size: 13px;
+        border-radius: 8px !important;
+    }
+
+    .uri-remove-btn {
+        background: none !important;
+        border: none;
+        color: var(--text-secondary);
+        cursor: pointer;
+        padding: 4px 8px;
+        border-radius: 6px;
+        font-size: 18px;
+        line-height: 1;
+        transition: all 0.15s ease;
+        flex-shrink: 0;
+        transform: none !important;
+        box-shadow: none !important;
+        filter: none !important;
+    }
+
+    .uri-remove-btn:hover {
+        background: rgba(239, 68, 68, 0.1) !important;
+        color: #ef4444;
+        transform: none !important;
+        box-shadow: none !important;
+    }
+
+    .uri-add-btn {
+        align-self: flex-start;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        background: none !important;
+        border: 1px dashed var(--border) !important;
+        color: var(--text-secondary) !important;
+        cursor: pointer;
+        padding: 5px 12px;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 400;
+        transition: all 0.15s ease;
+        margin-top: 2px;
+        transform: none !important;
+        box-shadow: none !important;
+        filter: none !important;
+    }
+
+    .uri-add-btn:hover {
+        border-color: var(--primary) !important;
+        color: var(--primary) !important;
+        background: rgba(99, 102, 241, 0.05) !important;
+        transform: none !important;
+        box-shadow: none !important;
+    }
+
+    .card-token {
+        font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+        font-size: 12px;
+        background: var(--slate-100);
+        padding: 2px 6px;
+        border-radius: 4px;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .card-token .copy-btn {
+        cursor: pointer;
+        opacity: 0.5;
+        transition: all 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        padding: 2px;
+        border-radius: 3px;
+    }
+
+    .card-token .copy-btn svg {
+        width: 12px;
+        height: 12px;
+    }
+
+    .card-token .copy-btn:hover {
+        opacity: 1;
+        background: var(--slate-200);
+        color: var(--primary);
+    }
+
+    .card-date {
+        color: var(--text-secondary);
+        font-size: 12px;
+    }
+
+    .card-scopes {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+    }
+
+    .scope-badge {
+        background: var(--green-50);
+        color: var(--green-700);
+        padding: 3px 8px;
+        border-radius: 6px;
+        font-size: 11px;
+        font-weight: 500;
+    }
+
+    .type-badge {
+        background: var(--slate-100);
+        color: var(--text-secondary);
+        padding: 3px 8px;
+        border-radius: 6px;
+        font-size: 11px;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .card-divider {
+        height: 1px;
+        background: var(--slate-200);
+        margin: 8px 0;
+    }
+
+    .card-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        font-size: 11px;
+        color: var(--text-muted);
+    }
+
+    .card-meta-item {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .card-meta-item svg {
+        width: 12px;
+        height: 12px;
+        opacity: 0.6;
+    }
+
+    /* Password Confirmation Modal */
+    .password-modal-subtitle {
+        font-size: 14px;
+        color: var(--text-secondary);
+        margin: 0 0 16px 0;
+        line-height: 1.5;
+    }
+
+    .password-modal-error {
+        background: rgba(239, 68, 68, 0.08);
+        border: 1px solid rgba(239, 68, 68, 0.2);
+        color: #ef4444;
+        padding: 10px 14px;
+        border-radius: 10px;
+        font-size: 13px;
+        margin-top: 8px;
+        animation: uriFadeIn 0.2s ease;
+    }
+
+    #password-modal .modal-content {
+        max-width: 400px;
+    }
+
+    /* Secret Reveal Modal — enterprise-grade one-time secret display */
+    #secret-reveal-modal .modal-content {
+        max-width: 560px;
+    }
+
+    .secret-reveal-warning {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        background: linear-gradient(135deg, rgba(245, 158, 11, 0.12), rgba(239, 68, 68, 0.08));
+        border: 1px solid rgba(245, 158, 11, 0.3);
+        border-radius: 12px;
+        padding: 16px;
+        margin-bottom: 20px;
+    }
+
+    .secret-reveal-warning svg {
+        width: 24px;
+        height: 24px;
+        flex-shrink: 0;
+        color: #f59e0b;
+        margin-top: 1px;
+    }
+
+    .secret-reveal-warning-text {
+        font-size: 13px;
+        line-height: 1.5;
+        color: var(--text);
+    }
+
+    .secret-reveal-warning-text strong {
+        display: block;
+        font-size: 14px;
+        margin-bottom: 4px;
+        color: #d97706;
+    }
+
+    .secret-reveal-block {
+        position: relative;
+        background: var(--slate-100);
+        border: 1px solid var(--slate-200);
+        border-radius: 12px;
+        padding: 16px 48px 16px 16px;
+        margin-bottom: 16px;
+        font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+        font-size: 13px;
+        line-height: 1.6;
+        word-break: break-all;
+        user-select: all;
+        color: var(--text);
+        cursor: text;
+    }
+
+    .secret-reveal-copy-btn {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background: var(--primary);
+        color: var(--primary-contrast);
+        border: none;
+        border-radius: 8px;
+        padding: 6px 12px;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        transition: all 0.2s ease;
+        white-space: nowrap;
+    }
+
+    .secret-reveal-copy-btn:hover {
+        filter: brightness(1.1);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px var(--primary-glow);
+    }
+
+    .secret-reveal-copy-btn.copied {
+        background: #10b981;
+    }
+
+    .secret-reveal-meta {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        margin-bottom: 20px;
+        font-size: 13px;
+        color: var(--text-secondary);
+    }
+
+    .secret-reveal-meta-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .secret-reveal-meta-label {
+        font-weight: 500;
+        color: var(--text);
+        min-width: 100px;
+    }
+
+    .secret-reveal-meta-value {
+        font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+        font-size: 12px;
+        background: var(--slate-100);
+        padding: 2px 8px;
+        border-radius: 4px;
+    }
+
+    /* Secret prefix display in client cards */
+    .secret-prefix-display {
+        display: inline-flex;
+        align-items: center;
+        gap: 2px;
+        font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+        font-size: 12px;
+        background: var(--slate-100);
+        padding: 2px 8px;
+        border-radius: 4px;
+    }
+
+    .secret-prefix-display .prefix-chars {
+        color: var(--text);
+        font-weight: 500;
+    }
+
+    .secret-prefix-display .prefix-mask {
+        color: var(--text-secondary);
+        letter-spacing: 1px;
+    }
+
+    .secret-no-prefix {
+        font-size: 11px;
+        color: var(--text-secondary);
+        font-style: italic;
+    }
+
+    .secret-age {
+        font-size: 11px;
+        color: var(--text-secondary);
+        margin-left: 8px;
+    }
+
+    /* Regenerate button — icon style */
+    .btn-regenerate-icon {
+        cursor: pointer;
+        opacity: 0.7;
+        transition: all 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        padding: 4px;
+        border-radius: 4px;
+        background: transparent;
+        border: none;
+        color: #f59e0b;
+        margin-left: 4px;
+    }
+
+    .btn-regenerate-icon:hover {
+        opacity: 1;
+        background: rgba(245, 158, 11, 0.1);
+        transform: translateY(-1px);
+    }
+
+    .btn-regenerate-icon svg {
+        width: 14px;
+        height: 14px;
+    }
+
+</style>
+
+<body>
+    <header>
+        <div class="header-container container">
+            <div class="header-left">
+                <picture><source srcset="/static/img/logo-dark.svg" media="(prefers-color-scheme: dark)"><img src="/static/img/logo.svg" alt="Gilos Logo"></picture>
+                <span>Gilos ID</span>
+            </div>
+            <div class="header-center">
+                <div class="tabs">
+                    <div class="tab active" data-tab="account">{{ index .T "account" }}</div>
+                    <div class="tab" data-tab="sessions">{{ index .T "sessions" }}</div>
+                    <div class="tab" data-tab="clients">{{ index .T "clients" }}</div>
+                </div>
+            </div>
+            <div class="header-right">
+                <div class="new-client-btn hidden" id="new-client-btn"></div>
+                <div class="profile-circle" id="appbar-profile-circle" onclick="toggleDropdown()">
+                    {{ if .User.Icon }}
+                        <img src="{{ .User.Icon }}" alt="User Icon" id="appbar-profile-img">
+                        <span style="display: none;">{{ printf "%.1s" .User.Username | upper }}</span>
+                    {{ else }}
+                        <img src="" alt="User Icon" id="appbar-profile-img" style="display: none;">
+                        <span>{{ printf "%.1s" .User.Username | upper }}</span>
+                    {{ end }}
+                </div>
+                <div class="dropdown" id="dropdown">
+                    <a href="https://my.gilos.app" target="_blank">{{ index .T "manage" }}</a>
+                    <a href="#" onclick="logout(); return false;">{{ index .T "logout" }}</a>
+                </div>
+            </div>
+        </div>
+    </header>
+    <main>
+        <div class="tabs tabs-mobile">
+            <div class="tab active" data-tab="account">{{ index .T "account" }}</div>
+            <div class="tab" data-tab="sessions">{{ index .T "sessions" }}</div>
+            <div class="tab" data-tab="clients">{{ index .T "clients" }}</div>
+        </div>
+        <div class="content">
+            <div id="account-content" class="tab-content"></div>
+            <div id="sessions-content" class="tab-content" style="display: none;"></div>
+            <div id="clients-content" class="tab-content" style="display: none;"></div>
+        </div>
+    </main>
+
+    {{ template "common/footer" . }}
+
+    <div class="modal" id="client-modal">
+        <div class="modal-content">
+            <h2 id="modal-title">{{ index .T "create_new_client" }}</h2>
+            <form id="client-form">
+                <div class="modal-form-body">
+                    <input type="hidden" id="client-id" name="id">
+                    <div class="form-field">
+                        <label for="name">{{ index .T "client_name" }}</label>
+                        <input type="text" id="name" name="name" required placeholder="My Application">
+                    </div>
+                    <div class="form-field">
+                        <label for="type">{{ index .T "client_type" }}</label>
+                        <select id="type" name="type" required>
+                            <option value="public">{{ index .T "public" }}</option>
+                            <option value="confidential">{{ index .T "confidential" }}</option>
+                        </select>
+                    </div>
+                    <input type="hidden" id="redirect_uris" name="redirect_uris">
+                    <div class="uri-list-container">
+                        <label>{{ index .T "redirect_uris" }}</label>
+                        <div id="uri-rows"></div>
+                        <button type="button" class="uri-add-btn" onclick="addURIRow()">
+                            <span>+</span> {{ index .T "add_redirect_uri" }}
+                        </button>
+                    </div>
+                    <div class="scopes">
+                        <label>{{ index .T "scopes" }}:</label>
+                        {{range .ValidScopes}}
+                        <div class="scope-option">
+                            <label class="toggle-switch">
+                                <input type="checkbox" name="{{.}}" onchange="toggleRequired(this, '{{.}}')">
+                                <span class="slider"></span>
+                            </label>
+                            <label>{{.}}</label>
+                            <span class="scope-required-toggle disabled" id="req-toggle-{{.}}">
+                                <label class="toggle-switch">
+                                    <input type="checkbox" name="required_{{.}}">
+                                    <span class="slider"></span>
+                                </label>
+                                <span>{{ index $.T "required" }}</span>
+                            </span>
+                        </div>
+                        {{end}}
+                    </div>
+                </div>
+                <div class="modal-buttons">
+                    <button type="button" class="bg-gray" onclick="closeModal()">{{ index .T "cancel" }}</button>
+                    <button type="submit">{{ index .T "save" }}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal" id="totp-modal">
+        <div class="modal-content">
+            <h2>{{ index .T "setup_authenticator" }}</h2>
+            <div class="modal-form-body">
+                <p>{{ index .T "scan_qr_code" }}</p>
+                <div class="qr-card">
+                    <img id="totp-qr" src="" alt="QR Code">
+                </div>
+                <div class="totp-secret" id="totp-secret"></div>
+                <label style="text-align:center; margin-bottom: 8px;">{{ index .T "six_digit_code" }}</label>
+                <div class="otp-container" id="totp-otp-inputs">
+                    <input type="number" class="otp-digit" maxlength="1" inputmode="numeric" aria-label="Digit 1">
+                    <input type="number" class="otp-digit" maxlength="1" inputmode="numeric" aria-label="Digit 2">
+                    <input type="number" class="otp-digit" maxlength="1" inputmode="numeric" aria-label="Digit 3">
+                    <input type="number" class="otp-digit" maxlength="1" inputmode="numeric" aria-label="Digit 4">
+                    <input type="number" class="otp-digit" maxlength="1" inputmode="numeric" aria-label="Digit 5">
+                    <input type="number" class="otp-digit" maxlength="1" inputmode="numeric" aria-label="Digit 6">
+                </div>
+            </div>
+            <div class="modal-buttons">
+                <button type="button" class="bg-gray" onclick="closeTOTPModal()">{{ index .T "cancel" }}</button>
+                <button type="button" id="totp-verify-btn" onclick="verifyTOTP()">{{ index .T "verify" }}</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="password-modal">
+        <div class="modal-content" style="max-width: 400px;">
+            <h2 id="password-modal-title">{{ index .T "verify_password" }}</h2>
+            <div class="modal-form-body">
+                <p class="password-modal-subtitle">{{ index .T "verify_password_subtitle" }}</p>
+                <div class="form-field">
+                    <label for="confirm-password-input">{{ index .T "current_password" }}</label>
+                    <input type="password" id="confirm-password-input" placeholder="••••••••" autocomplete="current-password">
+                </div>
+                <div id="password-modal-error" class="password-modal-error" style="display:none;"></div>
+            </div>
+            <div class="modal-buttons">
+                <button type="button" class="bg-gray" onclick="closePasswordModal()">{{ index .T "cancel" }}</button>
+                <button type="button" id="password-modal-confirm" onclick="confirmPasswordModal()">{{ index .T "confirm" }}</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Secret Reveal Modal — shown exactly once after creation or regeneration -->
+    <div class="modal" id="secret-reveal-modal">
+        <div class="modal-content">
+            <h2 id="secret-reveal-title">{{ or (index .T "secret_reveal_title") "Your Client Secret" }}</h2>
+            <div class="modal-form-body">
+                <div class="secret-reveal-warning">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                        <line x1="12" y1="9" x2="12" y2="13"/>
+                        <line x1="12" y1="17" x2="12.01" y2="17"/>
+                    </svg>
+                    <div class="secret-reveal-warning-text">
+                        <strong>{{ or (index .T "secret_reveal_warning") "Copy and save this secret now. It will not be shown again." }}</strong>
+                        {{ or (index .T "secret_reveal_warning_detail") "This secret is only displayed once for security reasons. If you lose it, you will need to regenerate a new secret." }}
+                    </div>
+                </div>
+                <div class="secret-reveal-block" id="secret-reveal-value">
+                    <!-- Secret will be injected here -->
+                    <button class="secret-reveal-copy-btn" id="secret-reveal-copy-btn" onclick="copyRevealedSecret()">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                        {{ or (index .T "copy") "Copy" }}
+                    </button>
+                </div>
+                <div class="secret-reveal-meta">
+                    <div class="secret-reveal-meta-item">
+                        <span class="secret-reveal-meta-label">{{ or (index .T "client_name") "Client" }}</span>
+                        <span class="secret-reveal-meta-value" id="secret-reveal-client-name">—</span>
+                    </div>
+                    <div class="secret-reveal-meta-item">
+                        <span class="secret-reveal-meta-label">{{ or (index .T "client_id") "Client ID" }}</span>
+                        <span class="secret-reveal-meta-value" id="secret-reveal-client-id">—</span>
+                    </div>
+                    <div class="secret-reveal-meta-item">
+                        <span class="secret-reveal-meta-label">{{ or (index .T "secret_prefix") "Prefix" }}</span>
+                        <span class="secret-reveal-meta-value" id="secret-reveal-prefix">—</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-buttons">
+                <button type="button" id="secret-reveal-confirm-btn" onclick="closeSecretRevealModal()">
+                    {{ or (index .T "secret_saved_confirm") "I've saved my secret" }}
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="contact-verify-modal">
+        <div class="modal-content">
+            <h2>{{ index .T "verify_contact_changes" }}</h2>
+            <form id="contact-verify-form">
+                <div class="modal-form-body">
+                    <p>{{ index .T "verify_contact_desc" }}</p>
+                    <div id="email-otp-group" class="otp-group" style="display: none;">
+                        <label>{{ index .T "otp_for" }} <span id="masked-email"></span></label>
+                        <div class="otp-container" id="email-otp-inputs">
+                            <input type="number" class="otp-digit" maxlength="1" inputmode="numeric">
+                            <input type="number" class="otp-digit" maxlength="1" inputmode="numeric">
+                            <input type="number" class="otp-digit" maxlength="1" inputmode="numeric">
+                            <input type="number" class="otp-digit" maxlength="1" inputmode="numeric">
+                            <input type="number" class="otp-digit" maxlength="1" inputmode="numeric">
+                            <input type="number" class="otp-digit" maxlength="1" inputmode="numeric">
+                        </div>
+                        <div class="countdown-container" id="otp-countdown-email">
+                            <span>{{ or (index .T "expires_in") "Expires in" }}:</span>
+                            <span class="countdown-timer" id="otp-timer-email">05:00</span>
+                        </div>
+                        <a href="#" class="resend-link" id="resend-email" onclick="resendContactOTP('email'); return false;">{{ index .T "resend_otp" }} (<span id="resends-email">0</span>/3)</a>
+                        <div id="message-email" class="message"></div>
+                    </div>
+                    <div id="phone-otp-group" class="otp-group" style="display: none;">
+                        <label>{{ index .T "otp_for" }} <span id="masked-phone"></span></label>
+                        <div class="otp-container" id="phone-otp-inputs">
+                            <input type="number" class="otp-digit" maxlength="1" inputmode="numeric">
+                            <input type="number" class="otp-digit" maxlength="1" inputmode="numeric">
+                            <input type="number" class="otp-digit" maxlength="1" inputmode="numeric">
+                            <input type="number" class="otp-digit" maxlength="1" inputmode="numeric">
+                            <input type="number" class="otp-digit" maxlength="1" inputmode="numeric">
+                            <input type="number" class="otp-digit" maxlength="1" inputmode="numeric">
+                        </div>
+                        <div class="countdown-container" id="otp-countdown-phone">
+                            <span>{{ or (index .T "expires_in") "Expires in" }}:</span>
+                            <span class="countdown-timer" id="otp-timer-phone">05:00</span>
+                        </div>
+                        <a href="#" class="resend-link" id="resend-phone" onclick="resendContactOTP('phone'); return false;">{{ index .T "resend_otp" }} (<span id="resends-phone">0</span>/3)</a>
+                        <div id="message-phone" class="message"></div>
+                    </div>
+                </div>
+                <div class="modal-buttons">
+                    <button type="button" class="bg-gray" onclick="cancelContactVerify()">{{ index .T "cancel" }}</button>
+                    <button type="submit">{{ index .T "verify" }}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Translations object from server
+        const T = {{ .T | json }};
+        
+        var currentSessionID = {{ .CurrentSessionID }};
+
+        // CSRF token from server — auto-injected into all state-changing requests
+        const csrfToken = '{{ .CSRFToken }}';
+        const _origFetch = window.fetch;
+        window.fetch = function(url, opts) {
+            opts = opts || {};
+            const method = (opts.method || 'GET').toUpperCase();
+            if (method !== 'GET' && method !== 'HEAD' && method !== 'OPTIONS') {
+                opts.headers = opts.headers || {};
+                if (opts.headers instanceof Headers) {
+                    opts.headers.set('X-CSRF-Token', csrfToken);
+                } else {
+                    opts.headers['X-CSRF-Token'] = csrfToken;
+                }
+            }
+            return _origFetch.call(this, url, opts);
+        };
+        // Toggle the "Required" checkbox visibility when a scope is checked/unchecked
+        function toggleRequired(scopeCheckbox, scopeName) {
+            const toggle = document.getElementById('req-toggle-' + scopeName);
+            if (!toggle) return;
+            if (scopeCheckbox.checked) {
+                toggle.classList.remove('disabled');
+            } else {
+                toggle.classList.add('disabled');
+                toggle.querySelector('input').checked = false;
+            }
+        }
+        
+        const tabs = document.querySelectorAll('.tab');
+        const accountContent = document.getElementById('account-content');
+        const sessionsContent = document.getElementById('sessions-content');
+        const clientsContent = document.getElementById('clients-content');
+        const newClientBtn = document.getElementById('new-client-btn');
+        const contactVerifyForm = document.getElementById('contact-verify-form');
+
+        let activeTab = 'account';
+        let wasMFA_TOTP_Enabled = false;
+        let setupSuccess = false;
+        let currentUser = null;
+        let pendingVerifications = [];
+        let iti = null;
+        let maskedContacts = {};
+        let attempts = {};
+        let resends = {};
+        let timeRemainingMap = {};
+        let resendAvailableMap = {};
+        let countdownInterval = null;
+
+        // Pagination state
+        const ITEMS_PER_PAGE = 6;
+        let allSessions = [];
+        let sessionsCurrentPage = 1;
+        let sessionsHasNextPage = false;
+        let allClients = [];
+        let clientsDisplayed = 0;
+
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                const tabName = tab.dataset.tab;
+                // Sync active state across all tabs (both desktop and mobile)
+                tabs.forEach(t => {
+                    if (t.dataset.tab === tabName) {
+                        t.classList.add('active');
+                    } else {
+                        t.classList.remove('active');
+                    }
+                });
+                activeTab = tabName;
+                document.querySelectorAll('.tab-content').forEach(content => content.style.display = 'none');
+                document.getElementById(`${activeTab}-content`).style.display = 'block';
+                newClientBtn.classList.toggle('hidden', activeTab !== 'clients');
+                loadContent();
+            });
+        });
+
+        newClientBtn.addEventListener('click', () => {
+            if (activeTab === 'clients') {
+                openModal();
+            }
+        });
+
+        function toggleDropdown() {
+            document.getElementById('dropdown').classList.toggle('active');
+        }
+
+        // Close dropdown on click outside
+        window.addEventListener('click', (event) => {
+            if (!event.target.closest('.profile-circle') && !event.target.closest('.dropdown')) {
+                const dropdown = document.getElementById('dropdown');
+                if (dropdown) dropdown.classList.remove('active');
+            }
+        });
+
+        async function copyToClipboard(text) {
+            try {
+                await navigator.clipboard.writeText(text);
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Copied!',
+                    text: 'Copied to clipboard!',
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 2000,
+                    timerProgressBar: true
+                });
+            } catch (err) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Oops...',
+                    text: 'Failed to copy: ' + err.message
+                });
+            }
+        }
+
+        async function logout() {
+            try {
+                const params = new URLSearchParams();
+                params.append('session_id', currentSessionID);
+                const response = await fetch('/sessions/terminate', {
+                    method: 'POST',
+                    body: params
+                });
+                const data = await response.json();
+                if (!data.success) throw new Error(data.error || 'Failed to logout');
+                window.location.href = '/';
+            } catch (error) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Logout Failed',
+                    text: error.message
+                });
+            }
+        }
+
+        // --- Universal Password Confirmation Modal ---
+        let _passwordCallback = null;
+
+        function requirePassword(callback) {
+            _passwordCallback = callback;
+            const modal = document.getElementById('password-modal');
+            const input = document.getElementById('confirm-password-input');
+            const errorEl = document.getElementById('password-modal-error');
+            input.value = '';
+            errorEl.style.display = 'none';
+            errorEl.textContent = '';
+            document.getElementById('password-modal-confirm').disabled = false;
+            modal.classList.add('active');
+            setTimeout(() => input.focus(), 100);
+        }
+
+        function closePasswordModal() {
+            document.getElementById('password-modal').classList.remove('active');
+            _passwordCallback = null;
+        }
+
+        function confirmPasswordModal() {
+            const password = document.getElementById('confirm-password-input').value;
+            if (!password) {
+                showPasswordError(T.password_required || 'Please enter your password');
+                return;
+            }
+            const cb = _passwordCallback;
+            closePasswordModal();
+            if (cb) {
+                cb(password);
+            }
+        }
+
+        function showPasswordError(message) {
+            const errorEl = document.getElementById('password-modal-error');
+            errorEl.textContent = message;
+            errorEl.style.display = 'block';
+        }
+
+        // Handle Enter key in password modal
+        document.getElementById('confirm-password-input').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                confirmPasswordModal();
+            }
+        });
+
+        // Close password modal on backdrop click
+        document.getElementById('password-modal').addEventListener('click', (e) => {
+            if (e.target === e.currentTarget) closePasswordModal();
+        });
+
+        // Helper to handle password-required API errors
+        function handlePasswordError(data, retryFn) {
+            if (data.error === 'password_required') {
+                requirePassword(retryFn);
+                return true;
+            }
+            if (data.error === 'incorrect_password') {
+                const remaining = data.attempts_remaining;
+                requirePassword(retryFn);
+                setTimeout(() => {
+                    showPasswordError(
+                        (T.incorrect_password || 'Incorrect password') +
+                        (remaining !== undefined ? ` (${remaining} ${T.attempts_remaining || 'attempts remaining'})` : '')
+                    );
+                }, 150);
+                return true;
+            }
+            if (data.error === 'max_attempts_reached' || data.error === 'account_blocked') {
+                Swal.fire({
+                    icon: 'error',
+                    title: T.account_blocked || 'Account Blocked',
+                    text: T.too_many_attempts || 'Too many failed attempts. Your account has been temporarily blocked for security.'
+                });
+                return true;
+            }
+            return false;
+        }
+
+        function loadContent() {
+            if (activeTab === 'account') {
+                loadAccount();
+            } else if (activeTab === 'sessions') {
+                loadSessions();
+            } else if (activeTab === 'clients') {
+                loadClients();
+            }
+        }
+
+        async function loadAccount() {
+            try {
+                const response = await fetch('/profile');
+                if (!response.ok) throw new Error('Failed to load account');
+                const user = await response.json();
+                currentUser = user;
+                wasMFA_TOTP_Enabled = user.mfa_totp_enabled;
+
+                // Sync appbar icon
+                const appbarImg = document.getElementById('appbar-profile-img');
+                const appbarSpan = document.querySelector('#appbar-profile-circle span');
+                if (user.icon) {
+                    appbarImg.src = user.icon;
+                    appbarImg.style.display = 'block';
+                    appbarSpan.style.display = 'none';
+                } else {
+                    appbarImg.style.display = 'none';
+                    appbarSpan.style.display = 'block';
+                }
+
+                accountContent.innerHTML = `
+                    <div class="profile-grid">
+                    <div class="section" style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 32px 24px;">
+                        <div class="icon-upload-container" style="position: relative;">
+                            <div class="icon-preview-large" onclick="document.getElementById('icon-input').click()" style="cursor: pointer; position: relative; width: 120px; height: 120px;">
+                                ${user.icon ? `<img src="${user.icon}" alt="Icon">` : `<span>${(user.first_name || user.username).charAt(0).toUpperCase()}</span>`}
+                                <div class="icon-edit-overlay">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                                </div>
+                            </div>
+                            <input type="file" id="icon-input" accept="image/*" style="display: none;" onchange="handleIconSelect(event)">
+                        </div>
+                        <div class="profile-card-info">
+                            <div class="profile-card-name">${[user.first_name, user.middle_name, user.last_name].filter(Boolean).join(' ') || user.username}</div>
+                            <div class="profile-card-handle">@${user.username}</div>
+                        </div>
+                    </div>
+                    <div class="section">
+                        <div class="section-header">
+                            <h3>${T.you_are || 'You are'}</h3>
+                            <button type="submit" form="names-form">${T.update || 'Update'}</button>
+                        </div>
+                        <form id="names-form">
+                            <div class="input-group">
+                                <input type="text" id="first-name" name="first_name" value="${user.first_name || ''}" required placeholder="${T.first_name || 'First Name'}">
+                                <input type="text" id="last-name" name="last_name" value="${user.last_name || ''}" placeholder="${T.last_name || 'Last Name'}">
+                            </div>
+                            <div class="input-group">
+                                <input type="text" id="middle-name" name="middle_name" value="${user.middle_name || ''}" placeholder="${T.middle_name || 'Middle Name'}">
+                                <input type="text" id="nickname" name="nickname" value="${user.nickname || ''}" placeholder="${T.nickname || 'Nickname'}">
+                            </div>
+                        </form>
+                    </div>
+                    <div class="section">
+                        <div class="section-header">
+                            <h3>${T.password || 'Password'}</h3>
+                            <button type="submit" form="password-form">${T.change || 'Change'}</button>
+                        </div>
+                        <form id="password-form">
+                            <div class="input-group">
+                                <input type="password" id="new-password" name="password" placeholder="${T.new_password || 'New Password'}">
+                                <input type="password" id="confirm-password" name="confirm_password" placeholder="${T.confirm_password || 'Confirm Password'}">
+                            </div>
+                            <input type="text" id="password-hint" name="password_hint" placeholder="${T.password_hint || 'Password Hint (Optional)'}" value="${user.password_hint || ''}">
+                        </form>
+                    </div>
+                    <div class="section">
+                        <div class="section-header">
+                            <h3>${T.contact_mfa || 'Contact & MFA'}</h3>
+                            <button type="submit" form="contact-form">${T.save || 'Save'}</button>
+                        </div>
+                        <form id="contact-form">
+                            <div class="input-with-switch">
+                                <input type="email" id="email" name="email" value="${user.email || ''}" placeholder="${T.email || 'Email'}">
+                                <label class="toggle-switch">
+                                    <input type="checkbox" name="mfa_email_enabled" ${user.mfa_email_enabled ? 'checked' : ''}>
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                            <div class="input-with-switch">
+                                <input type="tel" id="phone" name="phone" value="${user.phone ? '+' + user.phone : ''}" placeholder="${T.phone || 'Phone'}">
+                                <label class="toggle-switch">
+                                    <input type="checkbox" name="mfa_phone_enabled" ${user.mfa_phone_enabled ? 'checked' : ''}>
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                            <div class="input-with-switch">
+                                <input type="text" id="auth-app" disabled placeholder="${T.authenticator_app || 'Authenticator App'}">
+                                <label class="toggle-switch">
+                                    <input type="checkbox" name="mfa_totp_enabled" ${user.mfa_totp_enabled ? 'checked' : ''}>
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="section" id="username-section">
+                        <div class="section-header">
+                            <h3>${T.username || 'Username'}</h3>
+                            <button type="submit" form="username-form" id="username-submit" disabled>${T.update || 'Update'}</button>
+                        </div>
+                        <form id="username-form" onsubmit="updateUsername(event)">
+                            <div class="input-wrapper" style="position: relative; display: flex; align-items: center;">
+                                <input type="text" id="new-username" name="username" value="${user.username}" required placeholder="${T.enter_new_gilos_id || 'Enter new Gilos ID'}" oninput="handleUsernameInput(this)" style="padding-right: 40px;">
+                                <div id="username-status-icon" style="position: absolute; right: 12px; display: none; align-items: center; justify-content: center;"></div>
+                            </div>
+                            <p id="username-hint" class="verification-info" style="margin-top: 8px; font-size: 11px; opacity: 1; transition: color 0.2s ease;">
+                                ${T.username_requirements || 'Use 5-30 lowercase letters and numbers only.'} 
+                                <span style="display: block; margin-top: 4px; opacity: 0.8;">
+                                    ${(T.username_changes_left || 'Changes remaining: %d/3 in 30 days').replace('%d', 3 - (user.username_changes_count || 0))}
+                                </span>
+                            </p>
+                        </form>
+                    </div>
+                    <div class="section" id="deletion-section">
+                        <div id="deletion-section-content">
+                            <!-- Populated dynamically by loadDeletionStatus() -->
+                        </div>
+                    </div>
+                    </div>
+                `;
+                setupAccountForms();
+                checkPendingVerifications();
+                loadDeletionStatus();
+            } catch (error) {
+                accountContent.innerHTML = `<p>${T.failed_load_account || 'Failed to load account.'}</p>`;
+            }
+        }
+
+        function safeSetTextContent(id, text) {
+            const el = document.getElementById(id);
+            if (el) el.textContent = text;
+            return el;
+        }
+
+        async function checkPendingVerifications() {
+            try {
+                const response = await fetch('/profile/contact/pending');
+                const data = await response.json();
+                pendingVerifications = data.pending || [];
+                maskedContacts = data.masked || {};
+                attempts = data.attempts || {};
+                resends = data.resends || {};
+                timeRemainingMap = data.time_remaining || {};
+                resendAvailableMap = data.resend_available_in || {};
+                securityBlocks = data.blocks || {};
+                if (pendingVerifications.length > 0) {
+                    showContactVerifyModal();
+                    startCountdown();
+                }
+            } catch (error) {
+                console.error('Failed to check pending verifications:', error);
+            }
+        }
+
+        function showContactVerifyModal() {
+            const contactVerifyModal = document.getElementById('contact-verify-modal');
+            if (!contactVerifyModal) return;
+
+            const emailGroup = document.getElementById('email-otp-group');
+            if (emailGroup) emailGroup.style.display = pendingVerifications.includes('email') ? 'block' : 'none';
+            
+            const phoneGroup = document.getElementById('phone-otp-group');
+            if (phoneGroup) phoneGroup.style.display = pendingVerifications.includes('phone') ? 'block' : 'none';
+
+            safeSetTextContent('masked-email', maskedContacts.email || '');
+            safeSetTextContent('masked-phone', maskedContacts.phone || '');
+            safeSetTextContent('resends-email', resends.email || 0);
+            safeSetTextContent('resends-phone', resends.phone || 0);
+
+            clearOTPInputs('email-otp-inputs');
+            clearOTPInputs('phone-otp-inputs');
+            
+            safeSetTextContent('message-email', '');
+            safeSetTextContent('message-phone', '');
+            
+            // Re-enable everything initially
+            document.querySelectorAll('#contact-verify-modal input, #contact-verify-modal button:not(.bg-gray)').forEach(el => {
+                el.disabled = false;
+            });
+            document.querySelectorAll('#contact-verify-modal .resend-link').forEach(el => {
+                el.style.pointerEvents = 'auto';
+                el.style.opacity = '1';
+            });
+
+            // Handle Global or Per-Contact Blocks
+            ['email', 'phone'].forEach(type => {
+                const block = securityBlocks[type] || (securityBlocks.is_blocked ? securityBlocks : null);
+                if (block && block.is_blocked) {
+                    const blockedUntil = new Date(block.blocked_until);
+                    const msg = (T.security_block_active || 'Account blocked for security until %s').replace('%s', blockedUntil.toLocaleString());
+                    const messageEl = safeSetTextContent(`message-${type}`, msg);
+                    if (messageEl) messageEl.className = 'message error';
+                    
+                    // Disable inputs for this type
+                    const group = document.getElementById(`${type}-otp-group`);
+                    if (group) {
+                        group.querySelectorAll('input, .resend-link').forEach(el => {
+                            el.disabled = true;
+                            if (el.classList.contains('resend-link')) {
+                                el.style.pointerEvents = 'none';
+                                el.style.opacity = '0.5';
+                            }
+                        });
+                    }
+                    
+                    // If global block, disable submit button too
+                    if (securityBlocks.is_blocked) {
+                        document.querySelectorAll('#contact-verify-modal button:not(.bg-gray)').forEach(el => el.disabled = true);
+                    }
+                }
+            });
+
+            contactVerifyModal.classList.add('active');
+        }
+
+        function closeContactVerifyModal() {
+            document.getElementById('contact-verify-modal').classList.remove('active');
+        }
+
+        async function cancelContactVerify() {
+            const types = pendingVerifications.join(',');
+            try {
+                const response = await fetch(`/profile/contact/cancel?type=${types}`, { method: 'POST' });
+                const data = await response.json();
+                if (data.success) {
+                    closeContactVerifyModal();
+                    loadAccount();
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'Failed to cancel: ' + (data.error || 'Unknown error')
+                    });
+                }
+            } catch (error) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: error.message
+                });
+            }
+        }
+
+        async function resendContactOTP(typ) {
+            const link = document.getElementById(`resend-${typ}`);
+            const originalText = link.textContent;
+            link.textContent = 'Resending...';
+            
+            try {
+                const response = await fetch(`/profile/contact/resend?type=${typ}`, { method: 'POST' });
+                const data = await response.json();
+                if (response.ok) {
+                    timeRemainingMap[typ] = data.time_remaining || 300;
+                    resendAvailableMap[typ] = data.resend_available_in || 60;
+                    resends[typ] = data.resends || (resends[typ] || 0) + 1;
+                    showContactVerifyModal();
+                    startCountdown();
+                safeSetTextContent(`message-${typ}`, data.success_message || 'Code resent');
+                const msgEl = document.getElementById(`message-${typ}`);
+                if (msgEl) msgEl.className = 'message success';
+            } else {
+                if (data.resend_available_in) {
+                    resendAvailableMap[typ] = data.resend_available_in;
+                    startCountdown();
+                }
+                safeSetTextContent(`message-${typ}`, data.error || 'Failed to resend');
+                const msgEl = document.getElementById(`message-${typ}`);
+                if (msgEl) msgEl.className = 'message error';
+                updateCountdownUI(); // Update UI to reflect rate limit state
+            }
+            if (link) link.textContent = originalText.replace(/\d/, resends[typ]);
+        } catch (error) {
+            safeSetTextContent(`message-${typ}`, 'An error occurred. Please try again.');
+            const msgEl = document.getElementById(`message-${typ}`);
+            if (msgEl) msgEl.className = 'message error';
+        } finally {
+            if (link) link.textContent = originalText.replace(/\d+/, resends[typ] || 0);
+        }
+        }
+
+        contactVerifyForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const emailOTP = getOTPValue('email-otp-inputs');
+            const phoneOTP = getOTPValue('phone-otp-inputs');
+            const body = {};
+            if (pendingVerifications.includes('email') && emailOTP) body.email_otp = emailOTP;
+            if (pendingVerifications.includes('phone') && phoneOTP) body.phone_otp = phoneOTP;
+            if (Object.keys(body).length === 0) return;
+            try {
+                const response = await fetch('/profile/contact/verify', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+                const data = await response.json();
+                for (const [key, res] of Object.entries(data)) {
+                    const typ = key;
+                    if (res.success) {
+                        safeSetTextContent(`message-${typ}`, 'Verified!');
+                        clearPending(typ);
+                    } else {
+                        attempts[typ]++;
+                        const attemptsLeft = 3 - attempts[typ];
+                        safeSetTextContent(`message-${typ}`, res.error);
+                        if (attempts[typ] >= 3) {
+                            clearPending(typ);
+                        }
+                    }
+                }
+                if (pendingVerifications.length === 0) {
+                    closeContactVerifyModal();
+                    loadAccount();
+                }
+            } catch (error) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Verification Error',
+                    text: error.message
+                });
+            }
+        });
+
+        function clearPending(typ) {
+            pendingVerifications = pendingVerifications.filter(p => p !== typ);
+            document.getElementById(`${typ}-otp-group`).style.display = 'none';
+        }
+
+        function setupAccountForms() {
+            const namesForm = document.getElementById('names-form');
+            namesForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const formData = new FormData(namesForm);
+                const params = new URLSearchParams(formData);
+                try {
+                    const response = await fetch('/profile/names', { method: 'POST', body: params });
+                    const data = await response.json();
+                    if (!data.success) throw new Error(data.error || 'Failed to update names');
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Success',
+                        text: 'Names updated successfully',
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
+                    loadAccount();
+                } catch (error) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Update Failed',
+                        text: error.message
+                    });
+                }
+            });
+
+            const passwordForm = document.getElementById('password-form');
+            passwordForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const password = document.getElementById('new-password').value;
+                const confirmInput = document.getElementById('confirm-password').value;
+                if (password && password !== confirmInput) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Mismatch',
+                        text: 'Passwords do not match'
+                    });
+                    return;
+                }
+                const formData = new FormData(passwordForm);
+                const params = new URLSearchParams(formData);
+                try {
+                    const response = await fetch('/profile/password', { method: 'POST', body: params });
+                    const data = await response.json();
+                    if (!data.success) throw new Error(data.error || 'Failed to update password');
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Success',
+                        text: 'Password updated successfully',
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
+                    loadAccount();
+                } catch (error) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Update Failed',
+                        text: error.message
+                    });
+                }
+            });
+            
+            const phoneInput = document.getElementById('phone');
+            if (phoneInput) {
+                iti = window.intlTelInput(phoneInput, {
+                    utilsScript: "https://cdn.jsdelivr.net/npm/intl-tel-input@19.2.16/build/js/utils.js",
+                    initialCountry: "uz",
+                    autoInsertDialCode: true,
+                    separateDialCode: false,
+                    preferredCountries: ["uz", "kz", "kg", "ru"],
+                    autoPlaceholder: "aggressive",
+                    formatOnDisplay: true,
+                    nationalMode: false,
+                    dropdownContainer: document.body,
+                    allowDropdown: true
+                });
+
+                // As-you-type formatting with integrated dial code
+                phoneInput.addEventListener('input', (e) => {
+                    if (iti && window.intlTelInputUtils && e.inputType !== 'deleteContentBackward') {
+                        const originalValue = phoneInput.value;
+                        const originalCursor = phoneInput.selectionStart;
+                        const formatted = iti.getNumber(window.intlTelInputUtils.numberFormat.INTERNATIONAL);
+                        
+                        if (formatted && formatted !== originalValue && originalValue.trim()) {
+                            phoneInput.value = formatted;
+                            const diff = formatted.length - originalValue.length;
+                            const newCursor = Math.max(0, originalCursor + diff);
+                            phoneInput.setSelectionRange(newCursor, newCursor);
+                        }
+                    }
+                    updateMfaPhone();
+                });
+
+                // Final format on blur
+                phoneInput.addEventListener('blur', () => {
+                    if (iti && phoneInput.value.trim() && window.intlTelInputUtils) {
+                        if (iti.isValidNumber()) {
+                            phoneInput.value = iti.getNumber(window.intlTelInputUtils.numberFormat.INTERNATIONAL);
+                        }
+                    }
+                });
+            }
+
+            const contactForm = document.getElementById('contact-form');
+            contactForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                
+                if (iti && !iti.isValidNumber() && phoneInput.value.trim() !== '') {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Invalid Phone Number',
+                        text: 'Please enter a valid phone number.'
+                    });
+                    return;
+                }
+
+                const formData = new FormData(contactForm);
+                if (iti && phoneInput.value.trim() !== '') {
+                    formData.set('phone', iti.getNumber());
+                }
+                const params = new URLSearchParams(formData);
+                requirePassword((password) => doContactUpdate(params, password));
+            });
+
+            async function doContactUpdate(params, password) {
+                try {
+                    const response = await fetch('/profile/contact', {
+                        method: 'POST',
+                        headers: { 'X-Current-Password': password },
+                        body: params
+                    });
+                    const data = await response.json();
+                    if (!data.success) {
+                        if (handlePasswordError(data, (pw) => doContactUpdate(params, pw))) return;
+                        throw new Error(data.error || 'Failed to update contact');
+                    }
+                    if (data.verification_needed) {
+                        pendingVerifications = data.verification_needed;
+                        maskedContacts = data.masked;
+                        attempts = { email: 0, phone: 0 };
+                        resends = { email: 0, phone: 0 };
+                        showContactVerifyModal();
+                    } else {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Success',
+                            text: 'Contact updated successfully',
+                            timer: 2000,
+                            showConfirmButton: false
+                        });
+                    }
+                    loadAccount();
+                } catch (error) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Update Failed',
+                        text: error.message
+                    });
+                }
+            }
+
+            const mfaTotpCheckbox = document.querySelector('input[name="mfa_totp_enabled"]');
+            mfaTotpCheckbox.addEventListener('change', (e) => {
+                if (e.target.checked && !wasMFA_TOTP_Enabled) {
+                    openTOTPModal();
+                } else if (!e.target.checked && wasMFA_TOTP_Enabled) {
+                    Swal.fire({
+                        title: 'Are you sure?',
+                        text: "Do you want to disable Authenticator App MFA?",
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonText: 'Yes, disable it',
+                        cancelButtonText: 'Cancel'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            requirePassword((password) => {
+                                fetch('/profile/totp/disable', {
+                                    method: 'POST',
+                                    headers: { 'X-Current-Password': password }
+                                })
+                                .then(res => res.json())
+                                .then(data => {
+                                    if (data.success) {
+                                        loadAccount();
+                                    } else {
+                                        if (handlePasswordError(data, (pw) => {
+                                            fetch('/profile/totp/disable', {
+                                                method: 'POST',
+                                                headers: { 'X-Current-Password': pw }
+                                            }).then(r => r.json()).then(d => {
+                                                if (d.success) loadAccount();
+                                                else { Swal.fire('Error', d.error || 'Failed to disable', 'error'); e.target.checked = true; }
+                                            });
+                                        })) return;
+                                        Swal.fire('Error', data.error || 'Failed to disable', 'error');
+                                        e.target.checked = true;
+                                    }
+                                })
+                                .catch(err => {
+                                    Swal.fire('Error', err.message, 'error');
+                                    e.target.checked = true;
+                                });
+                            });
+                        } else {
+                            e.target.checked = true;
+                        }
+                    });
+                }
+            });
+
+
+            // Disable MFA switches if contacts are empty
+            const emailInput = document.getElementById('email');
+            const mfaEmailSwitch = document.querySelector('input[name="mfa_email_enabled"]');
+            function updateMfaEmail() {
+                const enabled = emailInput.value.trim() !== '';
+                mfaEmailSwitch.disabled = !enabled;
+                if (!enabled) mfaEmailSwitch.checked = false;
+            }
+            emailInput.addEventListener('input', updateMfaEmail);
+            updateMfaEmail();
+
+            const mfaPhoneSwitch = document.querySelector('input[name="mfa_phone_enabled"]');
+            function updateMfaPhone() {
+                const enabled = phoneInput.value.trim() !== '';
+                mfaPhoneSwitch.disabled = !enabled;
+                if (!enabled) mfaPhoneSwitch.checked = false;
+            }
+            phoneInput.addEventListener('input', updateMfaPhone);
+            updateMfaPhone();
+        }
+
+        // SVG Icons for cards
+        const icons = {
+            device: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>',
+            globe: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>',
+            key: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>',
+            calendar: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>',
+            shield: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>',
+            clock: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>',
+            copy: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>',
+            link: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>',
+            tag: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>'
+        };
+
+        // Scope label translations
+        function getScopeLabel(scope) {
+            const labels = {
+                'user_phone': T.scope_phone || 'Phone Number',
+                'user_email': T.scope_email || 'Email Address',
+                'user_first_name': T.scope_first_name || 'First Name',
+                'user_last_name': T.scope_last_name || 'Last Name',
+                'user_username': T.scope_username || 'Username',
+                'user_basic_info': T.scope_basic_info || 'Basic Info',
+                'user_middle_name': T.scope_middle_name || 'Middle Name',
+                'user_nickname': T.scope_nickname || 'Nickname',
+                'user_sessions': T.scope_sessions || 'Sessions',
+                'user_totps': T.scope_totps || 'TOTP synchronization'
+            };
+            return labels[scope.trim()] || scope;
+        }
+
+        // Token display helper
+        function renderToken(token, label) {
+            if (!token) return `<span class="card-value">${T.na || 'N/A'}</span>`;
+            const short = `${token.slice(0,6)}···${token.slice(-6)}`;
+            return `<span class="card-token">${short}<span class="copy-btn" onclick="copyToClipboard('${token}')">${icons.copy}</span></span>`;
+        }
+
+        function renderSessionCard(session) {
+            const isCurrent = session.id === currentSessionID;
+            const currentBadge = isCurrent ? `<span class="badge">${T.session_current || 'Current'}</span>` : '';
+            const typeBadge = session.type ? `<span class="type-badge">${T[session.type] || session.type}</span>` : '';
+            const na = T.na || 'N/A';
+            const unknown = T.unknown || 'Unknown';
+            
+            let scopesHtml = '';
+            if (session.scopes && session.scopes.trim() !== '') {
+                scopesHtml = `
+                    <div class="card-row">
+                        <span class="card-label">${icons.tag} ${T.scopes || 'Scopes'}</span>
+                        <div class="card-scopes">
+                            ${session.scopes.split(',').map(scope => `<span class="scope-badge">${getScopeLabel(scope)}</span>`).join('')}
+                        </div>
+                    </div>`;
+            }
+            
+            return `
+                <div class="section">
+                    <div class="card-header">
+                        <h3>${T.session || 'Session'} #${session.id} ${currentBadge}</h3>
+                        ${typeBadge}
+                    </div>
+                    <div class="card-body">
+                        <div class="card-row">
+                            <span class="card-label">${icons.device} ${T.device || 'Device'}</span>
+                            <span class="card-value">${session.device_info || unknown}</span>
+                        </div>
+                        <div class="card-row">
+                            <span class="card-label">${icons.globe} ${T.ip || 'IP'}</span>
+                            <span class="card-value">${session.ip_address || unknown}</span>
+                        </div>
+                        <div class="card-divider"></div>
+                        <div class="card-row">
+                            <span class="card-label">${icons.key} ${T.cookie || 'Cookie'}</span>
+                            ${renderToken(session.cookie_token)}
+                        </div>
+                        <div class="card-row">
+                            <span class="card-label">${icons.key} ${T.access || 'Access'}</span>
+                            ${renderToken(session.access_token)}
+                        </div>
+                        <div class="card-row">
+                            <span class="card-label">${icons.key} ${T.refresh || 'Refresh'}</span>
+                            ${renderToken(session.refresh_token)}
+                        </div>
+                        ${scopesHtml}
+                        <div class="card-divider"></div>
+                        <div class="card-meta">
+                            <span class="card-meta-item">${icons.clock} ${T.last_seen || 'Seen'}: ${session.last_seen_at}</span>
+                            <span class="card-meta-item">${icons.calendar} ${T.expires || 'Expires'}: ${session.expires_at}</span>
+                        </div>
+                    </div>
+                    <div class="action-buttons">
+                        <button onclick="terminateSession(${session.id})">${T.terminate || 'Terminate'}</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderSessionsGrid() {
+            if (allSessions.length === 0) {
+                sessionsContent.innerHTML = `<div class="empty-state">${T.no_active_sessions || 'No active sessions.'}</div>`;
+                return;
+            }
+
+            let html = '<div class="items-grid">';
+            html += allSessions.map(renderSessionCard).join('');
+            html += '</div>';
+
+            if (sessionsHasNextPage) {
+                html += `
+                    <div class="load-more-container">
+                        <button id="sessions-load-more" class="load-more-btn" onclick="loadMoreSessions()">${T.load_more || 'Load More'}</button>
+                    </div>
+                `;
+            } else if (allSessions.length > ITEMS_PER_PAGE) {
+                html += `<div class="no-more-text">${T.all_sessions_loaded || 'All sessions loaded'}</div>`;
+            }
+
+            sessionsContent.innerHTML = html;
+
+            // Add Terminate Others button after the grid
+            if (allSessions.length > 1) {
+                const terminateOthersBtn = document.createElement('div');
+                terminateOthersBtn.className = 'load-more-container';
+                terminateOthersBtn.innerHTML = `<button class="bg-red" style="padding: 12px 24px; border-radius: 12px;" onclick="terminateOtherSessions()">${T.terminate_all_others || 'Terminate All Other Sessions'}</button>`;
+                sessionsContent.appendChild(terminateOthersBtn);
+            }
+        }
+
+        async function terminateOtherSessions() {
+            Swal.fire({
+                title: 'Are you sure?',
+                text: "Do you want to terminate all other sessions?",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Yes, terminate all',
+                cancelButtonColor: '#d33'
+            }).then(async (result) => {
+                if (result.isConfirmed) {
+                    try {
+                        const response = await fetch('/sessions/terminate-others', {
+                            method: 'POST'
+                        });
+                        const data = await response.json();
+                        if (!data.success) throw new Error(data.error || 'Failed to terminate sessions');
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Terminated',
+                            text: 'All other sessions terminated.',
+                            timer: 2000,
+                            showConfirmButton: false
+                        });
+                        loadSessions();
+                    } catch (error) {
+                        Swal.fire('Error', error.message, 'error');
+                    }
+                }
+            });
+        }
+
+        async function loadSessions(page = 1) {
+            if (page === 1) {
+                sessionsContent.innerHTML = '<div class="empty-state">Loading...</div>';
+            }
+            
+            try {
+                const response = await fetch(`/sessions?page=${page}&limit=${ITEMS_PER_PAGE}`);
+                if (!response.ok) throw new Error('Failed to load sessions');
+                const result = await response.json();
+                
+                if (page === 1) {
+                    allSessions = result.data;
+                } else {
+                    allSessions = [...allSessions, ...result.data];
+                }
+                
+                sessionsCurrentPage = result.pagination.page;
+                sessionsHasNextPage = result.pagination.has_next_page;
+                
+                renderSessionsGrid();
+            } catch (error) {
+                sessionsContent.innerHTML = `<div class="empty-state">${T.failed_load_sessions || 'Failed to load sessions.'}</div>`;
+            }
+        }
+
+        function loadMoreSessions() {
+            const btn = document.getElementById('sessions-load-more');
+            if (btn) {
+                btn.disabled = true;
+                btn.textContent = T.loading || 'Loading...';
+            }
+            loadSessions(sessionsCurrentPage + 1);
+        }
+
+        function renderClientCard(client) {
+            const typeBadge = client.Type ? `<span class="type-badge">${T[client.Type] || client.Type}</span>` : '';
+            
+            let scopesHtml = '';
+            if (client.Scopes && client.Scopes.trim() !== '') {
+                const requiredList = (client.RequiredScopes || '').split(',');
+                scopesHtml = `
+                    <div class="card-row">
+                        <span class="card-label">${icons.tag} ${T.scopes || 'Scopes'}</span>
+                        <div class="card-scopes">
+                            ${client.Scopes.split(',').map(scope => {
+                                const isRequired = requiredList.includes(scope);
+                                const badge = isRequired ? ' <span style="font-size:9px;color:var(--red-600);font-weight:600;">★</span>' : '';
+                                return `<span class="scope-badge">${getScopeLabel(scope)}${badge}</span>`;
+                            }).join('')}
+                        </div>
+                    </div>`;
+            }
+            // Secret prefix display
+            let secretDisplay;
+            if (client.secret_prefix) {
+                secretDisplay = `<span class="secret-prefix-display"><span class="prefix-chars">${client.secret_prefix}</span><span class="prefix-mask">••••••••••••</span></span>`;
+            } else {
+                secretDisplay = `<span class="secret-no-prefix">${T.no_prefix_regenerate || 'Regenerate to set prefix'}</span>`;
+            }
+
+            // Secret age
+            let secretAge = '';
+            if (client.secret_created_at) {
+                secretAge = `<span class="secret-age">${formatTimeAgo(client.secret_created_at)}</span>`;
+            }
+
+            return `
+                <div class="section">
+                    <div class="card-header">
+                        <h3>${client.Name}</h3>
+                        ${typeBadge}
+                    </div>
+                    <div class="card-body">
+                        <div class="card-row">
+                            <span class="card-label">${icons.tag} ${T.client_id || 'Client ID'}</span>
+                            <span class="card-value">${client.ID}</span>
+                        </div>
+                        <div class="card-row">
+                            <span class="card-label">${icons.key} ${T.secret || 'Secret'}</span>
+                            <span class="card-value" style="display: inline-flex; align-items: center;">
+                                ${secretDisplay}
+                                <button type="button" class="btn-regenerate-icon" onclick="regenerateSecret(${client.ID}, '${escapeHtml(client.Name)}')" title="${T.regenerate_secret || 'Regenerate Secret'}">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 4v6h6"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+                                </button>
+                                ${secretAge}
+                            </span>
+                        </div>
+                        <div class="card-row">
+                            <span class="card-label">${icons.link} ${T.redirect_uris || 'Redirect URIs'}</span>
+                            <span class="card-value">${(client.RedirectURIs || '').split(',').map(u => u.trim()).filter(Boolean).map(u => `<div class="redirect-uri-pill">${u}</div>`).join('')}</span>
+                        </div>
+                        ${scopesHtml}
+                        <div class="card-divider"></div>
+                        <div class="card-meta">
+                            <span class="card-meta-item">${icons.calendar} ${T.created || 'Created'}: ${client.CreatedAt}</span>
+                            <span class="card-meta-item">${icons.calendar} ${T.updated || 'Updated'}: ${client.UpdatedAt}</span>
+                        </div>
+                    </div>
+                    <div class="action-buttons">
+                        <button onclick="openModal(${client.ID})">${T.edit || 'Edit'}</button>
+                        <button class="bg-gray" onclick="deleteClient(${client.ID})">${T.delete || 'Delete'}</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderClientsGrid() {
+            const toShow = allClients.slice(0, clientsDisplayed);
+            const hasMore = clientsDisplayed < allClients.length;
+            
+            if (toShow.length === 0) {
+                clientsContent.innerHTML = `<div class="empty-state">${T.no_clients_registered || 'No clients registered.'}</div>`;
+                return;
+            }
+
+            let html = '<div class="items-grid">';
+            html += toShow.map(renderClientCard).join('');
+            html += '</div>';
+
+            if (hasMore) {
+                html += `
+                    <div class="load-more-container">
+                        <button class="load-more-btn" onclick="loadMoreClients()">${T.load_more || 'Load More'}</button>
+                    </div>
+                `;
+            } else if (allClients.length > ITEMS_PER_PAGE) {
+                html += `<div class="no-more-text">${T.all_clients_loaded || 'All clients loaded'}</div>`;
+            }
+
+            clientsContent.innerHTML = html;
+        }
+
+        async function loadClients() {
+            try {
+                const response = await fetch('/clients');
+                if (!response.ok) throw new Error('Failed to load clients');
+                allClients = await response.json();
+                clientsDisplayed = Math.min(ITEMS_PER_PAGE, allClients.length);
+                renderClientsGrid();
+            } catch (error) {
+                clientsContent.innerHTML = `<div class="empty-state">${T.failed_load_clients || 'Failed to load clients.'}</div>`;
+            }
+        }
+
+        function loadMoreClients() {
+            clientsDisplayed = Math.min(clientsDisplayed + ITEMS_PER_PAGE, allClients.length);
+            renderClientsGrid();
+        }
+
+        async function terminateSession(id) {
+            const params = new URLSearchParams();
+            params.append('session_id', id);
+            try {
+                const response = await fetch('/sessions/terminate', {
+                    method: 'POST',
+                    body: params
+                });
+                const data = await response.json();
+                if (!data.success) throw new Error(data.error || 'Failed to terminate session');
+                if (id === currentSessionID) {
+                    window.location.href = '/';
+                } else {
+                    loadSessions();
+                }
+            } catch (error) {
+                Swal.fire('Error', error.message, 'error');
+            }
+        }
+
+        async function deleteClient(id) {
+            Swal.fire({
+                title: 'Are you sure?',
+                text: "Do you want to delete this client? This action cannot be undone.",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Yes, delete it',
+                cancelButtonColor: '#d33'
+            }).then(async (result) => {
+                if (result.isConfirmed) {
+                    const params = new URLSearchParams();
+                    params.append('client_id', id);
+                    try {
+                        const response = await fetch('/clients/delete', {
+                            method: 'POST',
+                            body: params
+                        });
+                        const data = await response.json();
+                        if (!data.success) throw new Error(data.error || 'Failed to delete client');
+                        loadClients();
+                    } catch (error) {
+                        Swal.fire('Error', error.message, 'error');
+                    }
+                }
+            });
+        }
+
+        // --- Secret Reveal Modal ---
+        let _revealedSecret = '';
+
+        function showSecretRevealModal({ secret, clientName, clientId, secretPrefix }) {
+            _revealedSecret = secret;
+            // Set secret text (first child text node of the block, before the button)
+            const revealBlock = document.getElementById('secret-reveal-value');
+            const textNode = revealBlock.childNodes[0];
+            if (textNode && textNode.nodeType === 3) {
+                textNode.textContent = secret;
+            } else {
+                revealBlock.insertBefore(document.createTextNode(secret), revealBlock.firstChild);
+            }
+            document.getElementById('secret-reveal-client-name').textContent = clientName;
+            document.getElementById('secret-reveal-client-id').textContent = clientId;
+            document.getElementById('secret-reveal-prefix').textContent = secretPrefix || secret.slice(0, 8);
+
+            // Reset copy button
+            const copyBtn = document.getElementById('secret-reveal-copy-btn');
+            copyBtn.classList.remove('copied');
+            copyBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> ${T.copy || 'Copy'}`;
+
+            document.getElementById('secret-reveal-modal').classList.add('active');
+        }
+
+        function closeSecretRevealModal() {
+            _revealedSecret = '';
+            document.getElementById('secret-reveal-modal').classList.remove('active');
+        }
+
+        async function copyRevealedSecret() {
+            if (!_revealedSecret) return;
+            try {
+                await navigator.clipboard.writeText(_revealedSecret);
+                const copyBtn = document.getElementById('secret-reveal-copy-btn');
+                copyBtn.classList.add('copied');
+                copyBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg> ${T.secret_copied || 'Copied!'}`;
+                setTimeout(() => {
+                    copyBtn.classList.remove('copied');
+                    copyBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> ${T.copy || 'Copy'}`;
+                }, 3000);
+            } catch (err) {
+                Swal.fire({ icon: 'error', title: 'Error', text: 'Failed to copy: ' + err.message });
+            }
+        }
+
+        // --- Regenerate Secret ---
+        async function regenerateSecret(clientId, clientName) {
+            const result = await Swal.fire({
+                title: T.regenerate_secret || 'Regenerate Secret',
+                html: `<p style="margin-bottom:8px;font-weight:600;">${escapeHtml(clientName)}</p><p style="color:#ef4444;font-size:14px;">${T.regenerate_secret_warning || 'This will invalidate the current secret. All applications using it will stop working.'}</p>`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: T.regenerate_secret || 'Regenerate Secret',
+                confirmButtonColor: '#f59e0b',
+                cancelButtonText: T.cancel || 'Cancel'
+            });
+
+            if (!result.isConfirmed) return;
+
+            try {
+                const params = new URLSearchParams();
+                params.append('client_id', clientId);
+                const response = await fetch('/clients/regenerate-secret', {
+                    method: 'POST',
+                    body: params
+                });
+                const data = await response.json();
+                if (!data.success) throw new Error(data.error || 'Failed to regenerate secret');
+
+                loadClients();
+                showSecretRevealModal({
+                    secret: data.client_secret,
+                    clientName: data.client_name || clientName,
+                    clientId: data.client_id,
+                    secretPrefix: data.secret_prefix || ''
+                });
+            } catch (error) {
+                Swal.fire({ icon: 'error', title: 'Error', text: error.message });
+            }
+        }
+
+        // --- Utility helpers ---
+        function formatTimeAgo(dateStr) {
+            if (!dateStr) return '';
+            const date = new Date(dateStr);
+            const now = new Date();
+            const diffMs = now - date;
+            const diffSec = Math.floor(diffMs / 1000);
+            const diffMin = Math.floor(diffSec / 60);
+            const diffHr = Math.floor(diffMin / 60);
+            const diffDay = Math.floor(diffHr / 24);
+
+            if (diffDay > 30) {
+                const diffMonth = Math.floor(diffDay / 30);
+                return diffMonth === 1 ? (T.month_ago || '1 month ago') : `${diffMonth} ${T.months_ago || 'months ago'}`;
+            }
+            if (diffDay > 0) return diffDay === 1 ? (T.day_ago || '1 day ago') : `${diffDay} ${T.days_ago || 'days ago'}`;
+            if (diffHr > 0) return diffHr === 1 ? (T.hour_ago || '1 hour ago') : `${diffHr} ${T.hours_ago || 'hours ago'}`;
+            if (diffMin > 0) return diffMin === 1 ? (T.minute_ago || '1 minute ago') : `${diffMin} ${T.minutes_ago || 'minutes ago'}`;
+            return T.just_now || 'just now';
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        }
+
+        async function openModal(id = null) {
+            const modal = document.getElementById('client-modal');
+            const modalTitle = document.getElementById('modal-title');
+            const clientIdInput = document.getElementById('client-id');
+            const clientForm = document.getElementById('client-form');
+            
+            clientIdInput.value = id || '';
+            modalTitle.textContent = id ? 'Edit Client' : 'Create New Client';
+            if (id) {
+                try {
+                    const response = await fetch(`/clients/edit?id=${id}`);
+                    if (!response.ok) throw new Error('Failed to load client');
+                    const client = await response.json();
+                    document.getElementById('name').value = client.Name;
+                    document.getElementById('type').value = client.Type;
+                    setRedirectURIs((client.RedirectURIs || '').split(',').map(u => u.trim()).filter(Boolean));
+                    const scopes = client.Scopes.split(',');
+                    const requiredScopes = (client.RequiredScopes || '').split(',');
+                    document.querySelectorAll('.scope-option').forEach(option => {
+                        const scopeCheckbox = option.querySelector('input[type="checkbox"]:not([name^="required_"])');
+                        const reqToggle = option.querySelector('.scope-required-toggle');
+                        const reqCheckbox = reqToggle ? reqToggle.querySelector('input') : null;
+                        
+                        const isChecked = scopes.includes(scopeCheckbox.name);
+                        scopeCheckbox.checked = isChecked;
+                        
+                        if (reqToggle && reqCheckbox) {
+                            if (isChecked) {
+                                reqToggle.classList.remove('disabled');
+                                reqCheckbox.checked = requiredScopes.includes(scopeCheckbox.name);
+                            } else {
+                                reqToggle.classList.add('disabled');
+                                reqCheckbox.checked = false;
+                            }
+                        }
+                    });
+                } catch (error) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Load Failed',
+                        text: 'Failed to load client: ' + error.message
+                    });
+                    return;
+                }
+            } else {
+                clientForm.reset();
+                // Reset all required toggles to disabled
+                document.querySelectorAll('.scope-required-toggle').forEach(toggle => {
+                    toggle.classList.add('disabled');
+                    toggle.querySelector('input').checked = false;
+                });
+                // Start with one empty URI row
+                setRedirectURIs(['']);
+            }
+            modal.classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('client-modal').classList.remove('active');
+        }
+
+        // --- Redirect URI list management ---
+        function addURIRow(value = '') {
+            const container = document.getElementById('uri-rows');
+            const row = document.createElement('div');
+            row.className = 'uri-row';
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.placeholder = 'https://example.com/callback';
+            input.value = value;
+            const removeBtn = document.createElement('button');
+            removeBtn.type = 'button';
+            removeBtn.className = 'uri-remove-btn';
+            removeBtn.innerHTML = '×';
+            removeBtn.title = 'Remove';
+            removeBtn.onclick = () => {
+                row.style.opacity = '0';
+                row.style.transform = 'translateY(-4px)';
+                row.style.transition = 'all 0.15s ease';
+                setTimeout(() => {
+                    row.remove();
+                    // Always keep at least one row
+                    if (document.getElementById('uri-rows').children.length === 0) {
+                        addURIRow();
+                    }
+                }, 150);
+            };
+            row.appendChild(input);
+            row.appendChild(removeBtn);
+            container.appendChild(row);
+            if (!value) input.focus();
+        }
+
+        function setRedirectURIs(uris) {
+            const container = document.getElementById('uri-rows');
+            container.innerHTML = '';
+            if (!uris || uris.length === 0) {
+                addURIRow();
+                return;
+            }
+            uris.forEach(uri => addURIRow(uri));
+        }
+
+        function collectRedirectURIs() {
+            const rows = document.querySelectorAll('#uri-rows .uri-row input[type="text"]');
+            const uris = [];
+            rows.forEach(input => {
+                const v = input.value.trim();
+                if (v) uris.push(v);
+            });
+            return uris;
+        }
+
+        const clientForm = document.getElementById('client-form');
+        if (clientForm) {
+            clientForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                // Collect URIs into the hidden field before submit
+                const uris = collectRedirectURIs();
+                if (uris.length === 0) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Missing Redirect URI',
+                        text: 'Please add at least one redirect URI.'
+                    });
+                    return;
+                }
+                document.getElementById('redirect_uris').value = uris.join(',');
+
+                const clientForm = document.getElementById('client-form');
+                const clientIdInput = document.getElementById('client-id');
+                const isEdit = !!clientIdInput.value;
+                const formData = new FormData(clientForm);
+                const params = new URLSearchParams(formData);
+                let url = isEdit ? '/clients/edit' : '/clients';
+                if (isEdit) {
+                    url += `?id=${clientIdInput.value}`;
+                }
+                try {
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        body: params
+                    });
+                    const data = await response.json();
+                    if (!data.success) throw new Error(data.error || 'Failed to save client');
+                    closeModal();
+                    loadClients();
+
+                    // On creation, show the secret reveal modal with the one-time plaintext secret
+                    if (!isEdit && data.client_secret) {
+                        showSecretRevealModal({
+                            secret: data.client_secret,
+                            clientName: data.client_name || 'New Client',
+                            clientId: data.client_id,
+                            secretPrefix: data.secret_prefix || ''
+                        });
+                    }
+                } catch (error) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Save Failed',
+                        text: 'Failed to save client: ' + error.message
+                    });
+                }
+            });
+        }
+
+        // --- OTP Digit Input Behavior ---
+        function setupOTPInputs(containerId, onComplete) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+            const inputs = container.querySelectorAll('.otp-digit');
+            inputs.forEach((input, index) => {
+                input.addEventListener('input', (e) => {
+                    const value = e.target.value.replace(/[^0-9]/g, '');
+                    e.target.value = value ? value[value.length - 1] : '';
+                    e.target.classList.toggle('filled', !!e.target.value);
+                    if (value && index < inputs.length - 1) {
+                        inputs[index + 1].focus();
+                    }
+                    if (getOTPValue(containerId).length === 6 && onComplete) {
+                        onComplete();
+                    }
+                });
+
+                input.addEventListener('paste', (e) => {
+                    e.preventDefault();
+                    const paste = (e.clipboardData || window.clipboardData).getData('text').replace(/[^0-9]/g, '');
+                    for (let i = 0; i < paste.length && i < inputs.length; i++) {
+                        inputs[i].value = paste[i];
+                        inputs[i].classList.add('filled');
+                    }
+                    const nextIndex = Math.min(paste.length, inputs.length - 1);
+                    inputs[nextIndex].focus();
+                    if (getOTPValue(containerId).length === 6 && onComplete) {
+                        onComplete();
+                    }
+                });
+
+                input.addEventListener('keydown', (e) => {
+                    if (e.key === 'Backspace' && !e.target.value && index > 0) {
+                        inputs[index - 1].focus();
+                        inputs[index - 1].value = '';
+                        inputs[index - 1].classList.remove('filled');
+                    } else if (e.key === 'ArrowLeft' && index > 0) {
+                        e.preventDefault();
+                        inputs[index - 1].focus();
+                    } else if (e.key === 'ArrowRight' && index < inputs.length - 1) {
+                        e.preventDefault();
+                        inputs[index + 1].focus();
+                    } else if (e.key === 'Enter' && getOTPValue(containerId).length === 6 && onComplete) {
+                        e.preventDefault();
+                        onComplete();
+                    }
+                });
+
+                input.addEventListener('focus', () => input.select());
+            });
+        }
+
+        function getOTPValue(containerId) {
+            const container = document.getElementById(containerId);
+            if (!container) return '';
+            return Array.from(container.querySelectorAll('.otp-digit')).map(i => i.value).join('');
+        }
+
+        function clearOTPInputs(containerId) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+            container.querySelectorAll('.otp-digit').forEach(i => {
+                i.value = '';
+                i.classList.remove('filled', 'error');
+            });
+        }
+
+        // Initialize all OTP containers
+        setupOTPInputs('totp-otp-inputs', () => verifyTOTP());
+        setupOTPInputs('email-otp-inputs');
+        setupOTPInputs('phone-otp-inputs');
+
+        function openTOTPModal() {
+            setupSuccess = false;
+            const totpModal = document.getElementById('totp-modal');
+            const totpQr = document.getElementById('totp-qr');
+            const totpSecret = document.getElementById('totp-secret');
+
+            totpModal.classList.add('active');
+            clearOTPInputs('totp-otp-inputs');
+            fetch('/profile/totp/generate')
+                .then(res => {
+                    if (!res.ok) throw new Error('Failed to generate TOTP');
+                    return res.json();
+                })
+                .then(data => {
+                    totpQr.src = 'data:image/png;base64,' + data.qr_base64;
+                    totpSecret.textContent = data.secret;
+                })
+                .catch(err => {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Setup Failed',
+                        text: 'Failed to load QR code: ' + err.message
+                    });
+                    closeTOTPModal();
+                });
+
+            // Focus first digit after QR loads
+            setTimeout(() => {
+                const firstInput = document.querySelector('#totp-otp-inputs .otp-digit');
+                if (firstInput) firstInput.focus();
+            }, 300);
+        }
+
+        function closeTOTPModal() {
+            document.getElementById('totp-modal').classList.remove('active');
+            if (!setupSuccess) {
+                document.querySelector('input[name="mfa_totp_enabled"]').checked = wasMFA_TOTP_Enabled;
+            }
+        }
+
+        async function verifyTOTP() {
+            const code = getOTPValue('totp-otp-inputs');
+            if (code.length !== 6) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Code Required',
+                    text: 'Enter all 6 digits'
+                });
+                return;
+            }
+            try {
+                const response = await fetch('/profile/totp/verify', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ code })
+                });
+                const data = await response.json();
+                if (!data.success) throw new Error(data.error || 'Invalid code');
+                setupSuccess = true;
+                closeTOTPModal();
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Success',
+                    text: 'Authenticator app enabled!',
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+                loadAccount();
+            } catch (error) {
+                // Shake the OTP inputs on error
+                document.querySelectorAll('#totp-otp-inputs .otp-digit').forEach(i => i.classList.add('error'));
+                setTimeout(() => document.querySelectorAll('#totp-otp-inputs .otp-digit').forEach(i => i.classList.remove('error')), 1500);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Verification Failed',
+                    text: error.message
+                });
+            }
+        }
+
+        let cropper;
+        function handleIconSelect(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            if (!file.type.startsWith('image/')) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Invalid File',
+                    text: 'Please select an image file'
+                });
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = document.getElementById('crop-image');
+                img.src = e.target.result;
+                openCropModal();
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function openCropModal() {
+            document.getElementById('crop-modal').classList.add('active');
+            const img = document.getElementById('crop-image');
+            if (cropper) cropper.destroy();
+            cropper = new Cropper(img, {
+                aspectRatio: 1,
+                viewMode: 2, // Consistently fit the image within the container
+                dragMode: 'move',
+                autoCropArea: 1,
+                restore: false,
+                guides: true,
+                center: true,
+                highlight: false,
+                cropBoxMovable: true,
+                cropBoxResizable: true,
+                toggleDragModeOnDblclick: false,
+                responsive: true,
+                checkOrientation: true,
+            });
+        }
+
+        function closeCropModal() {
+            const cropModal = document.getElementById('crop-modal');
+            cropModal.classList.remove('active');
+            if (cropper) {
+                cropper.destroy();
+                cropper = null;
+            }
+        }
+
+        // ─── Smart Account Deletion System ─────────────────────────────────
+
+        async function loadDeletionStatus() {
+            if (!currentUser) return;
+            const container = document.getElementById('deletion-section-content');
+            if (!container) return;
+
+            try {
+                const response = await fetch('/profile/delete/status');
+                const data = await response.json();
+
+                if (data.pending) {
+                    renderDeletionPending(container, data);
+                } else {
+                    renderDeletionIdle(container);
+                }
+            } catch (error) {
+                renderDeletionIdle(container);
+            }
+        }
+
+        function renderDeletionIdle(container) {
+            container.innerHTML = `
+                <div class="section-header">
+                    <h3>@${currentUser.username} (ID: ${currentUser.id})</h3>
+                    <button type="button" onclick="openDeleteModal()" class="bg-red">${T.delete || 'Delete'}</button>
+                </div>
+                <p class="verification-info" style="margin-top: 8px; font-size: 11px; opacity: 0.7;">
+                    ${T.gilos_id_warning || "Careful, changing your Gilos ID may affect external services tied to it. Deleting your account will permanently erase all of your data and sessions."}
+                </p>
+            `;
+        }
+
+        function renderDeletionPending(container, data) {
+            const scheduledDate = new Date(data.scheduled_at);
+            const formattedDate = scheduledDate.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
+            const daysRemaining = data.days_remaining;
+            const progressPercent = Math.max(0, Math.min(100, ((30 - daysRemaining) / 30) * 100));
+
+            const reasonLabels = {
+                'not_using': T.deletion_reason_not_using || 'I no longer use this account',
+                'privacy': T.deletion_reason_privacy || 'Privacy concerns',
+                'switching': T.deletion_reason_switching || 'Switching to another account',
+                'security': T.deletion_reason_security || 'Security concerns',
+                'dissatisfied': T.deletion_reason_dissatisfied || 'Not satisfied with the service',
+                'other': T.deletion_reason_other || 'Other'
+            };
+
+            container.innerHTML = `
+                <div class="deletion-pending-banner">
+                    <div class="deletion-pending-header">
+                        <div class="deletion-pending-icon">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="deletion-pending-title">${T.deletion_scheduled || 'Account Deletion Scheduled'}</h3>
+                            <p class="deletion-pending-subtitle">${(T.deletion_scheduled_for || 'Your account and all associated data will be permanently deleted on %s.').replace('%s', formattedDate)}</p>
+                        </div>
+                    </div>
+                    <div class="deletion-progress-container">
+                        <div class="deletion-progress-bar">
+                            <div class="deletion-progress-fill" style="width: ${progressPercent}%"></div>
+                        </div>
+                        <div class="deletion-progress-label">
+                            <span class="deletion-days-count">${(T.deletion_days_remaining || '%d days remaining').replace('%d', daysRemaining)}</span>
+                        </div>
+                    </div>
+                    <div class="deletion-pending-meta">
+                        <span>${reasonLabels[data.reason] || data.reason}${data.reason === 'other' && data.custom_reason ? ': ' + data.custom_reason : ''}</span>
+                    </div>
+                    <p class="deletion-grace-info">${T.deletion_grace_period_info || 'You have a 30-day grace period to cancel this request. After that, all your data will be permanently erased.'}</p>
+                    <button type="button" class="deletion-cancel-btn" onclick="cancelDeletion()">${T.deletion_cancel || 'Cancel Deletion'}</button>
+                </div>
+            `;
+        }
+
+        function openDeleteModal() {
+            if (!currentUser) return;
+            
+            const deleteModal = document.getElementById('delete-modal');
+            const desc = document.getElementById('delete-modal-desc');
+            desc.textContent = (T.delete_account_confirm_desc || "To delete your account, please enter your Username (@%s) and User ID (%d) below.")
+                .replace('%s', currentUser.username)
+                .replace('%d', currentUser.id);
+            
+            const usernameInput = document.getElementById('confirm-delete-username');
+            const idInput = document.getElementById('confirm-delete-id');
+            
+            usernameInput.value = '';
+            usernameInput.placeholder = '@' + currentUser.username;
+            
+            idInput.value = '';
+            idInput.placeholder = String(currentUser.id);
+
+            // Reset reason selection
+            const reasonRadios = deleteModal.querySelectorAll('input[name="deletion-reason"]');
+            reasonRadios.forEach(r => r.checked = false);
+            const customReasonArea = document.getElementById('deletion-custom-reason');
+            if (customReasonArea) {
+                customReasonArea.value = '';
+                customReasonArea.parentElement.style.display = 'none';
+            }
+            
+            document.getElementById('confirm-delete-btn').disabled = true;
+            deleteModal.classList.add('active');
+        }
+
+        function closeDeleteModal() {
+            document.getElementById('delete-modal').classList.remove('active');
+        }
+
+        function onDeletionReasonChange(value) {
+            const customGroup = document.getElementById('deletion-custom-reason-group');
+            if (customGroup) {
+                customGroup.style.display = value === 'other' ? 'block' : 'none';
+            }
+            validateDeleteInputs();
+        }
+
+        function validateDeleteInputs() {
+            if (!currentUser) return;
+            
+            const usernameInput = document.getElementById('confirm-delete-username').value.replace('@', '').trim();
+            const idInput = document.getElementById('confirm-delete-id').value.trim();
+            const submitBtn = document.getElementById('confirm-delete-btn');
+            const selectedReason = document.querySelector('input[name="deletion-reason"]:checked');
+            
+            let valid = usernameInput === currentUser.username && idInput === String(currentUser.id) && selectedReason;
+
+            // If "other" is selected, require custom reason
+            if (selectedReason && selectedReason.value === 'other') {
+                const customReason = document.getElementById('deletion-custom-reason');
+                if (!customReason || customReason.value.trim() === '') {
+                    valid = false;
+                }
+            }
+
+            submitBtn.disabled = !valid;
+        }
+
+        async function performDelete() {
+            closeDeleteModal();
+            requirePassword((password) => doPerformDelete(password));
+        }
+
+        async function doPerformDelete(password) {
+            const submitBtn = document.getElementById('confirm-delete-btn');
+            const originalText = submitBtn.textContent;
+            
+            const selectedReason = document.querySelector('input[name="deletion-reason"]:checked');
+            if (!selectedReason) return;
+            
+            const reason = selectedReason.value;
+            const customReason = reason === 'other' ? (document.getElementById('deletion-custom-reason')?.value?.trim() || '') : '';
+
+            try {
+                submitBtn.disabled = true;
+                submitBtn.textContent = '...';
+                
+                const response = await fetch('/profile/delete', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'X-Current-Password': password 
+                    },
+                    body: JSON.stringify({ reason, custom_reason: customReason })
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    closeDeleteModal();
+                    Swal.fire({
+                        icon: 'warning',
+                        title: T.deletion_request_submitted || 'Deletion Request Submitted',
+                        text: T.deletion_request_submitted_desc || 'Your account has been scheduled for deletion. You can cancel this request anytime within the grace period.'
+                    });
+                    loadDeletionStatus();
+                } else {
+                    if (handlePasswordError(data, (pw) => doPerformDelete(pw))) return;
+                    Swal.fire({
+                        icon: 'error',
+                        title: T.error || 'Error',
+                        text: data.error === 'deletion_already_pending' 
+                            ? (T.deletion_already_pending || 'A deletion request is already pending for this account.')
+                            : (data.error || T.failed_delete_account || 'Failed to delete account')
+                    });
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = originalText;
+                }
+            } catch (error) {
+                Swal.fire({
+                    icon: 'error',
+                    title: T.error || 'Error',
+                    text: error.message
+                });
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalText;
+            }
+        }
+
+        async function cancelDeletion() {
+            requirePassword((password) => doCancelDeletion(password));
+        }
+
+        async function doCancelDeletion(password) {
+            try {
+                const response = await fetch('/profile/delete/cancel', {
+                    method: 'POST',
+                    headers: { 'X-Current-Password': password }
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: T.success || 'Success',
+                        text: T.deletion_cancelled_success || 'Account deletion has been cancelled successfully.'
+                    });
+                    loadDeletionStatus();
+                } else {
+                    if (handlePasswordError(data, (pw) => doCancelDeletion(pw))) return;
+                    Swal.fire({
+                        icon: 'error',
+                        title: T.error || 'Error',
+                        text: data.error || 'Failed to cancel deletion'
+                    });
+                }
+            } catch (error) {
+                Swal.fire({
+                    icon: 'error',
+                    title: T.error || 'Error',
+                    text: error.message
+                });
+            }
+        }
+
+        async function performCrop() {
+            if (!cropper) return;
+            // Base resolution 500x500 for better initial detail
+            const canvas = cropper.getCroppedCanvas({
+                width: 500,
+                height: 500,
+                fillColor: '#fff',
+                imageSmoothingEnabled: true,
+                imageSmoothingQuality: 'high',
+            });
+
+            const targetSize = 100 * 1024;
+            let quality = 0.9;
+            let blob;
+            
+            async function getBlob(q) {
+                return new Promise(resolve => {
+                    canvas.toBlob(b => resolve(b), 'image/jpeg', q);
+                });
+            }
+
+            blob = await getBlob(quality);
+            // Iterative quality reduction
+            while (blob.size > targetSize && quality > 0.1) {
+                quality -= 0.1;
+                blob = await getBlob(quality);
+            }
+
+            // Fallback: If still too large, reduce dimensions iteratively
+            if (blob.size > targetSize) {
+                let scale = 0.7;
+                while (blob.size > targetSize && scale > 0.2) {
+                    const scaledCanvas = document.createElement('canvas');
+                    scaledCanvas.width = 500 * scale;
+                    scaledCanvas.height = 500 * scale;
+                    const ctx = scaledCanvas.getContext('2d');
+                    ctx.imageSmoothingEnabled = true;
+                    ctx.imageSmoothingQuality = 'high';
+                    ctx.drawImage(canvas, 0, 0, scaledCanvas.width, scaledCanvas.height);
+                    
+                    quality = 0.8;
+                    blob = await new Promise(resolve => {
+                        scaledCanvas.toBlob(b => resolve(b), 'image/jpeg', quality);
+                    });
+                    
+                    while (blob.size > targetSize && quality > 0.1) {
+                        quality -= 0.1;
+                        blob = await new Promise(resolve => {
+                            scaledCanvas.toBlob(b => resolve(b), 'image/jpeg', quality);
+                        });
+                    }
+                    scale -= 0.1;
+                }
+            }
+
+            uploadIcon(blob);
+        }
+
+        async function uploadIcon(blob) {
+            const formData = new FormData();
+            formData.append('icon', blob, 'icon.jpg');
+
+            try {
+                const response = await fetch('/profile/icon', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+                if (!data.success) throw new Error(data.error || 'Failed to upload icon');
+                
+                closeCropModal();
+                loadAccount();
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Updated',
+                    text: 'Icon updated successfully',
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+            } catch (error) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Upload Failed',
+                    text: error.message
+                });
+            }
+        }
+
+        let usernameCheckTimeout;
+        async function handleUsernameInput(input) {
+            const value = input.value.toLowerCase().replace(/[^a-z0-9]/g, '');
+            input.value = value;
+            
+            const hintEl = document.getElementById('username-hint');
+            const submitBtn = document.getElementById('username-submit');
+            const statusIcon = document.getElementById('username-status-icon');
+            const currentUsername = document.querySelector('.profile-card-handle').textContent.replace('@', '');
+            const defaultHint = T.username_requirements || 'Use 5-30 lowercase letters and numbers only.';
+
+            statusIcon.style.display = 'none';
+            hintEl.textContent = defaultHint;
+            hintEl.style.color = 'var(--text-muted)';
+            hintEl.style.opacity = '0.7';
+            submitBtn.disabled = true;
+
+            if (value === currentUsername || value.length === 0) {
+                return;
+            }
+
+            if (value.length < 5) {
+                hintEl.textContent = T.username_too_short || 'Username must be at least 5 characters';
+                hintEl.style.color = 'var(--red-500)';
+                hintEl.style.opacity = '1';
+                return;
+            }
+
+            clearTimeout(usernameCheckTimeout);
+            usernameCheckTimeout = setTimeout(async () => {
+                try {
+                    statusIcon.innerHTML = '<div class="spinner gray" style="width: 14px; height: 14px; border-width: 1.5px;"></div>';
+                    statusIcon.style.display = 'flex';
+                    
+                    const response = await fetch(`/profile/username/check?username=${value}`);
+                    const data = await response.json();
+                    
+                    if (data.available) {
+                        statusIcon.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--green-500)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+                        hintEl.textContent = T.username_available || 'Username is available';
+                        hintEl.style.color = 'var(--green-500)';
+                        hintEl.style.opacity = '1';
+                        submitBtn.disabled = false;
+                    } else {
+                        statusIcon.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--red-500)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>';
+                        hintEl.textContent = data.error || (T.username_taken || 'Username is already taken');
+                        hintEl.style.color = 'var(--red-500)';
+                        hintEl.style.opacity = '1';
+                        submitBtn.disabled = true;
+                    }
+                } catch (error) {
+                    statusIcon.style.display = 'none';
+                    console.error('Failed to check username:', error);
+                }
+            }, 500);
+        }
+
+        async function updateUsername(e) {
+            e.preventDefault();
+            const newUsername = document.getElementById('new-username').value;
+            requirePassword((password) => doUpdateUsername(newUsername, password));
+        }
+
+        async function doUpdateUsername(newUsername, password) {
+            const submitBtn = document.getElementById('username-submit');
+            const originalText = submitBtn.textContent;
+            
+            try {
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Updating...';
+                
+                const response = await fetch('/profile/username/update', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Current-Password': password
+                    },
+                    body: JSON.stringify({ username: newUsername })
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Updated',
+                        text: T.username_updated || 'Gilos ID updated successfully!',
+                        timer: 2000,
+                        showConfirmButton: false
+                    }).then(() => {
+                        location.reload();
+                    });
+                } else {
+                    if (handlePasswordError(data, (pw) => doUpdateUsername(newUsername, pw))) return;
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Update Failed',
+                        text: data.error || 'Failed to update Gilos ID'
+                    });
+                }
+            } catch (error) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: error.message
+                });
+            } finally {
+                submitBtn.textContent = originalText;
+                submitBtn.disabled = false;
+            }
+        }
+
+        function startCountdown() {
+            if (countdownInterval) clearInterval(countdownInterval);
+            updateCountdownUI();
+            countdownInterval = setInterval(() => {
+                let active = false;
+                for (let type in timeRemainingMap) {
+                    if (timeRemainingMap[type] > 0) {
+                        timeRemainingMap[type]--;
+                        active = true;
+                    }
+                }
+                for (let type in resendAvailableMap) {
+                    if (resendAvailableMap[type] > 0) {
+                        resendAvailableMap[type]--;
+                        active = true;
+                    }
+                }
+                updateCountdownUI();
+                if (!active) {
+                    clearInterval(countdownInterval);
+                }
+            }, 1000);
+        }
+
+        function updateCountdownUI() {
+            ['email', 'phone'].forEach(type => {
+                const timer = document.getElementById(`otp-timer-${type}`);
+                const container = document.getElementById(`otp-countdown-${type}`);
+                const resendLink = document.getElementById(`resend-${type}`);
+                
+                const timeRemaining = timeRemainingMap[type] || 0;
+                const resendAvailableIn = resendAvailableMap[type] || 0;
+
+                // Handle Timer
+                if (timeRemaining > 0 && pendingVerifications.includes(type)) {
+                    if (container) container.style.display = 'flex';
+                    if (timer) {
+                        const mins = Math.floor(timeRemaining / 60);
+                        const secs = timeRemaining % 60;
+                        timer.textContent = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+                    }
+                } else {
+                    if (container) container.style.display = 'none';
+                }
+
+                // Handle Resend Link and Count
+                if (resendLink) {
+                    const block = securityBlocks[type] || (securityBlocks.is_blocked ? securityBlocks : null);
+                    if (block && block.is_blocked) {
+                        resendLink.style.pointerEvents = 'none';
+                        resendLink.style.opacity = '0.5';
+                    } else if (resendAvailableIn > 0) {
+                        resendLink.style.pointerEvents = 'none';
+                        resendLink.style.opacity = '0.5';
+                        resendLink.textContent = (T.resend_in || 'Resend in %ds').replace('%d', resendAvailableIn);
+                    } else {
+                        resendLink.style.pointerEvents = 'auto';
+                        resendLink.style.opacity = '1';
+                        resendLink.innerHTML = `${T.resend_otp || 'Resend OTP'} (<span id="resends-${type}">${resends[type] || 0}</span>/3)`;
+                    }
+                }
+                
+                // Final sync of the span if it exists (in case it wasn't replaced by innerHTML)
+                safeSetTextContent(`resends-${type}`, resends[type] || 0);
+            });
+        }
+
+        // Initial load
+        loadContent();
+    </script>
+    <!-- Crop Modal -->
+    <div class="modal" id="crop-modal">
+        <div class="modal-content" style="max-width: 600px;">
+            <h2 id="crop-modal-title">Crop Image</h2>
+            <p id="crop-modal-description">Please crop your image to a square.</p>
+            <div class="crop-container">
+                <img id="crop-image">
+            </div>
+            <div class="modal-buttons" style="margin-top: 24px;">
+                <button type="button" class="bg-gray" onclick="closeCropModal()">Cancel</button>
+                <button type="button" onclick="performCrop()">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Account Modal -->
+    <div class="modal" id="delete-modal">
+        <div class="modal-content" style="max-width: 500px;">
+            <h2 class="text-red">{{ index .T "delete_account_confirm_title" }}</h2>
+            <form onsubmit="event.preventDefault(); performDelete();">
+                <div class="modal-form-body">
+                    <!-- Warning banner -->
+                    <div class="deletion-modal-warning">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                            <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+                        </svg>
+                        <p id="delete-modal-desc">
+                            <!-- Populated via JS -->
+                        </p>
+                    </div>
+
+                    <!-- Reason selection -->
+                    <div class="form-field">
+                        <label>{{ index .T "deletion_select_reason" }}</label>
+                        <div class="deletion-reason-list">
+                            <label class="deletion-reason-option">
+                                <input type="radio" name="deletion-reason" value="not_using" onchange="onDeletionReasonChange(this.value)">
+                                <span>{{ index .T "deletion_reason_not_using" }}</span>
+                            </label>
+                            <label class="deletion-reason-option">
+                                <input type="radio" name="deletion-reason" value="privacy" onchange="onDeletionReasonChange(this.value)">
+                                <span>{{ index .T "deletion_reason_privacy" }}</span>
+                            </label>
+                            <label class="deletion-reason-option">
+                                <input type="radio" name="deletion-reason" value="switching" onchange="onDeletionReasonChange(this.value)">
+                                <span>{{ index .T "deletion_reason_switching" }}</span>
+                            </label>
+                            <label class="deletion-reason-option">
+                                <input type="radio" name="deletion-reason" value="security" onchange="onDeletionReasonChange(this.value)">
+                                <span>{{ index .T "deletion_reason_security" }}</span>
+                            </label>
+                            <label class="deletion-reason-option">
+                                <input type="radio" name="deletion-reason" value="dissatisfied" onchange="onDeletionReasonChange(this.value)">
+                                <span>{{ index .T "deletion_reason_dissatisfied" }}</span>
+                            </label>
+                            <label class="deletion-reason-option">
+                                <input type="radio" name="deletion-reason" value="other" onchange="onDeletionReasonChange(this.value)">
+                                <span>{{ index .T "deletion_reason_other" }}</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Custom reason textarea (hidden by default) -->
+                    <div class="form-field" id="deletion-custom-reason-group" style="display: none;">
+                        <textarea id="deletion-custom-reason" rows="3" maxlength="500" placeholder="{{ index .T "deletion_reason_placeholder" }}" oninput="validateDeleteInputs()" style="resize: vertical; min-height: 60px;"></textarea>
+                    </div>
+
+                    <!-- Identity confirmation -->
+                    <div class="form-field">
+                        <label style="margin-top: 8px; padding-top: 16px; border-top: 1px solid var(--slate-200);">{{ index .T "confirm_identity" }}</label>
+                    </div>
+                    <div class="form-field">
+                        <label>{{ index .T "username" }}</label>
+                        <input type="text" id="confirm-delete-username" placeholder="" oninput="validateDeleteInputs()" autocomplete="off">
+                    </div>
+                    <div class="form-field">
+                        <label>{{ index .T "enter_user_id" }}</label>
+                        <input type="text" id="confirm-delete-id" placeholder="" oninput="validateDeleteInputs()" autocomplete="off">
+                    </div>
+                </div>
+                <div class="modal-buttons">
+                    <button type="button" class="bg-gray" onclick="closeDeleteModal()">{{ index .T "cancel" }}</button>
+                    <button type="submit" id="confirm-delete-btn" class="bg-red" disabled>{{ index .T "request_deletion" }}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</body>
+
+</html>

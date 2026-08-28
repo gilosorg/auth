@@ -1,0 +1,169 @@
+{{define "ribbon"}}
+<div id="app-ribbon" class="app-ribbon">
+    <div class="ribbon-inner">
+        <div class="ribbon-content">
+            <img src="/static/img/app.svg" alt="{{ index .T "gilos_authenticator" }}" class="ribbon-icon">
+            <div class="ribbon-text">
+                <div class="ribbon-title">{{ index .T "gilos_authenticator" }}</div>
+                <div class="ribbon-desc">{{ index .T "faster_access_better_security" }}</div>
+            </div>
+        </div>
+
+        <div class="ribbon-actions">
+            <a href="https://play.google.com/store/apps/details?id=org.gilos.auth" class="ribbon-cta">{{ index .T "get_app" }}</a>
+            
+            <button type="button" class="ribbon-close" aria-label="Close" onclick="this.closest('#app-ribbon').remove()">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M18 6L6 18M6 6l12 12"/>
+                </svg>
+            </button>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* RIBBON STYLES 
+       Scoped specifically to avoid conflict with auth-container 
+    */
+
+    .app-ribbon {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 9999;
+        /* Glassmorphism card style */
+        background: var(--card-bg); 
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        color: var(--text);
+        /* Very slim vertical padding */
+        padding: 8px 16px; 
+        /* Premium border */
+        border-bottom: 1px solid var(--card-border); 
+        box-shadow: var(--card-shadow);
+        animation: slideDown 0.4s ease-out;
+    }
+
+    /* Inner container for desktop max-width consistency */
+    .ribbon-inner {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        width: 100%;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+
+    /* Desktop: more side padding for professional look */
+    @media (min-width: 768px) {
+        .app-ribbon {
+            padding: 8px 32px;
+        }
+    }
+
+    .ribbon-content {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        overflow: hidden;
+    }
+
+    .ribbon-icon {
+        width: 32px;
+        height: 32px;
+        object-fit: cover;
+        flex-shrink: 0;
+    }
+
+    .ribbon-text {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        line-height: 1.1; /* Tight line height for compactness */
+    }
+
+    .ribbon-title {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text);
+    }
+
+    .ribbon-desc {
+        font-size: 11px;
+        opacity: 0.7; /* Uses opacity so it works on dark/light automatically */
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 300px;
+    }
+
+    /* RIGHT SIDE ACTIONS */
+    .ribbon-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-shrink: 0;
+    }
+
+    /* GET APP BUTTON */
+    .ribbon-cta {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--primary-gradient);
+        color: var(--primary-contrast);
+        text-decoration: none;
+        font-size: 12px;
+        font-weight: 600;
+        padding: 6px 14px;
+        border-radius: 99px;
+        transition: transform 0.2s ease, filter 0.2s ease, box-shadow 0.2s ease;
+        white-space: nowrap;
+    }
+
+    .ribbon-cta:hover {
+        filter: brightness(1.1);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px var(--primary-glow);
+    }
+
+    /* CLOSE BUTTON FIXES */
+    /* We use !important here to override the global 'button' styles in your main file 
+       which set opacity: 0 and transform: translateY(10px) */
+    .ribbon-close {
+        background: none !important;
+        border: none !important;
+        padding: 6px !important;
+        cursor: pointer;
+        color: var(--text-secondary) !important;
+        opacity: 1 !important;
+        transform: none !important;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 6px;
+        transition: color 0.2s ease, opacity 0.2s ease;
+        margin: 0 !important;
+        width: auto !important;
+        box-shadow: none !important;
+    }
+
+    /* HOVER STATE - No background, just color change */
+    .ribbon-close:hover {
+        color: var(--text) !important;
+        background: none !important;
+        box-shadow: none !important;
+        opacity: 1 !important;
+    }
+
+    @media (max-width: 480px) {
+        .ribbon-desc { display: none; } /* Hide text on mobile to save space */
+    }
+
+    @keyframes slideDown {
+        from { transform: translateY(-100%); }
+        to   { transform: translateY(0); }
+    }
+</style>
+{{end}}

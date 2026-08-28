@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="en">
+
+{{ template "common/head" . }}
+
+<style>
+    main {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .auth-container {
+        transition: height 0.3s ease;
+        width: 100%;
+        max-width: 400px;
+    }
+
+    .content-wrapper {
+        padding: 24px;
+        background: var(--card-bg);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border-radius: 16px;
+        border: none;
+        box-shadow: var(--card-shadow);
+        transition: box-shadow 0.3s ease, z-index 0.3s ease;
+        position: relative;
+        z-index: 10;
+    }
+
+    .content-wrapper:hover {
+        box-shadow: var(--card-shadow-hover);
+    }
+
+    .alert {
+        padding: 12px;
+        margin-bottom: 16px;
+        border-radius: 8px;
+        font-size: 14px;
+    }
+
+    .alert.error {
+        background-color: var(--red-50);
+        border-left: 4px solid var(--red-500);
+        color: var(--red-700);
+    }
+
+    .header {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: flex-start;
+        margin-bottom: 16px;
+        gap: 14px;
+    }
+
+    .header img {
+        height: 44px;
+        width: 44px;
+        object-fit: contain;
+        flex-shrink: 0;
+    }
+
+    .header h1 {
+        font-size: 20px;
+        font-weight: 600;
+        color: var(--text);
+        margin: 0;
+        line-height: 1.3;
+    }
+
+    .form-wrapper {
+        position: relative;
+        min-height: 50px;
+    }
+
+    .form-container {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        opacity: 1;
+        position: relative;
+        transition: opacity 0.2s ease;
+    }
+
+    .form-container.hidden {
+        opacity: 0;
+        position: absolute;
+        pointer-events: none;
+        display: none;
+    }
+
+    .form-element {
+        opacity: 0;
+        transform: translateY(10px);
+        transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+
+    .form-container:not(.hidden) .form-element {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    .form-container:not(.hidden) .form-element:nth-child(1) { transition-delay: 0.1s; }
+    .form-container:not(.hidden) .form-element:nth-child(2) { transition-delay: 0.15s; }
+    .form-container:not(.hidden) .form-element:nth-child(3) { transition-delay: 0.2s; }
+
+    .scopes-list {
+        margin: 16px 0;
+        padding: 0;
+        list-style: none;
+        background: var(--slate-100);
+        border-radius: 12px;
+        padding: 12px;
+    }
+
+    .scopes-list li {
+        font-size: 13px;
+        color: var(--text);
+        margin-bottom: 8px;
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .scopes-list li:last-child { margin-bottom: 0; }
+
+    .scopes-list li svg {
+        width: 16px;
+        height: 16px;
+        flex-shrink: 0;
+        color: var(--primary);
+        margin-top: 2px;
+    }
+
+    .scopes-list li.missing {
+        color: var(--red-700);
+    }
+
+    .scopes-list li.missing svg {
+        color: var(--red-500);
+    }
+
+    .scope-value {
+        font-size: 12px;
+        color: var(--text-muted);
+        margin-left: 26px;
+        margin-top: 2px;
+        font-family: monospace;
+    }
+
+    .scope-value.not-set {
+        color: var(--red-500);
+        font-style: italic;
+        font-family: inherit;
+    }
+
+    .scope-badge-required {
+        font-size: 10px;
+        color: var(--red-600);
+        background: var(--red-50);
+        padding: 1px 6px;
+        border-radius: 4px;
+        margin-left: 6px;
+        font-weight: 600;
+        vertical-align: middle;
+    }
+
+    .missing-warning {
+        background: var(--red-50);
+        border-left: 4px solid var(--red-500);
+        border-radius: 8px;
+        padding: 12px;
+        margin-top: 12px;
+        font-size: 13px;
+        color: var(--red-700);
+        line-height: 1.5;
+    }
+
+    .missing-warning a {
+        color: var(--primary);
+        text-decoration: underline;
+        font-weight: 500;
+    }
+
+    button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        filter: grayscale(0.5);
+    }
+
+    button:disabled:hover {
+        transform: none;
+        box-shadow: none;
+        filter: grayscale(0.5);
+    }
+
+    .otp-container {
+        display: flex;
+        gap: 8px;
+        justify-content: center;
+        padding: 12px 0;
+        width: 100%;
+        max-width: 312px;
+        margin: 0 auto;
+    }
+
+    .otp-input {
+        width: 48px !important;
+        height: 48px !important;
+        font-size: 18px;
+        text-align: center;
+        border: 2px solid var(--slate-200);
+        border-radius: 8px;
+        background-color: var(--card-bg);
+        color: var(--text);
+        outline: none;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        line-height: 48px;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    .otp-input:focus {
+        outline: none;
+        border-color: var(--primary);
+    }
+
+    .button-container {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        margin-top: 16px;
+    }
+
+    .button-group {
+        display: flex;
+        gap: 8px;
+    }
+
+    .button-group button {
+        flex: 1;
+    }
+
+    button {
+        background: var(--primary-gradient);
+        color: var(--primary-contrast);
+        padding: 12px 16px;
+        border-radius: 12px;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
+        border: none;
+    }
+
+    button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px var(--primary-glow);
+        filter: brightness(1.1);
+    }
+
+    button.bg-gray {
+        color: var(--text-secondary);
+        background: var(--slate-200);
+    }
+
+    button.bg-gray:hover {
+        background: var(--slate-300);
+        box-shadow: none;
+        filter: none;
+        transform: translateY(-2px);
+    }
+
+    .message-container {
+        min-height: 20px;
+        margin: 4px 0;
+        font-size: 14px;
+        color: var(--red-700);
+        text-align: center;
+    }
+
+    .terms-text {
+        font-size: 12px;
+        color: var(--text-muted);
+        text-align: center;
+        margin-top: 16px;
+    }
+
+    .terms-link {
+        color: var(--primary);
+        text-decoration: none;
+    }
+
+    .verification-info {
+        font-size: 13px;
+        color: var(--text-secondary);
+        margin-bottom: 12px;
+        line-height: 1.5;
+        text-align: center;
+    }
+</style>
+
+<body>
+    {{template "ribbon" .}}
+    <main>
+        <div class="auth-container">
+            <div class="content-wrapper">
+                <div class="header">
+                    <picture>
+                        <source srcset="/static/img/logo-dark.svg" media="(prefers-color-scheme: dark)">
+                        <img src="/static/img/logo.svg" alt="Gilos Logo">
+                    </picture>
+                    <h1 id="auth-header">{{ index .T "authorize" }}</h1>
+                </div>
+
+                {{if .Error}}
+                    <div class="alert error" id="error-alert">
+                        {{.Error}}
+                    </div>
+                {{end}}
+
+                <div id="message" class="message-container"></div>
+
+                <div class="form-wrapper">
+                    <!-- Step 1: Consent -->
+                    <form id="consent-form" class="form-container">
+                        <div class="form-element">
+                            <p style="margin-bottom: 4px;">{{ printf (index .T "wants_access") .Client.Name }}</p>
+                            <ul class="scopes-list">
+                                {{range .ScopeDetails}}
+                                    <li{{if .IsMissing}} class="missing"{{end}}>
+                                        {{if .IsMissing}}
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                                        {{else}}
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                        {{end}}
+                                        <div>
+                                            <span>{{.Description}}</span>
+                                            {{if .IsRequired}}<span class="scope-badge-required">{{ index $.T "required" }}</span>{{end}}
+                                            {{if .MaskedValue}}
+                                                <div class="scope-value">{{.MaskedValue}}</div>
+                                            {{else if .IsMissing}}
+                                                <div class="scope-value not-set">{{ index $.T "not_set" }}</div>
+                                            {{end}}
+                                        </div>
+                                    </li>
+                                {{end}}
+                            </ul>
+
+                            {{if .HasMissingRequired}}
+                                <div class="missing-warning" id="missing-warning"></div>
+                            {{end}}
+                        </div>
+
+                        <div class="button-container form-element">
+                            <div class="button-group">
+                                <button type="button" class="bg-gray" onclick="submitDeny()">{{ index .T "deny" }}</button>
+                                <button type="button" onclick="handleApprove()" id="approve-btn" {{if .HasMissingRequired}}disabled{{end}}>{{ index .T "approve" }}</button>
+                            </div>
+                        </div>
+                    </form>
+
+                    <!-- Step 2: TOTP -->
+                    <form id="totp-form" class="form-container hidden">
+                        <div class="form-element">
+                            <p class="verification-info">{{ index .T "otp_enter_authenticator" }}</p>
+                            <div class="otp-container" id="otp-inputs">
+                                <input type="number" class="otp-input" maxlength="1" inputmode="numeric">
+                                <input type="number" class="otp-input" maxlength="1" inputmode="numeric">
+                                <input type="number" class="otp-input" maxlength="1" inputmode="numeric">
+                                <input type="number" class="otp-input" maxlength="1" inputmode="numeric">
+                                <input type="number" class="otp-input" maxlength="1" inputmode="numeric">
+                                <input type="number" class="otp-input" maxlength="1" inputmode="numeric">
+                            </div>
+                        </div>
+
+                        <div class="button-container form-element">
+                            <div class="button-group">
+                                <button type="button" class="bg-gray" onclick="moveToState('consent')">{{ index .T "back" }}</button>
+                                <button type="button" onclick="submitApprove()">{{ index .T "verify" }}</button>
+                            </div>
+                        </div>
+                    </form>
+
+                    <!-- Hidden form for actual submission -->
+                    <form id="final-form" method="POST" style="display: none;">
+                        <input type="hidden" name="client_id" value="{{.Client.ID}}">
+                        <input type="hidden" name="redirect_uri" value="{{.RedirectURI}}">
+                        <input type="hidden" name="state" value="{{.State}}">
+                        <input type="hidden" name="approve" id="final-approve" value="true">
+                        <input type="hidden" name="totp_code" id="final-totp-code">
+                    </form>
+                </div>
+
+                <div id="terms-text" class="terms-text"></div>
+            </div>
+        </div>
+    </main>
+
+    {{ template "common/footer" . }}
+
+    <script>
+        const T = {{ .T | json }};
+        const mfaEnabled = {{.User.MFATOTPEnabled}};
+        const missingFields = {{ .MissingFields | json }};
+        const hasMissingRequired = {{.HasMissingRequired}};
+        
+        function moveToState(state) {
+            const consentForm = document.getElementById('consent-form');
+            const totpForm = document.getElementById('totp-form');
+            const header = document.getElementById('auth-header');
+
+            if (state === 'totp') {
+                consentForm.classList.add('hidden');
+                totpForm.classList.remove('hidden');
+                header.innerText = T.verify || 'Verify';
+                // Focus first OTP input
+                setTimeout(() => {
+                    const firstInput = totpForm.querySelector('.otp-input');
+                    if (firstInput) firstInput.focus();
+                }, 50);
+            } else {
+                consentForm.classList.remove('hidden');
+                totpForm.classList.add('hidden');
+                header.innerText = T.authorize || 'Authorize';
+            }
+        }
+
+        function handleApprove() {
+            if (mfaEnabled) {
+                moveToState('totp');
+            } else {
+                submitApprove();
+            }
+        }
+
+        function submitApprove() {
+            const finalForm = document.getElementById('final-form');
+            const totpInputs = document.querySelectorAll('#totp-form .otp-input');
+            let code = "";
+            
+            if (mfaEnabled) {
+                totpInputs.forEach(input => code += input.value);
+                if (code.length !== 6) {
+                    document.getElementById('message').innerText = T.enter_code || "Enter the 6-digit code";
+                    return;
+                }
+                document.getElementById('final-totp-code').value = code;
+            }
+
+            document.getElementById('final-approve').value = "true";
+            finalForm.submit();
+        }
+
+        function submitDeny() {
+            const finalForm = document.getElementById('final-form');
+            document.getElementById('final-approve').value = "false";
+            finalForm.submit();
+        }
+
+        // OTP Input Logic
+        function setupOTPInputs() {
+            const inputs = document.querySelectorAll('.otp-input');
+            inputs.forEach((input, index) => {
+                input.addEventListener('input', (e) => {
+                    if (e.target.value.length > 1) {
+                        e.target.value = e.target.value.slice(0, 1);
+                    }
+                    if (e.target.value && index < inputs.length - 1) {
+                        inputs[index + 1].focus();
+                    }
+                });
+
+                input.addEventListener('keydown', (e) => {
+                    if (e.key === 'Backspace' && !e.target.value && index > 0) {
+                        inputs[index - 1].focus();
+                    }
+                    if (e.key === 'Enter') {
+                        submitApprove();
+                    }
+                });
+
+                input.addEventListener('paste', (e) => {
+                    e.preventDefault();
+                    const data = e.clipboardData.getData('text').slice(0, 6).split('');
+                    data.forEach((char, i) => {
+                        if (inputs[i]) inputs[i].value = char;
+                    });
+                    if (inputs[data.length - 1]) inputs[data.length - 1].focus();
+                });
+            });
+        }
+
+        function renderTermsText() {
+            const termsDiv = document.getElementById('terms-text');
+            if (!termsDiv) return;
+            const termsAgreement = T.terms_agreement || 'By continuing, you agree to our %privacy% and %terms%.';
+            const privacyPolicy = T.privacy_policy || 'Privacy Policy';
+            const termsOfService = T.terms_of_service || 'Terms of Service';
+            
+            const privacyLink = `<a href="/privacy" target="_blank" class="terms-link">${privacyPolicy}</a>`;
+            const termsLink = `<a href="/terms" target="_blank" class="terms-link">${termsOfService}</a>`;
+            
+            let html = termsAgreement
+                .replace('%privacy%', privacyLink)
+                .replace('%terms%', termsLink);
+            
+            termsDiv.innerHTML = html;
+        }
+
+        function renderMissingWarning() {
+            const warningDiv = document.getElementById('missing-warning');
+            if (!warningDiv || !hasMissingRequired) return;
+            const fieldsList = missingFields.join(', ');
+            const profileLink = `<a href="/home">${T.profile_settings || 'profile settings'}</a>`;
+            const template = T.scope_data_missing_warning || 'This service requires your %fields%. Set them in your %link%.';
+            warningDiv.innerHTML = template.replace('%fields%', '<strong>' + fieldsList + '</strong>').replace('%link%', profileLink);
+        }
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            renderTermsText();
+            renderMissingWarning();
+            setupOTPInputs();
+
+            // If there's an error and MFA is enabled, we likely failed at the TOTP step
+            const hasError = {{if .Error}}true{{else}}false{{end}};
+            if (hasError && mfaEnabled) {
+                moveToState('totp');
+            }
+        });
+        
+        document.title = (T.authorize || "Authorize") + " " + "{{.Client.Name}}";
+    </script>
+</body>
+
+</html>

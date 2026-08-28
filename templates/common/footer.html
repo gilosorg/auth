@@ -1,0 +1,284 @@
+{{ define "common/footer" }}
+
+<style>
+    footer {
+        color: var(--text-muted);
+        font-size: 12px;
+        display: flex;
+        justify-content: center;
+        padding: 16px 0;
+    }
+
+    footer .container {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .footer-copyright {
+        text-align: left;
+        flex: 1;
+        color: var(--text-muted);
+    }
+
+    .footer-links {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 4px;
+    }
+
+    .footer-link {
+        color: var(--text-muted);
+        text-decoration: none;
+        padding: 4px 8px;
+        border-radius: 6px;
+        transition: all 0.2s ease;
+    }
+
+    .footer-link:hover {
+        color: var(--primary);
+        background: var(--primary-gradient-subtle);
+    }
+
+    /* ===== Modern Language Switcher ===== */
+    .lang-switcher {
+        position: relative;
+    }
+
+    /* Make toggle look like other footer links - no outline */
+    .lang-switcher .lang-toggle {
+        all: unset !important;
+        display: flex !important;
+        align-items: center !important;
+        gap: 6px !important;
+        padding: 4px 8px !important;
+        background: transparent !important;
+        border: none !important;
+        border-radius: 6px !important;
+        cursor: pointer !important;
+        color: var(--slate-500) !important;
+        font-size: 12px !important;
+        font-family: inherit !important;
+        font-weight: 400 !important;
+        transition: all 0.2s ease !important;
+        opacity: 1 !important;
+        transform: none !important;
+        visibility: visible !important;
+    }
+
+    .lang-switcher .lang-toggle:hover {
+        color: var(--text) !important;
+        background: var(--slate-100) !important;
+    }
+
+    .lang-switcher.open .lang-toggle {
+        color: var(--text) !important;
+        background: var(--slate-100) !important;
+    }
+
+    .lang-toggle .lang-flag {
+        width: 18px;
+        height: 13px;
+        object-fit: cover;
+        border-radius: 2px;
+        box-shadow: 0 0 0 1px rgba(0,0,0,0.1);
+    }
+
+    .lang-toggle .lang-code {
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+    }
+
+    .lang-toggle .lang-arrow {
+        width: 12px;
+        height: 12px;
+        transition: transform 0.2s ease;
+        opacity: 0.6;
+    }
+
+    .lang-switcher.open .lang-toggle .lang-arrow {
+        transform: rotate(180deg);
+    }
+
+    /* Dropdown Panel - glassmorphism with premium shadow */
+    .lang-dropdown {
+        position: absolute;
+        bottom: calc(100% + 8px);
+        right: 0;
+        background: var(--card-bg);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: none;
+        border-radius: 12px;
+        box-shadow: var(--card-shadow-hover);
+        min-width: 150px;
+        padding: 6px;
+        opacity: 0;
+        visibility: hidden;
+        transform: translateY(8px);
+        transition: all 0.2s ease;
+        z-index: 9999;
+    }
+
+    .lang-switcher.open .lang-dropdown {
+        opacity: 1;
+        visibility: visible;
+        transform: translateY(0);
+    }
+
+    .lang-option {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 12px;
+        cursor: pointer;
+        color: var(--text);
+        font-size: 13px;
+        text-decoration: none;
+        border-radius: 8px;
+        transition: all 0.15s ease;
+    }
+
+    .lang-option:hover {
+        background: var(--slate-100);
+    }
+
+    .lang-option.active {
+        background: var(--primary-glow);
+        color: var(--primary);
+    }
+
+    .lang-option.active::after {
+        content: "✓";
+        margin-left: auto;
+        font-size: 12px;
+        color: var(--primary);
+    }
+
+    .lang-option img {
+        width: 22px;
+        height: 16px;
+        object-fit: cover;
+        border-radius: 3px;
+        box-shadow: 0 0 0 1px rgba(0,0,0,0.1);
+    }
+
+    .lang-option span {
+        font-weight: 500;
+    }
+
+    /* Mobile Only - stacked layout */
+    @media (max-width: 600px) {
+        footer .container {
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            gap: 12px;
+        }
+
+        .footer-links {
+            justify-content: center;
+            flex-wrap: wrap;
+            order: 3;
+        }
+
+        .footer-copyright {
+            order: 2;
+        }
+
+        .lang-switcher {
+            order: -1;
+            margin-left: 0;
+            display: flex;
+            width: 100%;
+            justify-content: center;
+        }
+
+        .lang-dropdown {
+            right: 50%;
+            transform: translateX(50%) translateY(8px);
+        }
+
+        .lang-switcher.open .lang-dropdown {
+            transform: translateX(50%) translateY(0);
+        }
+    }
+</style>
+
+
+<footer>
+    <div class="container">
+        <div class="footer-copyright">
+            <script>document.write(new Date().getFullYear())</script> Gilos Auth v0.22-beta
+        </div>
+        <div class="footer-links">
+            <a href="https://gilos.gitbook.io/auth" class="footer-link">{{ index .T "docs" }}</a>
+            <a href="https://github.com/gilosorg/auth" class="footer-link">{{ index .T "source_code" }}</a>
+            <a href="/terms" class="footer-link">{{ index .T "terms" }}</a>
+            <a href="/privacy" class="footer-link">{{ index .T "privacy" }}</a>
+            <a href="/help" class="footer-link">{{ index .T "help" }}</a>
+        </div>
+        <!-- Language Switcher - outside footer-links for mobile ordering -->
+        <div class="lang-switcher" id="lang-switcher">
+            <button class="lang-toggle" onclick="toggleLangDropdown(event)" type="button">
+                <img class="lang-flag" src="{{ if .CurrentLanguage }}{{ .CurrentLanguage.Flag }}{{ else }}/static/img/i18n/en.png{{ end }}" alt="">
+                <span class="lang-name">{{ if .CurrentLanguage }}{{ .CurrentLanguage.Name }}{{ else }}English{{ end }}</span>
+                <svg class="lang-arrow" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+            </button>
+            <div class="lang-dropdown" id="lang-dropdown">
+                {{ range .Languages }}
+                <a href="#" class="lang-option{{ if eq .Code $.Lang }} active{{ end }}" onclick="setLanguage('{{ .Code }}'); return false;">
+                    <img src="{{ .Flag }}" alt="">
+                    <span>{{ .Name }}</span>
+                </a>
+                {{ else }}
+                <a href="#" class="lang-option" onclick="setLanguage('en'); return false;">
+                    <img src="/static/img/i18n/en.png" alt="">
+                    <span>English</span>
+                </a>
+                {{ end }}
+            </div>
+        </div>
+    </div>
+</footer>
+
+<script>
+    function toggleLangDropdown(event) {
+        event.stopPropagation();
+        const switcher = document.getElementById('lang-switcher');
+        switcher.classList.toggle('open');
+    }
+
+    function setLanguage(code) {
+        // Set cookie for 1 year
+        const expires = new Date();
+        expires.setFullYear(expires.getFullYear() + 1);
+        document.cookie = `lang=${code};path=/;expires=${expires.toUTCString()}`;
+        
+        // Reload the page to apply the new language safely
+        window.location.href = window.location.pathname + window.location.search;
+    }
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', function(event) {
+        const switcher = document.getElementById('lang-switcher');
+        if (switcher && !switcher.contains(event.target)) {
+            switcher.classList.remove('open');
+        }
+    });
+
+    // Close dropdown when pressing Escape
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape') {
+            const switcher = document.getElementById('lang-switcher');
+            if (switcher) {
+                switcher.classList.remove('open');
+            }
+        }
+    });
+</script>
+
+{{ end }}

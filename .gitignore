@@ -1,0 +1,35 @@
+# Environment secrets
+.env
+
+# Build artifacts
+main
+*.exe
+
+# Database files
+database/*.db
+database/*.db-wal
+database/*.db-shm
+
+# RSA keys (never commit private keys)
+keys/
+
+# Runtime directories
+logs/
+media/
+
+# IDE
+.vscode/
+.idea/
+.gemini/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Test coverage
+*.cover
+*.out
+
+# Temporary files
+*.tmp
+temp.*

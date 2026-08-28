@@ -1,0 +1,2044 @@
+<!DOCTYPE html>
+<html lang="en">
+
+{{ template "common/head" . }}
+
+<style>
+
+    main {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .auth-container {
+        transition: height 0.3s ease;
+        width: 100%;
+        max-width: 400px;
+    }
+
+    .content-wrapper {
+        padding: 24px;
+        background: var(--card-bg);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border-radius: 16px;
+        border: none;
+        box-shadow: var(--card-shadow);
+        transition: box-shadow 0.3s ease, z-index 0.3s ease;
+        position: relative;
+        z-index: 10;
+    }
+
+    .content-wrapper:focus-within {
+        z-index: 100;
+    }
+
+    .content-wrapper:hover {
+        box-shadow: var(--card-shadow-hover);
+    }
+
+    .alert {
+        padding: 12px;
+        margin-bottom: 16px;
+        border-radius: 8px;
+        font-size: 14px;
+    }
+
+    .alert.error {
+        background-color: var(--red-50);
+        border-left: 4px solid var(--red-500);
+        color: var(--red-700);
+    }
+
+    .alert.success {
+        background-color: var(--green-50);
+        border-left: 4px solid var(--green-500);
+        color: var(--green-700);
+    }
+
+    .header {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: flex-start;
+        margin-bottom: 16px;
+        gap: 14px;
+    }
+
+    .header img {
+        height: 44px;
+        width: 44px;
+        object-fit: contain;
+        flex-shrink: 0;
+    }
+
+    .header h1 {
+        font-size: 20px;
+        font-weight: 600;
+        color: var(--text);
+        margin: 0;
+        line-height: 1.3;
+    }
+
+    .form-wrapper {
+        position: relative;
+        min-height: 50px;
+    }
+
+    .form-container {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        opacity: 1;
+        position: relative;
+        transition: opacity 0.2s ease;
+    }
+
+    .form-container.hidden {
+        opacity: 0;
+        position: absolute;
+        pointer-events: none;
+    }
+
+    .hidden {
+        display: none !important;
+    }
+
+    /* Contact Method Selector - Refined Gilos Style */
+    .method-selector {
+        display: flex;
+        background: var(--slate-100);
+        padding: 4px;
+        border-radius: 14px;
+        margin-bottom: 20px;
+        position: relative;
+        z-index: 1;
+        backdrop-filter: blur(8px);
+        box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.02);
+    }
+
+    [data-theme="dark"] .method-selector {
+        background: rgba(26, 26, 26, 0.8);
+        box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+
+    @media (prefers-color-scheme: dark) {
+        .method-selector {
+            background: rgba(28, 28, 30, 0.8);
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+    }
+
+    .method-option {
+        flex: 1;
+        text-align: center;
+        padding: 10px 16px;
+        border-radius: 11px;
+        cursor: pointer;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text-muted);
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        z-index: 2;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        letter-spacing: 0.3px;
+    }
+
+    .method-option.active {
+        background: var(--card-bg-solid);
+        color: var(--primary);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+        transform: scale(1.02);
+    }
+
+    [data-theme="dark"] .method-option.active {
+        background: var(--primary-gradient);
+        color: var(--primary-contrast);
+        box-shadow: 0 4px 20px var(--primary-glow);
+    }
+
+    @media (prefers-color-scheme: dark) {
+        .method-option.active {
+            background: var(--primary-gradient);
+            color: var(--primary-contrast);
+            box-shadow: 0 4px 20px var(--primary-glow);
+        }
+    }
+
+    .method-option:hover:not(.active) {
+        color: var(--text);
+        background: rgba(255, 255, 255, 0.4);
+    }
+
+    [data-theme="dark"] .method-option:hover:not(.active) {
+        background: rgba(255, 255, 255, 0.05);
+    }
+
+    @media (prefers-color-scheme: dark) {
+        .method-option:hover:not(.active) {
+            background: rgba(255, 255, 255, 0.05);
+        }
+    }
+
+    .verification-info {
+        font-size: 13px;
+        color: var(--text-secondary);
+        margin-bottom: 12px;
+        line-height: 1.5;
+    }
+
+    .form-element {
+        opacity: 0;
+        transform: translateY(10px);
+        transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+
+    .form-container:not(.hidden) .form-element {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    .form-container:not(.hidden) .form-element:nth-child(1) {
+        transition-delay: 0.3s;
+    }
+
+    .form-container:not(.hidden) .form-element:nth-child(2) {
+        transition-delay: 0.35s;
+    }
+
+    .form-container:not(.hidden) .form-element:nth-child(3) {
+        transition-delay: 0.4s;
+    }
+
+    .form-container:not(.hidden) .form-element:nth-child(4) {
+        transition-delay: 0.45s;
+    }
+
+    .input-wrapper {
+        position: relative;
+        display: flex;
+        align-items: center;
+    }
+
+    input {
+        appearance: none;
+        outline: none;
+        border: none;
+        background-color: var(--slate-100);
+        border: 2px solid var(--slate-200);
+        border-radius: 12px;
+        width: 100%;
+        padding: 12px 56px 12px 16px;
+        color: var(--text);
+        font-size: 14px;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        caret-color: var(--text);
+    }
+
+    input:focus {
+        outline: none;
+        border-color: var(--primary);
+    }
+
+    input.error {
+        border-color: var(--error);
+    }
+
+    input:-webkit-autofill,
+    input:-webkit-autofill:hover,
+    input:-webkit-autofill:focus,
+    input:-webkit-autofill:active {
+        -webkit-box-shadow: 0 0 0 30px var(--slate-100) inset !important;
+        box-shadow: 0 0 0 30px var(--slate-100) inset !important;
+        -webkit-text-fill-color: var(--text) !important;
+    }
+
+    .otp-container {
+        display: flex;
+        gap: 8px;
+        justify-content: center;
+        padding: 12px 0;
+        width: 100%;
+        max-width: 330px;
+        margin: 0 auto;
+    }
+
+    .otp-input {
+        width: 48px !important;
+        height: 48px !important;
+        font-size: 18px;
+        text-align: center;
+        border: 2px solid var(--slate-200);
+        border-radius: 8px;
+        background-color: var(--card-bg);
+        color: var(--text);
+        outline: none;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        line-height: 48px;
+        padding: 0;
+        box-sizing: border-box;
+        -webkit-appearance: none;
+        -moz-appearance: textfield;
+        caret-color: var(--text);
+    }
+
+    .otp-input:focus {
+        outline: none;
+        border-color: var(--primary);
+    }
+
+    .otp-input.error {
+        border-color: var(--error);
+    }
+
+    .otp-input::-webkit-inner-spin-button,
+    .otp-input::-webkit-outer-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+
+    .trailing-button {
+        position: absolute;
+        right: 5px;
+        width: 35px;
+        height: 35px;
+        background: var(--primary-gradient);
+        color: var(--primary-contrast);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: transform 0.2s ease, filter 0.2s ease, box-shadow 0.2s ease;
+        border: none;
+    }
+
+    .trailing-button:hover:not(:disabled) {
+        filter: brightness(1.1);
+        transform: scale(1.05);
+        box-shadow: 0 4px 12px var(--primary-glow);
+    }
+
+    .trailing-button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .trailing-button svg {
+        width: 20px;
+        height: 20px;
+        fill: currentColor;
+    }
+
+    button:not(.trailing-button) {
+        background: var(--primary-gradient);
+        color: var(--primary-contrast);
+        padding: 12px 16px;
+        border-radius: 12px;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.3s ease, filter 0.2s ease;
+        border: none;
+        position: relative;
+        font-family: inherit;
+    }
+
+    /* Entrance animation scoped to auth forms only */
+    .auth-container button:not(.trailing-button) {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    .button-container:not(:empty) button:not(.trailing-button) {
+        opacity: 1;
+        transform: translateY(0);
+        transition-delay: 0.45s;
+    }
+
+    button.bg-gray {
+        color: var(--text-secondary);
+        background: var(--slate-200);
+    }
+
+    button.bg-gray:hover:not(:disabled) {
+        background: var(--slate-300);
+        box-shadow: none;
+        filter: none;
+    }
+
+    button:not(.trailing-button):hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px var(--primary-glow);
+        filter: brightness(1.1);
+    }
+
+    button:not(.trailing-button):disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .button-container {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        margin-top: 16px;
+    }
+
+    .button-group {
+        display: flex;
+        gap: 8px;
+    }
+
+    .button-group button {
+        flex: 1;
+    }
+
+    .forgot-password,
+    .terms-link,
+    .support-link,
+    .resend-link {
+        color: var(--primary);
+        font-size: 12px;
+        transition: color 0.2s ease;
+        text-decoration: none;
+    }
+
+    .forgot-password:hover,
+    .terms-link:hover,
+    .support-link:hover,
+    .resend-link:hover {
+        color: var(--primary-dark);
+    }
+
+    .message-container {
+        min-height: 20px;
+        margin: 4px 0;
+        transition: opacity 0.3s ease;
+        opacity: 0;
+        font-size: 14px;
+        color: var(--red-700);
+        text-align: center;
+    }
+
+    .countdown-container {
+        font-size: 12px;
+        color: var(--text-secondary);
+        margin-top: 8px;
+        display: none;
+        align-items: center;
+        gap: 4px;
+        justify-content: center;
+    }
+
+    .countdown-timer {
+        font-weight: 600;
+        color: var(--primary);
+    }
+
+    .message-container:not(:empty) {
+        opacity: 1;
+        transition-delay: 0.5s;
+    }
+
+    .message-container.success {
+        color: var(--green-700);
+    }
+
+    .terms-text {
+        font-size: 12px;
+        color: var(--text-muted);
+        text-align: center;
+        margin-top: 16px;
+    }
+
+    .terms-text.hidden {
+        display: none;
+    }
+
+    .recovery-info,
+    .otp-info,
+    .verification-info {
+        font-size: 12px;
+        color: var(--text-secondary);
+        margin-bottom: 8px;
+    }
+
+    .spinner {
+        display: inline-block;
+        width: 16px;
+        height: 16px;
+        border: 2px solid var(--primary-contrast);
+        border-top: 2px solid transparent;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+
+    .spinner.gray {
+        border: 2px solid var(--gray-600);
+        border-top: 2px solid transparent;
+    }
+
+    @keyframes spin {
+        to {
+            transform: rotate(360deg);
+        }
+    }
+
+    .checkbox-wrapper {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-top: 8px;
+    }
+
+    .checkbox-wrapper input {
+        width: 16px;
+        height: 16px;
+        background-color: var(--card-bg);
+        border: 2px solid var(--slate-200);
+        border-radius: 4px;
+        padding: 0;
+        caret-color: var(--text);
+    }
+
+    .checkbox-wrapper input:checked {
+        background-color: var(--primary);
+        border-color: var(--primary);
+    }
+
+    .checkbox-wrapper label {
+        font-size: 14px;
+        color: var(--text);
+    }
+
+    .radio-wrapper {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        margin-bottom: 8px;
+    }
+
+    .radio-option {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .radio-option input {
+        width: 16px;
+        height: 16px;
+        background-color: var(--card-bg);
+        border: 2px solid var(--slate-200);
+        border-radius: 50%;
+        padding: 0;
+        appearance: none;
+        caret-color: var(--text);
+    }
+
+    .radio-option input:checked {
+        background-color: var(--primary);
+        border-color: var(--primary);
+        box-shadow: inset 0 0 0 3px var(--card-bg);
+    }
+
+    .radio-option label {
+        font-size: 14px;
+        color: var(--text);
+    }
+</style>
+
+
+<body>
+    {{template "ribbon" .}}
+    <main>
+        <div class="auth-container">
+            <div class="content-wrapper">
+                <div class="header">
+                    <picture><source srcset="/static/img/logo-dark.svg" media="(prefers-color-scheme: dark)"><img src="/static/img/logo.svg" alt="Gilos Logo"></picture>
+                    <h1 id="auth-header">{{ index .T "welcome" }}</h1>
+                </div>
+                <div id="message" class="message-container"></div>
+                <div class="form-wrapper">
+                    <form id="gilos-form" autocomplete="off" class="form-container">
+                        <div class="form-element input-wrapper">
+                            <input type="text" id="gilos-id" name="username" required placeholder="{{ index .T "enter_gilos_id" }}"
+                                oninput="cleanGilosID(this)" onchange="cleanGilosID(this)" aria-describedby="gilos-id-error">
+                            <button id="continue-button" type="button" onclick="checkGilosID()" class="trailing-button"
+                                aria-label="Continue">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+                                    <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="m9 5l6 7l-6 7" />
+                                </svg>
+                            </button>
+                        </div>
+                    </form>
+                    <form id="password-form" autocomplete="off" class="form-container hidden">
+                        <input type="hidden" name="username" id="password-username">
+                        <div class="form-element">
+                            <p id="password-info" class="verification-info"></p>
+                            <input type="password" id="password" name="password" required placeholder="{{ index .T "enter_password" }}"
+                                oninput="validateForm()" onchange="validateForm()" aria-describedby="password-error">
+                            <a href="#" class="forgot-password"
+                                onclick="moveToState('forgot-password'); return false;">{{ index .T "forgot_password" }}</a>
+                        </div>
+                    </form>
+                    <form id="two-step-select-form" autocomplete="off" class="form-container hidden">
+                        <input type="hidden" name="username" id="two-step-select-username">
+                        <input type="hidden" name="password" id="two-step-select-password">
+                        <div class="form-element">
+                            <p class="otp-info">{{ index .T "two_step_select_title" }}</p>
+                            <div id="two-step-contact-options" class="radio-wrapper">
+                                <div class="radio-option" id="two-step-email-option">
+                                    <input type="radio" id="two-step-email" name="contact_type" value="email"
+                                        aria-label="Use Email for OTP" onchange="validateForm()">
+                                    <label for="two-step-email" id="two-step-email-label"></label>
+                                </div>
+                                <div class="radio-option" id="two-step-phone-option">
+                                    <input type="radio" id="two-step-phone" name="contact_type" value="phone"
+                                        aria-label="Use Phone for OTP" onchange="validateForm()">
+                                    <label for="two-step-phone" id="two-step-phone-label"></label>
+                                </div>
+                                <div class="radio-option" id="two-step-totp-option">
+                                    <input type="radio" id="two-step-totp" name="contact_type" value="totp"
+                                        aria-label="Use Authenticator App for OTP" onchange="validateForm()">
+                                    <label for="two-step-totp" id="two-step-totp-label">{{ index .T "authenticator_app" }}</label>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                    <form id="otp-form" autocomplete="off" class="form-container hidden">
+                        <input type="hidden" name="username" id="otp-username">
+                        <input type="hidden" name="contact_type" id="otp-contact-type">
+                        <input type="hidden" name="contact" id="otp-contact">
+                        <div class="form-element">
+                            <p id="otp-hint" class="otp-info"></p>
+                            <div class="otp-container" id="otp">
+                                <input type="number" class="otp-input" maxlength="1" inputmode="numeric" aria-label="OTP digit 1">
+                                <input type="number" class="otp-input" maxlength="1" inputmode="numeric" aria-label="OTP digit 2">
+                                <input type="number" class="otp-input" maxlength="1" inputmode="numeric" aria-label="OTP digit 3">
+                                <input type="number" class="otp-input" maxlength="1" inputmode="numeric" aria-label="OTP digit 4">
+                                <input type="number" class="otp-input" maxlength="1" inputmode="numeric" aria-label="OTP digit 5">
+                                <input type="number" class="otp-input" maxlength="1" inputmode="numeric" aria-label="OTP digit 6">
+                            </div>
+                            <div class="countdown-container" id="otp-countdown-container">
+                                <span>{{ or (index .T "expires_in") "Expires in" }}:</span>
+                                <span class="countdown-timer" id="otp-timer">05:00</span>
+                            </div>
+                            <a href="#" class="resend-link" onclick="resendOTP(); return false;" id="resend-link">{{ index .T "resend_otp" }}</a>
+                        </div>
+                    </form>
+                    <form id="register-name-form" autocomplete="off" class="form-container hidden">
+                        <input type="hidden" name="username" id="register-name-username">
+                        <div class="form-element">
+                            <p id="register-info" class="verification-info"></p>
+                            <input type="text" id="first-name" name="first_name" required placeholder="{{ index .T "first_name" }}"
+                                oninput="validateForm()" onchange="validateForm()" aria-describedby="first-name-error">
+                        </div>
+                        <div class="form-element">
+                            <input type="text" id="last-name" name="last_name" placeholder="{{ index .T "last_name" }}"
+                                oninput="validateForm()" onchange="validateForm()" aria-describedby="last-name-error">
+                        </div>
+                    </form>
+                    <form id="register-contact-form" autocomplete="off" class="form-container hidden">
+                        <input type="hidden" name="username" id="register-contact-username">
+                        <input type="hidden" name="first_name" id="register-contact-first-name">
+                        <input type="hidden" name="last_name" id="register-contact-last-name">
+                        <div class="form-element">
+                            <p class="verification-info">{{ index .T "verify_human" }}</p>
+                            <div class="method-selector" id="register-method-selector">
+                                <div class="method-option active" data-method="email" onclick="switchMethod('register', 'email')">
+                                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/>
+                                    </svg>
+                                    {{ index .T "email" }}
+                                </div>
+                                <div class="method-option" data-method="phone" onclick="switchMethod('register', 'phone')">
+                                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l2.27-2.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+                                    </svg>
+                                    {{ index .T "phone" }}
+                                </div>
+                            </div>
+                            
+                            <div id="register-email-wrapper">
+                                <input type="email" id="register-email" name="contact" required
+                                    placeholder="{{ index .T "email" }}" oninput="validateForm()" onchange="validateForm()">
+                            </div>
+                            
+                            <div id="register-phone-wrapper" class="hidden" style="width: 100%;">
+                                <input type="tel" id="register-phone" name="contact"
+                                    placeholder="{{ index .T "phone" }}" oninput="validateForm()" onchange="validateForm()">
+                            </div>
+
+                            <input type="hidden" id="register-contact" name="contact_value">
+                        </div>
+                    </form>
+                    <form id="register-password-form" autocomplete="off" class="form-container hidden">
+                        <input type="hidden" name="username" id="register-password-username">
+                        <input type="hidden" name="first_name" id="register-password-first-name">
+                        <input type="hidden" name="last_name" id="register-password-last-name">
+                        <input type="hidden" name="contact" id="register-password-contact">
+                        <div class="form-element">
+                            <input type="password" id="register-password" name="password" required
+                                placeholder="{{ index .T "password" }}" oninput="validateForm(); validatePasswordMatch()" onchange="validateForm(); validatePasswordMatch()"
+                                aria-describedby="register-password-error">
+                        </div>
+                        <div class="form-element">
+                            <input type="password" id="confirm-password" required placeholder="{{ index .T "confirm_password" }}"
+                                oninput="validateForm(); validatePasswordMatch()" onchange="validateForm(); validatePasswordMatch()"
+                                aria-describedby="confirm-password-error">
+                        </div>
+                        <div class="form-element">
+                            <input type="text" id="password-hint" name="password_hint"
+                                placeholder="{{ index .T "password_hint" }}" oninput="validateForm()" onchange="validateForm()"
+                                aria-describedby="password-hint-error">
+                        </div>
+                    </form>
+                    <form id="forgot-password-form" autocomplete="off" class="form-container hidden">
+                        <input type="hidden" name="username" id="forgot-password-username">
+                        <div class="form-element">
+                            <p id="recovery-info" class="recovery-info"></p>
+                            <div class="method-selector" id="recovery-method-selector">
+                                <div class="method-option active" data-method="email" onclick="switchMethod('recovery', 'email')">
+                                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/>
+                                    </svg>
+                                    {{ index .T "email" }}
+                                </div>
+                                <div class="method-option" data-method="phone" onclick="switchMethod('recovery', 'phone')">
+                                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l2.27-2.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+                                    </svg>
+                                    {{ index .T "phone" }}
+                                </div>
+                            </div>
+
+                            <div id="recovery-email-wrapper">
+                                <input type="email" id="recovery-email" name="recovery_contact"
+                                    placeholder="{{ index .T "email" }}" oninput="validateForm()" onchange="validateForm()">
+                            </div>
+
+                            <div id="recovery-phone-wrapper" class="hidden" style="width: 100%;">
+                                <input type="tel" id="recovery-phone" name="recovery_contact"
+                                    placeholder="{{ index .T "phone" }}" oninput="validateForm()" onchange="validateForm()">
+                            </div>
+
+                            <input type="hidden" id="recovery-input" name="recovery_contact_value">
+                        </div>
+                    </form>
+                    <form id="reset-password-form" autocomplete="off" class="form-container hidden">
+                        <input type="hidden" name="username" id="reset-password-username">
+                        <input type="hidden" name="contact" id="reset-password-contact">
+                        <div class="form-element">
+                            <input type="password" id="reset-password" name="password" required
+                                placeholder="{{ index .T "new_password" }}" oninput="validateForm(); validateResetPasswordMatch()" onchange="validateForm(); validateResetPasswordMatch()"
+                                aria-describedby="reset-password-error">
+                        </div>
+                        <div class="form-element">
+                            <input type="password" id="reset-confirm-password" required
+                                placeholder="{{ index .T "confirm_new_password" }}"
+                                oninput="validateForm(); validateResetPasswordMatch()" onchange="validateForm(); validateResetPasswordMatch()"
+                                aria-describedby="reset-confirm-password-error">
+                        </div>
+                        <div class="form-element">
+                            <input type="text" id="reset-password-hint" name="password_hint"
+                                placeholder="{{ index .T "password_hint" }}" oninput="validateForm()" onchange="validateForm()"
+                                aria-describedby="reset-password-hint-error">
+                        </div>
+                    </form>
+                </div>
+                <div id="button-container" class="button-container"></div>
+                <div id="terms-text" class="terms-text"></div>
+            </div>
+        </div>
+    </main>
+
+    {{ template "common/footer" . }}
+
+    <script>
+        // Translations object from server
+        const T = {{ .T | json }};
+        
+        // State management
+        const state = {
+            currentStep: 'gilos-id',
+            userData: null,
+            gilosID: '',
+            error: '',
+            success: '',
+            attempts: 0,
+            resends: 0,
+            contactType: 'email',
+            contact: '',
+            registerMethod: 'email',
+            recoveryMethod: 'email',
+            timeRemaining: 0,
+            resendAvailableIn: 0,
+            isBlocked: false,
+            blockedUntil: null
+        };
+
+        let countdownInterval = null;
+
+        function switchMethod(prefix, method) {
+            state[`${prefix}Method`] = method;
+            
+            // UI Toggle
+            const selector = document.getElementById(`${prefix}-method-selector`);
+            selector.querySelectorAll('.method-option').forEach(opt => {
+                opt.classList.toggle('active', opt.dataset.method === method);
+            });
+
+            // Input Visibility
+            const emailWrapper = document.getElementById(`${prefix}-email-wrapper`);
+            const phoneWrapper = document.getElementById(`${prefix}-phone-wrapper`);
+            
+            if (method === 'email') {
+                emailWrapper.classList.remove('hidden');
+                phoneWrapper.classList.add('hidden');
+                setTimeout(() => document.getElementById(`${prefix}-email`).focus(), 50);
+            } else {
+                emailWrapper.classList.add('hidden');
+                phoneWrapper.classList.remove('hidden');
+                setTimeout(() => document.getElementById(`${prefix}-phone`).focus(), 50);
+            }
+            
+            validateForm();
+            adjustCardHeight();
+        }
+
+        let itiRegister = null;
+        let itiRecovery = null;
+
+        // Global target URL (extracted on load)
+        let targetUrl = '/home';  // Default
+
+        // Initialize OTP inputs
+        function setupOTPInputs() {
+            const containers = document.querySelectorAll('.otp-container');
+            containers.forEach(container => {
+                const inputs = container.querySelectorAll('.otp-input');
+                inputs.forEach((input, index) => {
+                    input.addEventListener('input', (e) => {
+                        const value = e.target.value.replace(/[^0-9]/g, '');
+                        e.target.value = value;
+                        e.target.classList.remove('error');
+                        if (value && index < inputs.length - 1) {
+                            inputs[index + 1].focus();
+                        }
+                        validateOTPForm();
+                    });
+
+                    input.addEventListener('paste', (e) => {
+                        e.preventDefault();
+                        const paste = (e.clipboardData || window.clipboardData).getData('text').replace(/[^0-9]/g, '');
+                        if (paste.length <= 6) {
+                            for (let i = 0; i < paste.length && i < inputs.length; i++) {
+                                inputs[i].value = paste[i];
+                                inputs[i].classList.remove('error');
+                            }
+                            const nextIndex = Math.min(paste.length, inputs.length - 1);
+                            inputs[nextIndex].focus();
+                            validateOTPForm();
+                        }
+                    });
+
+                    input.addEventListener('keydown', (e) => {
+                        if (e.key === 'Backspace' && !e.target.value && index > 0) {
+                            inputs[index - 1].focus();
+                        } else if (e.key === 'ArrowLeft' && index > 0) {
+                            e.preventDefault();
+                            inputs[index - 1].focus();
+                        } else if (e.key === 'ArrowRight' && index < inputs.length - 1) {
+                            e.preventDefault();
+                            inputs[index + 1].focus();
+                        } else if (e.key === 'Enter' && getOTPValue().length === 6) {
+                            e.preventDefault();
+                            verifyOTP();
+                        }
+                    });
+                });
+            });
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Extract and validate target from URL params
+            const urlParams = new URLSearchParams(window.location.search);
+            let target = urlParams.get('target');
+            if (target) {
+                try {
+                    target = decodeURIComponent(target);
+                    if (target.startsWith('/')) {
+                        targetUrl = target;
+                    }
+                } catch (error) {
+                    console.error('Invalid target URL:', error);
+                }
+            }
+
+            setupOTPInputs();
+            renderTermsText();
+            await loadAuthState();
+
+            const formatInput = (input, itiInstance) => {
+                if (!itiInstance || !window.intlTelInputUtils || !input.value.trim() || input.value.includes('@')) return;
+                const originalValue = input.value;
+                const originalCursor = input.selectionStart;
+                const formatted = itiInstance.getNumber(window.intlTelInputUtils.numberFormat.INTERNATIONAL);
+                if (formatted && formatted !== originalValue) {
+                    input.value = formatted;
+                    const diff = formatted.length - originalValue.length;
+                    const newCursor = Math.max(0, originalCursor + diff);
+                    input.setSelectionRange(newCursor, newCursor);
+                }
+            };
+
+            const registerPhoneInput = document.getElementById('register-phone');
+            if (registerPhoneInput) {
+                itiRegister = window.intlTelInput(registerPhoneInput, {
+                    utilsScript: "https://cdn.jsdelivr.net/npm/intl-tel-input@19.2.16/build/js/utils.js",
+                    initialCountry: "uz",
+                    autoInsertDialCode: true,
+                    separateDialCode: false,
+                    preferredCountries: ["uz", "us", "gb", "ca"],
+                    autoPlaceholder: "aggressive",
+                    formatOnDisplay: true,
+                    nationalMode: false,
+                    dropdownContainer: document.body,
+                    allowDropdown: true
+                });
+
+                registerPhoneInput.addEventListener('input', (e) => {
+                    // Only format if not deleting or if it's a long string
+                    if (e.inputType !== 'deleteContentBackward') {
+                        formatInput(registerPhoneInput, itiRegister);
+                    }
+                    validateForm();
+                });
+                registerPhoneInput.addEventListener('blur', () => formatInput(registerPhoneInput, itiRegister));
+            }
+
+            const recoveryPhoneInput = document.getElementById('recovery-phone');
+            if (recoveryPhoneInput) {
+                itiRecovery = window.intlTelInput(recoveryPhoneInput, {
+                    utilsScript: "https://cdn.jsdelivr.net/npm/intl-tel-input@19.2.16/build/js/utils.js",
+                    initialCountry: "uz",
+                    autoInsertDialCode: true,
+                    separateDialCode: false,
+                    preferredCountries: ["uz", "us", "gb", "ca"],
+                    autoPlaceholder: "aggressive",
+                    formatOnDisplay: true,
+                    nationalMode: false,
+                    dropdownContainer: document.body,
+                    allowDropdown: true
+                });
+
+                recoveryPhoneInput.addEventListener('input', (e) => {
+                    if (e.inputType !== 'deleteContentBackward') {
+                        formatInput(recoveryPhoneInput, itiRecovery);
+                    }
+                    validateForm();
+                });
+                recoveryPhoneInput.addEventListener('blur', () => formatInput(recoveryPhoneInput, itiRecovery));
+            }
+
+            setTimeout(() => {
+                document.querySelectorAll('input').forEach(input => {
+                    if (input.value) {
+                        input.dispatchEvent(new Event('input', { bubbles: true }));
+                    }
+                });
+                validateForm();
+            }, 100);
+
+            document.addEventListener('keydown', (event) => {
+                if (event.key === 'Enter') {
+                    event.preventDefault();
+                    const continueButton = document.getElementById('continue-button');
+                    const actionButton = document.getElementById('action-button');
+                    if (state.currentStep === 'gilos-id' && continueButton && !continueButton.disabled) {
+                        checkGilosID();
+                    } else if (actionButton && !actionButton.disabled) {
+                        actionButton.click();
+                    }
+                }
+            });
+        });
+
+        async function loadAuthState() {
+            try {
+                const response = await fetch('/auth/state', {
+                    method: 'GET',
+                    headers: { 'Accept': 'application/json' }
+                });
+                const data = await response.json();
+                if (!response.ok) {
+                    if (response.status === 429 && data.is_blocked) {
+                        state.isBlocked = true;
+                        state.blockedUntil = data.blocked_until;
+                        updateUI(data);
+                        return;
+                    }
+                    throw new Error(data.error || `HTTP error! status: ${response.status}`);
+                }
+                state.currentStep = data.step || 'gilos-id';
+                state.gilosID = data.username || '';
+                state.attempts = data.attempts || 0;
+                state.resends = data.resends || 0;
+                state.contact = data.contact || '';
+                state.timeRemaining = data.time_remaining || 0;
+                state.resendAvailableIn = data.resend_available_in || 0;
+                state.userData = {
+                    status: data.user_status,
+                    password_hint: data.password_hint,
+                    mfa_email_enabled: data.mfa_email_enabled,
+                    mfa_phone_enabled: data.mfa_phone_enabled,
+                    has_email: data.has_email,
+                    has_phone: data.has_phone,
+                    email: data.email,
+                    phone: data.phone,
+                    phone_raw: data.phone_raw
+                };
+                startCountdown();
+                syncFormData(data);
+                updateUI(data);
+            } catch (error) {
+                console.error('Error loading auth state:', error);
+                showMessage('Unable to load auth state. Please try again.', false);
+                updateUI({ step: 'gilos-id' });
+            }
+        }
+
+        function syncFormData(data) {
+            const forms = ['password', 'two-step-select', 'otp', 'register-name', 'register-contact', 'register-password', 'forgot-password', 'reset-password'];
+            forms.forEach(form => {
+                if (data.username) {
+                    document.getElementById(`${form}-username`).value = data.username;
+                }
+            });
+
+            if (data.first_name) {
+                document.getElementById('first-name').value = data.first_name;
+                document.getElementById('register-contact-first-name').value = data.first_name;
+                document.getElementById('register-password-first-name').value = data.first_name;
+            }
+            if (data.last_name) {
+                document.getElementById('last-name').value = data.last_name;
+                document.getElementById('register-contact-last-name').value = data.last_name;
+                document.getElementById('register-password-last-name').value = data.last_name;
+            }
+            if (data.contact) {
+                if (data.contact.includes('@')) {
+                    document.getElementById('register-email').value = data.contact;
+                    document.getElementById('recovery-email').value = data.contact;
+                    switchMethod('register', 'email');
+                    switchMethod('recovery', 'email');
+                } else {
+                    document.getElementById('register-phone').value = data.contact;
+                    document.getElementById('recovery-phone').value = data.contact;
+                    if (itiRegister && data.phone_raw) itiRegister.setNumber(data.phone_raw);
+                    if (itiRecovery && data.phone_raw) itiRecovery.setNumber(data.phone_raw);
+                    switchMethod('register', 'phone');
+                    switchMethod('recovery', 'phone');
+                }
+                document.getElementById('register-contact').value = data.contact;
+                document.getElementById('register-password-contact').value = data.contact;
+                document.getElementById('otp-contact').value = data.contact;
+                document.getElementById('reset-password-contact').value = data.contact;
+                document.getElementById('recovery-input').value = data.contact;
+            }
+            if (data.contact_type) {
+                document.getElementById('otp-contact-type').value = data.contact_type;
+                state.contactType = data.contact_type;
+            }
+            if (data.password) {
+                document.getElementById('two-step-select-password').value = data.password;
+            }
+            state.contact = data.contact || '';
+        }
+
+        function cleanGilosID(input) {
+            const value = input.value.toLowerCase().replace(/[^a-z0-9]/g, '');
+            input.value = value;
+            state.gilosID = value;
+            updateButtonState();
+        }
+
+        function validateForm() {
+            const form = document.querySelector('.form-container:not(.hidden)');
+            const actionButton = document.getElementById('action-button');
+            let isValid = true;
+
+            switch (state.currentStep) {
+                case 'gilos-id':
+                    isValid = state.gilosID.length >= 5;
+                    break;
+                case 'password':
+                    isValid = document.getElementById('password').value.length > 0;
+                    break;
+                case 'two-step-select':
+                    isValid = document.querySelector('input[name="contact_type"]:checked') !== null;
+                    break;
+                case 'otp':
+                    isValid = getOTPValue().length === 6;
+                    break;
+                case 'register-name':
+                    isValid = document.getElementById('first-name').value.length > 0;
+                    break;
+                case 'register-contact':
+                    if (state.registerMethod === 'email') {
+                        const email = document.getElementById('register-email').value;
+                        isValid = email.length > 0 && email.includes('@');
+                    } else {
+                        isValid = itiRegister && itiRegister.isValidNumber();
+                    }
+                    break;
+                case 'register-password':
+                    const password = document.getElementById('register-password').value;
+                    const confirmPassword = document.getElementById('confirm-password').value;
+                    isValid = password.length > 0 && password === confirmPassword;
+                    break;
+                case 'forgot-password':
+                    if (state.recoveryMethod === 'email') {
+                        const email = document.getElementById('recovery-email').value;
+                        isValid = email.length > 0 && email.includes('@');
+                    } else {
+                        isValid = itiRecovery && itiRecovery.isValidNumber();
+                    }
+                    break;
+                case 'reset-password':
+                    const resetPassword = document.getElementById('reset-password').value;
+                    const resetConfirmPassword = document.getElementById('reset-confirm-password').value;
+                    isValid = resetPassword.length > 0 && resetPassword === resetConfirmPassword;
+                    break;
+            }
+
+            if (actionButton) actionButton.disabled = !isValid;
+        }
+
+        function validateOTPForm() {
+            const code = getOTPValue();
+            validateForm();
+            if (code.length === 6) {
+                verifyOTP();
+            }
+        }
+
+        function updateButtonState() {
+            const continueButton = document.getElementById('continue-button');
+            if (continueButton && state.currentStep === 'gilos-id') {
+                continueButton.disabled = state.gilosID.length < 5;
+            }
+            validateForm();
+        }
+
+        function adjustCardHeight() {
+            const authContainer = document.querySelector('.auth-container');
+            const contentWrapper = document.querySelector('.content-wrapper');
+            if (!contentWrapper) return;
+
+            const activeForm = document.querySelector('.form-container:not(.hidden)') || document.querySelector('.form-container');
+            const wasHidden = activeForm.classList.contains('hidden');
+            if (wasHidden) {
+                activeForm.classList.remove('hidden');
+                activeForm.style.opacity = '0';
+            }
+
+            authContainer.style.height = `${contentWrapper.offsetHeight + 20}px`;
+
+            if (wasHidden) {
+                activeForm.classList.add('hidden');
+                activeForm.style.opacity = '1';
+            }
+
+            setTimeout(() => {
+                const elements = document.querySelectorAll('.form-container:not(.hidden) .form-element, .button-container:not(:empty) button, .message-container:not(:empty)');
+                elements.forEach((el) => {
+                    el.style.opacity = '1';
+                    if (el.classList.contains('form-element') || el.tagName === 'BUTTON') {
+                        el.style.transform = 'translateY(0)';
+                    }
+                });
+            }, 300);
+        }
+
+        function updateHeaderAndTitle(step) {
+            const header = document.getElementById('auth-header');
+            const title = document.querySelector('title');
+            
+            let headerText = T.welcome || 'Welcome';
+            let titleText = T.welcome || 'Welcome';
+
+            // Login flow - Welcome back
+            if (['password', 'two-step-select', 'otp'].includes(step)) {
+                headerText = T.welcome_back || 'Welcome back';
+                titleText = T.sign_in || 'Sign in';
+            }
+            // Recovery flow
+            else if (step === 'forgot-password') {
+                headerText = T.recover_account || 'Recover account';
+                titleText = T.recover_account || 'Recover account';
+            }
+            else if (step === 'reset-password') {
+                headerText = T.reset_password || 'Reset password';
+                titleText = T.reset_password || 'Reset password';
+            }
+            // Registration flow - Create account
+            else if (['register-name', 'register-contact', 'register-password'].includes(step)) {
+                headerText = T.create_account || 'Create account';
+                titleText = T.create_account || 'Create account';
+            }
+
+            if (header) header.textContent = headerText;
+            if (title) title.textContent = titleText + ' - Gilos';
+        }
+
+        function renderTermsText() {
+            const termsDiv = document.getElementById('terms-text');
+            const termsAgreement = T.terms_agreement || 'By continuing, you agree to our %privacy% and %terms%.';
+            const privacyPolicy = T.privacy_policy || 'Privacy Policy';
+            const termsOfService = T.terms_of_service || 'Terms of Service';
+            
+            const privacyLink = `<a href="https://gilos.org/privacy" target="_blank" class="terms-link">${privacyPolicy}</a>`;
+            const termsLink = `<a href="https://gilos.org/terms" target="_blank" class="terms-link">${termsOfService}</a>`;
+            
+            let html = termsAgreement
+                .replace('%privacy%', privacyLink)
+                .replace('%terms%', termsLink);
+            
+            termsDiv.innerHTML = html;
+        }
+
+        function getOTPValue() {
+            const inputs = document.querySelectorAll('.otp-container .otp-input');
+            return Array.from(inputs).map(input => input.value).join('');
+        }
+
+        function clearOTPInputs() {
+            const inputs = document.querySelectorAll('.otp-container .otp-input');
+            inputs.forEach(input => {
+                input.value = '';
+                input.classList.remove('error');
+            });
+            inputs[0].focus();
+        }
+
+        function setOTPError(hasError) {
+            const inputs = document.querySelectorAll('.otp-container .otp-input');
+            inputs.forEach(input => input.classList.toggle('error', hasError));
+        }
+
+        function showMessage(message, isSuccess) {
+            const messageDiv = document.getElementById('message');
+            messageDiv.classList.toggle('success', isSuccess);
+            messageDiv.innerHTML = message ? `<p>${message}</p>` : '';
+            adjustCardHeight();
+        }
+
+        async function moveToState(step) {
+            const messageDiv = document.getElementById('message');
+            messageDiv.innerHTML = '';
+            const button = document.querySelector(`button[onclick="moveToState('${step}')"]`) || document.querySelector('.forgot-password');
+            const originalContent = button ? button.innerHTML : '';
+            if (button) {
+                button.innerHTML = '<span class="spinner"></span>';
+                button.disabled = true;
+            }
+
+            try {
+                const response = await fetch('/auth/state', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                    body: JSON.stringify({ step })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    state.currentStep = data.step;
+                    state.userData = {
+                        status: data.user_status,
+                        password_hint: data.password_hint,
+                        mfa_email_enabled: data.mfa_email_enabled,
+                        mfa_phone_enabled: data.mfa_phone_enabled,
+                        has_email: data.has_email,
+                        has_phone: data.has_phone,
+                        email: data.email,
+                        phone: data.phone
+                    };
+                    state.contact = data.contact || '';
+                    syncFormData(data);
+                    updateUI(data);
+                    showMessage(data.success_message || '', true);
+                } else {
+                    showMessage(data.error || 'Failed to navigate', false);
+                }
+            } catch (error) {
+                console.error('Error navigating:', error);
+                showMessage('Unable to navigate. Please try again.', false);
+            } finally {
+                if (button) {
+                    button.innerHTML = originalContent;
+                    button.disabled = false;
+                }
+                adjustCardHeight();
+            }
+        }
+
+        async function checkGilosID() {
+            const messageDiv = document.getElementById('message');
+            const continueButton = document.getElementById('continue-button');
+            messageDiv.innerHTML = '';
+            continueButton.innerHTML = '<span class="spinner"></span>';
+            continueButton.disabled = true;
+
+            try {
+                const response = await fetch(`/auth/check-user?username=${encodeURIComponent(state.gilosID)}`, {
+                    method: 'GET',
+                    headers: { 'Accept': 'application/json' }
+                });
+
+                const data = await response.json();
+                if (!response.ok) {
+                    if (response.status === 429 && data.is_blocked) {
+                        state.isBlocked = true;
+                        state.blockedUntil = data.blocked_until;
+                        updateUI(data);
+                        return;
+                    }
+                    throw new Error(data.error || `HTTP error! status: ${response.status}`);
+                }
+                state.userData = data;
+                state.error = '';
+                state.contact = data.contact || '';
+                syncFormData(data);
+                updateUI(data);
+            } catch (error) {
+                console.error('Error checking Gilos ID:', error);
+                showMessage('Unable to verify Gilos ID. Please try again.', false);
+            } finally {
+                continueButton.innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+                        <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="m9 5l6 7l-6 7" />
+                    </svg>
+                `;
+                continueButton.disabled = state.gilosID.length < 5;
+            }
+        }
+
+        async function submitPassword() {
+            const messageDiv = document.getElementById('message');
+            const button = document.getElementById('action-button');
+            const buttonText = button.innerText;
+            button.innerHTML = '<span class="spinner"></span>';
+            button.disabled = true;
+
+            try {
+                const response = await fetch('/auth/state', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                    body: JSON.stringify({
+                        step: 'password',
+                        password: document.getElementById('password').value
+                    })
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    if (data.redirect) {
+                        window.location.href = targetUrl;
+                    } else {
+                        state.currentStep = data.step;
+                        state.userData = data;
+                        state.contact = data.contact || '';
+                        syncFormData(data);
+                        updateUI(data);
+                        showMessage(data.success_message || 'Password verified', true);
+                    }
+                } else {
+                    showMessage(data.error || 'Invalid password', false);
+                }
+            } catch (error) {
+                console.error('Error submitting password:', error);
+                showMessage('Unable to proceed. Please try again.', false);
+            } finally {
+                button.innerHTML = buttonText;
+                button.disabled = false;
+                adjustCardHeight();
+            }
+        }
+
+        async function sendOTP() {
+            const messageDiv = document.getElementById('message');
+            const button = document.getElementById('action-button');
+            const buttonText = button.innerText;
+            button.innerHTML = '<span class="spinner"></span>';
+            button.disabled = true;
+
+            const contactType = document.querySelector('input[name="contact_type"]:checked').value;
+            state.contactType = contactType;
+
+            try {
+                const response = await fetch('/auth/otp/send', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                    body: JSON.stringify({
+                        username: state.gilosID,
+                        contact: contactType
+                    })
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    state.currentStep = data.step;
+                    state.resends = data.resends || 0;
+                    state.contact = data.contact || '';
+                    syncFormData(data);
+                    updateUI(data);
+                    showMessage(data.success_message || 'OTP sent successfully', true);
+                } else {
+                    showMessage(data.error || 'Failed to send OTP', false);
+                }
+            } catch (error) {
+                console.error('Error sending OTP:', error);
+                showMessage('Unable to send OTP. Please try again.', false);
+            } finally {
+                button.innerHTML = buttonText;
+                button.disabled = false;
+                adjustCardHeight();
+            }
+        }
+
+        async function verifyOTP() {
+            const code = getOTPValue();
+            const messageDiv = document.getElementById('message');
+            const button = document.getElementById('action-button');
+            const buttonText = button.innerText;
+            button.innerHTML = '<span class="spinner"></span>';
+            button.disabled = true;
+            state.attempts++;
+
+            try {
+                const response = await fetch('/auth/otp/verify', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                    body: JSON.stringify({
+                        username: state.gilosID,
+                        otp: code
+                    })
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    if (data.redirect) {
+                        window.location.href = targetUrl;
+                    } else {
+                        state.currentStep = data.step;
+                        state.contact = data.contact || '';
+                        syncFormData(data);
+                        updateUI(data);
+                        showMessage(data.success_message || 'OTP verified', true);
+                    }
+                } else {
+                    setOTPError(true);
+                    const attemptsLeft = 3 - state.attempts;
+                    showMessage(data.error || `Invalid OTP, ${attemptsLeft} attempt${attemptsLeft !== 1 ? 's' : ''} left`, false);
+                    if (state.attempts >= 3 || data.is_blocked) {
+                        if (data.is_blocked) {
+                            state.isBlocked = true;
+                            state.blockedUntil = data.blocked_until;
+                            updateUI(data);
+                        } else {
+                            await resetAndReload();
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('Error verifying OTP:', error);
+                setOTPError(true);
+                const attemptsLeft = 3 - state.attempts;
+                showMessage(`Unable to verify OTP. Please try again, ${attemptsLeft} attempt${attemptsLeft !== 1 ? 's' : ''} left`, false);
+                if (state.attempts >= 3) {
+                    await resetAndReload();
+                }
+            } finally {
+                button.innerHTML = buttonText;
+                button.disabled = getOTPValue().length !== 6;
+                adjustCardHeight();
+            }
+        }
+
+        async function resendOTP() {
+            const messageDiv = document.getElementById('message');
+            const link = document.querySelector('.resend-link');
+            const originalText = link.textContent;
+            link.innerHTML = '<span class="spinner"></span>';
+            link.style.pointerEvents = 'none';
+            state.resends++;
+
+            if (state.resends >= 3) {
+                showMessage('Maximum resend attempts reached. Starting over.', false);
+                await resetAndReload();
+                return;
+            }
+
+            try {
+                const contact = document.getElementById('otp-contact').value;
+                const response = await fetch('/auth/otp/send', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                    body: JSON.stringify({
+                        username: state.gilosID,
+                        contact: contact
+                    })
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    state.timeRemaining = data.time_remaining || 300;
+                    state.resendAvailableIn = data.resend_available_in || 60;
+                    startCountdown();
+                    showMessage(data.success_message || 'Code sent successfully', true);
+                } else {
+                    if (data.resend_available_in) {
+                        state.resendAvailableIn = data.resend_available_in;
+                        startCountdown();
+                    }
+                    showMessage(data.error || 'Failed to resend code', false);
+                }
+            } catch (error) {
+                console.error('Error resending OTP:', error);
+                showMessage('Unable to resend OTP. Please try again.', false);
+            } finally {
+                link.innerHTML = `Resend OTP (${state.resends}/3)`;
+                link.style.pointerEvents = 'auto';
+                adjustCardHeight();
+            }
+        }
+
+        async function submitRegisterName() {
+            const messageDiv = document.getElementById('message');
+            const button = document.getElementById('action-button');
+            const buttonText = button.innerText;
+            button.innerHTML = '<span class="spinner"></span>';
+            button.disabled = true;
+
+            try {
+                const response = await fetch('/auth/state', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                    body: JSON.stringify({
+                        step: 'register-name',
+                        first_name: document.getElementById('first-name').value,
+                        last_name: document.getElementById('last-name').value
+                    })
+                });
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Server error');
+                }
+                const data = await response.json();
+                if (data.success) {
+                    state.currentStep = data.step;
+                    state.contact = data.contact || '';
+                    syncFormData(data);
+                    updateUI(data);
+                    showMessage(data.success_message || 'Details saved', true);
+                } else {
+                    throw new Error(data.error || 'Failed to save details');
+                }
+            } catch (error) {
+                console.error('Error submitting register name:', error);
+                showMessage(error.message, false);
+            } finally {
+                button.innerHTML = buttonText;
+                button.disabled = false;
+                adjustCardHeight();
+            }
+        }
+
+        async function submitContact() {
+            const messageDiv = document.getElementById('message');
+            const button = document.getElementById('action-button');
+            const buttonText = button.innerText;
+            button.innerHTML = '<span class="spinner"></span>';
+            button.disabled = true;
+
+            const isRegister = state.currentStep === 'register-contact';
+            const method = isRegister ? state.registerMethod : state.recoveryMethod;
+            const currentIti = isRegister ? itiRegister : itiRecovery;
+            
+            let contactValue = '';
+            
+            if (method === 'email') {
+                contactValue = document.getElementById(isRegister ? 'register-email' : 'recovery-email').value.trim();
+                if (!contactValue || !contactValue.includes('@')) {
+                    showMessage('Please enter a valid email address.', false);
+                    button.innerHTML = buttonText;
+                    button.disabled = false;
+                    return;
+                }
+            } else {
+                const phoneInput = document.getElementById(isRegister ? 'register-phone' : 'recovery-phone');
+                if (currentIti && !currentIti.isValidNumber()) {
+                    showMessage('Please enter a valid phone number.', false);
+                    button.innerHTML = buttonText;
+                    button.disabled = false;
+                    return;
+                }
+                contactValue = currentIti ? currentIti.getNumber() : phoneInput.value.trim();
+            }
+
+            const formData = {
+                step: state.currentStep,
+                username: state.gilosID,
+                contact: contactValue
+            };
+            if (state.currentStep === 'register-contact') {
+                formData.first_name = document.getElementById('first-name').value;
+                formData.last_name = document.getElementById('last-name').value;
+            }
+
+            try {
+                const response = await fetch('/auth/contact/verify', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                    body: JSON.stringify(formData)
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Server error');
+                }
+
+                const data = await response.json();
+                if (data.success) {
+                    state.currentStep = data.step;
+                    state.contact = data.contact || '';
+                    syncFormData(data);
+                    updateUI(data);
+                    showMessage(data.success_message || 'Contact verified', true);
+                } else {
+                    throw new Error(data.error || 'Invalid contact');
+                }
+            } catch (error) {
+                console.error('Error submitting contact:', error);
+                showMessage(error.message, false);
+            } finally {
+                button.innerHTML = buttonText;
+                button.disabled = false;
+                adjustCardHeight();
+            }
+        }
+
+        async function submitRegister() {
+            const messageDiv = document.getElementById('message');
+            const button = document.getElementById('action-button');
+            const buttonText = button.innerText;
+            button.innerHTML = '<span class="spinner"></span>';
+            button.disabled = true;
+
+            const formData = {
+                username: document.getElementById('register-password-username').value,
+                password: document.getElementById('register-password').value,
+                first_name: document.getElementById('register-password-first-name').value,
+                last_name: document.getElementById('register-password-last-name').value,
+                contact: document.getElementById('register-password-contact').value,
+                password_hint: document.getElementById('password-hint').value
+            };
+
+            try {
+                const response = await fetch('/auth/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                    body: JSON.stringify(formData)
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Server error');
+                }
+
+                const data = await response.json();
+                if (data.success) {
+                    window.location.href = targetUrl;
+                } else {
+                    throw new Error(data.error || 'Failed to register');
+                }
+            } catch (error) {
+                console.error('Error submitting registration:', error);
+                showMessage(error.message, false);
+            } finally {
+                button.innerHTML = buttonText;
+                button.disabled = false;
+                adjustCardHeight();
+            }
+        }
+
+        async function submitResetPassword() {
+            const messageDiv = document.getElementById('message');
+            const button = document.getElementById('action-button');
+            const buttonText = button.innerText;
+            button.innerHTML = '<span class="spinner"></span>';
+            button.disabled = true;
+
+            const formData = {
+                username: document.getElementById('reset-password-username').value,
+                password: document.getElementById('reset-password').value,
+                contact: document.getElementById('reset-password-contact').value,
+                password_hint: document.getElementById('reset-password-hint').value
+            };
+
+            try {
+                const response = await fetch('/auth/reset-password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                    body: JSON.stringify(formData)
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Server error');
+                }
+
+                const data = await response.json();
+                if (data.success) {
+                    window.location.href = targetUrl;
+                } else {
+                    throw new Error(data.error || 'Failed to reset password');
+                }
+            } catch (error) {
+                console.error('Error submitting reset password:', error);
+                showMessage(error.message, false);
+            } finally {
+                button.innerHTML = buttonText;
+                button.disabled = false;
+                adjustCardHeight();
+            }
+        }
+
+        async function resetAndReload() {
+            const messageDiv = document.getElementById('message');
+            messageDiv.innerHTML = '';
+            try {
+                await fetch('/auth/state', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                    body: JSON.stringify({ step: 'gilos-id' })
+                });
+            } catch (error) {
+                console.error('Error resetting session:', error);
+            }
+            window.location.reload();
+        }
+
+        function updateUI(data) {
+            const forms = [
+                { id: 'gilos-form', step: 'gilos-id' },
+                { id: 'password-form', step: 'password' },
+                { id: 'two-step-select-form', step: 'two-step-select' },
+                { id: 'otp-form', step: 'otp' },
+                { id: 'register-name-form', step: 'register-name' },
+                { id: 'register-contact-form', step: 'register-contact' },
+                { id: 'register-password-form', step: 'register-password' },
+                { id: 'forgot-password-form', step: 'forgot-password' },
+                { id: 'reset-password-form', step: 'reset-password' }
+            ];
+
+            const buttonContainer = document.getElementById('button-container');
+            const termsText = document.getElementById('terms-text');
+
+            forms.forEach(form => document.getElementById(form.id).classList.add('hidden'));
+
+            state.currentStep = data.step;
+            updateHeaderAndTitle(data.step);
+
+            termsText.classList.toggle('hidden', data.step !== 'gilos-id');
+
+            const activeForm = forms.find(f => f.step === data.step);
+            document.getElementById(activeForm.id).classList.remove('hidden');
+
+            buttonContainer.innerHTML = '';
+            let actionLabel = T.continue || 'Continue';
+            let actionFunction = '';
+
+            switch (data.step) {
+                case 'gilos-id':
+                    break;
+                case 'password':
+                    actionLabel = T.login || 'Login';
+                    actionFunction = 'submitPassword()';
+                    document.getElementById('password-info').textContent = (T.password_found_info || 'We found an ID with @%s, enter its password to continue.').replace('%s', state.gilosID);
+                    const passwordHint = data.password_hint || (T.enter_password || 'Enter Password');
+                    document.getElementById('password').placeholder = passwordHint;
+                    buttonContainer.innerHTML = `
+                        <div class="button-group">
+                            <button type="button" onclick="moveToState('gilos-id')" class="bg-gray">${T.back || 'Back'}</button>
+                            <button id="action-button" type="button" onclick="${actionFunction}">${actionLabel}</button>
+                        </div>
+                    `;
+                    break;
+                case 'two-step-select':
+                    actionLabel = 'Continue';
+                    actionFunction = 'sendOTP()';
+                    const emailOption = document.getElementById('two-step-email-option');
+                    const phoneOption = document.getElementById('two-step-phone-option');
+                    const totpOption = document.getElementById('two-step-totp-option');
+                    const emailRadio = document.getElementById('two-step-email');
+                    const phoneRadio = document.getElementById('two-step-phone');
+                    const totpRadio = document.getElementById('two-step-totp');
+                    const emailLabel = document.getElementById('two-step-email-label');
+                    const phoneLabel = document.getElementById('two-step-phone-label');
+
+                    const hasEmail = data.has_email && data.mfa_email_enabled;
+                    const hasPhone = data.has_phone && data.mfa_phone_enabled;
+                    const hasTotp = data.mfa_totp_enabled;
+
+                    emailOption.style.display = hasEmail ? 'flex' : 'none';
+                    phoneOption.style.display = hasPhone ? 'flex' : 'none';
+                    totpOption.style.display = hasTotp ? 'flex' : 'none';
+                    emailLabel.textContent = data.email || (T.email || 'Email');
+                    phoneLabel.textContent = data.phone || (T.phone || 'Phone');
+
+                    const options = [];
+                    if (hasEmail) options.push('email');
+                    if (hasPhone) options.push('phone');
+                    if (hasTotp) options.push('totp');
+
+                    if (options.length === 1) {
+                        const type = options[0];
+                        document.getElementById(`two-step-${type}`).checked = true;
+                        state.contactType = type;
+                    } else {
+                        if (options.includes(state.contactType)) {
+                            document.getElementById(`two-step-${state.contactType}`).checked = true;
+                        } else {
+                            const type = options[0];
+                            document.getElementById(`two-step-${type}`).checked = true;
+                            state.contactType = type;
+                        }
+                    }
+
+                    emailRadio.addEventListener('change', () => {
+                        state.contactType = 'email';
+                        validateForm();
+                    });
+                    phoneRadio.addEventListener('change', () => {
+                        state.contactType = 'phone';
+                        validateForm();
+                    });
+                    totpRadio.addEventListener('change', () => {
+                        state.contactType = 'totp';
+                        validateForm();
+                    });
+
+                    buttonContainer.innerHTML = `
+                        <div class="button-group">
+                            <button type="button" onclick="moveToState('password')" class="bg-gray">${T.back || 'Back'}</button>
+                            <button id="action-button" type="button" onclick="${actionFunction}">${actionLabel}</button>
+                        </div>
+                    `;
+                    break;
+                case 'otp':
+                    actionLabel = T.verify || 'Verify';
+                    actionFunction = 'verifyOTP()';
+                    let otpHintText;
+                    if (data.contact_type === 'totp') {
+                        otpHintText = T.otp_enter_authenticator || 'Enter the code from your authenticator app';
+                    } else {
+                        otpHintText = (T.otp_sent_to || 'Enter code sent to %s').replace('%s', data.contact);
+                    }
+                    document.getElementById('otp-hint').textContent = otpHintText;
+                    const resendLink = document.getElementById('resend-link');
+                    if (data.contact_type === 'totp') {
+                        resendLink.style.display = 'none';
+                    } else {
+                        resendLink.style.display = 'block';
+                        resendLink.textContent = (T.resend_otp_count || 'Resend OTP (%d/3)').replace('%d', data.resends || 0);
+                    }
+                    const prevStep = data.mfa_email_enabled || data.mfa_phone_enabled || data.mfa_totp_enabled ? 'two-step-select' : (data.email || data.phone ? 'register-contact' : 'forgot-password');
+                    buttonContainer.innerHTML = `
+                        <div class="button-group">
+                            <button type="button" onclick="moveToState('${prevStep}')" class="bg-gray">${T.back || 'Back'}</button>
+                            <button id="action-button" type="button" onclick="${actionFunction}">${actionLabel}</button>
+                        </div>
+                    `;
+                    break;
+                case 'register-name':
+                    actionLabel = T.continue || 'Continue';
+                    actionFunction = 'submitRegisterName()';
+                    document.getElementById('register-info').textContent = (T.password_not_found_info || "We didn't find an account with @%s, you can continue to use it to create one, or go back to edit.").replace('%s', state.gilosID);
+                    buttonContainer.innerHTML = `
+                        <div class="button-group">
+                            <button type="button" onclick="moveToState('gilos-id')" class="bg-gray">${T.back || 'Back'}</button>
+                            <button id="action-button" type="button" onclick="${actionFunction}">${actionLabel}</button>
+                        </div>
+                    `;
+                    break;
+                case 'register-contact':
+                    actionLabel = T.verify_contact || 'Verify Contact';
+                    actionFunction = 'submitContact()';
+                    buttonContainer.innerHTML = `
+                        <div class="button-group">
+                            <button type="button" onclick="moveToState('register-name')" class="bg-gray">${T.back || 'Back'}</button>
+                            <button id="action-button" type="button" onclick="${actionFunction}">${actionLabel}</button>
+                        </div>
+                    `;
+                    break;
+                case 'register-password':
+                    actionLabel = T.join_gilos || 'Join Gilos';
+                    actionFunction = 'submitRegister()';
+                    buttonContainer.innerHTML = `
+                        <div class="button-group">
+                            <button type="button" onclick="moveToState('register-contact')" class="bg-gray">${T.back || 'Back'}</button>
+                            <button id="action-button" type="button" onclick="${actionFunction}">${actionLabel}</button>
+                        </div>
+                    `;
+                    break;
+                case 'forgot-password':
+                    actionLabel = T.submit || 'Submit';
+                    actionFunction = 'submitContact()';
+                    const recoveryInfo = document.getElementById('recovery-info');
+                    const recoveryInput = document.getElementById('recovery-input');
+                    let recoveryText = '';
+                    if (data.has_email || data.has_phone) {
+                        const options = [];
+                        if (data.email) options.push(`${T.email || 'email'}: ${data.email}`);
+                        if (data.phone) options.push(`${T.phone || 'phone'}: ${data.phone}`);
+                        recoveryText = (T.recovery_options_set || 'You have set the following recovery options: %s. Please enter one to proceed.').replace('%s', options.join(` ${T.or || 'or'} `));
+                        recoveryInput.classList.remove('hidden');
+                    } else {
+                        recoveryText = `${T.recovery_no_options || 'You have no recovery options available, contact'} <a href="https://t.me/gilos247" class="support-link" target="_blank">${T.support || 'support'}</a>.`;
+                        recoveryInput.classList.add('hidden');
+                    }
+                    recoveryInfo.innerHTML = recoveryText;
+                    buttonContainer.innerHTML = `
+                        <div class="button-group">
+                            <button type="button" onclick="moveToState('password')" class="bg-gray">${T.back || 'Back'}</button>
+                            ${data.has_email || data.has_phone ? `
+                            <button id="action-button" type="button" onclick="${actionFunction}">${actionLabel}</button>
+                            ` : ''}
+                        </div>
+                    `;
+                    break;
+                case 'reset-password':
+                    actionLabel = T.reset_password || 'Reset Password';
+                    actionFunction = 'submitResetPassword()';
+                    buttonContainer.innerHTML = `
+                        <div class="button-group">
+                            <button type="button" onclick="moveToState('forgot-password')" class="bg-gray">${T.back || 'Back'}</button>
+                            <button id="action-button" type="button" onclick="${actionFunction}">${actionLabel}</button>
+                        </div>
+                    `;
+                    break;
+            }
+
+            // Global Block Handling
+            if (data.is_blocked || state.isBlocked) {
+                state.isBlocked = true;
+                state.blockedUntil = data.blocked_until || state.blockedUntil;
+                
+                const blockedDate = new Date(state.blockedUntil);
+                const blockedMsg = (T.security_block_active || 'Your account is temporarily blocked for security until %s.').replace('%s', blockedDate.toLocaleString());
+                showMessage(blockedMsg, false);
+                
+                // Disable all inputs and buttons
+                document.querySelectorAll('input, button, .resend-link').forEach(el => {
+                    if (el.id !== 'ribbon-theme-toggle') {
+                        el.disabled = true;
+                        if (el.classList.contains('resend-link')) el.style.pointerEvents = 'none';
+                    }
+                });
+            }
+
+            validateForm();
+            adjustCardHeight();
+
+            const firstInput = document.querySelector(`#${activeForm.id} input:not([type="hidden"]):not(.otp-input)`);
+            if (firstInput) firstInput.focus();
+            else {
+                const otpInputs = document.querySelectorAll(`#${activeForm.id} .otp-input`);
+                if (otpInputs.length > 0) otpInputs[0].focus();
+            }
+        }
+
+        function validatePasswordMatch() {
+            const password = document.getElementById('register-password').value;
+            const confirmPassword = document.getElementById('confirm-password').value;
+            const confirmInput = document.getElementById('confirm-password');
+            const messageDiv = document.getElementById('message');
+
+            confirmInput.classList.toggle('error', confirmPassword && password !== confirmPassword);
+            state.error = confirmPassword && password !== confirmPassword ? (T.passwords_do_not_match || 'Passwords do not match') : '';
+            showMessage(state.error, false);
+            validateForm();
+        }
+
+        function validateResetPasswordMatch() {
+            const password = document.getElementById('reset-password').value;
+            const confirmPassword = document.getElementById('reset-confirm-password').value;
+            const confirmInput = document.getElementById('reset-confirm-password');
+            const messageDiv = document.getElementById('message');
+
+            confirmInput.classList.toggle('error', confirmPassword && password !== confirmPassword);
+            state.error = confirmPassword && password !== confirmPassword ? (T.passwords_do_not_match || 'Passwords do not match') : '';
+            showMessage(state.error, false);
+            validateForm();
+        }
+
+        function startCountdown() {
+            if (countdownInterval) clearInterval(countdownInterval);
+            
+            updateCountdownUI();
+            
+            countdownInterval = setInterval(() => {
+                if (state.timeRemaining > 0) state.timeRemaining--;
+                if (state.resendAvailableIn > 0) state.resendAvailableIn--;
+                
+                updateCountdownUI();
+                
+                if (state.timeRemaining <= 0 && state.resendAvailableIn <= 0) {
+                    clearInterval(countdownInterval);
+                }
+            }, 1000);
+        }
+
+        function updateCountdownUI() {
+            const otpTimer = document.getElementById('otp-timer');
+            const otpCountdown = document.getElementById('otp-countdown-container');
+            const resendLink = document.getElementById('resend-link');
+
+            if (state.timeRemaining > 0 && state.currentStep === 'otp') {
+                if (otpCountdown) otpCountdown.style.display = 'flex';
+                if (otpTimer) {
+                    const mins = Math.floor(state.timeRemaining / 60);
+                    const secs = state.timeRemaining % 60;
+                    otpTimer.textContent = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+                }
+            } else {
+                if (otpCountdown) otpCountdown.style.display = 'none';
+                if (state.timeRemaining <= 0 && state.currentStep === 'otp' && !state.error) {
+                    showMessage('Verification code expired. Please request a new one.', false);
+                }
+            }
+
+            if (resendLink) {
+                if (state.resendAvailableIn > 0) {
+                    resendLink.style.pointerEvents = 'none';
+                    resendLink.style.opacity = '0.5';
+                    resendLink.textContent = (T.resend_in || 'Resend in %ds').replace('%d', state.resendAvailableIn);
+                } else {
+                    resendLink.style.pointerEvents = 'auto';
+                    resendLink.style.opacity = '1';
+                    resendLink.textContent = (T.resend_otp_count || 'Resend OTP (%d/3)').replace('%d', state.resends || 0);
+                }
+            }
+        }
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,11 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "org.gilos.auth",
+      "sha256_cert_fingerprints":
+        ["27:F8:64:1A:37:A5:51:4B:DF:14:23:B7:C3:87:13:84:90:12:1E:5B:BE:32:49:CB:5E:02:B4:29:6C:89:02:DF", "7C:22:7F:77:E0:D2:B2:31:B6:45:51:E4:EE:B3:5B:D9:E6:0C:75:F9:CF:3A:F9:C6:64:64:A7:1F:A0:E1:EA:CA"]
+    }
+  }
+]

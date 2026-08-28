@@ -1,0 +1,445 @@
+{{ define "common/head" }}
+
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gilos Auth</title>
+    <link rel="icon" href="/static/img/icon.svg" type="image/svg+xml">
+    <link rel="icon" href="/static/img/icon-dark.svg" type="image/svg+xml" media="(prefers-color-scheme: dark)">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/intl-tel-input@19.2.16/build/css/intlTelInput.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/intl-tel-input@19.2.16/build/js/intlTelInput.min.js"></script>
+
+    <style>
+        :root {
+            /* ===== Apple-Style Neutral System ===== */
+            --primary: #1D1D1F;
+            --primary-dark: #000000;
+            --primary-light: #E8E8ED;
+            --primary-glow: rgba(0, 0, 0, 0.08);
+            --primary-gradient: #1D1D1F;
+            --primary-gradient-hover: #424245;
+            --primary-gradient-subtle: rgba(0, 0, 0, 0.04);
+            --primary-contrast: #FFFFFF;
+            
+            /* ===== Light Mode - Clean White ===== */
+            --background: #FFFFFF;
+            --background-solid: #FFFFFF;
+            
+            /* Card Styles - Subtle Depth */
+            --card-bg: rgba(255, 255, 255, 0.82);
+            --card-bg-solid: #FFFFFF;
+            --card-border: transparent;
+            --card-shadow: 0 2px 12px -2px rgba(0, 0, 0, 0.06), 0 1px 4px -1px rgba(0, 0, 0, 0.03);
+            --card-shadow-hover: 0 8px 28px -6px rgba(0, 0, 0, 0.1), 0 4px 12px -4px rgba(0, 0, 0, 0.05);
+            
+            /* ===== Text Hierarchy ===== */
+            --text: #1D1D1F;
+            --text-secondary: #424245;
+            --text-muted: #86868B;
+            
+            /* Status Colors */
+            --error: #FF3B30;
+            
+            /* Neutral Grays (Apple Scale) */
+            --gray-200: #E8E8ED;
+            --gray-600: #6E6E73;
+            --slate-100: #F5F5F7;
+            --slate-200: #E8E8ED;
+            --slate-300: #D1D1D6;
+            --slate-500: #86868B;
+            
+            /* Semantic Colors (Apple System) */
+            --red-50: #FFF5F5;
+            --red-500: #FF3B30;
+            --red-600: #FF3B30;
+            --red-700: #D70015;
+            --green-50: #F0FDF4;
+            --green-500: #34C759;
+            --green-700: #248A3D;
+        }
+
+        :root[data-theme="dark"] {
+                --primary: #F5F5F7;
+                --primary-dark: #FFFFFF;
+                --primary-light: #3A3A3C;
+                --primary-glow: rgba(255, 255, 255, 0.12);
+                --primary-gradient: #F5F5F7;
+                --primary-gradient-hover: #E8E8ED;
+                --primary-gradient-subtle: rgba(255, 255, 255, 0.06);
+                --primary-contrast: #1D1D1F;
+                --background: #000000;
+                --background-solid: #000000;
+                --card-bg: rgba(28, 28, 30, 0.82);
+                --card-bg-solid: #1C1C1E;
+                --card-border: transparent;
+                --card-shadow: 0 2px 12px -2px rgba(0, 0, 0, 0.5), 0 1px 4px -1px rgba(0, 0, 0, 0.3);
+                --card-shadow-hover: 0 8px 28px -6px rgba(0, 0, 0, 0.6), 0 4px 12px -4px rgba(0, 0, 0, 0.4);
+                --text: #F5F5F7;
+                --text-secondary: #A1A1A6;
+                --text-muted: #6E6E73;
+                --error: #FF453A;
+                --gray-200: #2C2C2E;
+                --gray-600: #A1A1A6;
+                --slate-100: #1C1C1E;
+                --slate-200: #2C2C2E;
+                --slate-300: #3A3A3C;
+                --slate-500: #6E6E73;
+                --red-50: #3A1D1D;
+                --red-500: #FF453A;
+                --red-600: #FF453A;
+                --red-700: #FF6961;
+                --green-50: #1D3A2A;
+                --green-500: #30D158;
+                --green-700: #A8F0C6;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root:not([data-theme="light"]) {
+                /* ===== Apple-Style Dark Mode ===== */
+                --primary: #F5F5F7;
+                --primary-dark: #FFFFFF;
+                --primary-light: #3A3A3C;
+                --primary-glow: rgba(255, 255, 255, 0.12);
+                --primary-gradient: #F5F5F7;
+                --primary-gradient-hover: #E8E8ED;
+                --primary-gradient-subtle: rgba(255, 255, 255, 0.06);
+                --primary-contrast: #1D1D1F;
+                
+                /* ===== Dark Mode - Pure Black ===== */
+                --background: #000000;
+                --background-solid: #000000;
+                
+                /* Card Styles - Elevated Dark */
+                --card-bg: rgba(28, 28, 30, 0.82);
+                --card-bg-solid: #1C1C1E;
+                --card-border: transparent;
+                --card-shadow: 0 2px 12px -2px rgba(0, 0, 0, 0.5), 0 1px 4px -1px rgba(0, 0, 0, 0.3);
+                --card-shadow-hover: 0 8px 28px -6px rgba(0, 0, 0, 0.6), 0 4px 12px -4px rgba(0, 0, 0, 0.4);
+                
+                /* ===== Text Hierarchy ===== */
+                --text: #F5F5F7;
+                --text-secondary: #A1A1A6;
+                --text-muted: #6E6E73;
+                
+                /* Status Colors */
+                --error: #FF453A;
+                
+                /* Dark Grays (Apple Scale) */
+                --gray-200: #2C2C2E;
+                --gray-600: #A1A1A6;
+                --slate-100: #1C1C1E;
+                --slate-200: #2C2C2E;
+                --slate-300: #3A3A3C;
+                --slate-500: #6E6E73;
+                
+                /* Semantic Colors (Apple Dark Mode) */
+                --red-50: #3A1D1D;
+                --red-500: #FF453A;
+                --red-600: #FF453A;
+                --red-700: #FF6961;
+                --green-50: #1D3A2A;
+                --green-500: #30D158;
+                --green-700: #A8F0C6;
+            }
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+            min-height: 100dvh;
+            background: var(--background);
+            background-attachment: fixed;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            padding: 16px;
+            color: var(--text);
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* ===== Focus-Visible (Keyboard Navigation) ===== */
+        *:focus-visible {
+            outline: 2px solid var(--primary);
+            outline-offset: 2px;
+        }
+        *:focus:not(:focus-visible) {
+            outline: none;
+        }
+        input:focus-visible,
+        select:focus-visible,
+        textarea:focus-visible {
+            outline: none !important;
+        }
+        input[type="checkbox"]:focus-visible,
+        input[type="radio"]:focus-visible {
+            outline: 2px solid var(--primary) !important;
+            outline-offset: 2px !important;
+        }
+        /* ===== Standard Toggle Switch ===== */
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 44px;
+            height: 24px;
+            flex-shrink: 0;
+            vertical-align: middle;
+        }
+
+        .toggle-switch input[type="checkbox"] {
+            opacity: 0;
+            width: 0;
+            height: 0;
+            position: absolute;
+        }
+
+        .toggle-switch .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: var(--slate-300);
+            transition: background-color 0.3s ease, box-shadow 0.3s ease;
+            border-radius: 24px;
+            box-shadow: inset 0 1px 2px rgba(0,0,0,0.1);
+        }
+
+        .toggle-switch .slider:before {
+            position: absolute;
+            content: "";
+            height: 20px;
+            width: 20px;
+            left: 2px;
+            bottom: 2px;
+            background-color: #FFFFFF;
+            transition: transform 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+            border-radius: 50%;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .toggle-switch input:checked + .slider {
+            background-color: var(--green-500);
+        }
+
+        .toggle-switch input:checked + .slider:before {
+            transform: translateX(20px);
+        }
+        
+        .toggle-switch input:focus-visible + .slider {
+            outline: 2px solid var(--primary);
+            outline-offset: 2px;
+        }
+
+        .toggle-switch input:disabled + .slider {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .toggle-switch:hover .slider {
+            box-shadow: inset 0 1px 2px rgba(0,0,0,0.1), 0 0 0 3px var(--primary-glow);
+        }
+
+        /* ===== Text Selection ===== */
+        ::selection {
+            background: rgba(0, 0, 0, 0.12);
+            color: inherit;
+        }
+
+
+        @media (prefers-color-scheme: dark) {
+            ::selection {
+                background: rgba(255, 255, 255, 0.2);
+            }
+        }
+
+        /* ===== Scrollbar ===== */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--slate-300);
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--slate-500);
+        }
+        * {
+            scrollbar-width: thin;
+            scrollbar-color: var(--slate-300) transparent;
+        }
+
+        /* ===== Placeholder ===== */
+        ::placeholder {
+            color: var(--text-muted);
+            opacity: 0.7;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 16px;
+        }
+
+        /* ===== SweetAlert2 Custom Styling ===== */
+        .swal2-popup {
+            background: var(--card-bg) !important;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-radius: 16px !important;
+            color: var(--text) !important;
+            font-family: 'Inter', sans-serif !important;
+            box-shadow: var(--card-shadow) !important;
+        }
+        .swal2-title, .swal2-html-container {
+            color: var(--text) !important;
+        }
+        .swal2-confirm {
+            background: var(--primary-gradient) !important;
+            color: var(--primary-contrast) !important;
+            border-radius: 8px !important;
+            padding: 10px 24px !important;
+            font-weight: 500 !important;
+            transition: filter 0.2s ease !important;
+        }
+        .swal2-confirm:hover {
+            filter: brightness(1.1) !important;
+        }
+        .swal2-cancel {
+            background: var(--gray-200) !important;
+            color: var(--text) !important;
+            border-radius: 8px !important;
+            padding: 10px 24px !important;
+        }
+        .swal2-icon.swal2-success {
+            border-color: var(--green-500) !important;
+            color: var(--green-500) !important;
+        }
+        .swal2-success-ring {
+            border-color: rgba(34, 197, 94, 0.2) !important;
+        }
+        .swal2-icon.swal2-error {
+            border-color: var(--red-500) !important;
+            color: var(--red-500) !important;
+        }
+        .swal2-icon.swal2-info {
+            border-color: var(--primary) !important;
+            color: var(--primary) !important;
+        }
+        .swal2-actions {
+            gap: 12px;
+        }
+
+        /* ===== intl-tel-input Customization ===== */
+        .iti {
+            width: 100%;
+            --iti-primary-color: var(--primary);
+            --iti-bg: var(--card-bg-solid);
+            --iti-text-color: var(--text);
+            --iti-hover-bg: var(--slate-100);
+            --iti-border-color: var(--slate-200);
+        }
+        .iti__country-list {
+            background-color: var(--card-bg-solid) !important;
+            backdrop-filter: blur(12px) !important;
+            -webkit-backdrop-filter: blur(12px) !important;
+            border: 1px solid var(--slate-200) !important;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2) !important;
+            color: var(--text) !important;
+            border-radius: 12px !important;
+            padding: 8px !important;
+            z-index: 10000 !important;
+            overflow-x: hidden !important;
+            width: 300px !important;
+        }
+        .iti__search-input {
+            width: 100% !important;
+            padding: 10px 14px !important;
+            border-radius: 8px !important;
+            border: 1px solid var(--slate-200) !important;
+            background-color: var(--slate-100) !important;
+            color: var(--text) !important;
+            font-family: 'Inter', sans-serif !important;
+            font-size: 14px !important;
+            margin-bottom: 8px !important;
+            outline: none !important;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
+        }
+        .iti__search-input:focus {
+            border-color: var(--primary) !important;
+            box-shadow: 0 0 0 2px var(--primary-glow) !important;
+        }
+        /* Official way to fix the white background glitch */
+        .iti__dropdown-content {
+            background: transparent !important;
+            border: none !important;
+            box-shadow: none !important;
+        }
+        .iti__country {
+            padding: 10px 12px !important;
+            border-radius: 8px !important;
+            transition: background 0.2s ease !important;
+            outline: none !important;
+        }
+        .iti__country.iti__highlight {
+            background-color: var(--slate-100) !important;
+        }
+        .iti__selected-flag {
+            border-radius: 12px 0 0 12px !important;
+            padding: 0 12px 0 16px !important;
+            background-color: transparent !important;
+        }
+        .iti__selected-flag:hover {
+            border-radius: 12px 0 0 12px !important;
+            background-color: var(--slate-100) !important;
+        }
+        
+        /* Dark mode specific for intl-tel-input */
+
+
+        @media (prefers-color-scheme: dark) {
+            .iti__country-list {
+                background-color: #1C1C1E !important;
+                border: 1px solid #2C2C2E !important;
+                box-shadow: 0 10px 40px rgba(0,0,0,0.8) !important;
+            }
+            .iti__search-input {
+                background-color: #1C1C1E !important;
+                border-color: #2C2C2E !important;
+                color: #F5F5F7 !important;
+            }
+            .iti__search-input:focus {
+                border-color: var(--primary) !important;
+            }
+            .iti__country.iti__highlight {
+                background-color: #2C2C2E !important;
+            }
+            .iti--allow-dropdown .iti__flag-container:hover .iti__selected-flag {
+                background: #1C1C1E !important;
+            }
+        }
+    </style>
+
+</head>
+
+
+{{ end }}

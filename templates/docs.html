@@ -1,0 +1,950 @@
+{{ define "docs-head" }}
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gilos Auth - Developer Documentation</title>
+    <meta name="description" content="Integrate Gilos Auth OAuth2 into your application.">
+    <link rel="icon" href="/static/img/icon.svg" type="image/svg+xml">
+    <link rel="icon" href="/static/img/icon-dark.svg" type="image/svg+xml" media="(prefers-color-scheme: dark)">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --doc-primary: #1D1D1F;
+            --doc-primary-dark: #000000;
+            --doc-primary-light: #424245;
+            --doc-gradient: #1D1D1F;
+            --doc-gradient-contrast: #FFFFFF;
+            --doc-bg: #FFFFFF;
+            --doc-sidebar-bg: #F5F5F7;
+            --doc-content-bg: #FFFFFF;
+            --doc-card-bg: #F5F5F7;
+            --doc-border: #E8E8ED;
+            --doc-text: #1D1D1F;
+            --doc-text-secondary: #424245;
+            --doc-text-muted: #86868B;
+            --doc-code-bg: #1D1D1F;
+            --doc-code-text: #F5F5F7;
+            --doc-inline-code-bg: #F5F5F7;
+            --doc-inline-code-text: #1D1D1F;
+            --method-get: #34C759;
+            --method-get-bg: #F0FDF4;
+            --method-post: #007AFF;
+            --method-post-bg: #EFF6FF;
+            --success-color: #34C759;
+            --warning-color: #FF9F0A;
+            --warning-bg: #FEF3C7;
+        }
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --doc-primary: #F5F5F7;
+                --doc-primary-dark: #E8E8ED;
+                --doc-primary-light: #A1A1A6;
+                --doc-gradient: #F5F5F7;
+                --doc-gradient-contrast: #1D1D1F;
+                --doc-bg: #000000;
+                --doc-sidebar-bg: #1C1C1E;
+                --doc-content-bg: #1C1C1E;
+                --doc-card-bg: #2C2C2E;
+                --doc-border: #2C2C2E;
+                --doc-text: #F5F5F7;
+                --doc-text-secondary: #A1A1A6;
+                --doc-text-muted: #6E6E73;
+                --doc-code-bg: #1C1C1E;
+                --doc-code-text: #F5F5F7;
+                --doc-inline-code-bg: #2C2C2E;
+                --doc-inline-code-text: #F5F5F7;
+                --method-get-bg: #1D3A2A;
+                --method-post-bg: #1D2C3E;
+                --warning-bg: #332200;
+            }
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+        body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background: var(--doc-bg); color: var(--doc-text); line-height: 1.6; }
+        .docs-wrapper { display: flex; min-height: 100vh; }
+        .docs-sidebar { width: 280px; background: var(--doc-sidebar-bg); border-right: 1px solid var(--doc-border); position: fixed; top: 0; left: 0; height: 100vh; overflow-y: auto; padding: 24px 0; z-index: 100; }
+        .sidebar-header { padding: 0 24px 24px; border-bottom: 1px solid var(--doc-border); margin-bottom: 16px; }
+        .sidebar-logo { display: flex; align-items: center; gap: 12px; text-decoration: none; color: var(--doc-text); }
+        .sidebar-logo img { width: 32px; height: 32px; }
+        .sidebar-logo span { font-weight: 700; font-size: 1.1rem; }
+        .sidebar-version { display: inline-block; background: var(--doc-gradient); color: var(--doc-gradient-contrast); font-size: 0.7rem; font-weight: 600; padding: 2px 8px; border-radius: 20px; margin-left: 8px; }
+        .sidebar-section { padding: 0 16px; margin-bottom: 8px; }
+        .sidebar-section-title { font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--doc-text-muted); padding: 8px; margin-bottom: 4px; }
+        .sidebar-nav { list-style: none; }
+        .sidebar-nav li { margin: 2px 0; }
+        .sidebar-nav a { display: block; padding: 8px 12px; color: var(--doc-text-secondary); text-decoration: none; font-size: 0.9rem; border-radius: 6px; transition: all 0.15s ease; }
+        .sidebar-nav a:hover { background: var(--doc-card-bg); color: var(--doc-primary); }
+        .sidebar-nav a.active { background: var(--doc-primary); color: var(--doc-gradient-contrast); }
+        .docs-main { flex: 1; margin-left: 280px; padding: 48px 64px; max-width: calc(100% - 280px); }
+        .docs-content { max-width: 900px; }
+        h1 { font-size: 2.5rem; font-weight: 700; margin-bottom: 16px; color: var(--doc-text); }
+        h2 { font-size: 1.6rem; font-weight: 600; margin: 48px 0 20px; padding-bottom: 12px; border-bottom: 1px solid var(--doc-border); color: var(--doc-text); }
+        h3 { font-size: 1.2rem; font-weight: 600; margin: 32px 0 12px; color: var(--doc-text); }
+        h4 { font-size: 0.95rem; font-weight: 600; margin: 20px 0 8px; color: var(--doc-text-secondary); }
+        p { color: var(--doc-text-secondary); margin-bottom: 16px; }
+        .lead { font-size: 1.1rem; color: var(--doc-text-secondary); margin-bottom: 32px; }
+        ul, ol { color: var(--doc-text-secondary); margin: 0 0 16px 24px; }
+        li { margin-bottom: 8px; }
+        code { font-family: 'JetBrains Mono', monospace; font-size: 0.875em; background: var(--doc-inline-code-bg); color: var(--doc-inline-code-text); padding: 2px 6px; border-radius: 4px; }
+        pre { background: var(--doc-code-bg); border-radius: 10px; padding: 20px 24px; overflow-x: auto; margin: 12px 0 20px; border: 1px solid var(--doc-border); position: relative; }
+        pre code { background: none; color: var(--doc-code-text); padding: 0; font-size: 0.85rem; line-height: 1.7; }
+        .copy-btn { position: absolute; top: 12px; right: 12px; background: var(--doc-card-bg); border: 1px solid var(--doc-border); color: var(--doc-text-muted); padding: 6px 12px; border-radius: 6px; font-size: 0.75rem; cursor: pointer; transition: all 0.2s; }
+        .copy-btn:hover { background: var(--doc-primary); color: var(--doc-gradient-contrast); border-color: var(--doc-primary); }
+        .endpoint { background: var(--doc-content-bg); border: 1px solid var(--doc-border); border-radius: 10px; padding: 20px; margin: 20px 0; }
+        .endpoint-header { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; flex-wrap: wrap; }
+        .method-badge { display: inline-flex; align-items: center; justify-content: center; padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.025em; font-family: 'JetBrains Mono', monospace; }
+        .method-get { background: var(--method-get-bg); color: var(--method-get); }
+        .method-post { background: var(--method-post-bg); color: var(--method-post); }
+        .endpoint-path { font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; font-weight: 500; color: var(--doc-text); }
+        .table-wrapper { overflow-x: auto; margin: 12px 0; border: 1px solid var(--doc-border); border-radius: 10px; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+        th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--doc-border); }
+        th { background: var(--doc-card-bg); font-weight: 600; color: var(--doc-text); }
+        tr:last-child td { border-bottom: none; }
+        .callout { padding: 14px 18px; border-radius: 8px; margin: 16px 0; border-left: 4px solid; }
+        .callout-info { background: var(--method-post-bg); border-color: var(--method-post); }
+        .callout-success { background: var(--method-get-bg); border-color: var(--method-get); }
+        .callout-warning { background: var(--warning-bg); border-color: var(--warning-color); }
+        .callout-title { font-weight: 600; margin-bottom: 4px; color: var(--doc-text); }
+        .callout p { margin: 0; font-size: 0.9rem; }
+        .step { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; background: var(--doc-gradient); color: var(--doc-gradient-contrast); font-weight: 700; font-size: 0.85rem; border-radius: 50%; margin-right: 12px; }
+        .step-title { display: flex; align-items: center; font-size: 1.1rem; font-weight: 600; margin: 28px 0 12px; color: var(--doc-text); }
+        .label { display: inline-block; font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--doc-text-muted); margin-bottom: 6px; }
+        .label-success { color: var(--method-get); }
+        @media (max-width: 900px) { .docs-sidebar { transform: translateX(-100%); } .docs-main { margin-left: 0; max-width: 100%; padding: 24px; } }
+        .docs-footer { margin-top: 48px; padding-top: 20px; border-top: 1px solid var(--doc-border); text-align: center; color: var(--doc-text-muted); font-size: 0.85rem; }
+        /* Interactive components */
+        .client-panel { background: linear-gradient(135deg, var(--doc-card-bg) 0%, var(--doc-content-bg) 100%); border: 1px solid var(--doc-border); border-radius: 12px; padding: 20px; margin: 20px 0; }
+        .client-selector { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+        .client-selector label { font-weight: 600; color: var(--doc-text); }
+        .client-selector select { padding: 10px 16px; border: 1px solid var(--doc-border); border-radius: 8px; background: var(--doc-content-bg); color: var(--doc-text); font-size: 0.9rem; min-width: 250px; cursor: pointer; }
+        .client-info { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--doc-border); display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+        .client-info-item { background: var(--doc-content-bg); padding: 12px; border-radius: 8px; border: 1px solid var(--doc-border); }
+        .client-info-label { font-size: 0.75rem; color: var(--doc-text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
+        .client-info-value { font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; color: var(--doc-text); word-break: break-all; }
+        .secret-toggle { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; color: var(--doc-primary); font-size: 0.8rem; }
+        .empty-state { text-align: center; padding: 48px 24px; background: var(--doc-card-bg); border-radius: 12px; margin: 24px 0; }
+        .empty-state h3 { color: var(--doc-text); margin-bottom: 12px; }
+        .empty-state p { color: var(--doc-text-secondary); margin-bottom: 20px; }
+        .btn { display: inline-flex; align-items: center; gap: 8px; padding: 12px 24px; border-radius: 8px; font-weight: 600; font-size: 0.9rem; text-decoration: none; cursor: pointer; transition: all 0.2s; border: none; }
+        .btn-primary { background: var(--doc-gradient); color: var(--doc-gradient-contrast); }
+        .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); }
+        .btn-secondary { background: var(--doc-content-bg); color: var(--doc-text); border: 1px solid var(--doc-border); }
+        .btn-secondary:hover { border-color: var(--doc-primary); color: var(--doc-primary); }
+        .interactive-box { background: var(--doc-card-bg); border: 2px dashed var(--doc-border); border-radius: 12px; padding: 24px; margin: 20px 0; }
+        .interactive-box.active { border-color: var(--doc-primary); border-style: solid; }
+        .input-group { margin-bottom: 16px; }
+        .input-group label { display: block; font-weight: 500; color: var(--doc-text); margin-bottom: 6px; font-size: 0.9rem; }
+        .input-group input { width: 100%; padding: 12px 16px; border: 1px solid var(--doc-border); border-radius: 8px; background: var(--doc-content-bg); color: var(--doc-text); font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; }
+        .input-group input:focus { outline: none; border-color: var(--doc-primary); }
+        .response-preview { background: var(--doc-code-bg); border-radius: 10px; padding: 20px; margin-top: 16px; }
+        .response-preview pre { margin: 0; background: none; border: none; padding: 0; }
+        .hidden { display: none !important; }
+        .highlight { color: var(--doc-primary-light); }
+        .user-badge { display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; background: var(--doc-card-bg); border-radius: 20px; font-size: 0.85rem; color: var(--doc-text); margin-bottom: 20px; }
+        .user-badge svg { width: 16px; height: 16px; }
+    </style>
+</head>
+{{ end }}
+
+<!DOCTYPE html>
+<html lang="en">
+{{ template "docs-head" . }}
+<body>
+    <div class="docs-wrapper">
+        <!-- Sidebar -->
+        <aside class="docs-sidebar">
+            <div class="sidebar-header">
+                <a href="/" class="sidebar-logo">
+                    <img src="/static/img/icon.svg" alt="Gilos">
+                    <span>Gilos Auth</span>
+                    <span class="sidebar-version">v1.0</span>
+                </a>
+            </div>
+
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">Getting Started</div>
+                <ul class="sidebar-nav">
+                    <li><a href="#introduction">Introduction</a></li>
+                    <li><a href="#quick-start">Quick Start</a></li>
+                    {{ if .IsLoggedIn }}<li><a href="#your-clients">Your Clients</a></li>{{ end }}
+                </ul>
+            </div>
+
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">OAuth2 Flow</div>
+                <ul class="sidebar-nav">
+                    <li><a href="#authorization">1. Authorization</a></li>
+                    <li><a href="#token">2. Get Token</a></li>
+                    <li><a href="#user-info">3. Get User Info</a></li>
+                    <li><a href="#refresh">Refresh Token</a></li>
+                </ul>
+            </div>
+
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">Reference</div>
+                <ul class="sidebar-nav">
+                    <li><a href="#scopes">Scopes</a></li>
+                    <li><a href="#errors">Error Handling</a></li>
+                </ul>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="docs-main">
+            <div class="docs-content">
+                
+                <!-- Introduction -->
+                <section id="introduction">
+                    <h1>Gilos Auth for Developers</h1>
+                    <p class="lead">
+                        Allow users to sign in to your application using their Gilos ID. 
+                        Gilos Auth implements the OAuth 2.0 Authorization Code flow.
+                    </p>
+
+                    {{ if .IsLoggedIn }}
+                    <div class="user-badge">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+                        Signed in as <strong>{{ .User.Username }}</strong>
+                    </div>
+                    {{ else }}
+                    <div class="callout callout-info">
+                        <div class="callout-title">Try it live!</div>
+                        <p><a href="/" style="color: var(--doc-primary);">Sign in</a> to see interactive examples with your actual OAuth clients.</p>
+                    </div>
+                    {{ end }}
+
+                    <div class="callout callout-info">
+                        <div class="callout-title">Base URL</div>
+                        <p><code id="baseUrl">https://auth.gilos.org</code></p>
+                    </div>
+                </section>
+
+                <!-- Your Clients Section (logged in users only) -->
+                {{ if .IsLoggedIn }}
+                <section id="your-clients">
+                    <h2>Your OAuth Clients</h2>
+                    
+                    {{ if .Clients }}
+                    <div class="client-panel">
+                        <div class="client-selector">
+                            <label for="clientSelect">Select a client:</label>
+                            <select id="clientSelect" onchange="updateClientContext()">
+                                <option value="">-- Choose a client --</option>
+                                {{ range .Clients }}
+                                <option value="{{ .ID }}" 
+                                    data-secret-prefix="{{ .SecretPrefix }}" 
+                                    data-redirect-uris="{{ .RedirectURIs }}" 
+                                    data-scopes="{{ .Scopes }}"
+                                    data-name="{{ .Name }}"
+                                    data-type="{{ .Type }}">
+                                    {{ .Name }} ({{ .Type }})
+                                </option>
+                                {{ end }}
+                            </select>
+                        </div>
+                        
+                        <div id="clientInfo" class="client-info hidden">
+                            <div class="client-info-item">
+                                <div class="client-info-label">Client ID</div>
+                                <div class="client-info-value" id="infoClientId">-</div>
+                            </div>
+                            <div class="client-info-item">
+                                <div class="client-info-label">Client Secret</div>
+                                <div class="client-info-value">
+                                    <span id="infoSecretPrefix" style="font-family:monospace;"></span><span style="color:var(--doc-muted);">••••••••••••</span>
+                                    <span style="font-size:0.75rem;color:var(--doc-muted);margin-left:8px;">(prefix only — use your saved secret)</span>
+                                </div>
+                            </div>
+                            <div class="client-info-item">
+                                <div class="client-info-label">Client Secret (for API testing)</div>
+                                <div class="client-info-value">
+                                    <input type="password" id="infoSecretInput" placeholder="Paste your client secret here" style="font-family:monospace;font-size:0.85rem;padding:6px 10px;border:1px solid var(--doc-border);border-radius:6px;background:var(--doc-bg);color:var(--doc-text);width:100%;max-width:420px;">
+                                </div>
+                            </div>
+                            <div class="client-info-item">
+                                <div class="client-info-label">Redirect URI</div>
+                                <div class="client-info-value" id="infoReturn">-</div>
+                            </div>
+                            <div class="client-info-item">
+                                <div class="client-info-label">Scopes</div>
+                                <div class="client-info-value" id="infoScopes">-</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="callout callout-success">
+                        <div class="callout-title">✨ Interactive Mode</div>
+                        <p>Select a client above and all code examples below will update with your actual credentials!</p>
+                    </div>
+                    {{ else }}
+                    <div class="empty-state">
+                        <h3>No OAuth Clients Yet</h3>
+                        <p>Create your first OAuth client to see interactive code examples with your real credentials.</p>
+                        <a href="/home" class="btn btn-primary">Create Your First Client</a>
+                    </div>
+                    {{ end }}
+                </section>
+                {{ end }}
+
+                <!-- Quick Start -->
+                <section id="quick-start">
+                    <h2>Quick Start</h2>
+                    <p>Integrating Gilos Auth takes just 3 steps:</p>
+                    <ol>
+                        <li><strong>Create a client</strong> - Register your app at <a href="/home" style="color: var(--doc-primary);">Gilos Auth</a></li>
+                        <li><strong>Redirect to authorize</strong> - Send users to our authorization page</li>
+                        <li><strong>Exchange code for token</strong> - Get an access token and fetch user data</li>
+                    </ol>
+                </section>
+
+                <!-- Step 1: Authorization -->
+                <section id="authorization">
+                    <h2>OAuth2 Flow</h2>
+                    
+                    <div class="step-title"><span class="step">1</span> Authorization</div>
+                    <p>Redirect users to the Gilos Auth authorization page:</p>
+
+                    <div class="endpoint">
+                        <div class="endpoint-header">
+                            <span class="method-badge method-get">GET</span>
+                            <span class="endpoint-path">/o/authorize</span>
+                        </div>
+                    </div>
+
+                    <h4>Query Parameters</h4>
+                    <div class="table-wrapper">
+                        <table>
+                            <thead><tr><th>Parameter</th><th>Required</th><th>Description</th></tr></thead>
+                            <tbody>
+                                <tr><td><code>client_id</code></td><td>Yes</td><td>Your application's Client ID</td></tr>
+                                <tr><td><code>redirect_uri</code></td><td>Yes</td><td>Must exactly match your registered callback URL</td></tr>
+                                <tr><td><code>response_type</code></td><td>Yes</td><td>Must be <code>code</code></td></tr>
+                                <tr><td><code>scope</code></td><td>Yes</td><td>Space-separated list of scopes</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <h4>Example Authorization URL</h4>
+                    <pre><code id="authUrlExample">https://auth.gilos.org/o/authorize?
+  client_id=<span class="var-client-id">YOUR_CLIENT_ID</span>
+  &redirect_uri=<span class="var-redirect-uri">https://yourapp.com/callback</span>
+  &response_type=code
+  &scope=<span class="var-scopes">user_username user_email</span></code><button class="copy-btn" onclick="copyCode(this)">Copy</button></pre>
+
+                    {{ if .IsLoggedIn }}{{ if .Clients }}
+                    <div class="interactive-box" id="authInteractive">
+                        <h4>🚀 Try It Live</h4>
+                        <p style="margin-bottom: 16px; color: var(--doc-text-secondary);">Select a client above, then click the button to start a real authorization flow:</p>
+                        <button id="openAuthBtn" class="btn btn-primary" onclick="openAuthUrl()" disabled>
+                            Select a client first
+                        </button>
+                    </div>
+                    {{ end }}{{ end }}
+
+                    <p>After the user approves, they'll be redirected to your callback URL with an authorization code:</p>
+<pre><code><span class="var-redirect-uri">https://yourapp.com/callback</span>?code=abc123def456...</code></pre>
+
+                    {{ if .IsLoggedIn }}{{ if .Clients }}
+                    <div class="interactive-box" id="redirectUrlBox">
+                        <h4>📋 Paste Your Redirect URL</h4>
+                        <p style="margin-bottom: 16px; color: var(--doc-text-secondary);">After authorization, paste the full URL you were redirected to:</p>
+                        <div class="input-group">
+                            <label for="redirectUrlInput">Redirect URL</label>
+                            <input type="text" id="redirectUrlInput" placeholder="https://yourapp.com/callback?code=abc123..." oninput="parseRedirectUrl()">
+                        </div>
+                        <div id="extractedCodeInfo" class="hidden" style="margin-top: 12px; padding: 12px; background: var(--method-get-bg); border-radius: 8px;">
+                            <span style="color: var(--method-get); font-weight: 600;">✓ Code extracted:</span>
+                            <code id="extractedCode" style="margin-left: 8px;"></code>
+                        </div>
+                    </div>
+                    {{ end }}{{ end }}
+                </section>
+
+                <!-- Step 2: Token -->
+                <section id="token">
+                    <div class="step-title"><span class="step">2</span> Exchange Code for Token</div>
+                    <p>Exchange the authorization code for an access token (server-side only):</p>
+
+                    <div class="endpoint">
+                        <div class="endpoint-header">
+                            <span class="method-badge method-post">POST</span>
+                            <span class="endpoint-path">/o/token</span>
+                        </div>
+                    </div>
+
+                    <h4>Request</h4>
+<pre><code>POST https://auth.gilos.org/o/token
+Content-Type: application/x-www-form-urlencoded
+
+grant_type=authorization_code
+&client_id=<span class="var-client-id">YOUR_CLIENT_ID</span>
+&client_secret=<span class="var-client-secret">YOUR_CLIENT_SECRET</span>
+&code=<span class="var-auth-code">AUTHORIZATION_CODE</span>
+&redirect_uri=<span class="var-redirect-uri">https://yourapp.com/callback</span></code><button class="copy-btn" onclick="copyCode(this)">Copy</button></pre>
+
+                    <h4>cURL Command</h4>
+<pre><code id="curlTokenExample">curl -X POST https://auth.gilos.org/o/token \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -d "grant_type=authorization_code" \
+  -d "client_id=<span class="var-client-id">YOUR_CLIENT_ID</span>" \
+  -d "client_secret=<span class="var-client-secret">YOUR_CLIENT_SECRET</span>" \
+  -d "code=<span class="var-auth-code">AUTHORIZATION_CODE</span>" \
+  -d "redirect_uri=<span class="var-redirect-uri">https://yourapp.com/callback</span>"</code><button class="copy-btn" onclick="copyCode(this)">Copy</button></pre>
+
+                    {{ if .IsLoggedIn }}{{ if .Clients }}
+                    <div class="interactive-box" id="tokenTestBox">
+                        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+                            <div>
+                                <h4 style="margin: 0;">🧪 Test Token Endpoint</h4>
+                                <p id="tokenTestStatus" style="margin: 4px 0 0; font-size: 0.85rem; color: var(--doc-text-muted);">Extract a code from Step 1 first</p>
+                            </div>
+                            <button id="testTokenBtn" class="btn btn-primary" onclick="testTokenEndpoint()" disabled>
+                                Test /o/token
+                            </button>
+                        </div>
+                        <div id="tokenResponse" class="hidden" style="margin-top: 16px;">
+                            <span class="label label-success">Live Response</span>
+                            <div class="response-preview">
+                                <pre><code id="tokenResponseCode"></code></pre>
+                            </div>
+                        </div>
+                    </div>
+                    {{ end }}{{ end }}
+
+                    <span class="label label-success">Response</span>
+<pre><code>{
+  "access_token": "eyJhbGciOiJIUzI1NiIs...",
+  "token_type": "Bearer",
+  "expires_in": 3600,
+  "refresh_token": "xyz789...",
+  "scope": "<span class="var-scopes">user_username user_email</span>"
+}</code></pre>
+                </section>
+
+                <!-- Step 3: User Info -->
+                <section id="user-info">
+                    <div class="step-title"><span class="step">3</span> Get User Info</div>
+                    <p>Fetch the authenticated user's information:</p>
+
+                    <div class="endpoint">
+                        <div class="endpoint-header">
+                            <span class="method-badge method-get">GET</span>
+                            <span class="endpoint-path">/o/me</span>
+                        </div>
+                    </div>
+
+                    <h4>Request</h4>
+<pre><code>GET https://auth.gilos.org/o/me
+Authorization: Bearer <span class="var-access-token">YOUR_ACCESS_TOKEN</span></code></pre>
+
+                    {{ if .IsLoggedIn }}{{ if .Clients }}
+                    <div class="interactive-box" id="userInfoTestBox">
+                        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+                            <div>
+                                <h4 style="margin: 0;">👤 Test User Info Endpoint</h4>
+                                <p id="userInfoTestStatus" style="margin: 4px 0 0; font-size: 0.85rem; color: var(--doc-text-muted);">Get a token from Step 2 first</p>
+                            </div>
+                            <button id="testUserInfoBtn" class="btn btn-primary" onclick="testUserInfoEndpoint()" disabled>
+                                Test /o/me
+                            </button>
+                        </div>
+                        <div id="userInfoResponse" class="hidden" style="margin-top: 16px;">
+                            <span class="label label-success">Live Response</span>
+                            <div class="response-preview">
+                                <pre><code id="userInfoResponseCode"></code></pre>
+                            </div>
+                        </div>
+                    </div>
+                    {{ end }}{{ end }}
+
+                    <h4>cURL Command</h4>
+<pre><code id="curlMeExample">curl https://auth.gilos.org/o/me \
+  -H "Authorization: Bearer <span class="var-access-token">YOUR_ACCESS_TOKEN</span>"</code><button class="copy-btn" onclick="copyCode(this)">Copy</button></pre>
+
+                    <span class="label label-success">Response</span>
+<pre><code>{
+  "id": 12345,
+  "username": "johndoe",
+  "first_name": "John",
+  "last_name": "Doe",
+  "email": "john@example.com"
+}</code></pre>
+
+                    <div class="callout callout-info">
+                        <div class="callout-title">Scope-based response</div>
+                        <p>Only fields matching your requested scopes will be returned.</p>
+                    </div>
+                </section>
+
+                <!-- Refresh Token -->
+                <section id="refresh">
+                    <h3>Refresh Token</h3>
+                    <p>Access tokens expire after 1 hour. Use the refresh token to get a new one:</p>
+
+                    <div class="endpoint">
+                        <div class="endpoint-header">
+                            <span class="method-badge method-post">POST</span>
+                            <span class="endpoint-path">/o/token</span>
+                        </div>
+                    </div>
+
+<pre><code>curl -X POST https://auth.gilos.org/o/token \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -d "grant_type=refresh_token" \
+  -d "client_id=<span class="var-client-id">YOUR_CLIENT_ID</span>" \
+  -d "client_secret=<span class="var-client-secret">YOUR_CLIENT_SECRET</span>" \
+  -d "refresh_token=<span class="var-refresh-token">YOUR_REFRESH_TOKEN</span>"</code><button class="copy-btn" onclick="copyCode(this)">Copy</button></pre>
+
+                    {{ if .IsLoggedIn }}{{ if .Clients }}
+                    <div class="interactive-box" id="refreshTestBox">
+                        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+                            <div>
+                                <h4 style="margin: 0;">🔄 Test Refresh Token</h4>
+                                <p id="refreshTestStatus" style="margin: 4px 0 0; font-size: 0.85rem; color: var(--doc-text-muted);">Get a refresh token from Step 2 first</p>
+                            </div>
+                            <button id="testRefreshBtn" class="btn btn-primary" onclick="testRefreshEndpoint()" disabled>
+                                Test Refresh
+                            </button>
+                        </div>
+                        <div id="refreshResponse" class="hidden" style="margin-top: 16px;">
+                            <span class="label label-success">Live Response</span>
+                            <div class="response-preview">
+                                <pre><code id="refreshResponseCode"></code></pre>
+                            </div>
+                        </div>
+                    </div>
+                    {{ end }}{{ end }}
+                </section>
+
+                <!-- Scopes -->
+                <section id="scopes">
+                    <h2>Scopes</h2>
+                    <p>Scopes define what user data your application can access:</p>
+
+                    <div class="table-wrapper">
+                        <table>
+                            <thead><tr><th>Scope</th><th>Description</th><th>Returns</th></tr></thead>
+                            <tbody>
+                                <tr><td><code>user_username</code></td><td>User's Gilos ID</td><td><code>username</code></td></tr>
+                                <tr><td><code>user_first_name</code></td><td>User's first name</td><td><code>first_name</code></td></tr>
+                                <tr><td><code>user_last_name</code></td><td>User's last name</td><td><code>last_name</code></td></tr>
+                                <tr><td><code>user_email</code></td><td>User's email address</td><td><code>email</code></td></tr>
+                                <tr><td><code>user_phone</code></td><td>User's phone number</td><td><code>phone</code></td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- Errors -->
+                <section id="errors">
+                    <h2>Error Handling</h2>
+                    <p>API errors return JSON with an <code>error</code> field:</p>
+
+<pre><code>{
+  "error": "invalid_grant",
+  "message": "Invalid or expired authorization code"
+}</code></pre>
+
+                    <div class="table-wrapper">
+                        <table>
+                            <thead><tr><th>Error</th><th>Description</th></tr></thead>
+                            <tbody>
+                                <tr><td><code>invalid_client</code></td><td>Client ID or secret is incorrect</td></tr>
+                                <tr><td><code>invalid_grant</code></td><td>Authorization code or refresh token is invalid/expired</td></tr>
+                                <tr><td><code>invalid_request</code></td><td>Missing required parameters</td></tr>
+                                <tr><td><code>access_denied</code></td><td>User denied the authorization request</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <footer class="docs-footer">
+                    <p>&copy; {{ .Year }} Gilos. Need help? Contact us at support@gilos.org</p>
+                </footer>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Current client context and tokens
+        let currentClient = null;
+        let extractedCode = null;
+        let accessToken = null;
+        let refreshToken = null;
+
+        // Update all dynamic examples when client is selected
+        function updateClientContext() {
+            const select = document.getElementById('clientSelect');
+            const option = select.options[select.selectedIndex];
+            const clientInfo = document.getElementById('clientInfo');
+            const authBtn = document.getElementById('openAuthBtn');
+            
+            if (!option.value) {
+                currentClient = null;
+                if (clientInfo) clientInfo.classList.add('hidden');
+                if (authBtn) {
+                    authBtn.disabled = true;
+                    authBtn.textContent = 'Select a client first';
+                }
+                resetToPlaceholders();
+                return;
+            }
+
+            currentClient = {
+                id: option.value,
+                secretPrefix: option.dataset.secretPrefix || '',
+                redirectUris: option.dataset.redirectUris || '',
+                return: (option.dataset.redirectUris || '').split(',')[0] || '',
+                scopes: (option.dataset.scopes || '').replace(/,/g, ' '),
+                name: option.dataset.name,
+                type: option.dataset.type
+            };
+
+            // Update info panel
+            if (clientInfo) {
+                clientInfo.classList.remove('hidden');
+                document.getElementById('infoClientId').textContent = currentClient.id;
+                document.getElementById('infoSecretPrefix').textContent = currentClient.secretPrefix || '????????';
+                document.getElementById('infoReturn').textContent = currentClient.return;
+                document.getElementById('infoScopes').textContent = currentClient.scopes;
+                // Clear the secret input
+                document.getElementById('infoSecretInput').value = '';
+            }
+
+            // Update auth button
+            if (authBtn) {
+                authBtn.disabled = false;
+                authBtn.textContent = 'Open Authorization URL →';
+            }
+
+            // Update code examples when user enters their secret
+            updateAllExamples();
+        }
+
+        // Re-update code examples when the user types/pastes their secret
+        const secretInput = document.getElementById('infoSecretInput');
+        if (secretInput) {
+            secretInput.addEventListener('input', () => {
+                if (currentClient) updateAllExamples();
+            });
+        }
+
+        function updateAllExamples() {
+            if (!currentClient) return;
+            
+            document.querySelectorAll('.var-client-id').forEach(el => {
+                el.textContent = currentClient.id;
+                el.classList.add('highlight');
+            });
+            document.querySelectorAll('.var-client-secret').forEach(el => {
+                const secret = document.getElementById('infoSecretInput')?.value || 'YOUR_CLIENT_SECRET';
+                el.textContent = secret;
+                el.classList.add('highlight');
+            });
+            document.querySelectorAll('.var-redirect-uri').forEach(el => {
+                el.textContent = currentClient.return;
+                el.classList.add('highlight');
+            });
+            document.querySelectorAll('.var-scopes').forEach(el => {
+                el.textContent = currentClient.scopes;
+                el.classList.add('highlight');
+            });
+        }
+
+        function resetToPlaceholders() {
+            document.querySelectorAll('.var-client-id').forEach(el => {
+                el.textContent = 'YOUR_CLIENT_ID';
+                el.classList.remove('highlight');
+            });
+            document.querySelectorAll('.var-client-secret').forEach(el => {
+                el.textContent = 'YOUR_CLIENT_SECRET';
+                el.classList.remove('highlight');
+            });
+            document.querySelectorAll('.var-redirect-uri').forEach(el => {
+                el.textContent = 'https://yourapp.com/callback';
+                el.classList.remove('highlight');
+            });
+            document.querySelectorAll('.var-scopes').forEach(el => {
+                el.textContent = 'user_username user_email';
+                el.classList.remove('highlight');
+            });
+        }
+
+        // Parse redirect URL and extract code
+        function parseRedirectUrl() {
+            const input = document.getElementById('redirectUrlInput');
+            const infoBox = document.getElementById('extractedCodeInfo');
+            const codeEl = document.getElementById('extractedCode');
+            const testBtn = document.getElementById('testTokenBtn');
+            const statusEl = document.getElementById('tokenTestStatus');
+            
+            if (!input) return;
+            
+            try {
+                const url = new URL(input.value);
+                const code = url.searchParams.get('code');
+                
+                if (code) {
+                    extractedCode = code;
+                    if (infoBox) infoBox.classList.remove('hidden');
+                    if (codeEl) codeEl.textContent = code;
+                    
+                    // Update code in examples
+                    document.querySelectorAll('.var-auth-code').forEach(el => {
+                        el.textContent = code;
+                        el.classList.add('highlight');
+                    });
+                    
+                    // Enable test button if client selected
+                    if (testBtn && currentClient) {
+                        testBtn.disabled = false;
+                        if (statusEl) statusEl.textContent = 'Ready to test!';
+                    }
+                } else {
+                    extractedCode = null;
+                    if (infoBox) infoBox.classList.add('hidden');
+                    if (testBtn) testBtn.disabled = true;
+                    if (statusEl) statusEl.textContent = 'No code found in URL';
+                }
+            } catch (e) {
+                extractedCode = null;
+                if (infoBox) infoBox.classList.add('hidden');
+                document.querySelectorAll('.var-auth-code').forEach(el => {
+                    el.textContent = 'AUTHORIZATION_CODE';
+                    el.classList.remove('highlight');
+                });
+            }
+        }
+
+        // Test token endpoint
+        async function testTokenEndpoint() {
+            if (!currentClient || !extractedCode) return;
+            
+            const btn = document.getElementById('testTokenBtn');
+            const responseBox = document.getElementById('tokenResponse');
+            const responseCode = document.getElementById('tokenResponseCode');
+            
+            btn.disabled = true;
+            btn.textContent = 'Testing...';
+            
+            try {
+                const formData = new URLSearchParams();
+                formData.append('grant_type', 'authorization_code');
+                formData.append('client_id', currentClient.id);
+                formData.append('client_secret', document.getElementById('infoSecretInput')?.value || '');
+                formData.append('code', extractedCode);
+                formData.append('redirect_uri', currentClient.return);
+                
+                const resp = await fetch('/o/token', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: formData
+                });
+                
+                const data = await resp.json();
+                
+                responseBox.classList.remove('hidden');
+                responseCode.textContent = JSON.stringify(data, null, 2);
+                
+                if (data.access_token) {
+                    accessToken = data.access_token;
+                    refreshToken = data.refresh_token;
+                    
+                    // Update access token in examples
+                    document.querySelectorAll('.var-access-token').forEach(el => {
+                        el.textContent = accessToken;
+                        el.classList.add('highlight');
+                    });
+                    
+                    // Update refresh token in examples
+                    document.querySelectorAll('.var-refresh-token').forEach(el => {
+                        el.textContent = refreshToken;
+                        el.classList.add('highlight');
+                    });
+                    
+                    // Enable user info test
+                    const userInfoBtn = document.getElementById('testUserInfoBtn');
+                    const userInfoStatus = document.getElementById('userInfoTestStatus');
+                    if (userInfoBtn) {
+                        userInfoBtn.disabled = false;
+                        if (userInfoStatus) userInfoStatus.textContent = 'Token ready! Click to test.';
+                    }
+                    
+                    // Enable refresh test
+                    const refreshBtn = document.getElementById('testRefreshBtn');
+                    const refreshStatus = document.getElementById('refreshTestStatus');
+                    if (refreshBtn) {
+                        refreshBtn.disabled = false;
+                        if (refreshStatus) refreshStatus.textContent = 'Refresh token ready! Click to test.';
+                    }
+                    
+                    btn.textContent = '✓ Success!';
+                    btn.style.background = 'var(--success-color)';
+                } else {
+                    btn.textContent = 'Error - Try Again';
+                    btn.style.background = '#EF4444';
+                }
+            } catch (e) {
+                responseBox.classList.remove('hidden');
+                responseCode.textContent = 'Error: ' + e.message;
+                btn.textContent = 'Error - Try Again';
+                btn.style.background = '#EF4444';
+            }
+            
+            setTimeout(() => {
+                btn.disabled = false;
+                btn.textContent = 'Test /o/token';
+                btn.style.background = '';
+            }, 3000);
+        }
+
+        // Test user info endpoint
+        async function testUserInfoEndpoint() {
+            if (!accessToken) return;
+            
+            const btn = document.getElementById('testUserInfoBtn');
+            const responseBox = document.getElementById('userInfoResponse');
+            const responseCode = document.getElementById('userInfoResponseCode');
+            
+            btn.disabled = true;
+            btn.textContent = 'Testing...';
+            
+            try {
+                const resp = await fetch('/o/me', {
+                    headers: { 'Authorization': 'Bearer ' + accessToken }
+                });
+                
+                const data = await resp.json();
+                
+                responseBox.classList.remove('hidden');
+                responseCode.textContent = JSON.stringify(data, null, 2);
+                
+                btn.textContent = '✓ Success!';
+                btn.style.background = 'var(--success-color)';
+            } catch (e) {
+                responseBox.classList.remove('hidden');
+                responseCode.textContent = 'Error: ' + e.message;
+                btn.textContent = 'Error';
+                btn.style.background = '#EF4444';
+            }
+            
+            setTimeout(() => {
+                btn.disabled = false;
+                btn.textContent = 'Test /o/me';
+                btn.style.background = '';
+            }, 3000);
+        }
+
+        // Test refresh token endpoint
+        async function testRefreshEndpoint() {
+            if (!currentClient || !refreshToken) return;
+            
+            const btn = document.getElementById('testRefreshBtn');
+            const responseBox = document.getElementById('refreshResponse');
+            const responseCode = document.getElementById('refreshResponseCode');
+            
+            btn.disabled = true;
+            btn.textContent = 'Testing...';
+            
+            try {
+                const formData = new URLSearchParams();
+                formData.append('grant_type', 'refresh_token');
+                formData.append('client_id', currentClient.id);
+                formData.append('client_secret', document.getElementById('infoSecretInput')?.value || '');
+                formData.append('refresh_token', refreshToken);
+                
+                const resp = await fetch('/o/token', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: formData
+                });
+                
+                const data = await resp.json();
+                
+                responseBox.classList.remove('hidden');
+                responseCode.textContent = JSON.stringify(data, null, 2);
+                
+                if (data.access_token) {
+                    // Update tokens
+                    accessToken = data.access_token;
+                    document.querySelectorAll('.var-access-token').forEach(el => {
+                        el.textContent = accessToken;
+                    });
+                    
+                    btn.textContent = '✓ Token Refreshed!';
+                    btn.style.background = 'var(--success-color)';
+                } else {
+                    btn.textContent = 'Error';
+                    btn.style.background = '#EF4444';
+                }
+            } catch (e) {
+                responseBox.classList.remove('hidden');
+                responseCode.textContent = 'Error: ' + e.message;
+                btn.textContent = 'Error';
+                btn.style.background = '#EF4444';
+            }
+            
+            setTimeout(() => {
+                btn.disabled = false;
+                btn.textContent = 'Test Refresh';
+                btn.style.background = '';
+            }, 3000);
+        }
+
+        function toggleSecret() {
+            // No-op — secret is no longer available in the docs page
+            // Users should paste their secret in the input field
+        }
+
+        function openAuthUrl() {
+            if (!currentClient) return alert('Please select a client first');
+            
+            const baseUrl = window.location.origin;
+            const authUrl = `${baseUrl}/o/authorize?client_id=${currentClient.id}&redirect_uri=${encodeURIComponent(currentClient.return)}&response_type=code&scope=${encodeURIComponent(currentClient.scopes)}`;
+            
+            window.open(authUrl, '_blank');
+        }
+
+        function copyCode(btn) {
+            const pre = btn.closest('pre');
+            const code = pre.querySelector('code').textContent;
+            navigator.clipboard.writeText(code).then(() => {
+                const original = btn.textContent;
+                btn.textContent = 'Copied!';
+                btn.style.background = 'var(--success-color)';
+                btn.style.color = 'white';
+                setTimeout(() => {
+                    btn.textContent = original;
+                    btn.style.background = '';
+                    btn.style.color = '';
+                }, 2000);
+            });
+        }
+
+        // Active link highlighting
+        const sections = document.querySelectorAll('section[id]');
+        const navLinks = document.querySelectorAll('.sidebar-nav a');
+        
+        function setActiveLink() {
+            let current = '';
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop - 100;
+                if (scrollY >= sectionTop) {
+                    current = section.getAttribute('id');
+                }
+            });
+            
+            navLinks.forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('href') === '#' + current) {
+                    link.classList.add('active');
+                }
+            });
+        }
+        
+        window.addEventListener('scroll', setActiveLink);
+        setActiveLink();
+    </script>
+</body>
+</html>
