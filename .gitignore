@@ -19,6 +19,9 @@ media/
 
 # IDE
 .vscode/
+
+# AI Agent Context
+AGENTS.md
 .idea/
 .gemini/
 
