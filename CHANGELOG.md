@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.4](https://github.com/gilosorg/auth/compare/v0.0.3...v0.0.4) (2026-08-28)
+
+
+### Bug Fixes
+
+* fetch tags in deployment script for correct versioning ([29e30bf](https://github.com/gilosorg/auth/commit/29e30bffe658568c53d48f3f2f69779f65aca893))
+
 ## [0.0.3](https://github.com/gilosorg/auth/compare/v0.0.2...v0.0.3) (2026-08-28)
 
 
