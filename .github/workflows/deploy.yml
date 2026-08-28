@@ -18,5 +18,6 @@ jobs:
           script: |
             cd /root/auth
             git pull origin main
-            go build main.go
+            VERSION=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.1")
+            go build -ldflags "-X gilosauth/config.Version=$VERSION" main.go
             sudo systemctl restart auth

@@ -130,6 +130,7 @@ func AuthHandler(tmpls *template.Template) http.HandlerFunc {
 			"CurrentLanguage": tr.Current(),
 			"Languages":       tr.All(),
 			"T":               i18n.GetTranslations(lang),
+			"AppVersion":      config.Version,
 		}
 
 		// Buffer template execution to prevent partial writes on error

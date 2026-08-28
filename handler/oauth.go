@@ -384,6 +384,7 @@ func renderConsentPage(w http.ResponseWriter, tmpls *template.Template, client d
 		"CurrentLanguage":    tr.Current(),
 		"Languages":          tr.All(),
 		"T":                  i18n.GetTranslations(lang),
+		"AppVersion":         config.Version,
 		"Error":              errorMessage,
 		"User":               user,
 		"HasMissingRequired": hasMissingRequired,

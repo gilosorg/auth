@@ -10,6 +10,8 @@ import (
 
 // Application identity
 var (
+	// Version is the current version of the application injected at build time.
+	Version string = "v0.0.0-dev"
 	// AppName is the display name used in UI, emails, and SMS messages (e.g., "Gilos Auth").
 	AppName string
 	// AppIDLabel is the label for user identifiers (e.g., "Gilos ID", "Account ID").

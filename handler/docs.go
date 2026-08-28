@@ -27,6 +27,7 @@ func DocsHandler(tmpls *template.Template) http.HandlerFunc {
 			"Languages":       tr.All(),
 			"T":               i18n.GetTranslations(lang),
 			"IsLoggedIn":      false,
+			"AppVersion":      config.Version,
 			"User":            nil,
 			"Clients":         []database.Client{},
 		}
