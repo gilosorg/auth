@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"fmt"
+	"gilosauth/config"
 	"gilosauth/database"
 	"gilosauth/i18n"
 	"gilosauth/middleware"

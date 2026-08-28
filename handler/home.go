@@ -2,6 +2,7 @@ package handler
 
 import (
 	"bytes"
+	"gilosauth/config"
 	"gilosauth/database"
 	"gilosauth/i18n"
 	"gilosauth/middleware"
