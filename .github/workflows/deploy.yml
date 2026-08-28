@@ -18,5 +18,5 @@ jobs:
           script: |
             cd /root/auth
             git pull origin main
-            go build -o auth .
+            go build main.go
             sudo systemctl restart auth
