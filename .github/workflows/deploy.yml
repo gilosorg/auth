@@ -2,8 +2,8 @@ name: Deploy to Production
 
 on:
   push:
-    tags:
-      - 'v*'
+    branches:
+      - main
 
 jobs:
   deploy:
@@ -17,7 +17,6 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             cd /root/auth
-            git fetch --tags
-            git checkout ${{ github.ref_name }}
+            git pull origin main
             go build main.go
             sudo systemctl restart auth

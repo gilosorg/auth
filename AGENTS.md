@@ -15,6 +15,6 @@ This document provides strict guidelines and context for any AI agents working o
   - `fix: ` for bug fixes (PATCH bump).
   - `feat!: ` or `fix!: ` for breaking changes (MAJOR bump).
   - `chore: `, `docs: `, `refactor: ` for other changes.
-- **Automated Deployment**: Deployments to production are triggered automatically when a new GitHub Release (Git tag `v*`) is created.
-  - When you push to `main`, a Release PR is automatically created/updated.
-  - Do **not** deploy manually. Simply push your conventional commits to `main` and let the Release Please workflow handle the versioning.
+- **Automated Deployment**: Deployments to production are triggered automatically when you push to the `main` branch. 
+  - The `release-please` action will also run to generate releases and version tags on GitHub for documentation, but the live server simply stays on the `main` branch to avoid disrupting active development.
+  - Do **not** deploy manually. Simply push your conventional commits to `main` and let the workflows handle it.
