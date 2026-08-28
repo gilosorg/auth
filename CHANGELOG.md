@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.5](https://github.com/gilosorg/auth/compare/v0.0.4...v0.0.5) (2026-08-28)
+
+
+### Bug Fixes
+
+* update docs and help links in footer ([eab5207](https://github.com/gilosorg/auth/commit/eab5207b8ff26db8fed5426bd5c3d861d94d25ae))
+
 ## [0.0.4](https://github.com/gilosorg/auth/compare/v0.0.3...v0.0.4) (2026-08-28)
 
 
