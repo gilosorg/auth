@@ -26,8 +26,7 @@ func SecurityHeaders(next http.Handler) http.Handler {
 				"img-src 'self' data: https://cdn.jsdelivr.net; "+
 				"font-src 'self' https://fonts.gstatic.com; "+
 				"frame-ancestors 'none'; "+
-				"base-uri 'self'; "+
-				"form-action 'self'")
+				"base-uri 'self'")
 
 		// Permissions Policy — disable unnecessary browser features
 		w.Header().Set("Permissions-Policy", "camera=(), microphone=(), geolocation=(), payment=()")
