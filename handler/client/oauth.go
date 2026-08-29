@@ -102,44 +102,18 @@ func GetOAuthInquiryHandler(w http.ResponseWriter, r *http.Request) {
 
 		// Check data availability and build masked value
 		switch s {
-		case "user_email":
+		case "email":
 			if clientUser.Email != "" {
 				maskedValue = utils.MaskEmail(clientUser.Email)
 			} else {
 				hasData = false
 			}
-		case "user_phone":
+		case "phone":
 			if clientUser.Phone != 0 {
 				maskedValue = utils.MaskPhone(clientUser.Phone)
 			} else {
 				hasData = false
 			}
-		case "user_first_name":
-			if clientUser.FirstName != "" {
-				maskedValue = clientUser.FirstName
-			} else {
-				hasData = false
-			}
-		case "user_last_name":
-			if clientUser.LastName != "" {
-				maskedValue = clientUser.LastName
-			} else {
-				hasData = false
-			}
-		case "user_middle_name":
-			if clientUser.MiddleName != "" {
-				maskedValue = clientUser.MiddleName
-			} else {
-				hasData = false
-			}
-		case "user_nickname":
-			if clientUser.Nickname != "" {
-				maskedValue = clientUser.Nickname
-			} else {
-				hasData = false
-			}
-		case "user_username":
-			maskedValue = clientUser.Username
 		}
 
 		if isRequired && !hasData {
@@ -272,34 +246,14 @@ func ApproveOAuthInquiryHandler(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 		switch s {
-		case "user_email":
+		case "email":
 			if user.Email == "" {
 				utils.WriteJSONResponse(w, http.StatusForbidden, map[string]string{"error": "missing_required_data", "message": "Your account is missing a required email address"})
 				return
 			}
-		case "user_phone":
+		case "phone":
 			if user.Phone == 0 {
 				utils.WriteJSONResponse(w, http.StatusForbidden, map[string]string{"error": "missing_required_data", "message": "Your account is missing a required phone number"})
-				return
-			}
-		case "user_first_name":
-			if user.FirstName == "" {
-				utils.WriteJSONResponse(w, http.StatusForbidden, map[string]string{"error": "missing_required_data", "message": "Your account is missing a required first name"})
-				return
-			}
-		case "user_last_name":
-			if user.LastName == "" {
-				utils.WriteJSONResponse(w, http.StatusForbidden, map[string]string{"error": "missing_required_data", "message": "Your account is missing a required last name"})
-				return
-			}
-		case "user_middle_name":
-			if user.MiddleName == "" {
-				utils.WriteJSONResponse(w, http.StatusForbidden, map[string]string{"error": "missing_required_data", "message": "Your account is missing a required middle name"})
-				return
-			}
-		case "user_nickname":
-			if user.Nickname == "" {
-				utils.WriteJSONResponse(w, http.StatusForbidden, map[string]string{"error": "missing_required_data", "message": "Your account is missing a required nickname"})
 				return
 			}
 		}

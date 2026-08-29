@@ -137,7 +137,7 @@ func main() {
 
 	// OAuth Client API endpoints (Bearer token auth)
 	mux.HandleFunc("GET /api/userinfo", middleware.RequireAccessToken(handler.UserInfoHandler))
-	mux.HandleFunc("GET /api/me", middleware.RequireAccessToken(middleware.RequireScope("user_basic_info", client.MeHandler)))
+	mux.HandleFunc("GET /api/me", middleware.RequireAccessToken(middleware.RequireScope("profile", client.MeHandler)))
 	mux.HandleFunc("GET /api/sessions", middleware.RequireAccessToken(middleware.RequireScope("user_sessions", client.SessionsHandler)))
 	mux.HandleFunc("POST /api/sessions/terminate", middleware.RequireAccessToken(middleware.RequireScope("user_sessions", client.TerminateSessionHandler)))
 	mux.HandleFunc("POST /api/sessions/terminate-others", middleware.RequireAccessToken(middleware.RequireScope("user_sessions", client.TerminateOthersHandler)))

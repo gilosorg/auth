@@ -45,7 +45,7 @@ func MeHandler(w http.ResponseWriter, r *http.Request) {
 		scopeMap[strings.TrimSpace(s)] = true
 	}
 
-	// Basic info (requires user_basic_info, which is checked by middleware but we include fields here)
+	// Basic info (requires profile, which is checked by middleware)
 	response := map[string]interface{}{
 		"id":                user.ID,
 		"username":          user.Username,
@@ -54,25 +54,16 @@ func MeHandler(w http.ResponseWriter, r *http.Request) {
 		"mfa_email_enabled": user.MFAEmailEnabled,
 		"mfa_phone_enabled": user.MFAPhoneEnabled,
 		"mfa_totp_enabled":  user.MFATOTPEnabled,
+		"first_name":        user.FirstName,
+		"last_name":         user.LastName,
+		"middle_name":       user.MiddleName,
+		"nickname":          user.Nickname,
 	}
 
-	// Optional granular scopes
-	if scopeMap["user_first_name"] {
-		response["first_name"] = user.FirstName
-	}
-	if scopeMap["user_last_name"] {
-		response["last_name"] = user.LastName
-	}
-	if scopeMap["user_middle_name"] {
-		response["middle_name"] = user.MiddleName
-	}
-	if scopeMap["user_nickname"] {
-		response["nickname"] = user.Nickname
-	}
-	if scopeMap["user_email"] && user.Email != "" {
+	if scopeMap["email"] && user.Email != "" {
 		response["email"] = user.Email
 	}
-	if scopeMap["user_phone"] && user.Phone != 0 {
+	if scopeMap["phone"] && user.Phone != 0 {
 		response["phone"] = user.Phone
 	}
 

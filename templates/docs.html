@@ -188,6 +188,13 @@
                     <li><a href="#errors">Error Handling</a></li>
                 </ul>
             </div>
+
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">Examples</div>
+                <ul class="sidebar-nav">
+                    <li><a href="#example-go">Go (Golang)</a></li>
+                </ul>
+            </div>
         </aside>
 
         <!-- Main Content -->
@@ -330,7 +337,7 @@
   client_id=<span class="var-client-id">YOUR_CLIENT_ID</span>
   &redirect_uri=<span class="var-redirect-uri">https://yourapp.com/callback</span>
   &response_type=code
-  &scope=<span class="var-scopes">user_username user_email</span></code><button class="copy-btn" onclick="copyCode(this)">Copy</button></pre>
+  &scope=<span class="var-scopes">profile email</span></code><button class="copy-btn" onclick="copyCode(this)">Copy</button></pre>
 
                     {{ if .IsLoggedIn }}{{ if .Clients }}
                     <div class="interactive-box" id="authInteractive">
@@ -418,7 +425,7 @@ grant_type=authorization_code
   "token_type": "Bearer",
   "expires_in": 3600,
   "refresh_token": "xyz789...",
-  "scope": "<span class="var-scopes">user_username user_email</span>"
+  "scope": "<span class="var-scopes">profile email</span>"
 }</code></pre>
                 </section>
 
@@ -526,11 +533,9 @@ Authorization: Bearer <span class="var-access-token">YOUR_ACCESS_TOKEN</span></c
                         <table>
                             <thead><tr><th>Scope</th><th>Description</th><th>Returns</th></tr></thead>
                             <tbody>
-                                <tr><td><code>user_username</code></td><td>User's Gilos ID</td><td><code>username</code></td></tr>
-                                <tr><td><code>user_first_name</code></td><td>User's first name</td><td><code>first_name</code></td></tr>
-                                <tr><td><code>user_last_name</code></td><td>User's last name</td><td><code>last_name</code></td></tr>
-                                <tr><td><code>user_email</code></td><td>User's email address</td><td><code>email</code></td></tr>
-                                <tr><td><code>user_phone</code></td><td>User's phone number</td><td><code>phone</code></td></tr>
+                                <tr><td><code>profile</code></td><td>User's profile info (name, username, etc.)</td><td><code>first_name, last_name, username</code></td></tr>
+                                <tr><td><code>email</code></td><td>User's email address</td><td><code>email</code></td></tr>
+                                <tr><td><code>phone</code></td><td>User's phone number</td><td><code>phone</code></td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -557,6 +562,296 @@ Authorization: Bearer <span class="var-access-token">YOUR_ACCESS_TOKEN</span></c
                             </tbody>
                         </table>
                     </div>
+                </section>
+
+                <!-- Example Codes: Go -->
+                <section id="example-go">
+                    <h2>Example: Go (Golang)</h2>
+                    <p>This is a complete, production-ready example in Go using the standard library. It implements the latest OAuth 2.1 specifications including PKCE (Proof Key for Code Exchange) and state verification for CSRF protection.</p>
+
+<pre><code class="language-go">package gilos
+
+import (
+	"crypto/rand"
+	"crypto/sha256"
+	"encoding/base64"
+	"encoding/hex"
+	"encoding/json"
+	"fmt"
+	"io"
+	"net/http"
+	"net/url"
+	"os"
+	"strings"
+	"time"
+)
+
+// Config holds the OAuth configuration for Gilos Auth
+type Config struct {
+	ClientID     string
+	ClientSecret string
+	RedirectURI  string
+	Scopes       string
+	AuthURL      string
+	TokenURL     string
+	UserInfoURL  string
+}
+
+// DefaultConfig returns the default configuration for Gilos Auth.
+var DefaultConfig = Config{
+	ClientID:     os.Getenv("GILOS_CLIENT_ID"),
+	ClientSecret: os.Getenv("GILOS_CLIENT_SECRET"),
+	RedirectURI:  "https://yourapp.com/callback",
+	Scopes:       "profile email",
+	AuthURL:      "https://auth.gilos.org/o/authorize",
+	TokenURL:     "https://auth.gilos.org/o/token",
+	UserInfoURL:  "https://auth.gilos.org/o/me",
+}
+
+// cfg holds the active configuration
+var cfg = DefaultConfig
+
+// httpClient is a shared HTTP client with timeouts
+var httpClient = &http.Client{Timeout: 10 * time.Second}
+
+// Configure sets a custom configuration
+func Configure(c Config) {
+	cfg = c
+}
+
+// Init initializes the configuration from environment variables
+func Init() {
+	cfg.ClientID = os.Getenv("GILOS_CLIENT_ID")
+	cfg.ClientSecret = os.Getenv("GILOS_CLIENT_SECRET")
+}
+
+type TokenResponse struct {
+	AccessToken  string `json:"access_token"`
+	TokenType    string `json:"token_type"`
+	ExpiresIn    int    `json:"expires_in"`
+	RefreshToken string `json:"refresh_token"`
+	Scope        string `json:"scope"`
+}
+
+type UserInfoResponse struct {
+	ID        int64  `json:"id"`
+	Username  string `json:"username"`
+	FirstName string `json:"first_name,omitempty"`
+	LastName  string `json:"last_name,omitempty"`
+	Email     string `json:"email,omitempty"`
+}
+
+// generateState creates a secure random state string
+func generateState() (string, error) {
+	b := make([]byte, 16)
+	if _, err := rand.Read(b); err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(b), nil
+}
+
+// generatePKCE creates a code verifier and its S256 challenge
+func generatePKCE() (verifier, challenge string, err error) {
+	b := make([]byte, 32)
+	if _, err := rand.Read(b); err != nil {
+		return "", "", err
+	}
+	verifier = base64.RawURLEncoding.EncodeToString(b)
+	hash := sha256.Sum256([]byte(verifier))
+	challenge = base64.RawURLEncoding.EncodeToString(hash[:])
+	return verifier, challenge, nil
+}
+
+// ExchangeCode exchanges an authorization code for tokens using PKCE
+func ExchangeCode(code, codeVerifier string) (*TokenResponse, error) {
+	data := url.Values{}
+	data.Set("grant_type", "authorization_code")
+	data.Set("code", code)
+	data.Set("redirect_uri", cfg.RedirectURI)
+	data.Set("client_id", cfg.ClientID)
+	data.Set("client_secret", cfg.ClientSecret)
+	data.Set("code_verifier", codeVerifier) // PKCE (OAuth 2.1)
+
+	resp, err := httpClient.Post(cfg.TokenURL, "application/x-www-form-urlencoded", strings.NewReader(data.Encode()))
+	if err != nil {
+		return nil, fmt.Errorf("failed to exchange code: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("token exchange failed: %s - %s", resp.Status, string(body))
+	}
+
+	var tokenResp TokenResponse
+	if err := json.NewDecoder(resp.Body).Decode(&tokenResp); err != nil {
+		return nil, fmt.Errorf("failed to parse token response: %w", err)
+	}
+	return &tokenResp, nil
+}
+
+// RefreshToken refreshes an access token using a refresh token
+func RefreshToken(refreshToken string) (*TokenResponse, error) {
+	data := url.Values{}
+	data.Set("grant_type", "refresh_token")
+	data.Set("refresh_token", refreshToken)
+	data.Set("client_id", cfg.ClientID)
+	data.Set("client_secret", cfg.ClientSecret)
+
+	resp, err := httpClient.Post(cfg.TokenURL, "application/x-www-form-urlencoded", strings.NewReader(data.Encode()))
+	if err != nil {
+		return nil, fmt.Errorf("failed to refresh token: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("token refresh failed: %s - %s", resp.Status, string(body))
+	}
+
+	var tokenResp TokenResponse
+	if err := json.NewDecoder(resp.Body).Decode(&tokenResp); err != nil {
+		return nil, fmt.Errorf("failed to parse refresh response: %w", err)
+	}
+	return &tokenResp, nil
+}
+
+// GetUserInfo fetches user information from Gilos Auth
+func GetUserInfo(accessToken string) (*UserInfoResponse, error) {
+	req, err := http.NewRequest("GET", cfg.UserInfoURL, nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Authorization", "Bearer "+accessToken)
+
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("user info request failed: %s - %s", resp.Status, string(body))
+	}
+
+	var userInfo UserInfoResponse
+	if err := json.NewDecoder(resp.Body).Decode(&userInfo); err != nil {
+		return nil, err
+	}
+	return &userInfo, nil
+}
+
+type AuthCallback func(w http.ResponseWriter, r *http.Request, userInfo *UserInfoResponse, tokens *TokenResponse) (redirectURL string, err error)
+
+// AuthorizeHandler initiates the OAuth flow
+func AuthorizeHandler() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		state, _ := generateState()
+		verifier, challenge, _ := generatePKCE()
+
+		// Store state and verifier in secure, short-lived cookies
+		cookieOpts := &http.Cookie{
+			Path:     "/",
+			MaxAge:   600, // 10 minutes
+			HttpOnly: true,
+			Secure:   r.TLS != nil || r.Header.Get("X-Forwarded-Proto") == "https",
+			SameSite: http.SameSiteLaxMode,
+		}
+		
+		stateCookie := *cookieOpts
+		stateCookie.Name = "oauth_state"
+		stateCookie.Value = state
+		http.SetCookie(w, &stateCookie)
+
+		verifierCookie := *cookieOpts
+		verifierCookie.Name = "oauth_verifier"
+		verifierCookie.Value = verifier
+		http.SetCookie(w, &verifierCookie)
+
+		params := url.Values{}
+		params.Set("response_type", "code")
+		params.Set("client_id", cfg.ClientID)
+		params.Set("redirect_uri", cfg.RedirectURI)
+		params.Set("scope", cfg.Scopes)
+		params.Set("state", state)
+		params.Set("code_challenge", challenge)        // PKCE (OAuth 2.1)
+		params.Set("code_challenge_method", "S256")    // Required by OAuth 2.1
+
+		redirectURL := cfg.AuthURL + "?" + params.Encode()
+		http.Redirect(w, r, redirectURL, http.StatusTemporaryRedirect)
+	}
+}
+
+// CallbackHandler processes the authorization redirect
+func CallbackHandler(onSuccess AuthCallback) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if err := r.URL.Query().Get("error"); err != "" {
+			http.Error(w, "Authorization denied: "+err, http.StatusForbidden)
+			return
+		}
+
+		// Verify state parameter
+		stateCookie, err := r.Cookie("oauth_state")
+		if err != nil || stateCookie.Value != r.URL.Query().Get("state") {
+			http.Error(w, "Invalid state parameter", http.StatusForbidden)
+			return
+		}
+
+		// Retrieve PKCE code verifier
+		verifierCookie, err := r.Cookie("oauth_verifier")
+		if err != nil {
+			http.Error(w, "Missing PKCE verifier", http.StatusBadRequest)
+			return
+		}
+
+		// Clear security cookies immediately
+		clearCookie := &http.Cookie{
+			Path:     "/",
+			MaxAge:   -1,
+			HttpOnly: true,
+			Secure:   r.TLS != nil || r.Header.Get("X-Forwarded-Proto") == "https",
+			SameSite: http.SameSiteLaxMode,
+		}
+		
+		stateClear := *clearCookie
+		stateClear.Name = "oauth_state"
+		http.SetCookie(w, &stateClear)
+		
+		verifierClear := *clearCookie
+		verifierClear.Name = "oauth_verifier"
+		http.SetCookie(w, &verifierClear)
+
+		code := r.URL.Query().Get("code")
+		if code == "" {
+			http.Error(w, "Authorization code missing", http.StatusBadRequest)
+			return
+		}
+
+		// Exchange code for tokens
+		tokens, err := ExchangeCode(code, verifierCookie.Value)
+		if err != nil {
+			http.Error(w, "Failed to exchange code: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		// Fetch user info
+		userInfo, err := GetUserInfo(tokens.AccessToken)
+		if err != nil {
+			http.Error(w, "Failed to fetch user info: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		// Call application callback
+		redirectURL, err := onSuccess(w, r, userInfo, tokens)
+		if err != nil {
+			http.Error(w, "Authentication handler failed", http.StatusInternalServerError)
+			return
+		}
+		
+		http.Redirect(w, r, redirectURL, http.StatusSeeOther)
+	}
+}</code><button class="copy-btn" onclick="copyCode(this)">Copy</button></pre>
                 </section>
 
                 <footer class="docs-footer">
@@ -666,7 +961,7 @@ Authorization: Bearer <span class="var-access-token">YOUR_ACCESS_TOKEN</span></c
                 el.classList.remove('highlight');
             });
             document.querySelectorAll('.var-scopes').forEach(el => {
-                el.textContent = 'user_username user_email';
+                el.textContent = 'profile email';
                 el.classList.remove('highlight');
             });
         }

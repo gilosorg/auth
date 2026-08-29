@@ -285,7 +285,7 @@ func buildScopeDetails(requestedScopes, requiredScopes []string, user *database.
 
 		// Check data availability and build masked value
 		switch s {
-		case "user_email":
+		case "email":
 			if user.Email != "" {
 				maskedValue = utils.MaskEmail(user.Email)
 			} else if isRequired {
@@ -297,7 +297,7 @@ func buildScopeDetails(requestedScopes, requiredScopes []string, user *database.
 				}
 				missingFields = append(missingFields, fieldName)
 			}
-		case "user_phone":
+		case "phone":
 			if user.Phone != 0 {
 				maskedValue = utils.MaskPhone(user.Phone)
 			} else if isRequired {
@@ -309,56 +309,6 @@ func buildScopeDetails(requestedScopes, requiredScopes []string, user *database.
 				}
 				missingFields = append(missingFields, fieldName)
 			}
-		case "user_first_name":
-			if user.FirstName != "" {
-				maskedValue = user.FirstName
-			} else if isRequired {
-				isMissing = true
-				hasMissingRequired = true
-				fieldName := translations["scope_first_name"]
-				if fieldName == "" {
-					fieldName = "first name"
-				}
-				missingFields = append(missingFields, fieldName)
-			}
-		case "user_last_name":
-			if user.LastName != "" {
-				maskedValue = user.LastName
-			} else if isRequired {
-				isMissing = true
-				hasMissingRequired = true
-				fieldName := translations["scope_last_name"]
-				if fieldName == "" {
-					fieldName = "last name"
-				}
-				missingFields = append(missingFields, fieldName)
-			}
-		case "user_middle_name":
-			if user.MiddleName != "" {
-				maskedValue = user.MiddleName
-			} else if isRequired {
-				isMissing = true
-				hasMissingRequired = true
-				fieldName := translations["scope_middle_name"]
-				if fieldName == "" {
-					fieldName = "middle name"
-				}
-				missingFields = append(missingFields, fieldName)
-			}
-		case "user_nickname":
-			if user.Nickname != "" {
-				maskedValue = user.Nickname
-			} else if isRequired {
-				isMissing = true
-				hasMissingRequired = true
-				fieldName := translations["scope_nickname"]
-				if fieldName == "" {
-					fieldName = "nickname"
-				}
-				missingFields = append(missingFields, fieldName)
-			}
-		case "user_username":
-			maskedValue = user.Username // always set
 		}
 
 		details = append(details, ScopeDetail{

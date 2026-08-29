@@ -101,30 +101,20 @@ func UserInfoHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Profile claims (OIDC Core §5.4)
-	if hasScope("profile") || hasScope("user_basic_info") || hasScope("user_username") {
+	if hasScope("profile") {
 		claims["preferred_username"] = user.Username
-	}
-	if hasScope("profile") || hasScope("user_basic_info") || hasScope("user_first_name") {
 		if user.FirstName != "" {
 			claims["given_name"] = user.FirstName
 		}
-	}
-	if hasScope("profile") || hasScope("user_basic_info") || hasScope("user_last_name") {
 		if user.LastName != "" {
 			claims["family_name"] = user.LastName
 		}
-	}
-	if hasScope("profile") || hasScope("user_basic_info") || hasScope("user_middle_name") {
 		if user.MiddleName != "" {
 			claims["middle_name"] = user.MiddleName
 		}
-	}
-	if hasScope("profile") || hasScope("user_basic_info") || hasScope("user_nickname") {
 		if user.Nickname != "" {
 			claims["nickname"] = user.Nickname
 		}
-	}
-	if hasScope("profile") || hasScope("user_basic_info") {
 		if user.Icon != "" {
 			claims["picture"] = config.IssuerURL + "/" + user.Icon
 		}
@@ -132,7 +122,7 @@ func UserInfoHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Email claims (OIDC Core §5.4)
-	if hasScope("email") || hasScope("user_email") {
+	if hasScope("email") {
 		if user.Email != "" {
 			claims["email"] = user.Email
 			claims["email_verified"] = user.EmailVerified
@@ -140,7 +130,7 @@ func UserInfoHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Phone claims (OIDC Core §5.4) — E.164 format with + prefix
-	if hasScope("phone") || hasScope("user_phone") {
+	if hasScope("phone") {
 		if user.Phone != 0 {
 			claims["phone_number"] = fmt.Sprintf("+%d", user.Phone)
 			claims["phone_number_verified"] = user.PhoneVerified
@@ -197,26 +187,22 @@ func GenerateIDToken(user *database.User, clientID uint64, scopes string, exp in
 		return false
 	}
 
-	if hasScope("profile") || hasScope("user_basic_info") || hasScope("user_username") {
+	if hasScope("profile") {
 		claims["preferred_username"] = user.Username
-	}
-	if hasScope("profile") || hasScope("user_basic_info") || hasScope("user_first_name") {
 		if user.FirstName != "" {
 			claims["given_name"] = user.FirstName
 		}
-	}
-	if hasScope("profile") || hasScope("user_basic_info") || hasScope("user_last_name") {
 		if user.LastName != "" {
 			claims["family_name"] = user.LastName
 		}
 	}
-	if hasScope("email") || hasScope("user_email") {
+	if hasScope("email") {
 		if user.Email != "" {
 			claims["email"] = user.Email
 			claims["email_verified"] = user.EmailVerified
 		}
 	}
-	if hasScope("phone") || hasScope("user_phone") {
+	if hasScope("phone") {
 		if user.Phone != 0 {
 			claims["phone_number"] = fmt.Sprintf("+%d", user.Phone)
 			claims["phone_number_verified"] = user.PhoneVerified
