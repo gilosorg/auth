@@ -387,6 +387,7 @@
 
                     <!-- Hidden form for actual submission -->
                     <form id="final-form" method="POST" style="display: none;">
+                        <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
                         <input type="hidden" name="client_id" value="{{.Client.ID}}">
                         <input type="hidden" name="redirect_uri" value="{{.RedirectURI}}">
                         <input type="hidden" name="state" value="{{.State}}">

@@ -105,6 +105,11 @@ func OAuthAuthorizeHandler(tmpls *template.Template) http.HandlerFunc {
 
 		tr := i18n.New(lang)
 
+		var csrfToken string
+		if sess, err := middleware.GetSession(r); err == nil {
+			csrfToken, _ = middleware.EnsureCSRFToken(sess)
+		}
+
 		// Step 8: Fetch user and check MFA status
 		var user database.User
 		if err := database.DB.First(&user, userID).Error; err != nil {
@@ -126,7 +131,7 @@ func OAuthAuthorizeHandler(tmpls *template.Template) http.HandlerFunc {
 			if r.Form.Get("approve") == "true" {
 				// Server-side enforcement: reject if required data is missing
 				if hasMissingRequired {
-					renderConsentPage(w, tmpls, client, scopeDetails, redirectURI, state, tr, lang, "Required account data is missing. Please update your profile.", &user, hasMissingRequired, missingFields)
+					renderConsentPage(w, tmpls, client, scopeDetails, redirectURI, state, tr, lang, "Required account data is missing. Please update your profile.", &user, hasMissingRequired, missingFields, csrfToken)
 					return
 				}
 
@@ -134,7 +139,7 @@ func OAuthAuthorizeHandler(tmpls *template.Template) http.HandlerFunc {
 				if user.MFATOTPEnabled {
 					totpCode := r.Form.Get("totp_code")
 					if totpCode == "" {
-						renderConsentPage(w, tmpls, client, scopeDetails, redirectURI, state, tr, lang, "TOTP verification code required", &user, hasMissingRequired, missingFields)
+						renderConsentPage(w, tmpls, client, scopeDetails, redirectURI, state, tr, lang, "TOTP verification code required", &user, hasMissingRequired, missingFields, csrfToken)
 						return
 					}
 
@@ -163,7 +168,7 @@ func OAuthAuthorizeHandler(tmpls *template.Template) http.HandlerFunc {
 							return
 						}
 						database.SM.SetData(sess, "oauth_totp_attempts", attemptCount)
-						renderConsentPage(w, tmpls, client, scopeDetails, redirectURI, state, tr, lang, fmt.Sprintf("Invalid verification code. %d attempts remaining.", 3-attemptCount), &user, hasMissingRequired, missingFields)
+						renderConsentPage(w, tmpls, client, scopeDetails, redirectURI, state, tr, lang, fmt.Sprintf("Invalid verification code. %d attempts remaining.", 3-attemptCount), &user, hasMissingRequired, missingFields, csrfToken)
 						return
 					}
 					// Clear attempts on success
@@ -246,7 +251,7 @@ func OAuthAuthorizeHandler(tmpls *template.Template) http.HandlerFunc {
 		}
 
 		// Render consent page
-		renderConsentPage(w, tmpls, client, scopeDetails, redirectURI, state, tr, lang, "", &user, hasMissingRequired, missingFields)
+		renderConsentPage(w, tmpls, client, scopeDetails, redirectURI, state, tr, lang, "", &user, hasMissingRequired, missingFields, csrfToken)
 	}
 }
 
@@ -324,7 +329,7 @@ func buildScopeDetails(requestedScopes, requiredScopes []string, user *database.
 }
 
 // renderConsentPage is a helper to render the oauth.html template
-func renderConsentPage(w http.ResponseWriter, tmpls *template.Template, client database.Client, scopeDetails []ScopeDetail, redirectURI string, state string, tr *i18n.Translator, lang string, errorMessage string, user *database.User, hasMissingRequired bool, missingFields []string) {
+func renderConsentPage(w http.ResponseWriter, tmpls *template.Template, client database.Client, scopeDetails []ScopeDetail, redirectURI string, state string, tr *i18n.Translator, lang string, errorMessage string, user *database.User, hasMissingRequired bool, missingFields []string, csrfToken string) {
 	data := map[string]interface{}{
 		"Client":             client,
 		"ScopeDetails":       scopeDetails,
@@ -340,6 +345,7 @@ func renderConsentPage(w http.ResponseWriter, tmpls *template.Template, client d
 		"User":               user,
 		"HasMissingRequired": hasMissingRequired,
 		"MissingFields":      missingFields,
+		"CSRFToken":          csrfToken,
 	}
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
