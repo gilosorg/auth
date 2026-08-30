@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.3](https://github.com/gilosorg/auth/compare/v0.1.2...v0.1.3) (2026-08-30)
+
+
+### Bug Fixes
+
+* bugs ([cf0af5a](https://github.com/gilosorg/auth/commit/cf0af5a6a06e81ed921cf8067f78c6c39e1823a4))
+
 ## [0.1.2](https://github.com/gilosorg/auth/compare/v0.1.1...v0.1.2) (2026-08-30)
 
 
