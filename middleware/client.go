@@ -117,7 +117,7 @@ func RequireScope(scope string, next http.HandlerFunc) http.HandlerFunc {
 		}
 
 		authorized := false
-		scopes := strings.Split(*session.Scopes, ",")
+		scopes := strings.Fields(*session.Scopes)
 		for _, s := range scopes {
 			if strings.TrimSpace(s) == scope {
 				authorized = true

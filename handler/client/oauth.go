@@ -62,7 +62,7 @@ func GetOAuthInquiryHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Prepare scope descriptions with required/missing info
-	requestedScopes := strings.Split(scope, " ")
+	requestedScopes := strings.Fields(scope)
 	clientScopes := strings.Split(client.Scopes, ",")
 	requiredScopes := strings.Split(client.RequiredScopes, ",")
 	translations := i18n.GetTranslations(lang)
@@ -212,7 +212,7 @@ func ApproveOAuthInquiryHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Validate scopes
-	requestedScopes := strings.Split(req.Scope, " ")
+	requestedScopes := strings.Fields(req.Scope)
 	clientScopes := strings.Split(client.Scopes, ",")
 	for _, s := range requestedScopes {
 		if s == "" {

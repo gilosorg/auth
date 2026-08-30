@@ -74,7 +74,7 @@ func OAuthAuthorizeHandler(tmpls *template.Template) http.HandlerFunc {
 		}
 
 		// Step 7: Validate scopes
-		requestedScopes := strings.Split(scope, " ")
+		requestedScopes := strings.Fields(scope)
 		clientScopes := strings.Split(client.Scopes, ",")
 		for _, s := range requestedScopes {
 			if !middleware.IsValidScope(s) || !slices.Contains(clientScopes, s) {

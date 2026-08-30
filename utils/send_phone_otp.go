@@ -6,8 +6,6 @@ import (
 	"slices"
 	"strings"
 
-	"gilosauth/config"
-
 	"github.com/nyaruka/phonenumbers"
 )
 
@@ -40,7 +38,7 @@ func SendPhoneOTP(phone string, otp string) error {
 		formatted = "998" + strings.TrimLeft(formatted, "0")
 	}
 
-	message := fmt.Sprintf("%s verification code: %s", config.AppName, otp)
+	message := fmt.Sprintf("auth.gilos.org is sending this code to verify your phone for Gilos ID registration or access: %s", otp)
 
 	// Call country-specific sending method
 	if country == "UZ" {

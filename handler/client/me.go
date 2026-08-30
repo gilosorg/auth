@@ -39,7 +39,7 @@ func MeHandler(w http.ResponseWriter, r *http.Request) {
 	if session.Scopes != nil {
 		scopeList = *session.Scopes
 	}
-	scopes := strings.Split(scopeList, ",")
+	scopes := strings.Fields(scopeList)
 	scopeMap := make(map[string]bool)
 	for _, s := range scopes {
 		scopeMap[strings.TrimSpace(s)] = true

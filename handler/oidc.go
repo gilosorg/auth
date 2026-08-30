@@ -78,7 +78,7 @@ func UserInfoHandler(w http.ResponseWriter, r *http.Request) {
 	if session.Scopes != nil {
 		scopesStr = *session.Scopes
 	}
-	scopes := strings.Split(scopesStr, ",")
+	scopes := strings.Fields(scopesStr)
 
 	var user database.User
 	if err := database.DB.First(&user, userID).Error; err != nil {
@@ -177,7 +177,7 @@ func GenerateIDToken(user *database.User, clientID uint64, scopes string, exp in
 		claims["at_hash"] = base64.RawURLEncoding.EncodeToString(atHash[:16])
 	}
 
-	scopesArr := strings.Split(scopes, " ")
+	scopesArr := strings.Fields(scopes)
 	hasScope := func(s string) bool {
 		for _, scope := range scopesArr {
 			if scope == s {

@@ -81,7 +81,7 @@ func main() {
 	// Define routes with explicit HTTP methods
 
 	// Page routes (GET only)
-	mux.HandleFunc("GET /", handler.AuthHandler(tmpls))
+	mux.HandleFunc("GET /{$}", handler.AuthHandler(tmpls))
 	mux.HandleFunc("GET /home", middleware.RequireCookieToken(handler.HomeHandler(tmpls)))
 	mux.HandleFunc("GET /docs", handler.DocsHandler(tmpls))
 
