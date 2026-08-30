@@ -6,9 +6,9 @@ main
 *.exe
 
 # Database files
-database/*.db
-database/*.db-wal
-database/*.db-shm
+*.db
+*.db-wal
+*.db-shm
 
 # RSA keys (never commit private keys)
 keys/
