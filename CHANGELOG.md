@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.1](https://github.com/gilosorg/auth/compare/v0.1.0...v0.1.1) (2026-08-30)
+
+
+### Bug Fixes
+
+* clean up ([130fcaf](https://github.com/gilosorg/auth/commit/130fcaf268633516cd9c7049d768809c4a8815f6))
+* remove form-action from csp to unblock oauth redirects ([84548b8](https://github.com/gilosorg/auth/commit/84548b84b6e1f4745ddbd10d112b35f7482628c7))
+
 ## [0.1.0](https://github.com/gilosorg/auth/compare/v0.0.5...v0.1.0) (2026-08-29)
 
 
