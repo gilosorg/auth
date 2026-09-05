@@ -855,7 +855,7 @@ func CallbackHandler(onSuccess AuthCallback) http.HandlerFunc {
                 </section>
 
                 <footer class="docs-footer">
-                    <p>&copy; {{ .Year }} Gilos. Need help? Contact us at info@gilos.email</p>
+                    <p>&copy; {{ .Year }} {{ index .T "company_name_llc" }}. Need help? Contact us at info@gilos.email</p>
                 </footer>
             </div>
         </main>

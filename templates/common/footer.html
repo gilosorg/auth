@@ -210,11 +210,11 @@
 <footer>
     <div class="container">
         <div class="footer-copyright">
-            <script>document.write(new Date().getFullYear())</script> Gilos Auth <a href="https://github.com/gilosorg/auth/releases/tag/{{.AppVersion}}" target="_blank" rel="noopener noreferrer" style="color: inherit; text-decoration: underline;">{{.AppVersion}}</a>
+            &copy; <script>document.write(new Date().getFullYear())</script> {{ index .T "company_name_llc" }}
         </div>
         <div class="footer-links">
             <a href="/docs" class="footer-link">{{ index .T "docs" }}</a>
-            <a href="https://github.com/gilosorg/auth" class="footer-link">{{ index .T "source_code" }}</a>
+            <a href="https://github.com/gilosorg/auth" class="footer-link">{{ index .T "source_code" }} {{.AppVersion}}</a>
             <a href="/terms" class="footer-link">{{ index .T "terms" }}</a>
             <a href="/privacy" class="footer-link">{{ index .T "privacy" }}</a>
             <a href="https://gilos.org/contact" class="footer-link">{{ index .T "help" }}</a>
