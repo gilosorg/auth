@@ -19,7 +19,7 @@ const (
 	clientIDKey contextKey = "ClientID"
 )
 
-// RequireCookieToken ensures a user is logged in
+// RequireCookieToken ensures a user is logged in.
 func RequireCookieToken(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Get session from cookie

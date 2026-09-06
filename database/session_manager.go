@@ -325,7 +325,7 @@ func (sm *SessionManager) ClearUser(session *Session) error {
 	return nil
 }
 
-// UpdateMetadata updates the session's IP address and device info from the request
+// UpdateMetadata updates the session's IP address and device info from the request.
 func (sm *SessionManager) UpdateMetadata(session *Session, r *http.Request) {
 	userAgent := r.UserAgent()
 	if userAgent != "" {

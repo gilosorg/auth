@@ -16,7 +16,7 @@ import (
 	"gilosauth/config"
 )
 
-// Pre-compiled regex for non-digit stripping
+// Pre-compiled regex for non-digit stripping.
 var digitsOnly = regexp.MustCompile(`[^0-9]`)
 
 // GenerateRandomString generates a random hex string of the given length in bytes.
