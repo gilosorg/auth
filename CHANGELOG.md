@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.6](https://github.com/gilosorg/auth/compare/v0.1.5...v0.1.6) (2026-09-06)
+
+
+### Bug Fixes
+
+* session IP detection and per-access metadata updates ([6e05f91](https://github.com/gilosorg/auth/commit/6e05f91dc55f2bf50b0081d92d71275f2f581471))
+
 ## [0.1.5](https://github.com/gilosorg/auth/compare/v0.1.4...v0.1.5) (2026-09-06)
 
 
