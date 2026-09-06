@@ -5,7 +5,7 @@
 
 ### Bug Fixes
 
-* enterprise-grade session IP detection with per-access updates ([fe897da](https://github.com/gilosorg/auth/commit/fe897da931f768c8237bb3a3a115a377d6a51e04))
+* proper session IP detection with per-access updates ([fe897da](https://github.com/gilosorg/auth/commit/fe897da931f768c8237bb3a3a115a377d6a51e04))
 
 ## [0.1.4](https://github.com/gilosorg/auth/compare/v0.1.3...v0.1.4) (2026-09-05)
 
