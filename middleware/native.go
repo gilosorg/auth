@@ -32,7 +32,7 @@ func RequireCookieToken(next http.HandlerFunc) http.HandlerFunc {
 		}
 
 		// Retrieve session
-		sess, err := database.SM.Get(cookie.Value, "native")
+		sess, err := database.SM.Get(cookie.Value, "native", r)
 		if err != nil {
 			// Clear the session cookie
 			http.SetCookie(w, &http.Cookie{

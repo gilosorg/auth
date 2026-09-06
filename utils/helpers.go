@@ -11,6 +11,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"sync"
 
 	"gilosauth/config"
 )
@@ -28,31 +29,44 @@ func GenerateRandomString(n int) (string, error) {
 }
 
 // GetClientIP extracts the real client IP address from an HTTP request.
-// It checks X-Forwarded-For and X-Real-IP headers only when the request
-// comes from a configured trusted proxy. Falls back to RemoteAddr.
+//
+// Uses the rightmost-untrusted-IP algorithm for X-Forwarded-For, which is the
+// only safe approach in production. The leftmost IP can be trivially spoofed by
+// clients; the rightmost untrusted IP is the one appended by the first trusted
+// proxy and cannot be forged without compromising the proxy itself.
+//
+// Trusted proxies are configured via TRUSTED_PROXIES env var (supports both
+// individual IPs and CIDR ranges). Loopback addresses (127.0.0.0/8, ::1) are
+// always implicitly trusted since this service sits behind a reverse proxy.
 func GetClientIP(r *http.Request) string {
-	remoteIP := extractRemoteIP(r)
+	remoteIP := normalizeIP(extractRemoteIP(r))
 
-	// Only trust proxy headers if the connection comes from a trusted proxy
-	if isTrustedProxy(remoteIP) {
-		// Check X-Forwarded-For header (standard for proxies)
-		// Format: "client, proxy1, proxy2" - we want the first (leftmost) IP
-		if xff := r.Header.Get("X-Forwarded-For"); xff != "" {
-			ips := strings.Split(xff, ",")
-			if len(ips) > 0 {
-				clientIP := strings.TrimSpace(ips[0])
-				if clientIP != "" && isValidIP(clientIP) {
-					return clientIP
-				}
+	// Only trust proxy headers if the direct connection is from a trusted source
+	if !isTrustedProxy(remoteIP) {
+		return remoteIP
+	}
+
+	// Use rightmost-untrusted-IP algorithm on X-Forwarded-For.
+	// Format: "client, proxy1, proxy2" — walk right-to-left, skipping trusted proxies.
+	// The first non-trusted IP we encounter is the real client IP.
+	if xff := r.Header.Get("X-Forwarded-For"); xff != "" {
+		ips := strings.Split(xff, ",")
+		for i := len(ips) - 1; i >= 0; i-- {
+			candidate := normalizeIP(strings.TrimSpace(ips[i]))
+			if candidate == "" || !isValidIP(candidate) {
+				continue
+			}
+			if !isTrustedProxy(candidate) {
+				return candidate
 			}
 		}
+	}
 
-		// Check X-Real-IP header (nginx default)
-		if xrip := r.Header.Get("X-Real-IP"); xrip != "" {
-			clientIP := strings.TrimSpace(xrip)
-			if clientIP != "" && isValidIP(clientIP) {
-				return clientIP
-			}
+	// Fall back to X-Real-IP (set by nginx: proxy_set_header X-Real-IP $remote_addr)
+	if xrip := r.Header.Get("X-Real-IP"); xrip != "" {
+		candidate := normalizeIP(strings.TrimSpace(xrip))
+		if candidate != "" && isValidIP(candidate) {
+			return candidate
 		}
 	}
 
@@ -68,20 +82,86 @@ func extractRemoteIP(r *http.Request) string {
 	return ip
 }
 
-// isTrustedProxy checks if an IP is in the configured trusted proxies list.
-func isTrustedProxy(ip string) bool {
-	if len(config.TrustedProxies) == 0 {
-		return false // No trusted proxies configured — never trust proxy headers
+// normalizeIP converts IPv4-mapped IPv6 addresses (e.g. "::ffff:192.168.1.1")
+// to their plain IPv4 form, and trims whitespace. This ensures consistent
+// matching against trusted proxy lists regardless of how the OS reports the IP.
+func normalizeIP(ip string) string {
+	ip = strings.TrimSpace(ip)
+	if ip == "" {
+		return ""
 	}
-	for _, proxy := range config.TrustedProxies {
-		if proxy == ip {
+	parsed := net.ParseIP(ip)
+	if parsed == nil {
+		return ip
+	}
+	// If it's an IPv4-mapped IPv6 address, convert to IPv4 string
+	if v4 := parsed.To4(); v4 != nil {
+		return v4.String()
+	}
+	return parsed.String()
+}
+
+// Parsed trusted proxy networks, initialized once on first use
+var (
+	trustedNets     []*net.IPNet
+	trustedIPs      []net.IP
+	trustedInitOnce sync.Once
+)
+
+// initTrustedProxies parses the configured TRUSTED_PROXIES into net.IPNet and
+// net.IP values for efficient matching. Called once via sync.Once.
+func initTrustedProxies() {
+	for _, entry := range config.TrustedProxies {
+		entry = strings.TrimSpace(entry)
+		if entry == "" {
+			continue
+		}
+		// Try parsing as CIDR first
+		if strings.Contains(entry, "/") {
+			if _, network, err := net.ParseCIDR(entry); err == nil {
+				trustedNets = append(trustedNets, network)
+			}
+			continue
+		}
+		// Parse as individual IP
+		if ip := net.ParseIP(entry); ip != nil {
+			trustedIPs = append(trustedIPs, ip)
+		}
+	}
+}
+
+// isTrustedProxy checks if an IP is a trusted proxy.
+// Loopback addresses are always trusted (the service runs behind nginx on the same host).
+// Configured TRUSTED_PROXIES supports both individual IPs and CIDR ranges.
+func isTrustedProxy(ip string) bool {
+	parsed := net.ParseIP(ip)
+	if parsed == nil {
+		return false
+	}
+
+	// Always trust loopback — the app always sits behind a local reverse proxy
+	if parsed.IsLoopback() {
+		return true
+	}
+
+	// Check configured trusted proxies
+	trustedInitOnce.Do(initTrustedProxies)
+
+	for _, trustedIP := range trustedIPs {
+		if trustedIP.Equal(parsed) {
 			return true
 		}
 	}
+	for _, network := range trustedNets {
+		if network.Contains(parsed) {
+			return true
+		}
+	}
+
 	return false
 }
 
-// isValidIP checks if a string is a valid IPv4 or IPv6 address
+// isValidIP checks if a string is a valid IPv4 or IPv6 address.
 func isValidIP(ip string) bool {
 	return net.ParseIP(ip) != nil
 }

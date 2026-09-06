@@ -95,12 +95,13 @@ func (sm *SessionManager) Start(ctx context.Context, w http.ResponseWriter, r *h
 			// Try to find session by cookie token
 			if err := sm.db.Where("cookie_token = ? AND type = ?", cookie.Value, "native").
 				First(&session).Error; err == nil {
-				// Update LastSeenAt and ExpiresAt
+				// Update LastSeenAt, ExpiresAt, and metadata (IP, device) on every access
 				session.LastSeenAt = time.Now()
 				if session.UserID == nil {
 					// Non-user-bound session: refresh 1-hour expiration
 					session.ExpiresAt = time.Now().Add(1 * time.Hour)
 				}
+				sm.UpdateMetadata(&session, r)
 				// User-bound sessions have long expiration
 				if err := sm.db.Save(&session).Error; err != nil {
 					return nil, fmt.Errorf("failed to update session: %w", err)
@@ -153,8 +154,10 @@ func (sm *SessionManager) Start(ctx context.Context, w http.ResponseWriter, r *h
 	return &session, nil
 }
 
-// Get retrieves a session by cookie token (for web) or ID (for API)
-func (sm *SessionManager) Get(identifier string, sessionType string) (*Session, error) {
+// Get retrieves a session by cookie token (for web) or ID (for API).
+// When r is provided, session metadata (IP address, device info) is updated
+// on every access so users always see the most recent IP for each session.
+func (sm *SessionManager) Get(identifier string, sessionType string, r ...*http.Request) (*Session, error) {
 	var session Session
 	var err error
 
@@ -178,6 +181,12 @@ func (sm *SessionManager) Get(identifier string, sessionType string) (*Session, 
 		// Non-user-bound session: refresh 1-hour expiration
 		session.ExpiresAt = time.Now().Add(1 * time.Hour)
 	}
+
+	// Update metadata (IP, device info) on every access when request is available
+	if len(r) > 0 && r[0] != nil {
+		sm.UpdateMetadata(&session, r[0])
+	}
+
 	// User-bound sessions have long expiration
 	if err := sm.db.Save(&session).Error; err != nil {
 		return nil, fmt.Errorf("failed to update session: %w", err)
@@ -186,7 +195,8 @@ func (sm *SessionManager) Get(identifier string, sessionType string) (*Session, 
 	return &session, nil
 }
 
-// GetFromRequest retrieves a session from the request for web sessions
+// GetFromRequest retrieves a session from the request for web sessions.
+// Passes the request through so metadata (IP, device) is updated on every access.
 func (sm *SessionManager) GetFromRequest(r *http.Request, sessionType string) (*Session, error) {
 	if sessionType != "native" {
 		return nil, fmt.Errorf("GetFromRequest only supports native sessions")
@@ -197,7 +207,7 @@ func (sm *SessionManager) GetFromRequest(r *http.Request, sessionType string) (*
 		return nil, fmt.Errorf("no session cookie: %w", err)
 	}
 
-	return sm.Get(cookie.Value, "native")
+	return sm.Get(cookie.Value, "native", r)
 }
 
 // SetData sets a key-value pair in the session data
