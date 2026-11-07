@@ -88,8 +88,15 @@ var (
 // RateLimitMiddleware applies tiered rate limiting based on the request path.
 func RateLimitMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ip := getClientIPForRateLimit(r)
 		path := r.URL.Path
+
+		// Bypass rate limiting for health check and static assets
+		if path == "/health" || strings.HasPrefix(path, "/static/") || strings.HasPrefix(path, "/media/") {
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		ip := getClientIPForRateLimit(r)
 
 		// Login-specific rate limiting (strictest)
 		if isLoginPath(path) {

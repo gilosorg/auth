@@ -417,8 +417,8 @@ func OAuthTokenHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		method, _ := database.SM.GetData(&session, "code_challenge_method")
-		methodStr := "plain"
-		if m, ok := method.(string); ok {
+		methodStr := "S256"
+		if m, ok := method.(string); ok && m != "" {
 			methodStr = m
 		}
 		if !verifyPKCE(codeVerifier, fmt.Sprint(storedChallenge), methodStr) {
