@@ -32,9 +32,9 @@ func CorsMiddleware(next http.Handler) http.Handler {
 		// - /o/token: Clients exchange auth codes/refresh tokens
 		// - /api/userinfo: Standard OIDC userinfo endpoint
 		// - /.well-known/*: Discovery and JWKS metadata
-		// Note: /o/introspect and /o/revoke use strict CORS because they require
+		// Note: /o/introspect uses strict CORS because it requires
 		// client authentication and should only be called server-to-server.
-		if path == "/o/token" || path == "/auth/logout" || path == "/api/userinfo" || strings.HasPrefix(path, "/.well-known/") {
+		if path == "/o/token" || path == "/o/revoke" || path == "/auth/logout" || path == "/api/userinfo" || strings.HasPrefix(path, "/.well-known/") {
 			publicCors.Handler(next).ServeHTTP(w, r)
 			return
 		}

@@ -370,6 +370,12 @@ func CleanExpiredSessions(db *gorm.DB) error {
 		log.Printf("Error processing expired deletion requests: %v", err)
 	}
 
+	// Run WAL checkpoint and incremental vacuum to maintain database health
+	if sqlDB, err := db.DB(); err == nil {
+		sqlDB.Exec("PRAGMA wal_checkpoint(PASSIVE)")
+		sqlDB.Exec("PRAGMA incremental_vacuum(100)")
+	}
+
 	return nil
 }
 

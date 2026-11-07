@@ -750,12 +750,26 @@ func OAuthRevokeHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	tokenTypeHint := r.FormValue("token_type_hint")
 	hashedToken := utils.HashToken(token)
 
-	// Delete the session containing either access or refresh token
-	// (RFC 7009: Revoking either revokes the entire grant)
-	database.DB.Where("(access_token = ? OR refresh_token = ?) AND type = ? AND client_id = ?", hashedToken, hashedToken, "client", client.ID).Delete(&database.Session{})
+	// RFC 7009 §2.1: token_type_hint can optimize lookup, but fallback to checking both.
+	// Revoking either access or refresh token revokes the entire grant.
+	switch tokenTypeHint {
+	case "access_token":
+		result := database.DB.Where("access_token = ? AND type = ? AND client_id = ?", hashedToken, "client", client.ID).Delete(&database.Session{})
+		if result.RowsAffected == 0 {
+			database.DB.Where("refresh_token = ? AND type = ? AND client_id = ?", hashedToken, "client", client.ID).Delete(&database.Session{})
+		}
+	case "refresh_token":
+		result := database.DB.Where("refresh_token = ? AND type = ? AND client_id = ?", hashedToken, "client", client.ID).Delete(&database.Session{})
+		if result.RowsAffected == 0 {
+			database.DB.Where("access_token = ? AND type = ? AND client_id = ?", hashedToken, "client", client.ID).Delete(&database.Session{})
+		}
+	default:
+		database.DB.Where("(access_token = ? OR refresh_token = ?) AND type = ? AND client_id = ?", hashedToken, hashedToken, "client", client.ID).Delete(&database.Session{})
+	}
 
-	// RFC 7009: Always return 200 OK
+	// RFC 7009 §2.2: Always return 200 OK
 	w.WriteHeader(http.StatusOK)
 }

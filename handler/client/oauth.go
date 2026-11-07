@@ -203,12 +203,13 @@ func ApproveOAuthInquiryHandler(w http.ResponseWriter, r *http.Request) {
 		utils.WriteJSONResponse(w, http.StatusBadRequest, map[string]string{"error": "invalid_request", "message": "PKCE code_challenge required (OAuth 2.1)"})
 		return
 	}
-	if req.CodeChallenge != "" && req.CodeChallengeMethod != "" && req.CodeChallengeMethod != "S256" && req.CodeChallengeMethod != "plain" {
-		utils.WriteJSONResponse(w, http.StatusBadRequest, map[string]string{"error": "invalid_request", "message": "Unsupported code_challenge_method. Use S256 or plain."})
-		return
+	// OAuth 2.1 mandates S256 only
+	if req.CodeChallengeMethod == "" {
+		req.CodeChallengeMethod = "S256" // Default to S256 per OAuth 2.1
 	}
-	if req.CodeChallengeMethod == "" && req.CodeChallenge != "" {
-		req.CodeChallengeMethod = "plain" // Default per RFC 7636
+	if req.CodeChallengeMethod != "S256" {
+		utils.WriteJSONResponse(w, http.StatusBadRequest, map[string]string{"error": "invalid_request", "message": "Unsupported code_challenge_method. Only S256 is supported (OAuth 2.1)."})
+		return
 	}
 
 	// Validate scopes
