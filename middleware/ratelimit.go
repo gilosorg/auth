@@ -1,7 +1,7 @@
 package middleware
 
 import (
-	"net"
+	"gilosauth/utils"
 	"net/http"
 	"strings"
 	"sync"
@@ -139,15 +139,8 @@ func isAuthPath(path string) bool {
 }
 
 // getClientIPForRateLimit extracts the client IP for rate limiting.
-// Uses RemoteAddr directly to avoid spoofing via X-Forwarded-For.
+// Uses utils.GetClientIP which securely parses X-Forwarded-For and X-Real-IP
+// only when the direct connection is from a trusted proxy (such as Nginx on localhost).
 func getClientIPForRateLimit(r *http.Request) string {
-	// For rate limiting, we use RemoteAddr (the actual TCP connection IP)
-	// to prevent bypassing via X-Forwarded-For spoofing.
-	// If behind a trusted proxy, the proxy's IP is rate-limited,
-	// which is acceptable because the proxy itself limits connections.
-	ip, _, err := net.SplitHostPort(r.RemoteAddr)
-	if err != nil {
-		return r.RemoteAddr
-	}
-	return ip
+	return utils.GetClientIP(r)
 }
