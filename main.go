@@ -95,6 +95,7 @@ func main() {
 	mux.HandleFunc("POST /auth/otp/verify", handler.VerifyOTPHandler)
 	mux.HandleFunc("GET /auth/state", handler.AuthStateHandler)
 	mux.HandleFunc("POST /auth/state", handler.AuthStateHandler)
+	mux.HandleFunc("POST /auth/logout", handler.LogoutHandler)
 
 	// Native session endpoints
 	mux.HandleFunc("GET /sessions", middleware.RequireCookieToken(handler.SessionsHandler))

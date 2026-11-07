@@ -34,7 +34,7 @@ func CorsMiddleware(next http.Handler) http.Handler {
 		// - /.well-known/*: Discovery and JWKS metadata
 		// Note: /o/introspect and /o/revoke use strict CORS because they require
 		// client authentication and should only be called server-to-server.
-		if path == "/o/token" || path == "/api/userinfo" || strings.HasPrefix(path, "/.well-known/") {
+		if path == "/o/token" || path == "/auth/logout" || path == "/api/userinfo" || strings.HasPrefix(path, "/.well-known/") {
 			publicCors.Handler(next).ServeHTTP(w, r)
 			return
 		}

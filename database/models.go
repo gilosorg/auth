@@ -2,6 +2,7 @@ package database
 
 import (
 	"database/sql/driver"
+	"net/url"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -67,13 +68,67 @@ func (c *Client) HasSecret() bool {
 }
 
 // HasRedirectURI checks whether the given URI is in this client's registered redirect URIs.
+// Per RFC 8252 Section 7.3, loopback redirects (http://localhost, http://127.0.0.1, http://[::1])
+// match regardless of port number, allowing desktop apps to use ephemeral ports while strictly
+// matching scheme, host, and path.
 func (c *Client) HasRedirectURI(uri string) bool {
 	for _, registered := range c.RedirectURIList() {
 		if registered == uri {
 			return true
 		}
+		// RFC 8252: allow any port for loopback redirects
+		if matchesLoopbackRedirect(registered, uri) {
+			return true
+		}
 	}
 	return false
+}
+
+// matchesLoopbackRedirect checks if requestedURI matches registeredURI per RFC 8252 §7.3.
+// Loopback redirects (http://localhost, http://127.0.0.1, http://[::1]) match
+// regardless of port number, allowing desktop apps to use ephemeral ports,
+// while strictly requiring scheme, loopback host, and path to match.
+func matchesLoopbackRedirect(registeredURI, requestedURI string) bool {
+	uReg, err1 := url.Parse(registeredURI)
+	uReq, err2 := url.Parse(requestedURI)
+	if err1 != nil || err2 != nil {
+		return false
+	}
+
+	// Must both use http scheme
+	if !strings.EqualFold(uReg.Scheme, "http") || !strings.EqualFold(uReq.Scheme, "http") {
+		return false
+	}
+
+	regHost := uReg.Hostname()
+	reqHost := uReq.Hostname()
+
+	// Both must be loopback hosts
+	if !isLoopbackHost(regHost) || !isLoopbackHost(reqHost) {
+		return false
+	}
+
+	// Hostname must match (e.g. localhost with localhost, 127.0.0.1 with 127.0.0.1)
+	if !strings.EqualFold(regHost, reqHost) {
+		return false
+	}
+
+	// Path must match exactly (normalize empty path to "/")
+	regPath := uReg.Path
+	if regPath == "" {
+		regPath = "/"
+	}
+	reqPath := uReq.Path
+	if reqPath == "" {
+		reqPath = "/"
+	}
+
+	return regPath == reqPath
+}
+
+func isLoopbackHost(host string) bool {
+	h := strings.ToLower(host)
+	return h == "localhost" || h == "127.0.0.1" || h == "::1" || h == "[::1]"
 }
 
 // RedirectURIList returns the registered redirect URIs as a slice.

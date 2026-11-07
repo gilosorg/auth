@@ -2,6 +2,7 @@ package client
 
 import (
 	"encoding/json"
+	"gilosauth/config"
 	"gilosauth/database"
 	"gilosauth/middleware"
 	"gilosauth/utils"
@@ -47,9 +48,15 @@ func sanitizeTotp(data TOTPData) TOTPData {
 
 // Convert model to TOTPData
 func modelToData(m database.TOTPSecret) TOTPData {
+	secret := m.Secret
+	if config.EncryptionKey != "" {
+		if decrypted, err := utils.DecryptAES(secret, config.EncryptionKey); err == nil {
+			secret = decrypted
+		}
+	}
 	data := TOTPData{
 		UUID:      m.UUID,
-		Secret:    m.Secret,
+		Secret:    secret,
 		Label:     m.Label,
 		Algorithm: m.Algorithm,
 		Digits:    &m.Digits,
@@ -167,7 +174,13 @@ func PushSyncHandler(w http.ResponseWriter, r *http.Request) {
 						errDetails = &details
 					} else {
 						data = sanitizeTotp(data)
-						existing.Secret = data.Secret
+						secretToStore := data.Secret
+						if config.EncryptionKey != "" {
+							if encrypted, err := utils.EncryptAES(secretToStore, config.EncryptionKey); err == nil {
+								secretToStore = encrypted
+							}
+						}
+						existing.Secret = secretToStore
 						existing.Label = data.Label
 						if data.Issuer != nil {
 							existing.Issuer = *data.Issuer
@@ -188,10 +201,16 @@ func PushSyncHandler(w http.ResponseWriter, r *http.Request) {
 				} else {
 					// Create new
 					data = sanitizeTotp(data)
+					secretToStore := data.Secret
+					if config.EncryptionKey != "" {
+						if encrypted, err := utils.EncryptAES(secretToStore, config.EncryptionKey); err == nil {
+							secretToStore = encrypted
+						}
+					}
 					newSecret := database.TOTPSecret{
 						UUID:      data.UUID,
 						UserID:    userID,
-						Secret:    data.Secret,
+						Secret:    secretToStore,
 						Label:     data.Label,
 						Algorithm: data.Algorithm,
 						Digits:    *data.Digits,

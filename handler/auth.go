@@ -1384,3 +1384,75 @@ func AuthStateHandler(w http.ResponseWriter, r *http.Request) {
 	response := getAuthStateResponse(sess, &user, successMessage, nextStep)
 	utils.WriteJSONResponse(w, http.StatusOK, response)
 }
+
+
+// LogoutHandler handles user session termination and token revocation.
+// Compatible with native apps, OAuth clients, and web sessions.
+func LogoutHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		utils.WriteJSONResponse(w, http.StatusMethodNotAllowed, map[string]interface{}{
+			"success": false,
+			"error":   "method not allowed",
+		})
+		return
+	}
+
+	var token string
+
+	// 1. Try decoding JSON body
+	var reqBody struct {
+		RefreshToken string `json:"refreshToken"`
+		Token        string `json:"token"`
+		RefreshTok   string `json:"refresh_token"`
+	}
+	if strings.Contains(r.Header.Get("Content-Type"), "json") {
+		_ = json.NewDecoder(r.Body).Decode(&reqBody)
+		if reqBody.RefreshToken != "" {
+			token = reqBody.RefreshToken
+		} else if reqBody.RefreshTok != "" {
+			token = reqBody.RefreshTok
+		} else if reqBody.Token != "" {
+			token = reqBody.Token
+		}
+	}
+
+	// 2. Try form values
+	if token == "" {
+		_ = r.ParseForm()
+		token = r.FormValue("refreshToken")
+		if token == "" {
+			token = r.FormValue("refresh_token")
+		}
+		if token == "" {
+			token = r.FormValue("token")
+		}
+	}
+
+	// 3. Try Authorization Bearer header
+	if token == "" {
+		authHeader := r.Header.Get("Authorization")
+		if strings.HasPrefix(authHeader, "Bearer ") {
+			token = strings.TrimPrefix(authHeader, "Bearer ")
+		}
+	}
+
+	// If token found, hash and delete matching sessions
+	if token != "" {
+		hashedToken := utils.HashToken(token)
+		database.DB.Where("refresh_token = ? OR access_token = ?", hashedToken, hashedToken).Delete(&database.Session{})
+	}
+
+	// 4. Also check cookie token if present
+	if cookie, err := r.Cookie("session_token"); err == nil && cookie.Value != "" {
+		hashedCookie := utils.HashToken(cookie.Value)
+		database.DB.Where("cookie_token = ?", hashedCookie).Delete(&database.Session{})
+	}
+
+	// Clear session cookie
+	database.SetSessionCookieHelper(w, "", time.Now().Add(-24*time.Hour))
+
+	utils.WriteJSONResponse(w, http.StatusOK, map[string]interface{}{
+		"success": true,
+		"message": "logged out successfully",
+	})
+}
