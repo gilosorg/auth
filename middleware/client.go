@@ -16,11 +16,12 @@ import (
 // Standard OIDC scopes (openid, profile, email, phone) are listed first,
 // followed by platform-specific fine-grained scopes.
 var Scopes = []string{
-	// Standard OIDC scopes (RFC 6749 / OIDC Core §5.4)
+	// Standard OIDC scopes (RFC 6749 / OIDC Core §5.4 / §11)
 	"openid",
 	"profile",
 	"email",
 	"phone",
+	"offline_access",
 	// Platform-specific scopes
 	"user_sessions",
 	"user_totps",

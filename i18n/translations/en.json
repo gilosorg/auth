@@ -271,5 +271,7 @@
   "day_ago": "1 day ago",
   "days_ago": "days ago",
   "month_ago": "1 month ago",
-  "months_ago": "months ago"
+  "months_ago": "months ago",
+  "access_offline_access": "Maintain offline access to your account",
+  "scope_offline_access": "Offline access"
 }

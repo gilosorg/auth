@@ -534,6 +534,7 @@ func OAuthTokenHandler(w http.ResponseWriter, r *http.Request) {
 
 		accessTokenExpiresAt := time.Now().Add(1 * time.Hour)
 		session.AccessTokenExpiresAt = &accessTokenExpiresAt
+		session.ExpiresAt = time.Now().Add(30 * 24 * time.Hour) // Sliding 30-day window on active refresh
 		session.LastSeenAt = time.Now()
 		database.SM.UpdateMetadata(&session, r)
 

@@ -271,5 +271,7 @@
   "day_ago": "1 kun oldin",
   "days_ago": "kun oldin",
   "month_ago": "1 oy oldin",
-  "months_ago": "oy oldin"
+  "months_ago": "oy oldin",
+  "access_offline_access": "Hisobingizga oflayn kirish huquqini saqlash",
+  "scope_offline_access": "Oflayn kirish"
 }
