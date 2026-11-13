@@ -1,6 +1,7 @@
 package client
 
 import (
+	"fmt"
 	"gilosauth/database"
 	"gilosauth/middleware"
 	"gilosauth/utils"
@@ -66,10 +67,15 @@ func SessionsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	sessionResponses := make([]database.SessionResponse, len(sessions))
+	for i, s := range sessions {
+		sessionResponses[i] = s.ToResponse()
+	}
+
 	totalPages := int(math.Ceil(float64(total) / float64(limit)))
 
 	response := PaginatedResponse{
-		Data: sessions,
+		Data: sessionResponses,
 		Pagination: Pagination{
 			Total:       total,
 			Page:        page,
@@ -126,8 +132,12 @@ func TerminateSessionHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	database.LogAuditEventWithUserID(database.AuditSessionTerminated, userID, r,
+		fmt.Sprintf("terminated session #%d via API (type: %s)", session.ID, session.Type))
+
 	utils.WriteJSONResponse(w, http.StatusOK, map[string]bool{"success": true})
 }
+
 // TerminateOthersHandler terminates all sessions except the current one.
 func TerminateOthersHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
@@ -141,17 +151,20 @@ func TerminateOthersHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Get current access token (verified by middleware)
-	accessToken := r.Header.Get("Authorization")
-	if len(accessToken) > 7 && accessToken[:7] == "Bearer " {
-		accessToken = accessToken[7:]
+	currentSession, ok := r.Context().Value(database.SessionContextKey).(*database.Session)
+	if !ok || currentSession == nil {
+		utils.WriteJSONResponse(w, http.StatusUnauthorized, map[string]string{"error": "session not found"})
+		return
 	}
 
-	// Delete all user sessions except the current one
-	if err := database.DB.Where("user_id = ? AND access_token != ?", userID, accessToken).Delete(&database.Session{}).Error; err != nil {
+	// Delete all user sessions except the current one by session ID
+	if err := database.DB.Where("user_id = ? AND id != ?", userID, currentSession.ID).Delete(&database.Session{}).Error; err != nil {
 		utils.WriteJSONResponse(w, http.StatusInternalServerError, map[string]string{"error": "failed to terminate other sessions"})
 		return
 	}
+
+	database.LogAuditEventWithUserID(database.AuditSessionsTerminated, userID, r,
+		fmt.Sprintf("terminated all other sessions via API except #%d", currentSession.ID))
 
 	utils.WriteJSONResponse(w, http.StatusOK, map[string]bool{"success": true})
 }

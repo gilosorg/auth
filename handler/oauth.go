@@ -18,7 +18,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/pquerna/otp/totp"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -96,6 +95,10 @@ func OAuthAuthorizeHandler(tmpls *template.Template) http.HandlerFunc {
 			http.Error(w, "Unsupported code_challenge_method. Only S256 is supported (OAuth 2.1).", http.StatusBadRequest)
 			return
 		}
+		if !utils.ValidatePKCECodeChallenge(codeChallenge) {
+			http.Error(w, "Invalid PKCE code_challenge format", http.StatusBadRequest)
+			return
+		}
 
 		// Get language preference
 		lang := "en"
@@ -110,10 +113,14 @@ func OAuthAuthorizeHandler(tmpls *template.Template) http.HandlerFunc {
 			csrfToken, _ = middleware.EnsureCSRFToken(sess)
 		}
 
-		// Step 8: Fetch user and check MFA status
+		// Step 8: Fetch user and verify active status
 		var user database.User
 		if err := database.DB.First(&user, userID).Error; err != nil {
 			http.Error(w, "User not found", http.StatusInternalServerError)
+			return
+		}
+		if user.Status != "active" {
+			http.Error(w, "Account is suspended", http.StatusForbidden)
 			return
 		}
 
@@ -159,8 +166,8 @@ func OAuthAuthorizeHandler(tmpls *template.Template) http.HandlerFunc {
 					}
 					attemptCount++
 
-					// Verify TOTP
-					if !totp.Validate(totpCode, user.TOTPSecret) {
+					// Verify TOTP (supporting encrypted secret at rest)
+					if !decryptAndValidateUserTOTP(&user, totpCode) {
 						if attemptCount >= 3 {
 							database.SM.ApplyBlock(fmt.Sprintf("user:%d:security", user.ID), sess, 24*time.Hour, "security")
 							database.SM.ClearAllData(sess)
@@ -378,6 +385,9 @@ func OAuthTokenHandler(w http.ResponseWriter, r *http.Request) {
 	// Authenticate client (supports both form params and HTTP Basic Auth)
 	client, err := authenticateClient(r)
 	if err != nil {
+		if _, _, hasBasic := r.BasicAuth(); hasBasic {
+			w.Header().Set("WWW-Authenticate", `Basic realm="Gilos Auth"`)
+		}
 		utils.WriteJSONResponse(w, http.StatusUnauthorized, map[string]string{"error": "invalid_client", "error_description": err.Error()})
 		return
 	}
@@ -433,10 +443,14 @@ func OAuthTokenHandler(w http.ResponseWriter, r *http.Request) {
 			scopeStr = s
 		}
 
-		// Get user for OIDC claims
+		// Get user for OIDC claims and verify account is active
 		var user database.User
 		if err := database.DB.First(&user, *session.UserID).Error; err != nil {
-			utils.WriteJSONResponse(w, http.StatusInternalServerError, map[string]string{"error": "server_error", "error_description": "Failed to fetch user"})
+			utils.WriteJSONResponse(w, http.StatusBadRequest, map[string]string{"error": "invalid_grant", "error_description": "User not found"})
+			return
+		}
+		if user.Status != "active" {
+			utils.WriteJSONResponse(w, http.StatusForbidden, map[string]string{"error": "access_denied", "error_description": "Account is suspended"})
 			return
 		}
 
@@ -448,9 +462,14 @@ func OAuthTokenHandler(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 
-		// C6: Delete the auth code session entirely (single-use guarantee)
-		if err := database.DB.Delete(&session).Error; err != nil {
+		// Atomically consume the auth code session (single-use guarantee)
+		delRes := database.DB.Where("id = ?", session.ID).Delete(&database.Session{})
+		if delRes.Error != nil {
 			utils.WriteJSONResponse(w, http.StatusInternalServerError, map[string]string{"error": "server_error", "error_description": "Failed to consume auth code"})
+			return
+		}
+		if delRes.RowsAffected == 0 {
+			utils.WriteJSONResponse(w, http.StatusBadRequest, map[string]string{"error": "invalid_grant", "error_description": "Authorization code has already been used"})
 			return
 		}
 
@@ -532,13 +551,28 @@ func OAuthTokenHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		// Verify user still exists and is active before refreshing
+		if session.UserID == nil {
+			utils.WriteJSONResponse(w, http.StatusBadRequest, map[string]string{"error": "invalid_grant", "error_description": "Session has no associated user"})
+			return
+		}
+		var user database.User
+		if err := database.DB.First(&user, *session.UserID).Error; err != nil || user.Status != "active" {
+			utils.WriteJSONResponse(w, http.StatusForbidden, map[string]string{"error": "access_denied", "error_description": "Account is unavailable or suspended"})
+			return
+		}
+
 		accessTokenExpiresAt := time.Now().Add(1 * time.Hour)
+		newExpiresAt := time.Now().Add(30 * 24 * time.Hour)
 		session.AccessTokenExpiresAt = &accessTokenExpiresAt
-		session.ExpiresAt = time.Now().Add(30 * 24 * time.Hour) // Sliding 30-day window on active refresh
+		session.ExpiresAt = newExpiresAt
 		session.LastSeenAt = time.Now()
 		database.SM.UpdateMetadata(&session, r)
 
-		scopeStr := *session.Scopes
+		var scopeStr string
+		if session.Scopes != nil {
+			scopeStr = *session.Scopes
+		}
 
 		// Generate new JWT access token (iat will reflect current time)
 		accessToken, err := GenerateAccessToken(&session, clientID, scopeStr)
@@ -547,21 +581,33 @@ func OAuthTokenHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		// H5: Rotate refresh token on every use
+		// Rotate refresh token on every use
 		newRefreshToken, err := generateToken()
 		if err != nil {
 			utils.WriteJSONResponse(w, http.StatusInternalServerError, map[string]string{"error": "server_error", "error_description": "Failed to generate refresh token"})
 			return
 		}
 
-		// C5: Store hashed tokens
+		// Store hashed tokens atomically guarded by previous refresh_token hash
 		hashedAccessToken := utils.HashToken(accessToken)
 		hashedNewRefreshToken := utils.HashToken(newRefreshToken)
-		session.AccessToken = &hashedAccessToken
-		session.RefreshToken = &hashedNewRefreshToken
-		
-		if err := database.DB.Save(&session).Error; err != nil {
+		updateRes := database.DB.Model(&database.Session{}).
+			Where("id = ? AND refresh_token = ?", session.ID, hashedRefreshToken).
+			Updates(map[string]interface{}{
+				"access_token":            hashedAccessToken,
+				"refresh_token":           hashedNewRefreshToken,
+				"access_token_expires_at": accessTokenExpiresAt,
+				"expires_at":              newExpiresAt,
+				"last_seen_at":            session.LastSeenAt,
+				"device_info":             session.DeviceInfo,
+				"ip_address":              session.IPAddress,
+			})
+		if updateRes.Error != nil {
 			utils.WriteJSONResponse(w, http.StatusInternalServerError, map[string]string{"error": "server_error", "error_description": "Failed to update session with new token"})
+			return
+		}
+		if updateRes.RowsAffected == 0 {
+			utils.WriteJSONResponse(w, http.StatusBadRequest, map[string]string{"error": "invalid_grant", "error_description": "Refresh token has already been rotated"})
 			return
 		}
 
@@ -569,19 +615,16 @@ func OAuthTokenHandler(w http.ResponseWriter, r *http.Request) {
 			"access_token":  accessToken,
 			"token_type":    "Bearer",
 			"expires_in":    3600,
-			"refresh_token": newRefreshToken, // H5: Return the new refresh token
+			"refresh_token": newRefreshToken,
 			"scope":         scopeStr,
 		}
 
 		// Add OIDC id_token if openid scope is requested
 		// Note: nonce is NOT echoed on refresh — it's only for the initial auth code exchange (OIDC Core §12.2)
 		if strings.Contains(" "+scopeStr+" ", " openid ") {
-			var user database.User
-			if err := database.DB.First(&user, *session.UserID).Error; err == nil {
-				idToken, err := GenerateIDToken(&user, clientID, scopeStr, accessTokenExpiresAt.Unix(), "", accessToken)
-				if err == nil {
-					response["id_token"] = idToken
-				}
+			idToken, err := GenerateIDToken(&user, clientID, scopeStr, accessTokenExpiresAt.Unix(), "", accessToken)
+			if err == nil {
+				response["id_token"] = idToken
 			}
 		}
 
@@ -592,13 +635,12 @@ func OAuthTokenHandler(w http.ResponseWriter, r *http.Request) {
 // verifyPKCE validates a PKCE code_verifier against the stored code_challenge.
 // OAuth 2.1 mandates S256 only.
 func verifyPKCE(verifier, challenge, method string) bool {
-	if method == "S256" {
-		h := sha256.Sum256([]byte(verifier))
-		computed := base64.RawURLEncoding.EncodeToString(h[:])
-		return computed == challenge
+	if method != "S256" || !utils.ValidatePKCECodeVerifier(verifier) {
+		return false
 	}
-	// Reject any non-S256 method (OAuth 2.1 compliance)
-	return false
+	h := sha256.Sum256([]byte(verifier))
+	computed := base64.RawURLEncoding.EncodeToString(h[:])
+	return computed == challenge
 }
 
 // generateAuthCode creates a secure random authorization code (256 bits)
@@ -678,6 +720,9 @@ func OAuthIntrospectHandler(w http.ResponseWriter, r *http.Request) {
 
 	client, err := authenticateClient(r)
 	if err != nil {
+		if _, _, hasBasic := r.BasicAuth(); hasBasic {
+			w.Header().Set("WWW-Authenticate", `Basic realm="Gilos Auth"`)
+		}
 		utils.WriteJSONResponse(w, http.StatusUnauthorized, map[string]string{"error": "invalid_client", "error_description": err.Error()})
 		return
 	}
@@ -696,6 +741,15 @@ func OAuthIntrospectHandler(w http.ResponseWriter, r *http.Request) {
 		// RFC 7662: If token is not found or invalid, return active: false
 		utils.WriteJSONResponse(w, http.StatusOK, map[string]bool{"active": false})
 		return
+	}
+
+	// Verify owning user still exists and is active
+	if session.UserID != nil {
+		var user database.User
+		if err := database.DB.First(&user, *session.UserID).Error; err != nil || user.Status != "active" {
+			utils.WriteJSONResponse(w, http.StatusOK, map[string]bool{"active": false})
+			return
+		}
 	}
 
 	// Check expiration
@@ -741,6 +795,9 @@ func OAuthRevokeHandler(w http.ResponseWriter, r *http.Request) {
 
 	client, err := authenticateClient(r)
 	if err != nil {
+		if _, _, hasBasic := r.BasicAuth(); hasBasic {
+			w.Header().Set("WWW-Authenticate", `Basic realm="Gilos Auth"`)
+		}
 		utils.WriteJSONResponse(w, http.StatusUnauthorized, map[string]string{"error": "invalid_client"})
 		return
 	}

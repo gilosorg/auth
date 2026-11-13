@@ -14,9 +14,9 @@ type requestIDKey struct{}
 // adds it to the context and the X-Request-ID response header.
 func RequestIDMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Check if there's already a request ID from upstream proxy
+		// Accept upstream X-Request-ID only if it is safe and well-formed
 		requestID := r.Header.Get("X-Request-ID")
-		if requestID == "" {
+		if !isValidRequestID(requestID) {
 			requestID = generateRequestID()
 		}
 
@@ -27,6 +27,20 @@ func RequestIDMiddleware(next http.Handler) http.Handler {
 		ctx := context.WithValue(r.Context(), requestIDKey{}, requestID)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
+}
+
+func isValidRequestID(id string) bool {
+	if len(id) == 0 || len(id) > 64 {
+		return false
+	}
+	for i := 0; i < len(id); i++ {
+		c := id[i]
+		isAlphaNum := (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9')
+		if !isAlphaNum && c != '-' && c != '_' && c != '.' {
+			return false
+		}
+	}
+	return true
 }
 
 // GetRequestID retrieves the request ID from the context.

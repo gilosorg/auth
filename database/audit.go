@@ -23,6 +23,7 @@ type AuditLog struct {
 const (
 	AuditLoginSuccess       = "login_success"
 	AuditLoginFailed        = "login_failed"
+	AuditLogout             = "logout"
 	AuditPasswordChanged    = "password_changed"
 	AuditPasswordReset      = "password_reset"
 	AuditMFAChanged         = "mfa_changed"

@@ -1,11 +1,14 @@
 package middleware
 
 import (
+	"bytes"
 	"crypto/rand"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"gilosauth/database"
 	"gilosauth/utils"
+	"io"
 	"net/http"
 	"strings"
 )
@@ -35,8 +38,14 @@ func CSRFMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		// Skip CSRF for pre-authentication endpoints (no session/CSRF token exists yet)
-		if strings.HasPrefix(path, "/auth/") {
+		// Skip CSRF for pre-authentication endpoints (no session/CSRF token exists yet),
+		// EXCEPT web-cookie logout requests without an explicit Bearer/refresh token.
+		if path == "/auth/logout" {
+			if logoutHasExplicitToken(r) {
+				next.ServeHTTP(w, r)
+				return
+			}
+		} else if strings.HasPrefix(path, "/auth/") {
 			next.ServeHTTP(w, r)
 			return
 		}
@@ -125,4 +134,44 @@ func EnsureCSRFToken(sess *database.Session) (string, error) {
 	}
 
 	return token, nil
+}
+
+func logoutHasExplicitToken(r *http.Request) bool {
+	authHeader := r.Header.Get("Authorization")
+	if len(authHeader) > 7 && strings.EqualFold(authHeader[:7], "Bearer ") && strings.TrimSpace(authHeader[7:]) != "" {
+		return true
+	}
+	if r.Body == nil {
+		return false
+	}
+	bodyBytes, err := io.ReadAll(r.Body)
+	if err != nil {
+		return false
+	}
+	r.Body = io.NopCloser(bytes.NewReader(bodyBytes))
+
+	if strings.Contains(r.Header.Get("Content-Type"), "json") {
+		var payload struct {
+			RefreshToken string `json:"refreshToken"`
+			RefreshTok   string `json:"refresh_token"`
+			Token        string `json:"token"`
+		}
+		if json.Unmarshal(bodyBytes, &payload) == nil {
+			if payload.RefreshToken != "" || payload.RefreshTok != "" || payload.Token != "" {
+				return true
+			}
+		}
+	}
+
+	if err := r.ParseForm(); err == nil {
+		hasFormToken := r.FormValue("refreshToken") != "" || r.FormValue("refresh_token") != "" || r.FormValue("token") != ""
+		r.Body = io.NopCloser(bytes.NewReader(bodyBytes))
+		if hasFormToken {
+			return true
+		}
+	} else {
+		r.Body = io.NopCloser(bytes.NewReader(bodyBytes))
+	}
+
+	return false
 }

@@ -118,6 +118,10 @@ func NamesUpdateHandler(w http.ResponseWriter, r *http.Request) {
 		utils.WriteJSONResponse(w, http.StatusBadRequest, map[string]string{"error": "first name is required"})
 		return
 	}
+	if len(user.FirstName) > 100 || len(user.LastName) > 100 || len(user.MiddleName) > 100 || len(user.Nickname) > 100 {
+		utils.WriteJSONResponse(w, http.StatusBadRequest, map[string]string{"error": "name fields must be at most 100 characters"})
+		return
+	}
 
 	if err := database.DB.Save(&user).Error; err != nil {
 		utils.WriteJSONResponse(w, http.StatusInternalServerError, map[string]string{"error": "failed to update names"})
@@ -180,10 +184,10 @@ func UsernameUpdateHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Start session for block management
-	sess, err := database.SM.Start(r.Context(), w, r, nil)
-	if err != nil {
-		utils.WriteJSONResponse(w, http.StatusInternalServerError, map[string]string{"error": "failed to start session"})
+	// Use authenticated session for block management without setting native cookies
+	sess, ok := r.Context().Value(database.SessionContextKey).(*database.Session)
+	if !ok || sess == nil {
+		utils.WriteJSONResponse(w, http.StatusUnauthorized, map[string]string{"error": "session not found"})
 		return
 	}
 
@@ -249,6 +253,8 @@ func UsernameUpdateHandler(w http.ResponseWriter, r *http.Request) {
 		OldUsername: oldUsername,
 		NewUsername: cleaned,
 	})
+	database.LogAuditEventWithUserID(database.AuditUsernameChanged, userID, r,
+		fmt.Sprintf("%s -> %s (via API)", oldUsername, cleaned))
 
 	utils.WriteJSONResponse(w, http.StatusOK, map[string]bool{"success": true})
 }
@@ -274,30 +280,38 @@ func PasswordUpdateHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if input.Password == "" {
+		utils.WriteJSONResponse(w, http.StatusBadRequest, map[string]string{"error": "password is required"})
+		return
+	}
+	if err := utils.ValidatePassword(input.Password); err != nil {
+		utils.WriteJSONResponse(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
+		return
+	}
+	if input.Password != input.ConfirmPassword {
+		utils.WriteJSONResponse(w, http.StatusBadRequest, map[string]string{"error": "passwords do not match"})
+		return
+	}
+
 	var user database.User
 	if err := database.DB.First(&user, userID).Error; err != nil {
 		utils.WriteJSONResponse(w, http.StatusInternalServerError, map[string]string{"error": "failed to retrieve profile"})
 		return
 	}
 
-	if input.Password != "" {
-		if input.Password != input.ConfirmPassword {
-			utils.WriteJSONResponse(w, http.StatusBadRequest, map[string]string{"error": "passwords do not match"})
-			return
-		}
-		hashed, err := bcrypt.GenerateFromPassword([]byte(input.Password), bcrypt.DefaultCost)
-		if err != nil {
-			utils.WriteJSONResponse(w, http.StatusInternalServerError, map[string]string{"error": "failed to hash password"})
-			return
-		}
-		user.Password = string(hashed)
+	hashed, err := bcrypt.GenerateFromPassword([]byte(input.Password), config.BcryptCost)
+	if err != nil {
+		utils.WriteJSONResponse(w, http.StatusInternalServerError, map[string]string{"error": "failed to hash password"})
+		return
 	}
-
+	user.Password = string(hashed)
 
 	if err := database.DB.Save(&user).Error; err != nil {
 		utils.WriteJSONResponse(w, http.StatusInternalServerError, map[string]string{"error": "failed to update password"})
 		return
 	}
+
+	database.LogAuditEventWithUserID(database.AuditPasswordChanged, userID, r, "password updated via API")
 
 	utils.WriteJSONResponse(w, http.StatusOK, map[string]bool{"success": true})
 }
@@ -355,17 +369,7 @@ func ProfileContactUpdateHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Check if user is blocked by ID
-	if blocked, until := database.SM.IsBlocked(fmt.Sprintf("user:%d:security", user.ID)); blocked {
-		utils.WriteJSONResponse(w, http.StatusTooManyRequests, map[string]interface{}{
-			"error":         fmt.Sprintf("your account is temporarily blocked for security until %s", until.Format(time.RFC3339)),
-			"is_blocked":    true,
-			"blocked_until": until.Format(time.RFC3339),
-		})
-		return
-	}
-
-	email := strings.TrimSpace(input.Email)
+	email := strings.ToLower(strings.TrimSpace(input.Email))
 	phoneStr := strings.TrimSpace(input.Phone)
 	mfaEmail := input.MFAEmail
 	mfaPhone := input.MFAPhone
@@ -376,50 +380,47 @@ func ProfileContactUpdateHandler(w http.ResponseWriter, r *http.Request) {
 	masked := make(map[string]string)
 
 	if email != oldEmail {
-		cleanedEmail, _, err := utils.ValidateContact(input.Email)
-		if err != nil {
-			utils.WriteJSONResponse(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
-			return
-		}
-
-		if blocked, until := database.SM.IsBlocked(cleanedEmail); blocked {
-			utils.WriteJSONResponse(w, http.StatusTooManyRequests, map[string]interface{}{
-				"error":         "this email is temporarily blocked for security, please try again in 24 hours",
-				"is_blocked":    true,
-				"blocked_until": until.Format(time.RFC3339),
-			})
-			return
-		}
 		if email == "" {
 			user.Email = ""
+			user.EmailVerified = false
 			user.MFAEmailEnabled = false
 			clearProfileData(sess, "email")
 		} else {
-			if _, _, err := utils.ValidateContact(email); err != nil {
+			cleanedEmail, contactType, err := utils.ValidateContact(email)
+			if err != nil || contactType != "email" {
 				utils.WriteJSONResponse(w, http.StatusBadRequest, map[string]string{"error": "invalid email"})
 				return
 			}
+			cleanedEmail = strings.ToLower(cleanedEmail)
+
+			if blocked, until := database.SM.IsBlocked(cleanedEmail); blocked {
+				utils.WriteJSONResponse(w, http.StatusTooManyRequests, map[string]interface{}{
+					"error":         "this email is temporarily blocked for security, please try again in 24 hours",
+					"is_blocked":    true,
+					"blocked_until": until.Format(time.RFC3339),
+				})
+				return
+			}
+
 			var existing database.User
-			if err := database.DB.Where("email = ? AND id != ?", email, userID).First(&existing).Error; err == nil {
+			if err := database.DB.Where("email = ? AND id != ?", cleanedEmail, userID).First(&existing).Error; err == nil {
 				utils.WriteJSONResponse(w, http.StatusConflict, map[string]string{"error": "email already in use"})
 				return
 			}
 			otp := utils.GenerateOTP()
-			database.SM.SetData(sess, "profile_pending_email", email)
+			database.SM.SetData(sess, "profile_pending_email", cleanedEmail)
 			database.SM.SetData(sess, "profile_pending_mfa_email_enabled", mfaEmail)
 			database.SM.SetData(sess, "profile_otp_email", utils.HashToken(otp))
 			database.SM.SetData(sess, "profile_otp_sent_at_email", time.Now().Format(time.RFC3339))
 			database.SM.SetData(sess, "profile_attempts_email", 0)
 			database.SM.SetData(sess, "profile_resends_email", 0)
-			if err := utils.SendVerificationEmail(email, otp); err != nil {
+			if err := utils.SendVerificationEmail(cleanedEmail, otp); err != nil {
+				clearProfileData(sess, "email")
 				utils.WriteJSONResponse(w, http.StatusInternalServerError, map[string]string{"error": "failed to send OTP email"})
 				return
 			}
 			verificationNeeded = append(verificationNeeded, "email")
-			parts := strings.Split(email, "@")
-			if len(parts) == 2 {
-				masked["email"] = parts[0][:int(math.Min(2, float64(len(parts[0]))))] + "...@" + parts[1]
-			}
+			masked["email"] = utils.MaskEmail(cleanedEmail)
 		}
 	} else {
 		user.MFAEmailEnabled = mfaEmail && user.Email != ""
@@ -427,9 +428,9 @@ func ProfileContactUpdateHandler(w http.ResponseWriter, r *http.Request) {
 
 	var newPhone uint64
 	if phoneStr != "" {
-		cleanedPhoneStr, _, err := utils.ValidateContact(phoneStr)
-		if err != nil {
-			utils.WriteJSONResponse(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
+		cleanedPhoneStr, contactType, err := utils.ValidateContact(phoneStr)
+		if err != nil || contactType != "phone" {
+			utils.WriteJSONResponse(w, http.StatusBadRequest, map[string]string{"error": "invalid phone number"})
 			return
 		}
 
@@ -442,9 +443,8 @@ func ProfileContactUpdateHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		newPhone, _ = utils.ParsePhone(cleanedPhoneStr)
-		newPhone, err = utils.ParsePhone(phoneStr)
-		if err != nil {
+		newPhone, err = utils.ParsePhone(cleanedPhoneStr)
+		if err != nil || newPhone == 0 {
 			utils.WriteJSONResponse(w, http.StatusBadRequest, map[string]string{"error": "invalid phone number"})
 			return
 		}
@@ -453,6 +453,7 @@ func ProfileContactUpdateHandler(w http.ResponseWriter, r *http.Request) {
 	if newPhone != oldPhone || (phoneStr == "" && oldPhone != 0) {
 		if phoneStr == "" {
 			user.Phone = 0
+			user.PhoneVerified = false
 			user.MFAPhoneEnabled = false
 			clearProfileData(sess, "phone")
 		} else {
@@ -468,7 +469,8 @@ func ProfileContactUpdateHandler(w http.ResponseWriter, r *http.Request) {
 			database.SM.SetData(sess, "profile_otp_sent_at_phone", time.Now().Format(time.RFC3339))
 			database.SM.SetData(sess, "profile_attempts_phone", 0)
 			database.SM.SetData(sess, "profile_resends_phone", 0)
-			if err := utils.SendPhoneOTP(phoneStr, otp); err != nil {
+			if err := utils.SendPhoneOTP(utils.FormatPhone(newPhone), otp); err != nil {
+				clearProfileData(sess, "phone")
 				utils.WriteJSONResponse(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
 				return
 			}
@@ -870,8 +872,10 @@ func ProfileContactVerifyHandler(w http.ResponseWriter, r *http.Request) {
 						mfaEmail = val
 					}
 					user.Email = email
+					user.EmailVerified = true
 					user.MFAEmailEnabled = mfaEmail && email != ""
 					clearProfileData(sess, "email")
+					database.LogAuditEventWithUserID(database.AuditContactChanged, userID, r, "email verified via API")
 					results["email"] = map[string]interface{}{"success": true}
 				} else {
 					attemptsLeft := 3 - attemptCount
@@ -931,8 +935,10 @@ func ProfileContactVerifyHandler(w http.ResponseWriter, r *http.Request) {
 						mfaPhone = val
 					}
 					user.Phone = phone
+					user.PhoneVerified = true
 					user.MFAPhoneEnabled = mfaPhone && phone != 0
 					clearProfileData(sess, "phone")
+					database.LogAuditEventWithUserID(database.AuditContactChanged, userID, r, "phone verified via API")
 					results["phone"] = map[string]interface{}{"success": true}
 				} else {
 					attemptsLeft := 3 - attemptCount
@@ -1003,7 +1009,7 @@ func ProfileContactCancelHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func clearProfileData(sess *database.Session, typ string) {
-	keys := []string{"pending_" + typ, "pending_mfa_" + typ, "otp_" + typ, "otp_sent_at_" + typ, "attempts_" + typ, "resends_" + typ}
+	keys := []string{"pending_" + typ, "pending_mfa_" + typ + "_enabled", "otp_" + typ, "otp_sent_at_" + typ, "attempts_" + typ, "resends_" + typ}
 	for _, key := range keys {
 		database.SM.DeleteData(sess, "profile_"+key)
 	}
@@ -1248,6 +1254,7 @@ func TOTPGenerateHandler(w http.ResponseWriter, r *http.Request) {
 		rawData = make(database.JSONData)
 	}
 	rawData["provisional_totp_secret"] = key.Secret()
+	rawData["provisional_totp_attempts"] = 0
 	if err := database.DB.Model(&sess).Update("raw_data", rawData).Error; err != nil {
 		utils.WriteJSONResponse(w, http.StatusInternalServerError, map[string]string{"error": "failed to store provisional secret"})
 		return
@@ -1319,7 +1326,24 @@ func TOTPVerifyHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	attempts := 0
+	if count, ok := rawData["provisional_totp_attempts"].(float64); ok {
+		attempts = int(count)
+	} else if count, ok := rawData["provisional_totp_attempts"].(int); ok {
+		attempts = count
+	}
+
 	if !totp.Validate(input.Code, provisional) {
+		attempts++
+		if attempts >= 5 {
+			delete(rawData, "provisional_totp_secret")
+			delete(rawData, "provisional_totp_attempts")
+			database.DB.Model(&sess).Update("raw_data", rawData)
+			utils.WriteJSONResponse(w, http.StatusTooManyRequests, map[string]string{"error": "too many failed TOTP verification attempts, please start setup again"})
+			return
+		}
+		rawData["provisional_totp_attempts"] = attempts
+		database.DB.Model(&sess).Update("raw_data", rawData)
 		utils.WriteJSONResponse(w, http.StatusBadRequest, map[string]string{"error": "invalid code"})
 		return
 	}
@@ -1330,18 +1354,27 @@ func TOTPVerifyHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	storedSecret, encErr := utils.EncryptTOTPSecret(provisional)
+	if encErr != nil {
+		utils.WriteJSONResponse(w, http.StatusInternalServerError, map[string]string{"error": "failed to protect TOTP secret"})
+		return
+	}
+
 	user.MFATOTPEnabled = true
-	user.TOTPSecret = provisional
+	user.TOTPSecret = storedSecret
 	if err := database.DB.Save(&user).Error; err != nil {
 		utils.WriteJSONResponse(w, http.StatusInternalServerError, map[string]string{"error": "failed to enable TOTP MFA"})
 		return
 	}
 
 	delete(rawData, "provisional_totp_secret")
+	delete(rawData, "provisional_totp_attempts")
 	if err := database.DB.Model(&sess).Update("raw_data", rawData).Error; err != nil {
 		utils.WriteJSONResponse(w, http.StatusInternalServerError, map[string]string{"error": "failed to clear provisional secret"})
 		return
 	}
+
+	database.LogAuditEventWithUserID(database.AuditMFATOTPEnabled, userID, r, "TOTP authenticator enabled via API")
 
 	response := map[string]interface{}{
 		"success": true,
@@ -1378,6 +1411,8 @@ func TOTPDisableHandler(w http.ResponseWriter, r *http.Request) {
 		utils.WriteJSONResponse(w, http.StatusInternalServerError, map[string]string{"error": "failed to disable TOTP MFA"})
 		return
 	}
+
+	database.LogAuditEventWithUserID(database.AuditMFATOTPDisabled, userID, r, "TOTP authenticator disabled via API")
 
 	utils.WriteJSONResponse(w, http.StatusOK, map[string]bool{"success": true})
 }

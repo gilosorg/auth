@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"html"
 	"io"
 	"log"
 	"net/http"
@@ -21,10 +22,14 @@ type emailPayload struct {
 
 // SendVerificationEmail sends an email with the verification code using the email API.
 func SendVerificationEmail(toEmail, code string) error {
+	if config.EmailAPIEndpoint == "" {
+		return fmt.Errorf("email provider is not configured")
+	}
+
 	subject := config.AppName + " — Verification Code"
 	htmlBody := fmt.Sprintf(
 		"<h3>%s</h3><p>Your verification code is: <strong>%s</strong></p><p>This code expires in 5 minutes.</p>",
-		config.AppName, code,
+		html.EscapeString(config.AppName), html.EscapeString(code),
 	)
 
 	payload := emailPayload{

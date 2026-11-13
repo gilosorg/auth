@@ -505,10 +505,11 @@ func ProfileContactUpdateHandler(w http.ResponseWriter, r *http.Request) {
 		if email == "" {
 			// Unlink email immediately
 			user.Email = ""
+			user.EmailVerified = false
 			user.MFAEmailEnabled = false
 			clearProfileData(sess, "email")
 		} else {
-			if _, _, err := utils.ValidateContact(email); err != nil {
+			if _, ct, err := utils.ValidateContact(email); err != nil || ct != "email" {
 				utils.WriteJSONResponse(w, http.StatusBadRequest, map[string]string{"error": "invalid email"})
 				return
 			}
@@ -522,17 +523,16 @@ func ProfileContactUpdateHandler(w http.ResponseWriter, r *http.Request) {
 			database.SM.SetData(sess, "profile_pending_email", email)
 			database.SM.SetData(sess, "profile_pending_mfa_email_enabled", mfaEmail)
 			database.SM.SetData(sess, "profile_otp_email", utils.HashToken(otp))
+			database.SM.SetData(sess, "profile_otp_sent_at_email", time.Now().Format(time.RFC3339))
 			database.SM.SetData(sess, "profile_attempts_email", 0)
 			database.SM.SetData(sess, "profile_resends_email", 0)
 			if err := utils.SendVerificationEmail(email, otp); err != nil {
+				clearProfileData(sess, "email")
 				utils.WriteJSONResponse(w, http.StatusInternalServerError, map[string]string{"error": "failed to send OTP email"})
 				return
 			}
 			verificationNeeded = append(verificationNeeded, "email")
-			parts := strings.Split(email, "@")
-			if len(parts) == 2 {
-				masked["email"] = parts[0][:int(math.Min(2, float64(len(parts[0]))))] + "...@" + parts[1]
-			}
+			masked["email"] = utils.MaskEmail(email)
 		}
 	} else {
 		// No change, update MFA
@@ -553,6 +553,7 @@ func ProfileContactUpdateHandler(w http.ResponseWriter, r *http.Request) {
 		if phoneStr == "" {
 			// Unlink phone immediately
 			user.Phone = 0
+			user.PhoneVerified = false
 			user.MFAPhoneEnabled = false
 			clearProfileData(sess, "phone")
 		} else {
@@ -566,9 +567,11 @@ func ProfileContactUpdateHandler(w http.ResponseWriter, r *http.Request) {
 			database.SM.SetData(sess, "profile_pending_phone", newPhone)
 			database.SM.SetData(sess, "profile_pending_mfa_phone_enabled", mfaPhone)
 			database.SM.SetData(sess, "profile_otp_phone", utils.HashToken(otp))
+			database.SM.SetData(sess, "profile_otp_sent_at_phone", time.Now().Format(time.RFC3339))
 			database.SM.SetData(sess, "profile_attempts_phone", 0)
 			database.SM.SetData(sess, "profile_resends_phone", 0)
 			if err := utils.SendPhoneOTP(phoneStr, otp); err != nil {
+				clearProfileData(sess, "phone")
 				utils.WriteJSONResponse(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
 				return
 			}
@@ -782,6 +785,7 @@ func ProfileContactResendHandler(w http.ResponseWriter, r *http.Request) {
 
 	pendingKey := fmt.Sprintf("profile_pending_%s", typ)
 	otpKey := fmt.Sprintf("profile_otp_%s", typ)
+	sentAtKey := fmt.Sprintf("profile_otp_sent_at_%s", typ)
 	attemptsKey := fmt.Sprintf("profile_attempts_%s", typ)
 	resendsKey := fmt.Sprintf("profile_resends_%s", typ)
 
@@ -789,6 +793,19 @@ func ProfileContactResendHandler(w http.ResponseWriter, r *http.Request) {
 	if !exists {
 		utils.WriteJSONResponse(w, http.StatusBadRequest, map[string]string{"error": "no pending verification for " + typ})
 		return
+	}
+
+	if sentRaw, ok := database.SM.GetData(sess, sentAtKey); ok {
+		sentTime := parseSessionTime(sentRaw)
+		if !sentTime.IsZero() && time.Since(sentTime) < 1*time.Minute {
+			timeLeft := 60 - int(time.Since(sentTime).Seconds())
+			utils.WriteJSONResponse(w, http.StatusTooManyRequests, map[string]interface{}{
+				"error":               fmt.Sprintf("please wait %d seconds before requesting another code", timeLeft),
+				"resend_available_in": timeLeft,
+				"time_remaining":      300 - int(time.Since(sentTime).Seconds()),
+			})
+			return
+		}
 	}
 
 	resends, _ := database.SM.GetData(sess, resendsKey)
@@ -809,6 +826,7 @@ func ProfileContactResendHandler(w http.ResponseWriter, r *http.Request) {
 
 	otp := utils.GenerateOTP()
 	database.SM.SetData(sess, otpKey, utils.HashToken(otp))
+	database.SM.SetData(sess, sentAtKey, time.Now().Format(time.RFC3339))
 	database.SM.SetData(sess, attemptsKey, 0)
 	database.SM.SetData(sess, resendsKey, resendCount)
 
@@ -838,7 +856,12 @@ func ProfileContactResendHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	utils.WriteJSONResponse(w, http.StatusOK, map[string]interface{}{"success": true, "resends": resendCount})
+	utils.WriteJSONResponse(w, http.StatusOK, map[string]interface{}{
+		"success":             true,
+		"resends":             resendCount,
+		"time_remaining":      300,
+		"resend_available_in": 60,
+	})
 }
 
 // ProfileContactVerifyHandler verifies OTPs and updates if correct.
@@ -905,35 +928,42 @@ func ProfileContactVerifyHandler(w http.ResponseWriter, r *http.Request) {
 			results["email"] = map[string]interface{}{"success": false, "error": "no pending email verification"}
 		} else {
 			storedOTP, _ := database.SM.GetData(sess, "profile_otp_email")
-			attempts, _ := database.SM.GetData(sess, "profile_attempts_email")
-			attemptCount := 0
-			if count, ok := attempts.(float64); ok {
-				attemptCount = int(count)
-			}
-			attemptCount++
-			database.SM.SetData(sess, "profile_attempts_email", attemptCount)
-			if attemptCount > 3 {
-				database.SM.ApplyBlock(fmt.Sprint(pendingEmail), sess, 24*time.Hour, "security")
-				results["email"] = map[string]interface{}{
-					"success":       false,
-					"error":         "maximum attempts reached, blocked for 24 hours",
-					"is_blocked":    true,
-					"blocked_until": time.Now().Add(24 * time.Hour).Format(time.RFC3339),
-				}
-			} else if utils.ConstantTimeOTPCompare(fmt.Sprint(storedOTP), utils.HashToken(input.EmailOTP)) {
-				email := fmt.Sprint(pendingEmail)
-				mfa, _ := database.SM.GetData(sess, "profile_pending_mfa_email_enabled")
-				mfaEmail := false
-				if val, ok := mfa.(bool); ok {
-					mfaEmail = val
-				}
-				user.Email = email
-				user.MFAEmailEnabled = mfaEmail && email != ""
-				clearProfileData(sess, "email")
-				results["email"] = map[string]interface{}{"success": true}
+			sentAtRaw, hasSentAt := database.SM.GetData(sess, "profile_otp_sent_at_email")
+			sentTime := parseSessionTime(sentAtRaw)
+			if hasSentAt && (sentTime.IsZero() || time.Since(sentTime) > 5*time.Minute) {
+				results["email"] = map[string]interface{}{"success": false, "error": "verification code expired, please resend"}
 			} else {
-				attemptsLeft := 3 - attemptCount
-				results["email"] = map[string]interface{}{"success": false, "error": fmt.Sprintf("invalid OTP, %d attempt%s left", attemptsLeft, utils.Pluralize(attemptsLeft))}
+				attempts, _ := database.SM.GetData(sess, "profile_attempts_email")
+				attemptCount := 0
+				if count, ok := attempts.(float64); ok {
+					attemptCount = int(count)
+				}
+				attemptCount++
+				database.SM.SetData(sess, "profile_attempts_email", attemptCount)
+				if attemptCount > 3 {
+					database.SM.ApplyBlock(fmt.Sprint(pendingEmail), sess, 24*time.Hour, "security")
+					results["email"] = map[string]interface{}{
+						"success":       false,
+						"error":         "maximum attempts reached, blocked for 24 hours",
+						"is_blocked":    true,
+						"blocked_until": time.Now().Add(24 * time.Hour).Format(time.RFC3339),
+					}
+				} else if utils.ConstantTimeOTPCompare(fmt.Sprint(storedOTP), utils.HashToken(input.EmailOTP)) {
+					email := fmt.Sprint(pendingEmail)
+					mfa, _ := database.SM.GetData(sess, "profile_pending_mfa_email_enabled")
+					mfaEmail := false
+					if val, ok := mfa.(bool); ok {
+						mfaEmail = val
+					}
+					user.Email = email
+					user.EmailVerified = true
+					user.MFAEmailEnabled = mfaEmail && email != ""
+					clearProfileData(sess, "email")
+					results["email"] = map[string]interface{}{"success": true}
+				} else {
+					attemptsLeft := 3 - attemptCount
+					results["email"] = map[string]interface{}{"success": false, "error": fmt.Sprintf("invalid OTP, %d attempt%s left", attemptsLeft, utils.Pluralize(attemptsLeft))}
+				}
 			}
 		}
 	}
@@ -945,43 +975,50 @@ func ProfileContactVerifyHandler(w http.ResponseWriter, r *http.Request) {
 			results["phone"] = map[string]interface{}{"success": false, "error": "no pending phone verification"}
 		} else {
 			storedOTP, _ := database.SM.GetData(sess, "profile_otp_phone")
-			attempts, _ := database.SM.GetData(sess, "profile_attempts_phone")
-			attemptCount := 0
-			if count, ok := attempts.(float64); ok {
-				attemptCount = int(count)
-			}
-			attemptCount++
-			database.SM.SetData(sess, "profile_attempts_phone", attemptCount)
-			if attemptCount > 3 {
-				database.SM.ApplyBlock(fmt.Sprint(pendingPhone), sess, 24*time.Hour, "security")
-				results["phone"] = map[string]interface{}{
-					"success":       false,
-					"error":         "maximum attempts reached, blocked for 24 hours",
-					"is_blocked":    true,
-					"blocked_until": time.Now().Add(24 * time.Hour).Format(time.RFC3339),
-				}
-			} else if utils.ConstantTimeOTPCompare(fmt.Sprint(storedOTP), utils.HashToken(input.PhoneOTP)) {
-				var phone uint64
-				switch v := pendingPhone.(type) {
-				case float64:
-					phone = uint64(math.Round(v))
-				case uint64:
-					phone = v
-				case string:
-					phone, _ = utils.ParsePhone(v)
-				}
-				mfa, _ := database.SM.GetData(sess, "profile_pending_mfa_phone_enabled")
-				mfaPhone := false
-				if val, ok := mfa.(bool); ok {
-					mfaPhone = val
-				}
-				user.Phone = phone
-				user.MFAPhoneEnabled = mfaPhone && phone != 0
-				clearProfileData(sess, "phone")
-				results["phone"] = map[string]interface{}{"success": true}
+			sentAtRaw, hasSentAt := database.SM.GetData(sess, "profile_otp_sent_at_phone")
+			sentTime := parseSessionTime(sentAtRaw)
+			if hasSentAt && (sentTime.IsZero() || time.Since(sentTime) > 5*time.Minute) {
+				results["phone"] = map[string]interface{}{"success": false, "error": "verification code expired, please resend"}
 			} else {
-				attemptsLeft := 3 - attemptCount
-				results["phone"] = map[string]interface{}{"success": false, "error": fmt.Sprintf("invalid OTP, %d attempt%s left", attemptsLeft, utils.Pluralize(attemptsLeft))}
+				attempts, _ := database.SM.GetData(sess, "profile_attempts_phone")
+				attemptCount := 0
+				if count, ok := attempts.(float64); ok {
+					attemptCount = int(count)
+				}
+				attemptCount++
+				database.SM.SetData(sess, "profile_attempts_phone", attemptCount)
+				if attemptCount > 3 {
+					database.SM.ApplyBlock(fmt.Sprint(pendingPhone), sess, 24*time.Hour, "security")
+					results["phone"] = map[string]interface{}{
+						"success":       false,
+						"error":         "maximum attempts reached, blocked for 24 hours",
+						"is_blocked":    true,
+						"blocked_until": time.Now().Add(24 * time.Hour).Format(time.RFC3339),
+					}
+				} else if utils.ConstantTimeOTPCompare(fmt.Sprint(storedOTP), utils.HashToken(input.PhoneOTP)) {
+					var phone uint64
+					switch v := pendingPhone.(type) {
+					case float64:
+						phone = uint64(math.Round(v))
+					case uint64:
+						phone = v
+					case string:
+						phone, _ = utils.ParsePhone(v)
+					}
+					mfa, _ := database.SM.GetData(sess, "profile_pending_mfa_phone_enabled")
+					mfaPhone := false
+					if val, ok := mfa.(bool); ok {
+						mfaPhone = val
+					}
+					user.Phone = phone
+					user.PhoneVerified = phone != 0
+					user.MFAPhoneEnabled = mfaPhone && phone != 0
+					clearProfileData(sess, "phone")
+					results["phone"] = map[string]interface{}{"success": true}
+				} else {
+					attemptsLeft := 3 - attemptCount
+					results["phone"] = map[string]interface{}{"success": false, "error": fmt.Sprintf("invalid OTP, %d attempt%s left", attemptsLeft, utils.Pluralize(attemptsLeft))}
+				}
 			}
 		}
 	}
@@ -1051,7 +1088,15 @@ func ProfileContactCancelHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func clearProfileData(sess *database.Session, typ string) {
-	keys := []string{"pending_" + typ, "pending_mfa_" + typ, "otp_" + typ, "attempts_" + typ, "resends_" + typ}
+	keys := []string{
+		"pending_" + typ,
+		"pending_mfa_" + typ,
+		"pending_mfa_" + typ + "_enabled",
+		"otp_" + typ,
+		"otp_sent_at_" + typ,
+		"attempts_" + typ,
+		"resends_" + typ,
+	}
 	for _, key := range keys {
 		database.SM.DeleteData(sess, "profile_"+key)
 	}
@@ -1325,6 +1370,7 @@ func TOTPGenerateHandler(w http.ResponseWriter, r *http.Request) {
 		rawData = make(database.JSONData)
 	}
 	rawData["provisional_totp_secret"] = key.Secret()
+	rawData["provisional_totp_attempts"] = 0
 	if err := database.DB.Model(&sess).Update("raw_data", rawData).Error; err != nil {
 		utils.WriteJSONResponse(w, http.StatusInternalServerError, map[string]string{"error": "failed to store provisional secret"})
 		return
@@ -1397,13 +1443,34 @@ func TOTPVerifyHandler(w http.ResponseWriter, r *http.Request) {
 
 	rawData := sess.RawData
 	provisional, ok := rawData["provisional_totp_secret"].(string)
-	if !ok {
+	if !ok || provisional == "" {
 		utils.WriteJSONResponse(w, http.StatusBadRequest, map[string]string{"error": "no TOTP setup in progress"})
 		return
 	}
 
+	attemptCount := 0
+	if count, ok := rawData["provisional_totp_attempts"].(float64); ok {
+		attemptCount = int(count)
+	}
+	attemptCount++
+	if attemptCount > 5 {
+		delete(rawData, "provisional_totp_secret")
+		delete(rawData, "provisional_totp_attempts")
+		_ = database.DB.Model(&sess).Update("raw_data", rawData).Error
+		utils.WriteJSONResponse(w, http.StatusTooManyRequests, map[string]string{"error": "too many failed attempts, please generate a new QR code"})
+		return
+	}
+
 	if !totp.Validate(input.Code, provisional) {
+		rawData["provisional_totp_attempts"] = attemptCount
+		_ = database.DB.Model(&sess).Update("raw_data", rawData).Error
 		utils.WriteJSONResponse(w, http.StatusBadRequest, map[string]string{"error": "invalid code"})
+		return
+	}
+
+	encryptedSecret, encErr := utils.EncryptTOTPSecret(provisional)
+	if encErr != nil {
+		utils.WriteJSONResponse(w, http.StatusInternalServerError, map[string]string{"error": "failed to secure TOTP secret"})
 		return
 	}
 
@@ -1414,17 +1481,20 @@ func TOTPVerifyHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	user.MFATOTPEnabled = true
-	user.TOTPSecret = provisional
+	user.TOTPSecret = encryptedSecret
 	if err := database.DB.Save(&user).Error; err != nil {
 		utils.WriteJSONResponse(w, http.StatusInternalServerError, map[string]string{"error": "failed to enable TOTP MFA"})
 		return
 	}
 
 	delete(rawData, "provisional_totp_secret")
+	delete(rawData, "provisional_totp_attempts")
 	if err := database.DB.Model(&sess).Update("raw_data", rawData).Error; err != nil {
 		utils.WriteJSONResponse(w, http.StatusInternalServerError, map[string]string{"error": "failed to clear provisional secret"})
 		return
 	}
+
+	database.LogAuditEventWithUserID(database.AuditMFATOTPEnabled, userID, r, "TOTP authenticator enabled")
 
 	utils.WriteJSONResponse(w, http.StatusOK, map[string]bool{"success": true})
 }
@@ -1459,6 +1529,8 @@ func TOTPDisableHandler(w http.ResponseWriter, r *http.Request) {
 		utils.WriteJSONResponse(w, http.StatusInternalServerError, map[string]string{"error": "failed to disable TOTP MFA"})
 		return
 	}
+
+	database.LogAuditEventWithUserID(database.AuditMFATOTPDisabled, userID, r, "TOTP authenticator disabled")
 
 	utils.WriteJSONResponse(w, http.StatusOK, map[string]bool{"success": true})
 }

@@ -33,56 +33,76 @@ func IsValidScope(scope string) bool {
 	return slices.Contains(Scopes, scope)
 }
 
+func writeBearerError(w http.ResponseWriter, status int, errCode, desc string) {
+	w.Header().Set("WWW-Authenticate", fmt.Sprintf(`Bearer error="%s", error_description="%s"`, errCode, desc))
+	utils.WriteJSONResponse(w, status, map[string]string{
+		"error":             errCode,
+		"error_description": desc,
+	})
+}
+
 // RequireAccessToken ensures a valid access token is provided for API requests
 func RequireAccessToken(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Extract token from Authorization header
 		authHeader := r.Header.Get("Authorization")
 		if authHeader == "" {
-			http.Error(w, `{"error": "missing Authorization header"}`, http.StatusUnauthorized)
+			writeBearerError(w, http.StatusUnauthorized, "invalid_request", "missing Authorization header")
 			return
 		}
 
 		parts := strings.SplitN(authHeader, " ", 2)
-		if len(parts) != 2 || parts[0] != "Bearer" {
-			http.Error(w, `{"error": "invalid Authorization header format"}`, http.StatusUnauthorized)
+		if len(parts) != 2 || !strings.EqualFold(parts[0], "Bearer") || strings.TrimSpace(parts[1]) == "" {
+			writeBearerError(w, http.StatusUnauthorized, "invalid_request", "invalid Authorization header format")
 			return
 		}
-		token := parts[1]
+		token := strings.TrimSpace(parts[1])
 
-		// C5: Hash the token before DB lookup (tokens are stored as SHA-256 hashes)
+		// Hash the token before DB lookup (tokens are stored as SHA-256 hashes)
 		hashedToken := utils.HashToken(token)
 
 		// Retrieve session using hashed token
 		var session database.Session
-		if err := database.DB.Where("access_token = ? AND type = ? AND expires_at > ? AND access_token_expires_at > ?", hashedToken, "client", time.Now(), time.Now()).First(&session).Error; err != nil {
-			http.Error(w, `{"error": "invalid or expired access token"}`, http.StatusUnauthorized)
+		now := time.Now()
+		if err := database.DB.Where("access_token = ? AND type = ? AND expires_at > ? AND access_token_expires_at > ?", hashedToken, "client", now, now).First(&session).Error; err != nil {
+			writeBearerError(w, http.StatusUnauthorized, "invalid_token", "invalid or expired access token")
 			return
 		}
-		database.SM.UpdateMetadata(&session, r)
-		database.DB.Save(&session)
+		metadataChanged := database.SM.UpdateMetadata(&session, r)
+		if metadataChanged || time.Since(session.LastSeenAt) >= time.Minute {
+			session.LastSeenAt = now
+			database.DB.Model(&session).Updates(map[string]interface{}{
+				"last_seen_at": session.LastSeenAt,
+				"device_info":  session.DeviceInfo,
+				"ip_address":   session.IPAddress,
+			})
+		}
 
-		// Verify user exists
+		// Verify user exists and is active
 		if session.UserID == nil {
-			http.Error(w, `{"error": "no user associated with token"}`, http.StatusUnauthorized)
+			writeBearerError(w, http.StatusUnauthorized, "invalid_token", "no user associated with token")
 			return
 		}
 
 		var user database.User
 		if err := database.DB.First(&user, *session.UserID).Error; err != nil {
-			http.Error(w, `{"error": "user not found"}`, http.StatusUnauthorized)
+			writeBearerError(w, http.StatusUnauthorized, "invalid_token", "user not found")
+			return
+		}
+		if user.Status != "active" {
+			writeBearerError(w, http.StatusForbidden, "access_denied", "account is suspended")
 			return
 		}
 
 		// Verify client exists
 		if session.ClientID == nil {
-			http.Error(w, `{"error": "no client associated with token"}`, http.StatusUnauthorized)
+			writeBearerError(w, http.StatusUnauthorized, "invalid_token", "no client associated with token")
 			return
 		}
 
 		var client database.Client
 		if err := database.DB.First(&client, *session.ClientID).Error; err != nil {
-			http.Error(w, `{"error": "client not found"}`, http.StatusUnauthorized)
+			writeBearerError(w, http.StatusUnauthorized, "invalid_token", "client not found")
 			return
 		}
 
@@ -108,17 +128,17 @@ func RequireScope(scope string, next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		session, ok := r.Context().Value(database.SessionContextKey).(*database.Session)
 		if !ok || session == nil {
-			http.Error(w, `{"error": "session not found"}`, http.StatusUnauthorized)
+			writeBearerError(w, http.StatusUnauthorized, "invalid_token", "session not found")
 			return
 		}
 
 		if session.Scopes == nil {
-			http.Error(w, `{"error": "no scopes authorized for this token"}`, http.StatusForbidden)
+			writeBearerError(w, http.StatusForbidden, "insufficient_scope", "no scopes authorized for this token")
 			return
 		}
 
 		authorized := false
-		scopes := strings.Fields(*session.Scopes)
+		scopes := strings.Fields(strings.ReplaceAll(*session.Scopes, ",", " "))
 		for _, s := range scopes {
 			if strings.TrimSpace(s) == scope {
 				authorized = true
@@ -127,7 +147,7 @@ func RequireScope(scope string, next http.HandlerFunc) http.HandlerFunc {
 		}
 
 		if !authorized {
-			http.Error(w, fmt.Sprintf(`{"error": "insufficient scope: %s required"}`, scope), http.StatusForbidden)
+			writeBearerError(w, http.StatusForbidden, "insufficient_scope", fmt.Sprintf("insufficient scope: %s required", scope))
 			return
 		}
 

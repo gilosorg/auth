@@ -64,6 +64,55 @@ func JWKSHandler(w http.ResponseWriter, r *http.Request) {
 	utils.WriteJSONResponse(w, http.StatusOK, response)
 }
 
+// buildOIDCUserClaims builds standard OIDC user claims filtered by the granted scopes.
+func buildOIDCUserClaims(user *database.User, scopes []string) map[string]interface{} {
+	hasScope := func(s string) bool {
+		for _, scope := range scopes {
+			if scope == s {
+				return true
+			}
+		}
+		return false
+	}
+
+	claims := map[string]interface{}{}
+
+	// Profile claims (OIDC Core §5.4)
+	if hasScope("profile") {
+		claims["preferred_username"] = user.Username
+		if user.FirstName != "" {
+			claims["given_name"] = user.FirstName
+		}
+		if user.LastName != "" {
+			claims["family_name"] = user.LastName
+		}
+		if user.MiddleName != "" {
+			claims["middle_name"] = user.MiddleName
+		}
+		if user.Nickname != "" {
+			claims["nickname"] = user.Nickname
+		}
+		if user.Icon != "" {
+			claims["picture"] = strings.TrimRight(config.IssuerURL, "/") + "/" + strings.TrimLeft(user.Icon, "/")
+		}
+		claims["updated_at"] = user.UpdatedAt.Unix()
+	}
+
+	// Email claims (OIDC Core §5.4)
+	if hasScope("email") && user.Email != "" {
+		claims["email"] = user.Email
+		claims["email_verified"] = user.EmailVerified
+	}
+
+	// Phone claims (OIDC Core §5.4) — E.164 format with + prefix
+	if hasScope("phone") && user.Phone != 0 {
+		claims["phone_number"] = fmt.Sprintf("+%d", user.Phone)
+		claims["phone_number_verified"] = user.PhoneVerified
+	}
+
+	return claims
+}
+
 // UserInfoHandler serves the standard OIDC userinfo endpoint.
 func UserInfoHandler(w http.ResponseWriter, r *http.Request) {
 	// Middleware should have already validated the access token and set session context
@@ -85,57 +134,13 @@ func UserInfoHandler(w http.ResponseWriter, r *http.Request) {
 		utils.WriteJSONResponse(w, http.StatusNotFound, map[string]string{"error": "user_not_found"})
 		return
 	}
-
-	// Build OIDC claims based on granted scopes
-	hasScope := func(s string) bool {
-		for _, scope := range scopes {
-			if scope == s {
-				return true
-			}
-		}
-		return false
+	if user.Status != "active" {
+		utils.WriteJSONResponse(w, http.StatusForbidden, map[string]string{"error": "account is suspended"})
+		return
 	}
 
-	claims := map[string]interface{}{
-		"sub": fmt.Sprint(user.ID),
-	}
-
-	// Profile claims (OIDC Core §5.4)
-	if hasScope("profile") {
-		claims["preferred_username"] = user.Username
-		if user.FirstName != "" {
-			claims["given_name"] = user.FirstName
-		}
-		if user.LastName != "" {
-			claims["family_name"] = user.LastName
-		}
-		if user.MiddleName != "" {
-			claims["middle_name"] = user.MiddleName
-		}
-		if user.Nickname != "" {
-			claims["nickname"] = user.Nickname
-		}
-		if user.Icon != "" {
-			claims["picture"] = config.IssuerURL + "/" + user.Icon
-		}
-		claims["updated_at"] = user.UpdatedAt.Unix()
-	}
-
-	// Email claims (OIDC Core §5.4)
-	if hasScope("email") {
-		if user.Email != "" {
-			claims["email"] = user.Email
-			claims["email_verified"] = user.EmailVerified
-		}
-	}
-
-	// Phone claims (OIDC Core §5.4) — E.164 format with + prefix
-	if hasScope("phone") {
-		if user.Phone != 0 {
-			claims["phone_number"] = fmt.Sprintf("+%d", user.Phone)
-			claims["phone_number_verified"] = user.PhoneVerified
-		}
-	}
+	claims := buildOIDCUserClaims(&user, scopes)
+	claims["sub"] = fmt.Sprint(user.ID)
 
 	utils.WriteJSONResponse(w, http.StatusOK, claims)
 }
@@ -177,36 +182,8 @@ func GenerateIDToken(user *database.User, clientID uint64, scopes string, exp in
 		claims["at_hash"] = base64.RawURLEncoding.EncodeToString(atHash[:16])
 	}
 
-	scopesArr := strings.Fields(scopes)
-	hasScope := func(s string) bool {
-		for _, scope := range scopesArr {
-			if scope == s {
-				return true
-			}
-		}
-		return false
-	}
-
-	if hasScope("profile") {
-		claims["preferred_username"] = user.Username
-		if user.FirstName != "" {
-			claims["given_name"] = user.FirstName
-		}
-		if user.LastName != "" {
-			claims["family_name"] = user.LastName
-		}
-	}
-	if hasScope("email") {
-		if user.Email != "" {
-			claims["email"] = user.Email
-			claims["email_verified"] = user.EmailVerified
-		}
-	}
-	if hasScope("phone") {
-		if user.Phone != 0 {
-			claims["phone_number"] = fmt.Sprintf("+%d", user.Phone)
-			claims["phone_number_verified"] = user.PhoneVerified
-		}
+	for k, v := range buildOIDCUserClaims(user, strings.Fields(scopes)) {
+		claims[k] = v
 	}
 
 	return utils.SignJWT(claims)

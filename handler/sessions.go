@@ -3,12 +3,14 @@
 package handler
 
 import (
+	"fmt"
 	"gilosauth/database"
 	"gilosauth/middleware"
 	"gilosauth/utils"
 	"math"
 	"net/http"
 	"strconv"
+	"time"
 )
 
 // Pagination metadata
@@ -132,11 +134,7 @@ func TerminateSessionHandler(w http.ResponseWriter, r *http.Request) {
 	if session.Type == "native" && session.CookieToken != nil {
 		currentCookie, err := r.Cookie("session_token")
 		if err == nil && currentCookie.Value == *session.CookieToken {
-			if err := database.SM.ClearUser(&session); err != nil {
-				utils.WriteJSONResponse(w, http.StatusInternalServerError, map[string]string{"error": "failed to clear session user"})
-				return
-			}
-			updateSessionCookie(w, &session)
+			database.SetSessionCookieHelper(w, "", time.Now().Add(-1*time.Hour))
 		}
 	}
 
@@ -145,6 +143,8 @@ func TerminateSessionHandler(w http.ResponseWriter, r *http.Request) {
 		utils.WriteJSONResponse(w, http.StatusInternalServerError, map[string]string{"error": "failed to terminate session"})
 		return
 	}
+
+	database.LogAuditEventWithUserID(database.AuditSessionTerminated, userID, r, fmt.Sprintf("terminated session #%d (%s)", session.ID, session.Type))
 
 	utils.WriteJSONResponse(w, http.StatusOK, map[string]bool{"success": true})
 }
@@ -170,10 +170,13 @@ func TerminateOthersHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Delete all user sessions except the current one
-	if err := database.DB.Where("user_id = ? AND (type != ? OR cookie_token != ?)", userID, "native", currentCookie.Value).Delete(&database.Session{}).Error; err != nil {
+	res := database.DB.Where("user_id = ? AND (type != ? OR cookie_token != ?)", userID, "native", currentCookie.Value).Delete(&database.Session{})
+	if res.Error != nil {
 		utils.WriteJSONResponse(w, http.StatusInternalServerError, map[string]string{"error": "failed to terminate other sessions"})
 		return
 	}
+
+	database.LogAuditEventWithUserID(database.AuditSessionTerminated, userID, r, fmt.Sprintf("terminated %d other sessions", res.RowsAffected))
 
 	utils.WriteJSONResponse(w, http.StatusOK, map[string]bool{"success": true})
 }

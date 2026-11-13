@@ -29,6 +29,9 @@ func DocsHandler(tmpls *template.Template) http.HandlerFunc {
 			"T":               i18n.GetTranslations(lang),
 			"IsLoggedIn":      false,
 			"AppVersion":      config.Version,
+			"AppName":         config.AppName,
+			"AppIDLabel":      config.AppIDLabel,
+			"IssuerURL":       config.IssuerURL,
 			"User":            nil,
 			"Clients":         []database.Client{},
 		}
@@ -39,7 +42,7 @@ func DocsHandler(tmpls *template.Template) http.HandlerFunc {
 			if sess, err := database.SM.Get(cookie.Value, "native"); err == nil && sess.UserID != nil {
 				// User is logged in
 				var user database.User
-				if err := database.DB.First(&user, *sess.UserID).Error; err == nil {
+				if err := database.DB.First(&user, *sess.UserID).Error; err == nil && user.Status == "active" {
 					data["IsLoggedIn"] = true
 					data["User"] = user
 

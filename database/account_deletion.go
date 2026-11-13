@@ -135,50 +135,63 @@ func (r *AccountDeletionRequest) DaysRemaining() int {
 	return int(remaining.Hours() / 24)
 }
 
-// PurgeUserData permanently deletes all data associated with a user.
+// PurgeUserData permanently deletes all data associated with a user inside a transaction.
 // This is the destructive operation that runs after the grace period expires.
 func PurgeUserData(db *gorm.DB, userID uint64) error {
-	// 1. Destroy all sessions (properly, including cookie cleanup)
-	var sessions []Session
-	if err := db.Where("user_id = ?", userID).Find(&sessions).Error; err != nil {
-		return fmt.Errorf("failed to find sessions: %w", err)
-	}
-	for _, sess := range sessions {
-		if err := SM.Destroy(&sess); err != nil {
-			log.Printf("Warning: failed to destroy session %d for user %d: %v", sess.ID, userID, err)
+	err := db.Transaction(func(tx *gorm.DB) error {
+		// 1. Delete all sessions belonging to this user
+		if err := tx.Where("user_id = ?", userID).Delete(&Session{}).Error; err != nil {
+			return fmt.Errorf("failed to delete user sessions: %w", err)
 		}
-	}
 
-	// 2. Delete all client sessions (sessions for clients owned by this user)
-	var clients []Client
-	if err := db.Where("user_id = ?", userID).Find(&clients).Error; err != nil {
-		return fmt.Errorf("failed to find clients: %w", err)
-	}
-	for _, client := range clients {
-		var clientSessions []Session
-		if err := db.Where("client_id = ?", client.ID).Find(&clientSessions).Error; err == nil {
-			for _, cs := range clientSessions {
-				SM.Destroy(&cs)
+		// 2. Delete all client sessions for OAuth clients owned by this user
+		var clientIDs []uint64
+		if err := tx.Model(&Client{}).Where("user_id = ?", userID).Pluck("id", &clientIDs).Error; err != nil {
+			return fmt.Errorf("failed to find clients: %w", err)
+		}
+		if len(clientIDs) > 0 {
+			if err := tx.Where("client_id IN ?", clientIDs).Delete(&Session{}).Error; err != nil {
+				return fmt.Errorf("failed to delete client sessions: %w", err)
 			}
 		}
+
+		// 3. Delete all OAuth clients owned by the user
+		if err := tx.Where("user_id = ?", userID).Delete(&Client{}).Error; err != nil {
+			return fmt.Errorf("failed to delete clients: %w", err)
+		}
+
+		// 4. Delete TOTP secrets
+		if err := tx.Where("user_id = ?", userID).Delete(&TOTPSecret{}).Error; err != nil {
+			return fmt.Errorf("failed to delete TOTP secrets: %w", err)
+		}
+
+		// 5. Delete username change logs
+		if err := tx.Where("user_id = ?", userID).Delete(&UsernameChangeLog{}).Error; err != nil {
+			return fmt.Errorf("failed to delete username change logs: %w", err)
+		}
+
+		// 6. Delete account deletion requests (must precede User deletion due to FK constraint)
+		if err := tx.Where("user_id = ?", userID).Delete(&AccountDeletionRequest{}).Error; err != nil {
+			return fmt.Errorf("failed to delete deletion requests: %w", err)
+		}
+
+		// 7. Anonymize audit log entries referencing this user
+		if err := tx.Model(&AuditLog{}).Where("user_id = ?", userID).Update("user_id", nil).Error; err != nil {
+			log.Printf("Warning: failed to anonymize audit logs for user %d: %v", userID, err)
+		}
+
+		// 8. Delete the user record
+		if err := tx.Where("id = ?", userID).Delete(&User{}).Error; err != nil {
+			return fmt.Errorf("failed to delete user: %w", err)
+		}
+
+		return nil
+	})
+	if err != nil {
+		return err
 	}
 
-	// 3. Delete all OAuth clients
-	if err := db.Where("user_id = ?", userID).Delete(&Client{}).Error; err != nil {
-		return fmt.Errorf("failed to delete clients: %w", err)
-	}
-
-	// 4. Delete TOTP secrets
-	if err := db.Where("user_id = ?", userID).Delete(&TOTPSecret{}).Error; err != nil {
-		log.Printf("Warning: failed to delete TOTP secrets for user %d: %v", userID, err)
-	}
-
-	// 5. Delete username change logs
-	if err := db.Where("user_id = ?", userID).Delete(&UsernameChangeLog{}).Error; err != nil {
-		log.Printf("Warning: failed to delete username change logs for user %d: %v", userID, err)
-	}
-
-	// 6. Delete user icon files
+	// Clean up user icon files on disk after database purge commits
 	iconDir := "./media/user/icon/"
 	pattern := filepath.Join(iconDir, fmt.Sprintf("%d_*.jpg", userID))
 	oldFiles, _ := filepath.Glob(pattern)
@@ -186,11 +199,6 @@ func PurgeUserData(db *gorm.DB, userID uint64) error {
 		os.Remove(f)
 	}
 	os.Remove(filepath.Join(iconDir, fmt.Sprintf("%d.jpg", userID)))
-
-	// 7. Delete the user record
-	if err := db.Where("id = ?", userID).Delete(&User{}).Error; err != nil {
-		return fmt.Errorf("failed to delete user: %w", err)
-	}
 
 	return nil
 }
@@ -210,15 +218,10 @@ func ProcessExpiredDeletionRequests(db *gorm.DB) error {
 		LogAuditEventWithUserID(AuditAccountDeletionCompleted, req.UserID, nil,
 			fmt.Sprintf("account deletion completed after 30-day grace period (reason: %s)", req.Reason))
 
-		// Purge all user data
+		// Purge all user data (also removes AccountDeletionRequest FK rows)
 		if err := PurgeUserData(db, req.UserID); err != nil {
 			log.Printf("Error purging user %d data: %v", req.UserID, err)
-			continue // Don't mark as completed if purge failed
-		}
-
-		// Mark request as completed
-		if err := db.Model(&req).Update("status", DeletionStatusCompleted).Error; err != nil {
-			log.Printf("Error marking deletion request %d as completed: %v", req.ID, err)
+			continue
 		}
 
 		log.Printf("Successfully purged all data for user %d", req.UserID)

@@ -27,7 +27,7 @@ type User struct {
 	MiddleName      string    `gorm:"size:50" json:"middle_name"`
 	Nickname        string    `gorm:"size:50" json:"nickname"`
 	Icon            string    `gorm:"size:255" json:"icon"` // Path to user profile picture
-	TOTPSecret      string    `gorm:"size:100" json:"-"`    // TOTP secret for MFA (encrypted)
+	TOTPSecret      string    `gorm:"size:255" json:"-"`    // TOTP secret for MFA (AES-256-GCM encrypted)
 	CreatedAt       time.Time `gorm:"autoCreateTime" json:"created_at"`
 	UpdatedAt       time.Time `gorm:"autoUpdateTime" json:"updated_at"`
 }
@@ -42,7 +42,7 @@ type Client struct {
 	SecretPrefix    string     `gorm:"size:8" json:"secret_prefix,omitempty"`  // First 8 chars of plaintext secret for identification
 	SecretCreatedAt *time.Time `json:"secret_created_at,omitempty"`            // When the current secret was generated
 	UserID          uint64     `gorm:"index;not null"`
-	User            User       `gorm:"foreignKey:UserID"`
+	User            User       `gorm:"foreignKey:UserID" json:"-"`
 	Type            string     `gorm:"size:15;not null"`                       // "public" or "confidential"
 	RedirectURIs    string     `gorm:"column:redirect_uris;size:2048;not null;default:''"` // Comma-separated redirect URIs
 	Scopes          string     `gorm:"size:255"`                               // Comma-separated scopes
@@ -169,28 +169,45 @@ type Session struct {
 	UpdatedAt            time.Time  `gorm:"autoUpdateTime"`
 }
 
+// ClientSummary exposes non-sensitive client metadata on session DTOs.
+type ClientSummary struct {
+	ID   uint64 `json:"id"`
+	Name string `json:"name"`
+	Type string `json:"type"`
+}
+
 // SessionResponse is a safe DTO for API responses that excludes sensitive token data.
 type SessionResponse struct {
-	ID         uint64     `json:"id"`
-	UserID     *uint64    `json:"user_id"`
-	ClientID   *uint64    `json:"client_id"`
-	Client     *Client    `json:"client,omitempty"`
-	Type       string     `json:"type"`
-	DeviceInfo *string    `json:"device_info"`
-	IPAddress  *string    `json:"ip_address"`
-	LastSeenAt time.Time  `json:"last_seen_at"`
-	ExpiresAt  time.Time  `json:"expires_at"`
-	CreatedAt  time.Time  `json:"created_at"`
-	UpdatedAt  time.Time  `json:"updated_at"`
+	ID         uint64         `json:"id"`
+	UserID     *uint64        `json:"user_id"`
+	ClientID   *uint64        `json:"client_id"`
+	Client     *ClientSummary `json:"client,omitempty"`
+	Scopes     *string        `json:"scopes,omitempty"`
+	Type       string         `json:"type"`
+	DeviceInfo *string        `json:"device_info"`
+	IPAddress  *string        `json:"ip_address"`
+	LastSeenAt time.Time      `json:"last_seen_at"`
+	ExpiresAt  time.Time      `json:"expires_at"`
+	CreatedAt  time.Time      `json:"created_at"`
+	UpdatedAt  time.Time      `json:"updated_at"`
 }
 
 // ToResponse converts a Session to a safe SessionResponse DTO.
 func (s *Session) ToResponse() SessionResponse {
+	var clientSummary *ClientSummary
+	if s.Client != nil {
+		clientSummary = &ClientSummary{
+			ID:   s.Client.ID,
+			Name: s.Client.Name,
+			Type: s.Client.Type,
+		}
+	}
 	resp := SessionResponse{
 		ID:         s.ID,
 		UserID:     s.UserID,
 		ClientID:   s.ClientID,
-		Client:     s.Client,
+		Client:     clientSummary,
+		Scopes:     s.Scopes,
 		Type:       s.Type,
 		DeviceInfo: s.DeviceInfo,
 		IPAddress:  s.IPAddress,

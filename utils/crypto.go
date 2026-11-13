@@ -9,6 +9,7 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"fmt"
+	"gilosauth/config"
 	"io"
 )
 
@@ -96,4 +97,44 @@ func DecryptAES(encoded, hexKey string) (string, error) {
 	}
 
 	return string(plaintext), nil
+}
+
+// EncryptTOTPSecret encrypts a user's MFA TOTP secret at rest using config.EncryptionKey when set.
+func EncryptTOTPSecret(secret string) (string, error) {
+	if secret == "" || config.EncryptionKey == "" {
+		return secret, nil
+	}
+	return EncryptAES(secret, config.EncryptionKey)
+}
+
+// DecryptTOTPSecret decrypts a stored MFA TOTP secret.
+// If the stored value is a legacy unencrypted Base32 secret while an encryption key is configured,
+// it returns the plaintext secret along with needsMigration=true so callers can re-encrypt it.
+func DecryptTOTPSecret(stored string) (plain string, needsMigration bool, err error) {
+	if stored == "" || config.EncryptionKey == "" {
+		return stored, false, nil
+	}
+	decrypted, decErr := DecryptAES(stored, config.EncryptionKey)
+	if decErr == nil {
+		return decrypted, false, nil
+	}
+	if isLegacyBase32Secret(stored) {
+		return stored, true, nil
+	}
+	return "", false, decErr
+}
+
+func isLegacyBase32Secret(s string) bool {
+	if len(s) < 16 || len(s) > 64 {
+		return false
+	}
+	for i := 0; i < len(s); i++ {
+		c := s[i]
+		isUpper := c >= 'A' && c <= 'Z'
+		isDigit := c >= '2' && c <= '7'
+		if !isUpper && !isDigit && c != '=' {
+			return false
+		}
+	}
+	return true
 }

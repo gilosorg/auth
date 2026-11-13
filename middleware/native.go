@@ -3,10 +3,11 @@ package middleware
 import (
 	"context"
 	"fmt"
-	"gilosauth/config"
 	"gilosauth/database"
+	"gilosauth/utils"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 )
 
@@ -19,58 +20,67 @@ const (
 	clientIDKey contextKey = "ClientID"
 )
 
-// RequireCookieToken ensures a user is logged in.
+func isAPIOrAjaxRequest(r *http.Request) bool {
+	if r.Method != http.MethodGet && r.Method != http.MethodHead {
+		return true
+	}
+	if r.Header.Get("X-CSRF-Token") != "" || r.Header.Get("X-Current-Password") != "" {
+		return true
+	}
+	accept := r.Header.Get("Accept")
+	return strings.Contains(accept, "application/json") && !strings.Contains(accept, "text/html")
+}
+
+func rejectUnauthenticatedCookie(w http.ResponseWriter, r *http.Request, clearCookie bool) {
+	if clearCookie {
+		database.SetSessionCookieHelper(w, "", time.Now().Add(-1*time.Hour))
+	}
+	if isAPIOrAjaxRequest(r) {
+		utils.WriteJSONResponse(w, http.StatusUnauthorized, map[string]string{"error": "unauthorized"})
+		return
+	}
+	target := url.QueryEscape(r.RequestURI)
+	http.Redirect(w, r, "/?target="+target, http.StatusSeeOther)
+}
+
+// RequireCookieToken ensures a user is logged in and active.
 func RequireCookieToken(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Get session from cookie
 		cookie, err := r.Cookie("session_token")
 		if err != nil || cookie.Value == "" {
-			// Encode the original RequestURI safely to preserve path + query params
-			target := url.QueryEscape(r.RequestURI)
-			http.Redirect(w, r, "/?target="+target, http.StatusSeeOther)
+			rejectUnauthenticatedCookie(w, r, false)
 			return
 		}
 
 		// Retrieve session
 		sess, err := database.SM.Get(cookie.Value, "native", r)
 		if err != nil {
-			// Clear the session cookie
-			http.SetCookie(w, &http.Cookie{
-				Name:     "session_token",
-				Value:    "",
-				Path:     "/",
-				HttpOnly: true,
-				Secure:   config.SecureCookies,
-				SameSite: http.SameSiteLaxMode,
-				Expires:  time.Now().Add(-1 * time.Hour), // Expire immediately
-			})
-			// Encode target on invalid session
-			target := url.QueryEscape(r.RequestURI)
-			http.Redirect(w, r, "/?target="+target, http.StatusSeeOther)
+			rejectUnauthenticatedCookie(w, r, true)
 			return
 		}
 
 		// Verify user exists
 		if sess.UserID == nil {
-			target := url.QueryEscape(r.RequestURI)
-			http.Redirect(w, r, "/?target="+target, http.StatusSeeOther)
+			rejectUnauthenticatedCookie(w, r, false)
 			return
 		}
 
 		var user database.User
 		if err := database.DB.First(&user, *sess.UserID).Error; err != nil {
-			// Clear the session cookie
-			http.SetCookie(w, &http.Cookie{
-				Name:     "session_token",
-				Value:    "",
-				Path:     "/",
-				HttpOnly: true,
-				Secure:   config.SecureCookies,
-				SameSite: http.SameSiteLaxMode,
-				Expires:  time.Now().Add(-1 * time.Hour),
-			})
-			target := url.QueryEscape(r.RequestURI)
-			http.Redirect(w, r, "/?target="+target, http.StatusSeeOther)
+			_ = database.SM.Destroy(sess)
+			rejectUnauthenticatedCookie(w, r, true)
+			return
+		}
+
+		if user.Status != "active" {
+			_ = database.SM.Destroy(sess)
+			database.SetSessionCookieHelper(w, "", time.Now().Add(-1*time.Hour))
+			if isAPIOrAjaxRequest(r) {
+				utils.WriteJSONResponse(w, http.StatusForbidden, map[string]string{"error": "account is suspended"})
+				return
+			}
+			http.Redirect(w, r, "/?error=suspended", http.StatusSeeOther)
 			return
 		}
 

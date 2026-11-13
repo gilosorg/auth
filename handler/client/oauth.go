@@ -3,6 +3,7 @@ package client
 import (
 	"encoding/json"
 	"fmt"
+	"gilosauth/config"
 	"gilosauth/database"
 	"gilosauth/i18n"
 	"gilosauth/middleware"
@@ -46,6 +47,10 @@ func GetOAuthInquiryHandler(w http.ResponseWriter, r *http.Request) {
 	var clientUser database.User
 	if err := database.DB.First(&clientUser, userID).Error; err != nil {
 		utils.WriteJSONResponse(w, http.StatusInternalServerError, map[string]string{"error": "user not found"})
+		return
+	}
+	if clientUser.Status != "active" {
+		utils.WriteJSONResponse(w, http.StatusForbidden, map[string]string{"error": "account_suspended"})
 		return
 	}
 
@@ -170,6 +175,7 @@ func ApproveOAuthInquiryHandler(w http.ResponseWriter, r *http.Request) {
 		Scope               string `json:"scope"`
 		RedirectURI         string `json:"redirect_uri"`
 		State               string `json:"state"`
+		Nonce               string `json:"nonce"`
 		TOTPCode            string `json:"totp_code"`
 		CodeChallenge       string `json:"code_challenge"`
 		CodeChallengeMethod string `json:"code_challenge_method"`
@@ -203,6 +209,10 @@ func ApproveOAuthInquiryHandler(w http.ResponseWriter, r *http.Request) {
 		utils.WriteJSONResponse(w, http.StatusBadRequest, map[string]string{"error": "invalid_request", "message": "PKCE code_challenge required (OAuth 2.1)"})
 		return
 	}
+	if !utils.ValidatePKCECodeChallenge(req.CodeChallenge) {
+		utils.WriteJSONResponse(w, http.StatusBadRequest, map[string]string{"error": "invalid_request", "message": "Invalid PKCE code_challenge format"})
+		return
+	}
 	// OAuth 2.1 mandates S256 only
 	if req.CodeChallengeMethod == "" {
 		req.CodeChallengeMethod = "S256" // Default to S256 per OAuth 2.1
@@ -233,10 +243,14 @@ func ApproveOAuthInquiryHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Verify TOTP if enabled
+	// Verify active user & TOTP if enabled
 	var user database.User
 	if err := database.DB.First(&user, userID).Error; err != nil {
 		utils.WriteJSONResponse(w, http.StatusInternalServerError, map[string]string{"error": "user not found"})
+		return
+	}
+	if user.Status != "active" {
+		utils.WriteJSONResponse(w, http.StatusForbidden, map[string]string{"error": "account_suspended"})
 		return
 	}
 
@@ -266,10 +280,10 @@ func ApproveOAuthInquiryHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		// Get current session for retry tracking
-		sess, err := database.SM.Start(r.Context(), w, r, nil)
-		if err != nil {
-			utils.WriteJSONResponse(w, http.StatusInternalServerError, map[string]string{"error": "failed to start session"})
+		// Use the authenticated Bearer session for retry tracking without issuing native cookies
+		sess, ok := r.Context().Value(database.SessionContextKey).(*database.Session)
+		if !ok || sess == nil {
+			utils.WriteJSONResponse(w, http.StatusUnauthorized, map[string]string{"error": "session not found"})
 			return
 		}
 
@@ -282,7 +296,13 @@ func ApproveOAuthInquiryHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		attemptCount++
 
-		if !totp.Validate(req.TOTPCode, user.TOTPSecret) {
+		plainSecret, needsMigration, decErr := utils.DecryptTOTPSecret(user.TOTPSecret)
+		if decErr != nil {
+			utils.WriteJSONResponse(w, http.StatusInternalServerError, map[string]string{"error": "failed to decrypt TOTP configuration"})
+			return
+		}
+
+		if !totp.Validate(req.TOTPCode, plainSecret) {
 			if attemptCount >= 3 {
 				database.SM.ApplyBlock(fmt.Sprintf("user:%d:security", user.ID), sess, 24*time.Hour, "security")
 				database.SM.ClearAllData(sess)
@@ -295,6 +315,11 @@ func ApproveOAuthInquiryHandler(w http.ResponseWriter, r *http.Request) {
 				"attempts_remaining": 3 - attemptCount,
 			})
 			return
+		}
+		if needsMigration && config.EncryptionKey != "" {
+			if encrypted, encErr := utils.EncryptTOTPSecret(plainSecret); encErr == nil {
+				database.DB.Model(&user).Update("totp_secret", encrypted)
+			}
 		}
 		// Clear attempts on success
 		database.SM.DeleteData(sess, "oauth_totp_attempts")
@@ -325,6 +350,9 @@ func ApproveOAuthInquiryHandler(w http.ResponseWriter, r *http.Request) {
 	oauthSess.RawData["client_id"] = req.ClientID
 	oauthSess.RawData["scopes"] = req.Scope
 	oauthSess.RawData["redirect_uri"] = req.RedirectURI
+	if req.Nonce != "" {
+		oauthSess.RawData["nonce"] = req.Nonce
+	}
 
 	// Store PKCE challenge if provided
 	if req.CodeChallenge != "" {

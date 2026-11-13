@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"fmt"
+	"gilosauth/config"
 	"gilosauth/database"
 	"gilosauth/middleware"
 	"gilosauth/utils"
@@ -14,6 +15,24 @@ import (
 
 	"golang.org/x/crypto/bcrypt"
 )
+
+func validateClientMetadata(name, clientType string, redirectURIs []string) error {
+	if name == "" || clientType == "" || len(redirectURIs) == 0 {
+		return fmt.Errorf("name, type, and at least one redirect URI are required")
+	}
+	if len(name) > 100 {
+		return fmt.Errorf("client name must be at most 100 characters")
+	}
+	for _, uri := range redirectURIs {
+		if err := utils.ValidateRedirectURI(uri); err != nil {
+			return err
+		}
+	}
+	if clientType != "public" && clientType != "confidential" {
+		return fmt.Errorf("invalid client type")
+	}
+	return nil
+}
 
 // ClientsHandler returns JSON list of clients or handles creation.
 func ClientsHandler(w http.ResponseWriter, r *http.Request) {
@@ -37,13 +56,8 @@ func ClientsHandler(w http.ResponseWriter, r *http.Request) {
 		rawURIs := r.Form.Get("redirect_uris")
 		redirectURIs := parseRedirectURIs(rawURIs)
 
-		if name == "" || clientType == "" || len(redirectURIs) == 0 {
-			utils.WriteJSONResponse(w, http.StatusBadRequest, map[string]string{"error": "name, type, and at least one redirect URI are required"})
-			return
-		}
-
-		if clientType != "public" && clientType != "confidential" {
-			utils.WriteJSONResponse(w, http.StatusBadRequest, map[string]string{"error": "invalid client type"})
+		if err := validateClientMetadata(name, clientType, redirectURIs); err != nil {
+			utils.WriteJSONResponse(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
 			return
 		}
 
@@ -90,7 +104,7 @@ func ClientsHandler(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 
-			hashedSecret, err := bcrypt.GenerateFromPassword([]byte(plaintextSecret), bcrypt.DefaultCost)
+			hashedSecret, err := bcrypt.GenerateFromPassword([]byte(plaintextSecret), config.BcryptCost)
 			if err != nil {
 				utils.WriteJSONResponse(w, http.StatusInternalServerError, map[string]string{"error": "failed to hash client secret"})
 				return
@@ -182,13 +196,8 @@ func EditClientHandler(w http.ResponseWriter, r *http.Request) {
 		rawURIs := r.Form.Get("redirect_uris")
 		redirectURIs := parseRedirectURIs(rawURIs)
 
-		if name == "" || clientType == "" || len(redirectURIs) == 0 {
-			utils.WriteJSONResponse(w, http.StatusBadRequest, map[string]string{"error": "name, type, and at least one redirect URI are required"})
-			return
-		}
-
-		if clientType != "public" && clientType != "confidential" {
-			utils.WriteJSONResponse(w, http.StatusBadRequest, map[string]string{"error": "invalid client type"})
+		if err := validateClientMetadata(name, clientType, redirectURIs); err != nil {
+			utils.WriteJSONResponse(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
 			return
 		}
 
@@ -232,7 +241,7 @@ func EditClientHandler(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 
-			hashedSecret, err := bcrypt.GenerateFromPassword([]byte(plaintextSecret), bcrypt.DefaultCost)
+			hashedSecret, err := bcrypt.GenerateFromPassword([]byte(plaintextSecret), config.BcryptCost)
 			if err != nil {
 				utils.WriteJSONResponse(w, http.StatusInternalServerError, map[string]string{"error": "failed to hash client secret"})
 				return

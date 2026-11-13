@@ -27,6 +27,99 @@ func updateSessionCookie(w http.ResponseWriter, session *database.Session) {
 	}
 }
 
+func parseSessionTime(raw interface{}) time.Time {
+	switch v := raw.(type) {
+	case string:
+		t, _ := time.Parse(time.RFC3339, v)
+		return t
+	case time.Time:
+		return v
+	default:
+		return time.Time{}
+	}
+}
+
+func authenticateUserPassword(user *database.User, cleanedUsername, password string, r *http.Request) (int, map[string]interface{}, bool) {
+	if user.Status == "suspended" {
+		return http.StatusForbidden, map[string]interface{}{"error": "account is suspended"}, false
+	}
+
+	userBlockKey := fmt.Sprintf("user:%d:security", user.ID)
+	if blocked, until := database.SM.IsBlocked(userBlockKey); blocked {
+		return http.StatusTooManyRequests, map[string]interface{}{
+			"error":         fmt.Sprintf("your account is temporarily blocked for security until %s", until.Format(time.RFC3339)),
+			"is_blocked":    true,
+			"blocked_until": until.Format(time.RFC3339),
+		}, false
+	}
+	if blocked, until := database.SM.IsBlocked(cleanedUsername); blocked {
+		return http.StatusTooManyRequests, map[string]interface{}{
+			"error":         fmt.Sprintf("your account is temporarily blocked for security until %s", until.Format(time.RFC3339)),
+			"is_blocked":    true,
+			"blocked_until": until.Format(time.RFC3339),
+		}, false
+	}
+
+	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password)); err != nil {
+		failKey := fmt.Sprintf("login_fail:%s", cleanedUsername)
+		failCount := int64(0)
+		database.DB.Model(&database.SecurityBlock{}).Where("identifier = ? AND blocked_until > ?", failKey, time.Now()).Count(&failCount)
+		blockEntry := database.SecurityBlock{
+			Identifier:   failKey,
+			BlockedUntil: time.Now().Add(1 * time.Hour),
+		}
+		database.DB.Create(&blockEntry)
+		failCount++
+		if failCount >= 15 {
+			database.SM.ApplyBlock(userBlockKey, nil, 24*time.Hour, "security")
+			database.LogAuditEventWithUserID(database.AuditBruteForceBlocked, user.ID, r, "24h block after 15 failed attempts")
+		} else if failCount >= 10 {
+			database.SM.ApplyBlock(userBlockKey, nil, 1*time.Hour, "security")
+			database.LogAuditEventWithUserID(database.AuditBruteForceBlocked, user.ID, r, "1h block after 10 failed attempts")
+		} else if failCount >= 5 {
+			database.SM.ApplyBlock(userBlockKey, nil, 15*time.Minute, "security")
+			database.LogAuditEventWithUserID(database.AuditBruteForceBlocked, user.ID, r, "15m block after 5 failed attempts")
+		}
+		database.LogAuditEventWithUserID(database.AuditLoginFailed, user.ID, r, fmt.Sprintf("failed password attempt #%d", failCount))
+		return http.StatusUnauthorized, map[string]interface{}{"error": fmt.Sprintf("invalid %s or password", config.AppIDLabel)}, false
+	}
+
+	database.DB.Where("identifier = ?", fmt.Sprintf("login_fail:%s", cleanedUsername)).Delete(&database.SecurityBlock{})
+	return http.StatusOK, nil, true
+}
+
+func decryptAndValidateUserTOTP(user *database.User, code string) bool {
+	if user == nil || !user.MFATOTPEnabled || user.TOTPSecret == "" {
+		return false
+	}
+	plainSecret, needsMigration, err := utils.DecryptTOTPSecret(user.TOTPSecret)
+	if err != nil {
+		return false
+	}
+	if !totp.Validate(code, plainSecret) {
+		return false
+	}
+	if needsMigration && config.EncryptionKey != "" {
+		if encrypted, encErr := utils.EncryptTOTPSecret(plainSecret); encErr == nil {
+			user.TOTPSecret = encrypted
+			_ = database.DB.Model(user).Update("totp_secret", encrypted).Error
+		}
+	}
+	return true
+}
+
+func applyOTPFailureBlock(identifier, cleanedUsername string, user *database.User, sess *database.Session) {
+	if identifier != "" {
+		_ = database.SM.ApplyBlock(identifier, sess, 24*time.Hour, "security")
+	}
+	if cleanedUsername != "" && cleanedUsername != identifier {
+		_ = database.SM.ApplyBlock(cleanedUsername, nil, 24*time.Hour, "security")
+	}
+	if user != nil && user.ID != 0 {
+		_ = database.SM.ApplyBlock(fmt.Sprintf("user:%d:security", user.ID), nil, 24*time.Hour, "security")
+	}
+}
+
 // getAuthStateResponse constructs the response with current state and user data.
 func getAuthStateResponse(sess *database.Session, user *database.User, successMessage string, step string) map[string]interface{} {
 	response := map[string]interface{}{
@@ -59,12 +152,7 @@ func getAuthStateResponse(sess *database.Session, user *database.User, successMe
 	}
 
 	if otpSentAt, exists := database.SM.GetData(sess, "otp_sent_at"); exists {
-		var sentTime time.Time
-		if tStr, ok := otpSentAt.(string); ok {
-			sentTime, _ = time.Parse(time.RFC3339, tStr)
-		} else if t, ok := otpSentAt.(time.Time); ok {
-			sentTime = t
-		}
+		sentTime := parseSessionTime(otpSentAt)
 		if !sentTime.IsZero() {
 			timeRemaining := 300 - int(time.Since(sentTime).Seconds())
 			if timeRemaining < 0 {
@@ -81,9 +169,18 @@ func getAuthStateResponse(sess *database.Session, user *database.User, successMe
 	}
 
 	if isBlocked, exists := database.SM.GetData(sess, "is_blocked"); exists {
-		response["is_blocked"] = isBlocked
-		if until, ok := database.SM.GetData(sess, "blocked_until"); ok {
-			response["blocked_until"] = until
+		if b, ok := isBlocked.(bool); ok && b {
+			untilRaw, hasUntil := database.SM.GetData(sess, "blocked_until")
+			untilTime := parseSessionTime(untilRaw)
+			if !hasUntil || untilTime.After(time.Now()) {
+				response["is_blocked"] = true
+				if hasUntil {
+					response["blocked_until"] = untilRaw
+				}
+			} else {
+				_ = database.SM.DeleteData(sess, "is_blocked")
+				_ = database.SM.DeleteData(sess, "blocked_until")
+			}
 		}
 	}
 
@@ -109,12 +206,18 @@ func getAuthStateResponse(sess *database.Session, user *database.User, successMe
 // AuthHandler handles rendering the auth page.
 func AuthHandler(tmpls *template.Template) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		// Check for existing user-bound session
+		// Check for existing user-bound active session
 		cookie, err := r.Cookie("session_token")
 		if err == nil && cookie.Value != "" {
 			if sess, err := database.SM.Get(cookie.Value, "native"); err == nil && sess.UserID != nil {
-				http.Redirect(w, r, "/home", http.StatusFound)
-				return
+				var user database.User
+				if err := database.DB.First(&user, *sess.UserID).Error; err == nil && user.Status == "active" {
+					target := utils.SanitizeRelativeTarget(r.URL.Query().Get("target"), "/home")
+					http.Redirect(w, r, target, http.StatusFound)
+					return
+				}
+				_ = database.SM.Destroy(sess)
+				database.SetSessionCookieHelper(w, "", time.Now().Add(-1*time.Hour))
 			}
 		}
 
@@ -125,12 +228,26 @@ func AuthHandler(tmpls *template.Template) http.HandlerFunc {
 		}
 
 		tr := i18n.New(lang)
+		translations := i18n.GetTranslations(lang)
+
+		var authError string
+		if r.URL.Query().Get("error") == "suspended" {
+			authError = translations["account_suspended_desc"]
+			if authError == "" {
+				authError = "Your account is currently suspended."
+			}
+		}
+
 		data := map[string]interface{}{
+			"Year":            time.Now().Year(),
 			"Lang":            lang,
 			"CurrentLanguage": tr.Current(),
 			"Languages":       tr.All(),
-			"T":               i18n.GetTranslations(lang),
+			"T":               translations,
 			"AppVersion":      config.Version,
+			"AppName":         config.AppName,
+			"AppIDLabel":      config.AppIDLabel,
+			"AuthError":       authError,
 		}
 
 		// Buffer template execution to prevent partial writes on error
@@ -180,49 +297,10 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if user.Status == "suspended" {
-		utils.WriteJSONResponse(w, http.StatusForbidden, map[string]string{"error": "account is suspended"})
+	if status, payload, ok := authenticateUserPassword(&user, cleanedUsername, input.Password, r); !ok {
+		utils.WriteJSONResponse(w, status, payload)
 		return
 	}
-
-	// Check if user is blocked by ID
-	if blocked, until := database.SM.IsBlocked(fmt.Sprintf("user:%d:security", user.ID)); blocked {
-		utils.WriteJSONResponse(w, http.StatusTooManyRequests, map[string]interface{}{
-			"error":         fmt.Sprintf("your account is temporarily blocked for security until %s", until.Format(time.RFC3339)),
-			"is_blocked":    true,
-			"blocked_until": until.Format(time.RFC3339),
-		})
-		return
-	}
-
-	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(input.Password)); err != nil {
-		// Track failed password attempt for brute-force protection
-		failKey := fmt.Sprintf("login_fail:%s", cleanedUsername)
-		failCount := int64(0)
-		database.DB.Model(&database.SecurityBlock{}).Where("identifier = ? AND blocked_until > ?", failKey, time.Now()).Count(&failCount)
-		blockEntry := database.SecurityBlock{
-			Identifier:   failKey,
-			BlockedUntil: time.Now().Add(1 * time.Hour), // track window
-		}
-		database.DB.Create(&blockEntry)
-		failCount++ // including this attempt
-		if failCount >= 15 {
-			database.SM.ApplyBlock(fmt.Sprintf("user:%d:security", user.ID), nil, 24*time.Hour, "security")
-			database.LogAuditEventWithUserID(database.AuditBruteForceBlocked, user.ID, r, "24h block after 15 failed attempts")
-		} else if failCount >= 10 {
-			database.SM.ApplyBlock(fmt.Sprintf("user:%d:security", user.ID), nil, 1*time.Hour, "security")
-			database.LogAuditEventWithUserID(database.AuditBruteForceBlocked, user.ID, r, "1h block after 10 failed attempts")
-		} else if failCount >= 5 {
-			database.SM.ApplyBlock(fmt.Sprintf("user:%d:security", user.ID), nil, 15*time.Minute, "security")
-			database.LogAuditEventWithUserID(database.AuditBruteForceBlocked, user.ID, r, "15m block after 5 failed attempts")
-		}
-		database.LogAuditEventWithUserID(database.AuditLoginFailed, user.ID, r, fmt.Sprintf("failed password attempt #%d", failCount))
-		utils.WriteJSONResponse(w, http.StatusUnauthorized, map[string]string{"error": fmt.Sprintf("invalid %s or password", config.AppIDLabel)})
-		return
-	}
-
-	// Clear failed login attempts on success
-	database.DB.Where("identifier = ?", fmt.Sprintf("login_fail:%s", cleanedUsername)).Delete(&database.SecurityBlock{})
 
 	// Pass nil clientID for web-based session
 	sess, err := database.SM.Start(r.Context(), w, r, nil)
@@ -242,7 +320,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 	if mfaEnabled && input.TwoStepCode != "" {
 		// Check if it's a TOTP code first
-		if user.MFATOTPEnabled && totp.Validate(input.TwoStepCode, user.TOTPSecret) {
+		if decryptAndValidateUserTOTP(&user, input.TwoStepCode) {
 			mfaValid = true
 		}
 
@@ -413,6 +491,7 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		user.Email = cleanedContact
+		user.EmailVerified = true
 	} else {
 		phone, err := utils.ParsePhone(cleanedContact)
 		if err != nil {
@@ -424,6 +503,7 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		user.Phone = phone
+		user.PhoneVerified = true
 	}
 
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(input.Password), config.BcryptCost)
@@ -812,8 +892,13 @@ func ContactVerifyHandler(w http.ResponseWriter, r *http.Request) {
 		"contact":      cleanedContact,
 	}
 	if input.Step == "register-contact" {
-		sessionData["first_name"] = input.FirstName
-		sessionData["last_name"] = input.LastName
+		if strings.TrimSpace(input.FirstName) != "" {
+			sessionData["first_name"] = strings.TrimSpace(input.FirstName)
+			sessionData["last_name"] = strings.TrimSpace(input.LastName)
+		} else if existingFirst, ok := database.SM.GetData(sess, "first_name"); !ok || fmt.Sprint(existingFirst) == "" {
+			utils.WriteJSONResponse(w, http.StatusBadRequest, map[string]string{"error": "first name is required"})
+			return
+		}
 	}
 
 	for key, value := range sessionData {
@@ -997,13 +1082,9 @@ func SendOTPHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Rate limit check
-	if otpSentAt, exists := database.SM.GetData(sess, "otp_sent_at"); exists {
-		var sentTime time.Time
-		if tStr, ok := otpSentAt.(string); ok {
-			sentTime, _ = time.Parse(time.RFC3339, tStr)
-		} else if t, ok := otpSentAt.(time.Time); ok {
-			sentTime = t
-		}
+	otpSentAt, alreadySent := database.SM.GetData(sess, "otp_sent_at")
+	if alreadySent {
+		sentTime := parseSessionTime(otpSentAt)
 		if !sentTime.IsZero() && time.Since(sentTime) < 1*time.Minute {
 			timeLeft := 60 - int(time.Since(sentTime).Seconds())
 			utils.WriteJSONResponse(w, http.StatusTooManyRequests, map[string]interface{}{
@@ -1014,11 +1095,11 @@ func SendOTPHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	if contactType != "totp" {
+	if contactType != "totp" && (alreadySent || fmt.Sprint(currentStep) == "otp") {
 		resendCount++
 	}
 	if resendCount > 3 && contactType != "totp" {
-		database.SM.ApplyBlock(cleanedContact, sess, 24*time.Hour, "security")
+		applyOTPFailureBlock(cleanedContact, cleanedUsername, &user, sess)
 		utils.WriteJSONResponse(w, http.StatusTooManyRequests, map[string]interface{}{
 			"error":         "maximum resend attempts reached, blocked for 24 hours",
 			"is_blocked":    true,
@@ -1114,6 +1195,23 @@ func VerifyOTPHandler(w http.ResponseWriter, r *http.Request) {
 
 	contactType, _ := database.SM.GetData(sess, "contact_type")
 
+	var user database.User
+	userLoaded := database.DB.Where("username = ?", cleanedUsername).First(&user).Error == nil
+	if userLoaded {
+		if user.Status == "suspended" {
+			utils.WriteJSONResponse(w, http.StatusForbidden, map[string]string{"error": "account is suspended"})
+			return
+		}
+		if blocked, until := database.SM.IsBlocked(fmt.Sprintf("user:%d:security", user.ID)); blocked {
+			utils.WriteJSONResponse(w, http.StatusTooManyRequests, map[string]interface{}{
+				"error":         fmt.Sprintf("your account is temporarily blocked for security until %s", until.Format(time.RFC3339)),
+				"is_blocked":    true,
+				"blocked_until": until.Format(time.RFC3339),
+			})
+			return
+		}
+	}
+
 	attempts, exists := database.SM.GetData(sess, "attempts")
 	attemptCount := 0
 	if exists {
@@ -1130,7 +1228,10 @@ func VerifyOTPHandler(w http.ResponseWriter, r *http.Request) {
 			identifier = cleanedUsername
 		}
 
-		database.SM.ApplyBlock(identifier, sess, 24*time.Hour, "security")
+		applyOTPFailureBlock(identifier, cleanedUsername, &user, sess)
+		if user.ID != 0 {
+			database.LogAuditEventWithUserID(database.AuditBruteForceBlocked, user.ID, r, "24h block after max OTP attempts")
+		}
 		utils.WriteJSONResponse(w, http.StatusTooManyRequests, map[string]interface{}{
 			"error":         "maximum OTP attempts reached, blocked for 24 hours",
 			"is_blocked":    true,
@@ -1143,20 +1244,23 @@ func VerifyOTPHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var user database.User
 	valid := false
 	if fmt.Sprint(contactType) == "totp" {
-		if err := database.DB.Where("username = ?", cleanedUsername).First(&user).Error; err != nil {
+		if !userLoaded {
 			utils.WriteJSONResponse(w, http.StatusBadRequest, map[string]string{"error": fmt.Sprintf("invalid %s", config.AppIDLabel)})
 			return
 		}
-		if totp.Validate(input.OTP, user.TOTPSecret) {
-			valid = true
-		}
+		valid = decryptAndValidateUserTOTP(&user, input.OTP)
 	} else {
 		storedOTPHash, exists := database.SM.GetData(sess, "otp")
-		if !exists {
+		otpSentAt, sentExists := database.SM.GetData(sess, "otp_sent_at")
+		if !exists || !sentExists {
 			utils.WriteJSONResponse(w, http.StatusBadRequest, map[string]string{"error": "no OTP session found"})
+			return
+		}
+		sentTime := parseSessionTime(otpSentAt)
+		if sentTime.IsZero() || time.Since(sentTime) > 5*time.Minute {
+			utils.WriteJSONResponse(w, http.StatusBadRequest, map[string]string{"error": "OTP has expired, please request a new code"})
 			return
 		}
 		// Compare hashed OTP (stored) with hash of submitted OTP
@@ -1222,6 +1326,8 @@ func VerifyOTPHandler(w http.ResponseWriter, r *http.Request) {
 		utils.WriteJSONResponse(w, http.StatusInternalServerError, map[string]string{"error": "failed to update session data"})
 		return
 	}
+	_ = database.SM.DeleteData(sess, "otp")
+	_ = database.SM.DeleteData(sess, "otp_sent_at")
 
 	response := getAuthStateResponse(sess, &user, successMessage, nextStep)
 	utils.WriteJSONResponse(w, http.StatusOK, response)
@@ -1292,6 +1398,56 @@ func AuthStateHandler(w http.ResponseWriter, r *http.Request) {
 	var user database.User
 	var successMessage string
 	var nextStep = input.Step
+	cleanedUsername := fmt.Sprint(username)
+
+	// Enforce valid state machine transitions
+	currentStepRaw, _ := database.SM.GetData(sess, "step")
+	currentStep := fmt.Sprint(currentStepRaw)
+	switch input.Step {
+	case "gilos-id":
+		// Always allowed to reset flow
+	case "password", "forgot-password":
+		if err := database.DB.Where("username = ?", cleanedUsername).First(&user).Error; err != nil {
+			utils.WriteJSONResponse(w, http.StatusBadRequest, map[string]string{"error": fmt.Sprintf("invalid %s", config.AppIDLabel)})
+			return
+		}
+	case "two-step-select":
+		if verified, ok := database.SM.GetData(sess, "password_verified"); !ok || verified != true {
+			utils.WriteJSONResponse(w, http.StatusBadRequest, map[string]string{"error": "password verification required"})
+			return
+		}
+	case "otp":
+		if currentStep != "otp" {
+			_, hasSentAt := database.SM.GetData(sess, "otp_sent_at")
+			ct, _ := database.SM.GetData(sess, "contact_type")
+			if !hasSentAt && fmt.Sprint(ct) != "totp" {
+				utils.WriteJSONResponse(w, http.StatusBadRequest, map[string]string{"error": "OTP flow not initialized"})
+				return
+			}
+		}
+	case "register-name":
+		if err := database.DB.Where("username = ?", cleanedUsername).First(&user).Error; err == nil {
+			utils.WriteJSONResponse(w, http.StatusConflict, map[string]string{"error": fmt.Sprintf("%s already taken", config.AppIDLabel)})
+			return
+		}
+	case "register-contact":
+		if strings.TrimSpace(input.FirstName) == "" {
+			if first, ok := database.SM.GetData(sess, "first_name"); !ok || strings.TrimSpace(fmt.Sprint(first)) == "" {
+				utils.WriteJSONResponse(w, http.StatusBadRequest, map[string]string{"error": "first name is required"})
+				return
+			}
+		}
+	case "register-password":
+		if currentStep != "register-password" {
+			utils.WriteJSONResponse(w, http.StatusBadRequest, map[string]string{"error": "OTP verification required"})
+			return
+		}
+	case "reset-password":
+		if currentStep != "reset-password" {
+			utils.WriteJSONResponse(w, http.StatusBadRequest, map[string]string{"error": "OTP verification required"})
+			return
+		}
+	}
 
 	if input.Step == "password" && input.Password != "" {
 		// Input length validation
@@ -1299,16 +1455,8 @@ func AuthStateHandler(w http.ResponseWriter, r *http.Request) {
 			utils.WriteJSONResponse(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
 			return
 		}
-		if err := database.DB.Where("username = ?", username).First(&user).Error; err != nil {
-			utils.WriteJSONResponse(w, http.StatusBadRequest, map[string]string{"error": fmt.Sprintf("invalid %s", config.AppIDLabel)})
-			return
-		}
-		if user.Status == "suspended" {
-			utils.WriteJSONResponse(w, http.StatusForbidden, map[string]string{"error": "account is suspended"})
-			return
-		}
-		if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(input.Password)); err != nil {
-			utils.WriteJSONResponse(w, http.StatusUnauthorized, map[string]string{"error": "invalid password"})
+		if status, payload, ok := authenticateUserPassword(&user, cleanedUsername, input.Password, r); !ok {
+			utils.WriteJSONResponse(w, status, payload)
 			return
 		}
 		// Store only a flag, not the actual password
@@ -1336,32 +1484,30 @@ func AuthStateHandler(w http.ResponseWriter, r *http.Request) {
 				utils.WriteJSONResponse(w, http.StatusInternalServerError, map[string]string{"error": "failed to clear session data"})
 				return
 			}
+			database.LogAuditEventWithUserID(database.AuditLoginSuccess, user.ID, r, "login via web UI")
 			response := getAuthStateResponse(newSess, &user, "Login successful", "login")
 			response["redirect"] = true
 			utils.WriteJSONResponse(w, http.StatusOK, response)
 			return
 		}
-	} else if input.Step == "register-name" && input.FirstName != "" {
-		// Input length validation
-		if len(input.FirstName) > 50 || len(input.LastName) > 50 {
+	} else if input.Step == "register-name" && strings.TrimSpace(input.FirstName) != "" {
+		firstName := strings.TrimSpace(input.FirstName)
+		lastName := strings.TrimSpace(input.LastName)
+		if len(firstName) > 50 || len(lastName) > 50 {
 			utils.WriteJSONResponse(w, http.StatusBadRequest, map[string]string{"error": "names must be at most 50 characters"})
 			return
 		}
-		if err := database.SM.SetData(sess, "first_name", input.FirstName); err != nil {
+		if err := database.SM.SetData(sess, "first_name", firstName); err != nil {
 			utils.WriteJSONResponse(w, http.StatusInternalServerError, map[string]string{"error": "failed to store session data"})
 			return
 		}
-		if err := database.SM.SetData(sess, "last_name", input.LastName); err != nil {
+		if err := database.SM.SetData(sess, "last_name", lastName); err != nil {
 			utils.WriteJSONResponse(w, http.StatusInternalServerError, map[string]string{"error": "failed to store session data"})
 			return
 		}
 		nextStep = "register-contact"
 		successMessage = "Details saved"
 	} else if input.Step == "forgot-password" {
-		if err := database.DB.Where("username = ?", username).First(&user).Error; err != nil {
-			utils.WriteJSONResponse(w, http.StatusBadRequest, map[string]string{"error": fmt.Sprintf("invalid %s", config.AppIDLabel)})
-			return
-		}
 		if user.Status == "suspended" {
 			utils.WriteJSONResponse(w, http.StatusForbidden, map[string]string{"error": "account is suspended"})
 			return
@@ -1431,21 +1577,33 @@ func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 	// 3. Try Authorization Bearer header
 	if token == "" {
 		authHeader := r.Header.Get("Authorization")
-		if strings.HasPrefix(authHeader, "Bearer ") {
-			token = strings.TrimPrefix(authHeader, "Bearer ")
+		if len(authHeader) > 7 && strings.EqualFold(authHeader[:7], "Bearer ") {
+			token = strings.TrimSpace(authHeader[7:])
 		}
 	}
 
 	// If token found, hash and delete matching sessions
 	if token != "" {
 		hashedToken := utils.HashToken(token)
+		var tokenSessions []database.Session
+		database.DB.Where("refresh_token = ? OR access_token = ?", hashedToken, hashedToken).Find(&tokenSessions)
+		for _, ts := range tokenSessions {
+			if ts.UserID != nil {
+				database.LogAuditEventWithUserID(database.AuditLogout, *ts.UserID, r, "token logout")
+			}
+		}
 		database.DB.Where("refresh_token = ? OR access_token = ?", hashedToken, hashedToken).Delete(&database.Session{})
 	}
 
-	// 4. Also check cookie token if present
+	// 4. Delete matching native cookie session (cookie_token is stored as generated hex token)
 	if cookie, err := r.Cookie("session_token"); err == nil && cookie.Value != "" {
-		hashedCookie := utils.HashToken(cookie.Value)
-		database.DB.Where("cookie_token = ?", hashedCookie).Delete(&database.Session{})
+		var webSess database.Session
+		if database.DB.Where("cookie_token = ?", cookie.Value).First(&webSess).Error == nil {
+			if webSess.UserID != nil {
+				database.LogAuditEventWithUserID(database.AuditLogout, *webSess.UserID, r, "web session logout")
+			}
+			database.DB.Delete(&webSess)
+		}
 	}
 
 	// Clear session cookie

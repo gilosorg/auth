@@ -27,6 +27,10 @@ func MeHandler(w http.ResponseWriter, r *http.Request) {
 		utils.WriteJSONResponse(w, http.StatusNotFound, map[string]string{"error": "user not found"})
 		return
 	}
+	if user.Status != "active" {
+		utils.WriteJSONResponse(w, http.StatusForbidden, map[string]string{"error": "account_suspended"})
+		return
+	}
 
 	// Get session to check granular scopes
 	session, ok := r.Context().Value(database.SessionContextKey).(*database.Session)
@@ -39,10 +43,14 @@ func MeHandler(w http.ResponseWriter, r *http.Request) {
 	if session.Scopes != nil {
 		scopeList = *session.Scopes
 	}
-	scopes := strings.Fields(scopeList)
+	scopes := strings.FieldsFunc(scopeList, func(r rune) bool {
+		return r == ' ' || r == ',' || r == '\t' || r == '\n'
+	})
 	scopeMap := make(map[string]bool)
 	for _, s := range scopes {
-		scopeMap[strings.TrimSpace(s)] = true
+		if trimmed := strings.TrimSpace(s); trimmed != "" {
+			scopeMap[trimmed] = true
+		}
 	}
 
 	// Basic info (requires profile, which is checked by middleware)
@@ -62,9 +70,11 @@ func MeHandler(w http.ResponseWriter, r *http.Request) {
 
 	if scopeMap["email"] && user.Email != "" {
 		response["email"] = user.Email
+		response["email_verified"] = user.EmailVerified
 	}
 	if scopeMap["phone"] && user.Phone != 0 {
 		response["phone"] = user.Phone
+		response["phone_verified"] = user.PhoneVerified
 	}
 
 	utils.WriteJSONResponse(w, http.StatusOK, response)

@@ -92,22 +92,29 @@ func (sm *SessionManager) Start(ctx context.Context, w http.ResponseWriter, r *h
 		// Check for existing session cookie
 		cookie, err := r.Cookie("session_token")
 		if err == nil && cookie.Value != "" {
-			// Try to find session by cookie token
-			if err := sm.db.Where("cookie_token = ? AND type = ?", cookie.Value, "native").
+			// Try to find active, unexpired session by cookie token
+			if err := sm.db.Where("cookie_token = ? AND type = ? AND expires_at > ?", cookie.Value, "native", time.Now()).
 				First(&session).Error; err == nil {
-				// Update LastSeenAt, ExpiresAt, and metadata (IP, device) on every access
-				session.LastSeenAt = time.Now()
-				if session.UserID == nil {
-					// Non-user-bound session: refresh 1-hour expiration
-					session.ExpiresAt = time.Now().Add(1 * time.Hour)
+				metadataChanged := sm.UpdateMetadata(&session, r)
+				shouldTouch := metadataChanged || time.Since(session.LastSeenAt) >= time.Minute
+				if shouldTouch {
+					session.LastSeenAt = time.Now()
+					updates := map[string]interface{}{
+						"last_seen_at": session.LastSeenAt,
+						"device_info":  session.DeviceInfo,
+						"ip_address":   session.IPAddress,
+					}
+					if session.UserID == nil {
+						// Non-user-bound session: refresh 1-hour expiration
+						session.ExpiresAt = time.Now().Add(1 * time.Hour)
+						updates["expires_at"] = session.ExpiresAt
+					}
+					if err := sm.db.Model(&session).Updates(updates).Error; err != nil {
+						return nil, fmt.Errorf("failed to update session: %w", err)
+					}
 				}
-				sm.UpdateMetadata(&session, r)
-				// User-bound sessions have long expiration
-				if err := sm.db.Save(&session).Error; err != nil {
-					return nil, fmt.Errorf("failed to update session: %w", err)
-				}
-				// Update cookie expiration
-				if session.CookieToken != nil {
+				// Keep browser cookie aligned with current expiration
+				if session.CookieToken != nil && (shouldTouch || session.UserID == nil) {
 					setSessionCookie(w, *session.CookieToken, session.ExpiresAt)
 				}
 				return &session, nil
@@ -175,21 +182,27 @@ func (sm *SessionManager) Get(identifier string, sessionType string, r ...*http.
 		return nil, fmt.Errorf("session not found or expired: %w", err)
 	}
 
-	// Update LastSeenAt and ExpiresAt
-	session.LastSeenAt = time.Now()
-	if session.UserID == nil {
-		// Non-user-bound session: refresh 1-hour expiration
-		session.ExpiresAt = time.Now().Add(1 * time.Hour)
-	}
-
-	// Update metadata (IP, device info) on every access when request is available
+	// Update metadata immediately when IP/UA changes; throttle idle LastSeenAt writes
+	metadataChanged := false
 	if len(r) > 0 && r[0] != nil {
-		sm.UpdateMetadata(&session, r[0])
+		metadataChanged = sm.UpdateMetadata(&session, r[0])
 	}
 
-	// User-bound sessions have long expiration
-	if err := sm.db.Save(&session).Error; err != nil {
-		return nil, fmt.Errorf("failed to update session: %w", err)
+	if metadataChanged || time.Since(session.LastSeenAt) >= time.Minute {
+		session.LastSeenAt = time.Now()
+		updates := map[string]interface{}{
+			"last_seen_at": session.LastSeenAt,
+			"device_info":  session.DeviceInfo,
+			"ip_address":   session.IPAddress,
+		}
+		if session.UserID == nil {
+			// Non-user-bound session: refresh 1-hour expiration
+			session.ExpiresAt = time.Now().Add(1 * time.Hour)
+			updates["expires_at"] = session.ExpiresAt
+		}
+		if err := sm.db.Model(&session).Updates(updates).Error; err != nil {
+			return nil, fmt.Errorf("failed to update session: %w", err)
+		}
 	}
 
 	return &session, nil
@@ -326,15 +339,29 @@ func (sm *SessionManager) ClearUser(session *Session) error {
 }
 
 // UpdateMetadata updates the session's IP address and device info from the request.
-func (sm *SessionManager) UpdateMetadata(session *Session, r *http.Request) {
+// Returns true if either field changed.
+func (sm *SessionManager) UpdateMetadata(session *Session, r *http.Request) bool {
+	if r == nil {
+		return false
+	}
+	changed := false
 	userAgent := r.UserAgent()
-	if userAgent != "" {
+	if len(userAgent) > 255 {
+		userAgent = userAgent[:255]
+	}
+	if userAgent != "" && (session.DeviceInfo == nil || *session.DeviceInfo != userAgent) {
 		session.DeviceInfo = &userAgent
+		changed = true
 	}
 	clientIP := utils.GetClientIP(r)
-	if clientIP != "" {
-		session.IPAddress = &clientIP
+	if len(clientIP) > 45 {
+		clientIP = clientIP[:45]
 	}
+	if clientIP != "" && (session.IPAddress == nil || *session.IPAddress != clientIP) {
+		session.IPAddress = &clientIP
+		changed = true
+	}
+	return changed
 }
 
 // CleanExpiredSessions removes all expired sessions and security blocks from the database.

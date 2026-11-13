@@ -36,6 +36,10 @@ type LoginResponse struct {
 
 // login authenticates with the Eskiz API and updates the token.
 func login() error {
+	if config.EskizEmail == "" || config.EskizPassword == "" {
+		return errors.New("SMS provider credentials are not configured")
+	}
+
 	mutex.Lock()
 	defer mutex.Unlock()
 
@@ -72,6 +76,19 @@ func getEskizToken() string {
 	mutex.RLock()
 	defer mutex.RUnlock()
 	return eskizToken
+}
+
+func isEskizLoggedIn() bool {
+	mutex.RLock()
+	defer mutex.RUnlock()
+	return loggedIn
+}
+
+func invalidateEskizSession() {
+	mutex.Lock()
+	defer mutex.Unlock()
+	loggedIn = false
+	eskizToken = ""
 }
 
 // sendEskizSMS sends an SMS using the Eskiz API.
@@ -113,8 +130,11 @@ func sendEskizSMS(phone, message string) error {
 
 // SendEskizSMSWithRetry attempts to send an SMS with retries.
 func SendEskizSMSWithRetry(phone, message string, retries int) error {
+	if retries <= 0 {
+		retries = 1
+	}
 	for attempt := 1; attempt <= retries; attempt++ {
-		if !loggedIn {
+		if !isEskizLoggedIn() {
 			if err := login(); err != nil {
 				return fmt.Errorf("attempt %d: login failed: %v", attempt, err)
 			}
@@ -125,7 +145,7 @@ func SendEskizSMSWithRetry(phone, message string, retries int) error {
 				return fmt.Errorf("attempt %d: failed to send SMS: %v", attempt, err)
 			}
 			// Retry by logging in again
-			loggedIn = false
+			invalidateEskizSession()
 			continue
 		}
 

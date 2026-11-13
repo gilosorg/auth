@@ -176,9 +176,13 @@ func PushSyncHandler(w http.ResponseWriter, r *http.Request) {
 						data = sanitizeTotp(data)
 						secretToStore := data.Secret
 						if config.EncryptionKey != "" {
-							if encrypted, err := utils.EncryptAES(secretToStore, config.EncryptionKey); err == nil {
-								secretToStore = encrypted
+							encrypted, encErr := utils.EncryptAES(secretToStore, config.EncryptionKey)
+							if encErr != nil {
+								tx.Rollback()
+								utils.WriteJSONResponse(w, http.StatusInternalServerError, map[string]string{"error": "failed to encrypt secret"})
+								return
 							}
+							secretToStore = encrypted
 						}
 						existing.Secret = secretToStore
 						existing.Label = data.Label
@@ -203,9 +207,13 @@ func PushSyncHandler(w http.ResponseWriter, r *http.Request) {
 					data = sanitizeTotp(data)
 					secretToStore := data.Secret
 					if config.EncryptionKey != "" {
-						if encrypted, err := utils.EncryptAES(secretToStore, config.EncryptionKey); err == nil {
-							secretToStore = encrypted
+						encrypted, encErr := utils.EncryptAES(secretToStore, config.EncryptionKey)
+						if encErr != nil {
+							tx.Rollback()
+							utils.WriteJSONResponse(w, http.StatusInternalServerError, map[string]string{"error": "failed to encrypt secret"})
+							return
 						}
+						secretToStore = encrypted
 					}
 					newSecret := database.TOTPSecret{
 						UUID:      data.UUID,

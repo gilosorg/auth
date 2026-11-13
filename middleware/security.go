@@ -23,7 +23,7 @@ func SecurityHeaders(next http.Handler) http.Handler {
 			"default-src 'self'; "+
 				"script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; "+
 				"style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; "+
-				"img-src 'self' data: https://cdn.jsdelivr.net; "+
+				"img-src 'self' data: blob: https://cdn.jsdelivr.net; "+
 				"font-src 'self' https://fonts.gstatic.com; "+
 				"frame-ancestors 'none'; "+
 				"base-uri 'self'")
@@ -46,10 +46,11 @@ func SecurityHeaders(next http.Handler) http.Handler {
 	})
 }
 
-// isSensitivePath checks if the request path is an API, auth, or other sensitive endpoint
+// isAPIPath checks if the request path is an API, auth, or sensitive page
 // where responses must not be cached.
 func isAPIPath(path string) bool {
-	return len(path) >= 4 && path[:4] == "/api" ||
+	return path == "/home" ||
+		len(path) >= 4 && path[:4] == "/api" ||
 		len(path) >= 5 && path[:5] == "/auth" ||
 		len(path) >= 2 && path[:2] == "/o" ||
 		len(path) >= 9 && path[:9] == "/sessions" ||
