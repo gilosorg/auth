@@ -518,5 +518,8 @@
   "preset_standard_oidc": "Standard OIDC preset",
   "test_in_docs": "Test flow",
   "mfa_active_count": "{count} of 3 active",
-  "toggle_checkup_details": "Details"
+  "toggle_checkup_details": "Details",
+  "session_expired_redirect": "Your session has expired. Redirecting to sign in...",
+  "copy_ip": "Copy IP address",
+  "copy_response": "Copy JSON"
 }

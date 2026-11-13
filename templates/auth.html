@@ -1886,6 +1886,7 @@
             showMessage('', false);
             const button = document.getElementById('action-button');
             const buttonText = button ? button.textContent : '';
+            let stepChanged = false;
             if (button) {
                 button.innerHTML = '<span class="spinner"></span>';
                 button.disabled = true;
@@ -1903,6 +1904,7 @@
                 const data = await response.json();
                 if (data.success) {
                     if (data.redirect) {
+                        stepChanged = true;
                         window.location.href = targetUrl;
                         return;
                     }
@@ -1911,12 +1913,14 @@
                     state.contact = data.contact || '';
                     syncFormData(data);
                     updateUI(data);
+                    stepChanged = true;
                     showMessage(data.success_message || '', true);
                 } else {
                     if (data.is_blocked) {
                         state.isBlocked = true;
                         state.blockedUntil = data.blocked_until;
                         updateUI(data);
+                        stepChanged = true;
                         return;
                     }
                     showMessage(data.error || 'Invalid password', false);
@@ -1925,7 +1929,7 @@
                 console.error('Error submitting password:', error);
                 showMessage(T.network_error || 'Unable to proceed. Please try again.', false);
             } finally {
-                if (button) {
+                if (button && !stepChanged) {
                     button.textContent = buttonText;
                     validateForm();
                 }
@@ -1936,6 +1940,7 @@
             showMessage('', false);
             const button = document.getElementById('action-button');
             const buttonText = button ? button.textContent : '';
+            let stepChanged = false;
             if (button) {
                 button.innerHTML = '<span class="spinner"></span>';
                 button.disabled = true;
@@ -1961,6 +1966,7 @@
                     state.contact = data.contact || '';
                     syncFormData(data);
                     updateUI(data);
+                    stepChanged = true;
                     if (data.contact_type !== 'totp') {
                         state.timeRemaining = data.time_remaining || 300;
                         state.resendAvailableIn = data.resend_available_in || 60;
@@ -1974,7 +1980,7 @@
                 console.error('Error sending OTP:', error);
                 showMessage(T.network_error || 'Unable to send code. Please try again.', false);
             } finally {
-                if (button) {
+                if (button && !stepChanged) {
                     button.textContent = buttonText;
                     validateForm();
                 }
@@ -1990,11 +1996,11 @@
             showMessage('', false);
             const button = document.getElementById('action-button');
             const buttonText = button ? button.textContent : '';
+            let stepChanged = false;
             if (button) {
                 button.innerHTML = '<span class="spinner"></span>';
                 button.disabled = true;
             }
-            state.attempts++;
 
             try {
                 const response = await fetch('/auth/otp/verify', {
@@ -2008,6 +2014,7 @@
                 const data = await response.json();
                 if (data.success) {
                     if (data.redirect) {
+                        stepChanged = true;
                         window.location.href = targetUrl;
                         return;
                     }
@@ -2015,8 +2022,10 @@
                     state.contact = data.contact || '';
                     syncFormData(data);
                     updateUI(data);
+                    stepChanged = true;
                     showMessage(data.success_message || '', true);
                 } else {
+                    state.attempts++;
                     setOTPError(true);
                     const attemptsLeft = Math.max(0, 3 - state.attempts);
                     showMessage(data.error || `Invalid OTP (${attemptsLeft} left)`, false);
@@ -2025,6 +2034,7 @@
                             state.isBlocked = true;
                             state.blockedUntil = data.blocked_until;
                             updateUI(data);
+                            stepChanged = true;
                         } else {
                             await resetAndReload();
                         }
@@ -2035,7 +2045,7 @@
                 setOTPError(true);
                 showMessage(T.network_error || 'Unable to verify code. Please try again.', false);
             } finally {
-                if (button) {
+                if (button && !stepChanged) {
                     button.textContent = buttonText;
                     button.disabled = getOTPValue().length !== 6 || state.isBlocked;
                 }
@@ -2095,6 +2105,7 @@
             }
             const button = document.getElementById('action-button');
             const buttonText = button ? button.textContent : '';
+            let stepChanged = false;
             if (button) {
                 button.innerHTML = '<span class="spinner"></span>';
                 button.disabled = true;
@@ -2118,12 +2129,13 @@
                 state.contact = data.contact || '';
                 syncFormData(data);
                 updateUI(data);
+                stepChanged = true;
                 showMessage(data.success_message || '', true);
             } catch (error) {
                 console.error('Error submitting register name:', error);
                 showMessage(error.message, false);
             } finally {
-                if (button) {
+                if (button && !stepChanged) {
                     button.textContent = buttonText;
                     validateForm();
                 }
@@ -2134,6 +2146,7 @@
             showMessage('', false);
             const button = document.getElementById('action-button');
             const buttonText = button ? button.textContent : '';
+            let stepChanged = false;
             if (button) {
                 button.innerHTML = '<span class="spinner"></span>';
                 button.disabled = true;
@@ -2186,6 +2199,7 @@
                 state.contactType = data.contact_type || (method === 'email' ? 'email' : 'phone');
                 syncFormData(data);
                 updateUI(data);
+                stepChanged = true;
                 if (data.step === 'otp' && data.contact_type !== 'totp') {
                     state.resends = data.resends || 0;
                     state.timeRemaining = data.time_remaining || 300;
@@ -2197,7 +2211,7 @@
                 console.error('Error submitting contact:', error);
                 showMessage(error.message, false);
             } finally {
-                if (button) {
+                if (button && !stepChanged) {
                     button.textContent = buttonText;
                     validateForm();
                 }
@@ -2208,6 +2222,7 @@
             showMessage('', false);
             const button = document.getElementById('action-button');
             const buttonText = button ? button.textContent : '';
+            let redirected = false;
             if (button) {
                 button.innerHTML = '<span class="spinner"></span>';
                 button.disabled = true;
@@ -2231,12 +2246,13 @@
                 if (!response.ok || !data.success) {
                     throw new Error(data.error || 'Failed to register');
                 }
+                redirected = true;
                 window.location.href = targetUrl;
             } catch (error) {
                 console.error('Error submitting registration:', error);
                 showMessage(error.message, false);
             } finally {
-                if (button) {
+                if (button && !redirected) {
                     button.textContent = buttonText;
                     validateForm();
                 }

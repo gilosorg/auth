@@ -518,5 +518,8 @@
   "preset_standard_oidc": "Стандартный OIDC",
   "test_in_docs": "Проверить",
   "mfa_active_count": "{count} из 3 активно",
-  "toggle_checkup_details": "Подробнее"
+  "toggle_checkup_details": "Подробнее",
+  "session_expired_redirect": "Срок действия сессии истёк. Перенаправление...",
+  "copy_ip": "Копировать IP-адрес",
+  "copy_response": "Копировать JSON"
 }

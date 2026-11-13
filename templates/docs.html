@@ -456,7 +456,10 @@ grant_type=authorization_code
                             </button>
                         </div>
                         <div id="tokenResponse" class="hidden" style="margin-top: 16px;">
-                            <span class="label label-success">Live Response</span>
+                            <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px;">
+                                <span class="label label-success" style="margin: 0;">Live Response</span>
+                                <button type="button" class="btn btn-secondary" style="font-size: 0.76rem; padding: 4px 10px;" onclick="copyResponseJSON('tokenResponseCode', this)">{{ index .T "copy_response" }}</button>
+                            </div>
                             <div class="response-preview">
                                 <pre><code id="tokenResponseCode"></code></pre>
                             </div>
@@ -504,7 +507,10 @@ Authorization: Bearer <span class="var-access-token">YOUR_ACCESS_TOKEN</span></c
                             </button>
                         </div>
                         <div id="userInfoResponse" class="hidden" style="margin-top: 16px;">
-                            <span class="label label-success">Live Response</span>
+                            <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px;">
+                                <span class="label label-success" style="margin: 0;">Live Response</span>
+                                <button type="button" class="btn btn-secondary" style="font-size: 0.76rem; padding: 4px 10px;" onclick="copyResponseJSON('userInfoResponseCode', this)">{{ index .T "copy_response" }}</button>
+                            </div>
                             <div class="response-preview">
                                 <pre><code id="userInfoResponseCode"></code></pre>
                             </div>
@@ -564,7 +570,10 @@ Authorization: Bearer <span class="var-access-token">YOUR_ACCESS_TOKEN</span></c
                             </button>
                         </div>
                         <div id="refreshResponse" class="hidden" style="margin-top: 16px;">
-                            <span class="label label-success">Live Response</span>
+                            <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px;">
+                                <span class="label label-success" style="margin: 0;">Live Response</span>
+                                <button type="button" class="btn btn-secondary" style="font-size: 0.76rem; padding: 4px 10px;" onclick="copyResponseJSON('refreshResponseCode', this)">{{ index .T "copy_response" }}</button>
+                            </div>
                             <div class="response-preview">
                                 <pre><code id="refreshResponseCode"></code></pre>
                             </div>
@@ -946,7 +955,7 @@ func CallbackHandler(onSuccess AuthCallback) http.HandlerFunc {
 		
 		http.Redirect(w, r, redirectURL, http.StatusSeeOther)
 	}
-}</code><button type="button" class="copy-btn" onclick="copyCode(this)">Copy</button></pre>
+}</code><button type="button" class="copy-btn" onclick="copyCode(this)">{{ index .T "copy" }}</button></pre>
                 </section>
 
                 <footer class="docs-footer">
@@ -966,7 +975,9 @@ func CallbackHandler(onSuccess AuthCallback) http.HandlerFunc {
             themeSystem: {{ index .T "theme_system" }},
             themeLight: {{ index .T "theme_light" }},
             themeDark: {{ index .T "theme_dark" }},
-            copied: {{ index .T "copied" }}
+            copy: {{ index .T "copy" }},
+            copied: {{ index .T "copied" }},
+            copyFailed: {{ index .T "copy_failed" }}
         };
 
         const DOCS_THEME_ICONS = {
@@ -1414,6 +1425,30 @@ func CallbackHandler(onSuccess AuthCallback) http.HandlerFunc {
                 btn.textContent = 'Test Refresh';
                 btn.style.background = '';
             }, 3000);
+        }
+
+        function copyResponseJSON(codeElId, btn) {
+            const codeEl = document.getElementById(codeElId);
+            const text = codeEl ? codeEl.textContent : '';
+            if (!text) return;
+            if (window.GilosUI) {
+                window.GilosUI.copyText(text, {
+                    triggerEl: btn,
+                    copiedHtml: DOCS_I18N.copied || 'Copied!',
+                    successMsg: DOCS_I18N.copied || 'Copied!',
+                    errorMsg: DOCS_I18N.copyFailed || 'Failed to copy'
+                });
+                return;
+            }
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text).then(() => {
+                    if (btn) {
+                        const prev = btn.textContent;
+                        btn.textContent = DOCS_I18N.copied || 'Copied!';
+                        setTimeout(() => { btn.textContent = prev; }, 1600);
+                    }
+                }).catch(() => showDocsToast(DOCS_I18N.copyFailed || 'Failed to copy', true));
+            }
         }
 
         function showDocsToast(message, isError = false) {

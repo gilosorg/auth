@@ -518,5 +518,8 @@
   "preset_standard_oidc": "Standart OIDC",
   "test_in_docs": "Sinab ko'rish",
   "mfa_active_count": "3 tadan {count} tasi yoqilgan",
-  "toggle_checkup_details": "Tafsilotlar"
+  "toggle_checkup_details": "Tafsilotlar",
+  "session_expired_redirect": "Seans muddati tugadi. Kirish sahifasiga yo'naltirilmoqda...",
+  "copy_ip": "IP-manzilni nusxalash",
+  "copy_response": "JSON nusxalash"
 }

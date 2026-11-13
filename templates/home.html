@@ -1711,7 +1711,7 @@
                 </div>
                 <div class="field">
                     <label>{{ index .T "manual_secret_entry" }}</label>
-                    <div class="totp-secret-box" onclick="copyTotpSecret()" title="{{ index .T "totp_secret_copy_hint" }}">
+                    <div class="totp-secret-box" tabindex="0" role="button" onclick="copyTotpSecret()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();copyTotpSecret();}" title="{{ index .T "totp_secret_copy_hint" }}">
                         <span class="totp-secret-code" id="totp-secret"></span>
                         <span class="badge badge-neutral">{{ index .T "copy" }}</span>
                     </div>
@@ -1763,7 +1763,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" onclick="closePasswordModal(false)">{{ index .T "cancel" }}</button>
-                <button type="button" class="btn btn-primary" onclick="confirmPasswordModal()">{{ index .T "confirm" }}</button>
+                <button type="button" class="btn btn-primary" id="password-confirm-btn" onclick="confirmPasswordModal()">{{ index .T "confirm" }}</button>
             </div>
         </div>
     </div>
@@ -2151,16 +2151,17 @@
         }
 
         function confirmPasswordModal() {
+            const cb = pendingPasswordCallback;
+            if (typeof cb !== 'function') return;
             const pw = document.getElementById('current-password-input').value;
             if (!pw) {
                 showPasswordError(tr('password_required', 'Please enter your password'));
                 return;
             }
-            const cb = pendingPasswordCallback;
             pendingPasswordCallback = null;
             pendingPasswordCancelCallback = null;
             hideModal('password-modal');
-            if (typeof cb === 'function') cb(pw);
+            cb(pw);
         }
 
         function handlePasswordError(data, retryFn, onCancel = null) {
@@ -2189,6 +2190,61 @@
             return false;
         }
 
+        function buildReturnTargetUrl() {
+            let returnPath = window.location.pathname || '/home';
+            if (window.location.search) {
+                returnPath += window.location.search;
+            } else if (typeof currentTab === 'string' && currentTab && currentTab !== 'account') {
+                returnPath += `?tab=${encodeURIComponent(currentTab)}`;
+            }
+            return `/?target=${encodeURIComponent(returnPath)}`;
+        }
+
+        let isSessionRedirecting = false;
+        function redirectOnSessionExpiry() {
+            if (isSessionRedirecting) return;
+            isSessionRedirecting = true;
+            if (window.GilosUI) {
+                window.GilosUI.toast(tr('session_expired_redirect', 'Your session has expired. Redirecting to sign in...'), 'warning');
+            }
+            setTimeout(() => {
+                window.location.href = buildReturnTargetUrl();
+            }, 650);
+        }
+
+        (function installSessionExpiryInterceptor() {
+            const prevFetch = window.fetch;
+            window.fetch = async function (...args) {
+                const res = await prevFetch.apply(this, args);
+                if (res && res.status === 401 && !isSessionRedirecting) {
+                    const reqUrl = typeof args[0] === 'string' ? args[0] : (args[0] && args[0].url) || '';
+                    if (!reqUrl.includes('/logout')) {
+                        let errCode = '';
+                        try {
+                            const cloned = await res.clone().json();
+                            if (cloned && typeof cloned.error === 'string') errCode = cloned.error;
+                        } catch (_) {}
+                        const isReauthError = ['incorrect_password', 'password_required', 'max_attempts_reached', 'account_blocked'].includes(errCode);
+                        if (!isReauthError) {
+                            redirectOnSessionExpiry();
+                        }
+                    }
+                }
+                return res;
+            };
+        })();
+
+        async function parseJSONSafe(response, fallbackMsg) {
+            try {
+                return await response.json();
+            } catch (_) {
+                if (!response.ok) {
+                    throw new Error(fallbackMsg || `HTTP ${response.status}`);
+                }
+                throw new Error(fallbackMsg || tr('failed', 'Request failed'));
+            }
+        }
+
         // Account Loading & Rendering
         async function loadAccount() {
             const container = document.getElementById('account-content');
@@ -2198,7 +2254,7 @@
 
             try {
                 const response = await fetch('/profile', { headers: { 'Accept': 'application/json' } });
-                if (response.status === 401) { window.location.href = '/'; return; }
+                if (response.status === 401) { redirectOnSessionExpiry(); return; }
                 if (!response.ok) throw new Error(tr('failed_load_profile', 'Failed to load profile'));
 
                 const user = await response.json();
@@ -3194,7 +3250,7 @@
                 : allActivity.filter(ev => getActivityCategory(ev.event_type) === activityFilter);
 
             const loadMoreHtml = hasMoreActivity
-                ? `<div class="load-more-wrap"><button type="button" class="btn btn-secondary btn-sm" onclick="loadActivity(${activityPage + 1})">${escapeHtml(tr('load_more', 'Load more'))}</button></div>`
+                ? `<div class="load-more-wrap"><button type="button" class="btn btn-secondary btn-sm" id="activity-load-more-btn" onclick="loadActivity(${activityPage + 1}, this)">${escapeHtml(tr('load_more', 'Load more'))}</button></div>`
                 : '';
 
             if (filtered.length === 0) {
@@ -3225,6 +3281,9 @@
                 const deviceLabel = ua.shortLabel || tr('unknown', 'Unknown');
                 const relTime = window.GilosUI.formatRelativeTime(ev.created_at, T);
                 const exactTime = window.GilosUI.formatExactTime(ev.created_at);
+                const ipHtml = ev.ip_address
+                    ? `<button type="button" class="ip-copy-btn tabular-nums" onclick="copyToClipboard('${escapeHtml(ev.ip_address)}', this)" title="${escapeHtml(tr('copy_ip', 'Copy IP address'))}">${escapeHtml(ev.ip_address)}</button>`
+                    : `<span>${escapeHtml(tr('unknown', 'Unknown'))}</span>`;
 
                 return `
                     <div class="activity-item">
@@ -3234,7 +3293,7 @@
                                 <div class="activity-title">${escapeHtml(title)}</div>
                                 <div class="activity-meta">
                                     ${ev.user_agent ? `<span>${escapeHtml(deviceLabel)}</span><span>&middot;</span>` : ''}
-                                    <span>${escapeHtml(ev.ip_address || tr('unknown', 'Unknown'))}</span>
+                                    ${ipHtml}
                                 </div>
                             </div>
                         </div>
@@ -3246,7 +3305,7 @@
             box.innerHTML = `<div class="activity-list">${rowsHtml}</div>` + loadMoreHtml;
         }
 
-        async function loadActivity(page = 1) {
+        async function loadActivity(page = 1, triggerBtn = null) {
             const box = document.getElementById('activity-list-container');
             if (!box) return;
             activityPage = page;
@@ -3257,6 +3316,8 @@
                 });
                 allActivity = [];
                 box.innerHTML = `<div class="skeleton" style="height:52px;margin-bottom:8px;"></div><div class="skeleton" style="height:52px;"></div>`;
+            } else if (triggerBtn && window.GilosUI) {
+                window.GilosUI.setButtonLoading(triggerBtn, true, tr('loading', 'Loading...'));
             }
 
             try {
@@ -3271,7 +3332,12 @@
                 allActivity = page === 1 ? items : allActivity.concat(items);
                 renderActivityList();
             } catch (e) {
-                box.innerHTML = `<p class="card-desc">${escapeHtml(tr('failed_load_activity', 'Could not load recent activity.'))}</p>`;
+                if (page === 1) {
+                    box.innerHTML = `<p class="card-desc">${escapeHtml(tr('failed_load_activity', 'Could not load recent activity.'))}</p>`;
+                } else {
+                    if (triggerBtn && window.GilosUI) window.GilosUI.setButtonLoading(triggerBtn, false);
+                    window.GilosUI.toast(tr('failed_load_activity', 'Could not load recent activity.'), 'error');
+                }
             }
         }
 
@@ -3469,7 +3535,9 @@
                         <div class="entity-rows">
                             <div class="entity-row">
                                 <span class="entity-label">${escapeHtml(tr('ip', 'IP Address'))}</span>
-                                <span class="entity-val tabular-nums">${escapeHtml(session.ip_address || tr('unknown', 'Unknown'))}</span>
+                                ${session.ip_address
+                                    ? `<button type="button" class="entity-val ip-copy-btn tabular-nums" onclick="copyToClipboard('${escapeHtml(session.ip_address)}', this)" title="${escapeHtml(tr('copy_ip', 'Copy IP address'))}">${escapeHtml(session.ip_address)}</button>`
+                                    : `<span class="entity-val tabular-nums">${escapeHtml(tr('unknown', 'Unknown'))}</span>`}
                             </div>
                             <div class="entity-row">
                                 <span class="entity-label">${escapeHtml(tr('last_active', 'Last Active'))}</span>
@@ -3492,7 +3560,7 @@
 
                         <div class="entity-footer">
                             <span class="badge badge-neutral">${escapeHtml(tr(session.type, session.type))}</span>
-                            ${!isCurrent ? `<button type="button" class="btn btn-danger-outline btn-sm" onclick="terminateSession(${Number(session.id)})">${escapeHtml(tr('terminate', 'Terminate'))}</button>` : ''}
+                            ${!isCurrent ? `<button type="button" class="btn btn-danger-outline btn-sm" onclick="terminateSession(${Number(session.id)}, this)">${escapeHtml(tr('terminate', 'Terminate'))}</button>` : ''}
                         </div>
                     </article>
                 `;
@@ -3501,7 +3569,8 @@
             region.innerHTML = `<div class="cards-grid">${cardsHtml}</div>` + loadMoreHtml;
         }
 
-        async function terminateSession(id) {
+        async function terminateSession(id, triggerBtn = null) {
+            const btn = triggerBtn || (typeof event !== 'undefined' && event && event.currentTarget && event.currentTarget.tagName === 'BUTTON' ? event.currentTarget : null);
             const conf = await Swal.fire({
                 title: tr('terminate', 'Terminate'),
                 text: tr('terminate_session_confirm', 'End this session?'),
@@ -3511,19 +3580,22 @@
                 cancelButtonText: tr('cancel', 'Cancel')
             });
             if (!conf.isConfirmed) return;
+            if (btn && window.GilosUI) window.GilosUI.setButtonLoading(btn, true, tr('loading', 'Loading...'));
             try {
                 const params = new URLSearchParams({ session_id: String(id) });
                 const response = await fetch('/sessions/terminate', { method: 'POST', body: params });
-                const data = await response.json();
+                const data = await parseJSONSafe(response, tr('failed_terminate_session', 'Failed to terminate session'));
                 if (!data.success) throw new Error(data.error || tr('failed_terminate_session', 'Failed to terminate session'));
                 window.GilosUI.toast(tr('session_terminated_success', 'Session terminated.'), 'success');
                 loadSessions(1);
             } catch (err) {
+                if (btn && window.GilosUI) window.GilosUI.setButtonLoading(btn, false);
                 window.GilosUI.toast(err.message, 'error');
             }
         }
 
-        async function terminateOtherSessions() {
+        async function terminateOtherSessions(triggerBtn = null) {
+            const btn = triggerBtn || (typeof event !== 'undefined' && event && event.currentTarget && event.currentTarget.tagName === 'BUTTON' ? event.currentTarget : null);
             const conf = await Swal.fire({
                 title: tr('terminate_all_others', 'Terminate all others'),
                 text: tr('terminate_others_confirm', 'Terminate all other sessions and revoke their tokens?'),
@@ -3533,14 +3605,17 @@
                 cancelButtonText: tr('cancel', 'Cancel')
             });
             if (!conf.isConfirmed) return;
+            if (btn && window.GilosUI) window.GilosUI.setButtonLoading(btn, true, tr('loading', 'Loading...'));
             try {
                 const response = await fetch('/sessions/terminate-others', { method: 'POST' });
-                const data = await response.json();
+                const data = await parseJSONSafe(response, tr('failed_terminate_session', 'Failed to terminate sessions'));
                 if (!data.success) throw new Error(data.error || tr('failed_terminate_session', 'Failed to terminate sessions'));
                 window.GilosUI.toast(tr('sessions_terminated_success', 'All other sessions terminated.'), 'success');
                 loadSessions(1);
             } catch (err) {
                 window.GilosUI.toast(err.message, 'error');
+            } finally {
+                if (btn && window.GilosUI) window.GilosUI.setButtonLoading(btn, false);
             }
         }
 
@@ -3595,7 +3670,7 @@
             container.innerHTML = `<div class="cards-grid"><div class="skeleton" style="height:240px;border-radius:18px;"></div><div class="skeleton" style="height:240px;border-radius:18px;"></div></div>`;
             try {
                 const response = await fetch('/clients');
-                if (response.status === 401) { window.location.href = '/'; return; }
+                if (response.status === 401) { redirectOnSessionExpiry(); return; }
                 if (!response.ok) throw new Error(tr('failed_load_clients', 'Failed to load clients.'));
                 const result = await response.json();
                 const rawList = Array.isArray(result) ? result : (Array.isArray(result && result.data) ? result.data : []);
@@ -3944,7 +4019,8 @@
             }
         });
 
-        async function deleteClient(id) {
+        async function deleteClient(id, triggerBtn = null) {
+            const btn = triggerBtn || (typeof event !== 'undefined' && event && event.currentTarget && event.currentTarget.tagName === 'BUTTON' ? event.currentTarget : null);
             const targetClient = allClients.find(item => item.id === Number(id));
             const conf = await Swal.fire({
                 title: targetClient && targetClient.name ? targetClient.name : tr('delete', 'Delete'),
@@ -3955,19 +4031,22 @@
                 cancelButtonText: tr('cancel', 'Cancel')
             });
             if (!conf.isConfirmed) return;
+            if (btn && window.GilosUI) window.GilosUI.setButtonLoading(btn, true, tr('loading', 'Loading...'));
             try {
                 const params = new URLSearchParams({ client_id: String(id) });
                 const response = await fetch('/clients/delete', { method: 'POST', body: params });
-                const data = await response.json();
+                const data = await parseJSONSafe(response, tr('failed_delete_client', 'Failed to delete client'));
                 if (!data.success) throw new Error(data.error || tr('failed_delete_client', 'Failed to delete client'));
                 window.GilosUI.toast(tr('client_deleted_msg', 'Client deleted'), 'success');
                 loadClients();
             } catch (err) {
+                if (btn && window.GilosUI) window.GilosUI.setButtonLoading(btn, false);
                 window.GilosUI.toast(err.message, 'error');
             }
         }
 
-        async function regenerateSecret(clientId) {
+        async function regenerateSecret(clientId, triggerBtn = null) {
+            const btn = triggerBtn || (typeof event !== 'undefined' && event && event.currentTarget && event.currentTarget.tagName === 'BUTTON' ? event.currentTarget : null);
             const targetClient = allClients.find(item => item.id === Number(clientId));
             const clientName = targetClient ? targetClient.name : '';
             const conf = await Swal.fire({
@@ -3979,10 +4058,11 @@
                 cancelButtonText: tr('cancel', 'Cancel')
             });
             if (!conf.isConfirmed) return;
+            if (btn && window.GilosUI) window.GilosUI.setButtonLoading(btn, true, tr('loading', 'Loading...'));
             try {
                 const params = new URLSearchParams({ client_id: String(clientId) });
                 const response = await fetch('/clients/regenerate-secret', { method: 'POST', body: params });
-                const data = await response.json();
+                const data = await parseJSONSafe(response, tr('save_changes_failed', 'Failed'));
                 if (!data.success) throw new Error(data.error || tr('save_changes_failed', 'Failed'));
                 window.GilosUI.toast(tr('secret_regenerated_msg', 'Client secret rotated'), 'success');
                 loadClients();
@@ -3993,6 +4073,7 @@
                     secretPrefix: data.secret_prefix || ''
                 });
             } catch (err) {
+                if (btn && window.GilosUI) window.GilosUI.setButtonLoading(btn, false);
                 window.GilosUI.toast(err.message, 'error');
             }
         }
@@ -4042,6 +4123,15 @@
                     if (e.key === 'Backspace' && !e.target.value && idx > 0) {
                         inputs[idx - 1].focus();
                         inputs[idx - 1].value = '';
+                    } else if (e.key === 'ArrowLeft' && idx > 0) {
+                        e.preventDefault();
+                        inputs[idx - 1].focus();
+                    } else if (e.key === 'ArrowRight' && idx < inputs.length - 1) {
+                        e.preventDefault();
+                        inputs[idx + 1].focus();
+                    } else if (e.key === 'Enter' && typeof onComplete === 'function' && getOTPValue(containerId).length === 6) {
+                        e.preventDefault();
+                        onComplete();
                     }
                 });
                 inp.addEventListener('paste', (e) => {
@@ -4058,9 +4148,14 @@
             return container ? Array.from(container.querySelectorAll('.otp-input')).map(i => i.value).join('') : '';
         }
 
-        function clearOTPInputs(containerId) {
+        function clearOTPInputs(containerId, focusFirst = true) {
             const container = document.getElementById(containerId);
-            if (container) container.querySelectorAll('.otp-input').forEach(i => { i.value = ''; });
+            if (!container) return;
+            const inputs = container.querySelectorAll('.otp-input');
+            inputs.forEach(i => { i.value = ''; });
+            if (focusFirst && inputs.length && typeof container.closest === 'function' && container.closest('.modal.is-open')) {
+                inputs[0].focus();
+            }
         }
 
         // Avatar Crop & Upload
@@ -4160,7 +4255,7 @@
                             <div class="global-banner-desc">${escapeHtml(tr('deletion_days_remaining', 'Days remaining: %d').replace('%d', days))}</div>
                         </div>
                     </div>
-                    <button type="button" class="btn btn-secondary btn-sm" onclick="cancelDeletion()">${escapeHtml(tr('pending_deletion_banner_action', 'Cancel Deletion'))}</button>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="cancelDeletion(this)">${escapeHtml(tr('pending_deletion_banner_action', 'Cancel Deletion'))}</button>
                 </div>
             `;
         }
@@ -4183,7 +4278,7 @@
                         <strong>${escapeHtml(tr('deletion_scheduled', 'Account deletion scheduled'))} (${escapeHtml(tr('deletion_days_remaining', 'Days remaining: %d').replace('%d', days))})</strong>
                         <div style="margin-top:3px;">${escapeHtml(tr('deletion_scheduled_for', 'Your account will be permanently deleted on %s.').replace('%s', scheduled))}</div>
                     </div>
-                    <button type="button" class="btn btn-secondary btn-sm" onclick="cancelDeletion()">${escapeHtml(tr('deletion_cancel', 'Cancel deletion'))}</button>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="cancelDeletion(this)">${escapeHtml(tr('deletion_cancel', 'Cancel deletion'))}</button>
                 </div>
             `;
         }
@@ -4232,7 +4327,7 @@
                         headers: { 'Content-Type': 'application/json', 'X-Current-Password': pw },
                         body: JSON.stringify({ reason, custom_reason: customReason })
                     });
-                    const data = await response.json();
+                    const data = await parseJSONSafe(response, tr('failed_delete_account', 'Failed to delete account'));
                     if (!data.success) {
                         if (handlePasswordError(data, attemptDelete)) return;
                         throw new Error(data.error || tr('failed_delete_account', 'Failed to delete account'));
@@ -4246,7 +4341,8 @@
             requirePassword(attemptDelete);
         }
 
-        async function cancelDeletion() {
+        async function cancelDeletion(triggerBtn = null) {
+            const btn = triggerBtn || (typeof event !== 'undefined' && event && event.currentTarget && event.currentTarget.tagName === 'BUTTON' ? event.currentTarget : null);
             const conf = await Swal.fire({
                 title: tr('deletion_cancel', 'Cancel deletion'),
                 text: tr('confirm_cancel_deletion', 'Cancel your scheduled account deletion?'),
@@ -4256,14 +4352,17 @@
                 cancelButtonText: tr('no', 'No')
             });
             if (!conf.isConfirmed) return;
+            if (btn && window.GilosUI) window.GilosUI.setButtonLoading(btn, true, tr('loading', 'Loading...'));
             try {
                 const response = await fetch('/profile/delete/cancel', { method: 'POST' });
-                const data = await response.json();
+                const data = await parseJSONSafe(response, tr('failed_cancel', 'Failed to cancel'));
                 if (!data.success) throw new Error(data.error || tr('failed_cancel', 'Failed to cancel'));
                 window.GilosUI.toast(tr('deletion_cancelled_success', 'Account deletion cancelled.'), 'success');
                 loadDeletionStatus();
             } catch (err) {
                 window.GilosUI.toast(err.message, 'error');
+            } finally {
+                if (btn && window.GilosUI) window.GilosUI.setButtonLoading(btn, false);
             }
         }
 
@@ -4276,6 +4375,7 @@
                 window.GilosUI.bindModalA11y(document.getElementById('client-modal'), closeModal);
                 window.GilosUI.bindModalA11y(document.getElementById('totp-modal'), closeTOTPModal);
                 window.GilosUI.bindModalA11y(document.getElementById('password-modal'), () => closePasswordModal(false));
+                window.GilosUI.bindModalA11y(document.getElementById('secret-reveal-modal'), closeSecretRevealModal, { closeOnBackdrop: false });
                 window.GilosUI.bindModalA11y(document.getElementById('contact-verify-modal'), cancelContactVerify);
                 window.GilosUI.bindModalA11y(document.getElementById('crop-modal'), closeCropModal);
                 window.GilosUI.bindModalA11y(document.getElementById('delete-modal'), closeDeleteModal);

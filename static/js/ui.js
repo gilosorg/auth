@@ -349,19 +349,26 @@
         return update;
     }
 
-    function bindModalA11y(modalEl, closeFn) {
+    function bindModalA11y(modalEl, closeFn, options) {
         if (!modalEl || typeof closeFn !== 'function') return;
-        modalEl.addEventListener('click', function (e) {
-            if (e.target === modalEl) {
-                closeFn();
-            }
-        });
-        document.addEventListener('keydown', function (e) {
-            if (e.key === 'Escape' && modalEl.classList.contains('is-open')) {
+        var opts = options || {};
+        if (opts.closeOnBackdrop !== false) {
+            modalEl.addEventListener('click', function (e) {
+                if (e.target === modalEl) {
+                    closeFn();
+                }
+            });
+        }
+        if (opts.closeOnEscape !== false) {
+            document.addEventListener('keydown', function (e) {
+                if (e.key !== 'Escape' || !modalEl.classList.contains('is-open')) return;
+                if (document.querySelector('.swal2-container')) return;
+                var openModals = document.querySelectorAll('.modal.is-open');
+                if (openModals.length && openModals[openModals.length - 1] !== modalEl) return;
                 e.preventDefault();
                 closeFn();
-            }
-        });
+            });
+        }
     }
 
     function attachCapsLockWarning(inputEl, badgeEl, labelText) {
