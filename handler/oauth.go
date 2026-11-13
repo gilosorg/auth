@@ -338,6 +338,7 @@ func buildScopeDetails(requestedScopes, requiredScopes []string, user *database.
 // renderConsentPage is a helper to render the oauth.html template
 func renderConsentPage(w http.ResponseWriter, tmpls *template.Template, client database.Client, scopeDetails []ScopeDetail, redirectURI string, state string, tr *i18n.Translator, lang string, errorMessage string, user *database.User, hasMissingRequired bool, missingFields []string, csrfToken string) {
 	data := map[string]interface{}{
+		"Year":               time.Now().Year(),
 		"Client":             client,
 		"ScopeDetails":       scopeDetails,
 		"RedirectURI":        redirectURI,
@@ -348,6 +349,7 @@ func renderConsentPage(w http.ResponseWriter, tmpls *template.Template, client d
 		"Languages":          tr.All(),
 		"T":                  i18n.GetTranslations(lang),
 		"AppVersion":         config.Version,
+		"AppName":            config.AppName,
 		"Error":              errorMessage,
 		"User":               user,
 		"HasMissingRequired": hasMissingRequired,

@@ -9,6 +9,7 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"time"
 )
 
 // HomeHandler handles rendering the home page.
@@ -58,6 +59,7 @@ func HomeHandler(tmpls *template.Template) http.HandlerFunc {
 
 		// Render home page with full User and current session ID
 		data := map[string]interface{}{
+			"Year":             time.Now().Year(),
 			"User":             user,
 			"CurrentSessionID": currentSessionID,
 			"ValidScopes":      middleware.Scopes,
@@ -67,6 +69,7 @@ func HomeHandler(tmpls *template.Template) http.HandlerFunc {
 			"T":                i18n.GetTranslations(lang),
 			"CSRFToken":        csrfToken,
 			"AppVersion":       config.Version,
+			"AppName":          config.AppName,
 		}
 
 		// Buffer template execution to prevent partial writes on error

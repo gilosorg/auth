@@ -118,6 +118,10 @@ func setupHandlerTestEnv(t *testing.T) *testEnv {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /terms", TermsHandler(tmpls))
 	mux.HandleFunc("GET /privacy", PrivacyHandler(tmpls))
+	mux.HandleFunc("GET /home", middleware.RequireCookieToken(HomeHandler(tmpls)))
+	mux.HandleFunc("GET /profile", middleware.RequireCookieToken(ProfileHandler))
+	mux.HandleFunc("GET /profile/contact/pending", middleware.RequireCookieToken(ProfileContactPendingHandler))
+	mux.HandleFunc("GET /profile/delete/status", middleware.RequireCookieToken(DeletionStatusHandler))
 	mux.HandleFunc("GET /auth/check-user", CheckUserHandler)
 	mux.HandleFunc("POST /auth/login", LoginHandler)
 	mux.HandleFunc("GET /auth/state", AuthStateHandler)
@@ -597,5 +601,56 @@ func TestOAuth21PKCEOIDCAndBearerErrors(t *testing.T) {
 	env.mux.ServeHTTP(suspCookieRec, suspCookieReq)
 	if suspCookieRec.Code != http.StatusForbidden {
 		t.Fatalf("suspended GET /clients status = %d, want 403", suspCookieRec.Code)
+	}
+}
+
+func TestHomeAndProfileEndpoints(t *testing.T) {
+	env := setupHandlerTestEnv(t)
+	user := createTestUser(t, "homeuser1", "ValidPass123!", "active")
+	cookie, _, _ := createNativeSessionCookie(t, user.ID)
+
+	homeReq := httptest.NewRequest(http.MethodGet, "/home", nil)
+	homeReq.AddCookie(cookie)
+	homeRec := httptest.NewRecorder()
+	env.mux.ServeHTTP(homeRec, homeReq)
+	if homeRec.Code != http.StatusOK {
+		t.Fatalf("GET /home status = %d, want 200", homeRec.Code)
+	}
+	if !strings.Contains(homeRec.Body.String(), "function initHomePasswordToggles()") {
+		t.Errorf("GET /home response missing top-level initHomePasswordToggles declaration")
+	}
+
+	profReq := httptest.NewRequest(http.MethodGet, "/profile", nil)
+	profReq.AddCookie(cookie)
+	profRec := httptest.NewRecorder()
+	env.mux.ServeHTTP(profRec, profReq)
+	if profRec.Code != http.StatusOK {
+		t.Fatalf("GET /profile status = %d, want 200: %s", profRec.Code, profRec.Body.String())
+	}
+	var profData map[string]interface{}
+	if err := json.Unmarshal(profRec.Body.Bytes(), &profData); err != nil {
+		t.Fatalf("decode /profile JSON: %v", err)
+	}
+	if profData["email_verified"] != true {
+		t.Errorf("GET /profile email_verified = %v, want true", profData["email_verified"])
+	}
+	if _, ok := profData["phone_verified"]; !ok {
+		t.Errorf("GET /profile missing phone_verified key")
+	}
+
+	pendReq := httptest.NewRequest(http.MethodGet, "/profile/contact/pending", nil)
+	pendReq.AddCookie(cookie)
+	pendRec := httptest.NewRecorder()
+	env.mux.ServeHTTP(pendRec, pendReq)
+	if pendRec.Code != http.StatusOK {
+		t.Fatalf("GET /profile/contact/pending status = %d, want 200", pendRec.Code)
+	}
+
+	delReq := httptest.NewRequest(http.MethodGet, "/profile/delete/status", nil)
+	delReq.AddCookie(cookie)
+	delRec := httptest.NewRecorder()
+	env.mux.ServeHTTP(delRec, delReq)
+	if delRec.Code != http.StatusOK {
+		t.Fatalf("GET /profile/delete/status status = %d, want 200", delRec.Code)
 	}
 }

@@ -1876,7 +1876,10 @@
                 <p class="password-modal-subtitle">{{ index .T "verify_password_subtitle" }}</p>
                 <div class="form-field">
                     <label for="confirm-password-input">{{ index .T "current_password" }}</label>
-                    <input type="password" id="confirm-password-input" placeholder="••••••••" autocomplete="current-password">
+                    <div class="home-pw-wrap">
+                        <input type="password" id="confirm-password-input" placeholder="••••••••" autocomplete="current-password">
+                        <button type="button" class="home-pw-toggle" onclick="toggleHomePassword('confirm-password-input', this)" aria-label="{{ index .T "show_password" }}"></button>
+                    </div>
                 </div>
                 <div id="password-modal-error" class="password-modal-error" style="display:none;"></div>
             </div>
@@ -2214,6 +2217,24 @@
             }
         }
 
+        const HOME_EYE_OPEN = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
+        const HOME_EYE_CLOSED = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>';
+
+        function initHomePasswordToggles() {
+            document.querySelectorAll('.home-pw-toggle').forEach(btn => {
+                if (!btn.innerHTML.trim()) btn.innerHTML = HOME_EYE_OPEN;
+            });
+        }
+
+        function toggleHomePassword(inputId, btn) {
+            const input = document.getElementById(inputId);
+            if (!input) return;
+            const reveal = input.type === 'password';
+            input.type = reveal ? 'text' : 'password';
+            btn.innerHTML = reveal ? HOME_EYE_CLOSED : HOME_EYE_OPEN;
+            btn.setAttribute('aria-label', reveal ? (T.hide_password || 'Hide password') : (T.show_password || 'Show password'));
+        }
+
         async function loadAccount() {
             try {
                 const response = await fetch('/profile');
@@ -2225,13 +2246,15 @@
                 // Sync appbar icon
                 const appbarImg = document.getElementById('appbar-profile-img');
                 const appbarSpan = document.querySelector('#appbar-profile-circle span');
-                if (user.icon) {
-                    appbarImg.src = user.icon;
-                    appbarImg.style.display = 'block';
-                    appbarSpan.style.display = 'none';
-                } else {
-                    appbarImg.style.display = 'none';
-                    appbarSpan.style.display = 'block';
+                if (appbarImg && appbarSpan) {
+                    if (user.icon) {
+                        appbarImg.src = user.icon;
+                        appbarImg.style.display = 'block';
+                        appbarSpan.style.display = 'none';
+                    } else {
+                        appbarImg.style.display = 'none';
+                        appbarSpan.style.display = 'block';
+                    }
                 }
 
                 const fullName = [user.first_name, user.middle_name, user.last_name].filter(Boolean).join(' ') || user.username;
@@ -2351,7 +2374,8 @@
                 checkPendingVerifications();
                 loadDeletionStatus();
             } catch (error) {
-                accountContent.innerHTML = `<p>${T.failed_load_account || 'Failed to load account.'}</p>`;
+                console.error('Failed to load account:', error);
+                accountContent.innerHTML = `<p>${escapeHtml(T.failed_load_account || 'Failed to load account.')}</p>`;
             }
         }
 
@@ -2580,24 +2604,6 @@
                     });
                 }
             });
-
-            const HOME_EYE_OPEN = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
-            const HOME_EYE_CLOSED = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>';
-
-            window.initHomePasswordToggles = function() {
-                document.querySelectorAll('.home-pw-toggle').forEach(btn => {
-                    if (!btn.innerHTML.trim()) btn.innerHTML = HOME_EYE_OPEN;
-                });
-            };
-
-            window.toggleHomePassword = function(inputId, btn) {
-                const input = document.getElementById(inputId);
-                if (!input) return;
-                const reveal = input.type === 'password';
-                input.type = reveal ? 'text' : 'password';
-                btn.innerHTML = reveal ? HOME_EYE_CLOSED : HOME_EYE_OPEN;
-                btn.setAttribute('aria-label', reveal ? (T.hide_password || 'Hide password') : (T.show_password || 'Show password'));
-            };
 
             const passwordForm = document.getElementById('password-form');
             passwordForm.addEventListener('submit', async (e) => {
@@ -4182,6 +4188,7 @@
         }
 
         // Initial load
+        initHomePasswordToggles();
         loadContent();
     </script>
     <!-- Crop Modal -->
