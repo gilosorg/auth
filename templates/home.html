@@ -818,6 +818,14 @@
         flex-wrap: wrap;
     }
 
+    .filter-toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+
     .filter-pills {
         display: flex;
         align-items: center;
@@ -858,6 +866,81 @@
         border-radius: var(--radius-pill);
         background: rgba(128, 128, 128, 0.18);
         font-variant-numeric: tabular-nums;
+    }
+
+    .console-search-wrap {
+        position: relative;
+        flex: 1 1 240px;
+        max-width: 340px;
+        min-width: 200px;
+    }
+
+    .console-search-icon {
+        position: absolute;
+        left: 11px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--text-muted);
+        pointer-events: none;
+        display: inline-flex;
+    }
+
+    .console-search-input {
+        width: 100%;
+        height: 36px;
+        padding: 0 30px 0 33px;
+        border-radius: 10px;
+        border: 1px solid var(--border-default);
+        background: var(--surface-elevated);
+        color: var(--text);
+        font-size: 0.84rem;
+        font-family: inherit;
+        transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .console-search-input:focus {
+        outline: none;
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px var(--focus-ring);
+    }
+
+    .console-search-clear {
+        position: absolute;
+        right: 6px;
+        top: 50%;
+        transform: translateY(-50%);
+        border: none;
+        background: transparent;
+        color: var(--text-muted);
+        width: 24px;
+        height: 24px;
+        border-radius: 6px;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .console-search-clear:hover {
+        background: var(--surface-subtle);
+        color: var(--text);
+    }
+
+    .status-live-dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: var(--green-600);
+        display: inline-block;
+        flex-shrink: 0;
+    }
+
+    .card-head-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+        justify-content: flex-end;
     }
 
     /* Sessions & Clients Grids */
@@ -1023,15 +1106,43 @@
     }
 
     .uri-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        width: 100%;
+        border: 1px solid transparent;
+        text-align: left;
         font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
         font-size: 0.76rem;
         color: var(--text-secondary);
         background: var(--surface-subtle);
-        padding: 4px 8px;
-        border-radius: 6px;
+        padding: 5px 9px;
+        border-radius: 7px;
+        cursor: pointer;
+        transition: border-color 0.14s ease, color 0.14s ease, background-color 0.14s ease;
+    }
+
+    .uri-item-text {
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
+        min-width: 0;
+    }
+
+    .uri-item-copy-icon {
+        flex-shrink: 0;
+        opacity: 0.45;
+        transition: opacity 0.14s ease;
+    }
+
+    .uri-item:hover {
+        border-color: var(--border-default);
+        color: var(--text);
+    }
+
+    .uri-item:hover .uri-item-copy-icon {
+        opacity: 1;
     }
 
     .entity-footer {
@@ -1320,6 +1431,35 @@
         color: var(--text);
     }
 
+    .env-snippet-box {
+        border-radius: 12px;
+        border: 1px solid var(--border-default);
+        background: var(--surface-subtle);
+        overflow: hidden;
+    }
+
+    .env-snippet-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 7px 12px;
+        border-bottom: 1px solid var(--border-subtle);
+        font-size: 0.76rem;
+        font-weight: 600;
+        color: var(--text-muted);
+    }
+
+    .env-snippet-pre {
+        margin: 0;
+        padding: 10px 12px;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        font-size: 0.76rem;
+        line-height: 1.5;
+        color: var(--text-secondary);
+        white-space: pre-wrap;
+        word-break: break-all;
+    }
+
     .crop-stage {
         width: 100%;
         height: 320px;
@@ -1394,16 +1534,16 @@
                 <span>{{ if .AppIDLabel }}{{ .AppIDLabel }}{{ else }}Gilos ID{{ end }}</span>
             </a>
 
-            <nav class="header-tabs" aria-label="Account sections">
-                <button type="button" class="tab-btn active" data-tab="account" onclick="setActiveTab('account')">
+            <nav class="header-tabs" role="tablist" aria-label="Account sections">
+                <button type="button" role="tab" aria-selected="true" tabindex="0" class="tab-btn active" data-tab="account" onclick="setActiveTab('account')">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 1 0-16 0"/></svg>
                     <span>{{ index .T "account" }}</span>
                 </button>
-                <button type="button" class="tab-btn" data-tab="sessions" onclick="setActiveTab('sessions')">
+                <button type="button" role="tab" aria-selected="false" tabindex="-1" class="tab-btn" data-tab="sessions" onclick="setActiveTab('sessions')">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
                     <span>{{ index .T "sessions" }}</span>
                 </button>
-                <button type="button" class="tab-btn" data-tab="clients" onclick="setActiveTab('clients')">
+                <button type="button" role="tab" aria-selected="false" tabindex="-1" class="tab-btn" data-tab="clients" onclick="setActiveTab('clients')">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
                     <span>{{ index .T "clients" }}</span>
                 </button>
@@ -1443,9 +1583,9 @@
             </div>
         </div>
         <div class="mobile-tabs-bar" role="tablist">
-            <button type="button" class="tab-btn active" data-tab="account" onclick="setActiveTab('account')">{{ index .T "account" }}</button>
-            <button type="button" class="tab-btn" data-tab="sessions" onclick="setActiveTab('sessions')">{{ index .T "sessions" }}</button>
-            <button type="button" class="tab-btn" data-tab="clients" onclick="setActiveTab('clients')">{{ index .T "clients" }}</button>
+            <button type="button" role="tab" aria-selected="true" tabindex="0" class="tab-btn active" data-tab="account" onclick="setActiveTab('account')">{{ index .T "account" }}</button>
+            <button type="button" role="tab" aria-selected="false" tabindex="-1" class="tab-btn" data-tab="sessions" onclick="setActiveTab('sessions')">{{ index .T "sessions" }}</button>
+            <button type="button" role="tab" aria-selected="false" tabindex="-1" class="tab-btn" data-tab="clients" onclick="setActiveTab('clients')">{{ index .T "clients" }}</button>
         </div>
     </header>
 
@@ -1603,6 +1743,13 @@
                     <div class="secret-box" id="revealed-secret-value"></div>
                 </div>
                 <div id="secret-reveal-meta" class="card-desc"></div>
+                <div class="env-snippet-box">
+                    <div class="env-snippet-head">
+                        <span>{{ index .T "env_snippet" }}</span>
+                        <button type="button" class="btn btn-ghost btn-sm" id="copy-env-btn" onclick="copyRevealedEnv()">{{ index .T "copy_env" }}</button>
+                    </div>
+                    <pre class="env-snippet-pre" id="revealed-env-snippet"></pre>
+                </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" onclick="copyRevealedSecret()" id="copy-secret-btn">{{ index .T "copy" }}</button>
@@ -1735,10 +1882,14 @@
         let allSessions = [];
         let hasMoreSessions = true;
         let sessionsFilter = 'all';
+        let sessionsQuery = '';
         let allClients = [];
+        let clientsFilter = 'all';
+        let clientsQuery = '';
         let activityPage = 1;
         let allActivity = [];
         let hasMoreActivity = true;
+        let activityFilter = 'all';
 
         let currentUser = {};
         let itiProfilePhone = null;
@@ -1823,10 +1974,10 @@
             }
         });
 
-        async function copyToClipboard(text, triggerEl) {
+        async function copyToClipboard(text, triggerEl, customMsg) {
             if (window.GilosUI) {
                 return window.GilosUI.copyText(text, {
-                    successMsg: tr('copied_clipboard', 'Copied to clipboard!'),
+                    successMsg: customMsg || tr('copied_clipboard', 'Copied to clipboard!'),
                     errorMsg: tr('copy_failed', 'Failed to copy'),
                     triggerEl: triggerEl || null
                 });
@@ -1834,12 +1985,20 @@
             return false;
         }
 
+        function copyDiscoveryURL(triggerEl) {
+            const url = `${window.location.origin}/.well-known/openid-configuration`;
+            copyToClipboard(url, triggerEl, tr('discovery_copied_msg', 'OIDC Discovery URL copied!'));
+        }
+
         function setActiveTab(tabName, shouldLoad = true) {
             if (!['account', 'sessions', 'clients'].includes(tabName)) tabName = 'account';
             currentTab = tabName;
 
             document.querySelectorAll('.tab-btn').forEach(btn => {
-                btn.classList.toggle('active', btn.dataset.tab === tabName);
+                const isSelected = btn.dataset.tab === tabName;
+                btn.classList.toggle('active', isSelected);
+                btn.setAttribute('aria-selected', isSelected ? 'true' : 'false');
+                btn.setAttribute('tabindex', isSelected ? '0' : '-1');
             });
 
             ['account', 'sessions', 'clients'].forEach(t => {
@@ -1852,6 +2011,28 @@
             window.history.replaceState({}, '', url.toString());
 
             if (shouldLoad) loadContent();
+        }
+
+        function initTablistKeyboard() {
+            document.querySelectorAll('[role="tablist"]').forEach(tablist => {
+                const tabs = Array.from(tablist.querySelectorAll('[role="tab"]'));
+                tabs.forEach((tab, idx) => {
+                    tab.addEventListener('keydown', (e) => {
+                        let nextIdx = null;
+                        if (e.key === 'ArrowRight') nextIdx = (idx + 1) % tabs.length;
+                        else if (e.key === 'ArrowLeft') nextIdx = (idx - 1 + tabs.length) % tabs.length;
+                        else if (e.key === 'Home') nextIdx = 0;
+                        else if (e.key === 'End') nextIdx = tabs.length - 1;
+                        if (nextIdx === null) return;
+                        e.preventDefault();
+                        const nextTab = tabs[nextIdx];
+                        if (nextTab && nextTab.dataset.tab) {
+                            setActiveTab(nextTab.dataset.tab);
+                            nextTab.focus();
+                        }
+                    });
+                });
+            });
         }
 
         function loadContent() {
@@ -2094,10 +2275,16 @@
                         <section class="console-card">
                             <div class="card-head">
                                 <div class="card-title-group">
-                                    <h3 class="card-title">${escapeHtml(tr('your_names', 'Personal Info'))}</h3>
+                                    <h3 class="card-title">
+                                        <span>${escapeHtml(tr('your_names', 'Personal Info'))}</span>
+                                        <span class="badge badge-warning hidden" id="names-dirty-badge">${escapeHtml(tr('unsaved_changes', 'Unsaved changes'))}</span>
+                                    </h3>
                                     <p class="card-desc">${escapeHtml(tr('personal_info_desc', 'How your name and profile photo appear across connected apps.'))}</p>
                                 </div>
-                                <button type="submit" form="names-form" class="btn btn-primary btn-sm" id="names-save-btn">${escapeHtml(tr('save', 'Save'))}</button>
+                                <div class="card-head-actions">
+                                    <button type="button" class="btn btn-ghost btn-sm hidden" id="names-discard-btn">${escapeHtml(tr('discard_changes', 'Discard'))}</button>
+                                    <button type="submit" form="names-form" class="btn btn-primary btn-sm" id="names-save-btn">${escapeHtml(tr('save', 'Save'))}</button>
+                                </div>
                             </div>
                             <form id="names-form" class="form-grid">
                                 <div class="field">
@@ -2291,6 +2478,12 @@
                                 </div>
                                 <button type="button" class="btn btn-secondary btn-sm" onclick="loadActivity(1)">${escapeHtml(tr('refresh_list', 'Refresh'))}</button>
                             </div>
+                            <div class="filter-pills" id="activity-filter-bar">
+                                <button type="button" class="filter-pill active" data-activity-filter="all" onclick="setActivityFilter('all')">${escapeHtml(tr('activity_filter_all', 'All'))}</button>
+                                <button type="button" class="filter-pill" data-activity-filter="auth" onclick="setActivityFilter('auth')">${escapeHtml(tr('activity_filter_auth', 'Sign-ins'))}</button>
+                                <button type="button" class="filter-pill" data-activity-filter="security" onclick="setActivityFilter('security')">${escapeHtml(tr('activity_filter_security', 'Security & 2FA'))}</button>
+                                <button type="button" class="filter-pill" data-activity-filter="clients" onclick="setActivityFilter('clients')">${escapeHtml(tr('activity_filter_clients', 'Apps & Clients'))}</button>
+                            </div>
                             <div id="activity-list-container">
                                 <div class="skeleton" style="height:56px;"></div>
                             </div>
@@ -2349,6 +2542,28 @@
         function setupAccountForms() {
             const namesForm = document.getElementById('names-form');
             if (namesForm) {
+                const nameFields = ['first-name', 'last-name', 'middle-name', 'nickname'];
+                const initialValues = Object.fromEntries(nameFields.map(id => [id, document.getElementById(id)?.value || '']));
+                const dirtyBadge = document.getElementById('names-dirty-badge');
+                const discardBtn = document.getElementById('names-discard-btn');
+                const syncNamesDirty = () => {
+                    const isDirty = nameFields.some(id => (document.getElementById(id)?.value || '') !== initialValues[id]);
+                    if (dirtyBadge) dirtyBadge.classList.toggle('hidden', !isDirty);
+                    if (discardBtn) discardBtn.classList.toggle('hidden', !isDirty);
+                };
+                nameFields.forEach(id => {
+                    const inp = document.getElementById(id);
+                    if (inp) inp.addEventListener('input', syncNamesDirty);
+                });
+                if (discardBtn) {
+                    discardBtn.addEventListener('click', () => {
+                        nameFields.forEach(id => {
+                            const inp = document.getElementById(id);
+                            if (inp) inp.value = initialValues[id];
+                        });
+                        syncNamesDirty();
+                    });
+                }
                 namesForm.addEventListener('submit', async (e) => {
                     e.preventDefault();
                     const btn = document.getElementById('names-save-btn');
@@ -2843,11 +3058,99 @@
         }
 
         // Security Activity Timeline
+        function getActivityCategory(eventType) {
+            if (['login_success', 'login_failed', 'logout', 'session_terminated', 'sessions_terminated_bulk'].includes(eventType)) {
+                return 'auth';
+            }
+            if (['oauth_authorized', 'oauth_denied', 'oauth_token_issued', 'client_created', 'client_updated', 'client_deleted', 'client_secret_rotated'].includes(eventType)) {
+                return 'clients';
+            }
+            return 'security';
+        }
+
+        function setActivityFilter(filter) {
+            activityFilter = ['all', 'auth', 'security', 'clients'].includes(filter) ? filter : 'all';
+            document.querySelectorAll('#activity-filter-bar .filter-pill').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.activityFilter === activityFilter);
+            });
+            renderActivityList();
+        }
+
+        function renderActivityList() {
+            const box = document.getElementById('activity-list-container');
+            if (!box) return;
+
+            if (allActivity.length === 0) {
+                box.innerHTML = `<p class="card-desc">${escapeHtml(tr('no_activity', 'No recent security events recorded.'))}</p>`;
+                return;
+            }
+
+            const filtered = activityFilter === 'all'
+                ? allActivity
+                : allActivity.filter(ev => getActivityCategory(ev.event_type) === activityFilter);
+
+            const loadMoreHtml = hasMoreActivity
+                ? `<div class="load-more-wrap"><button type="button" class="btn btn-secondary btn-sm" onclick="loadActivity(${activityPage + 1})">${escapeHtml(tr('load_more', 'Load more'))}</button></div>`
+                : '';
+
+            if (filtered.length === 0) {
+                box.innerHTML = `<p class="card-desc" style="padding:12px 0 4px;">${escapeHtml(tr('activity_no_matches', 'No activity events in this category yet.'))}</p>` + loadMoreHtml;
+                return;
+            }
+
+            const eventIcons = {
+                login_success: { cls: 'activity-dot--success', svg: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>' },
+                login_failed: { cls: 'activity-dot--danger', svg: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>' },
+                security_blocked: { cls: 'activity-dot--danger', svg: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>' },
+                brute_force_blocked: { cls: 'activity-dot--danger', svg: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>' },
+                password_changed: { cls: 'activity-dot--warning', svg: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>' },
+                password_reset: { cls: 'activity-dot--warning', svg: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>' },
+                mfa_totp_enabled: { cls: 'activity-dot--success', svg: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>' },
+                mfa_totp_disabled: { cls: 'activity-dot--warning', svg: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>' },
+                oauth_authorized: { cls: 'activity-dot--info', svg: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>' },
+                client_created: { cls: 'activity-dot--info', svg: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>' },
+                client_updated: { cls: 'activity-dot--info', svg: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>' },
+                client_deleted: { cls: 'activity-dot--danger', svg: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>' },
+                client_secret_rotated: { cls: 'activity-dot--warning', svg: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>' }
+            };
+
+            const rowsHtml = filtered.map(ev => {
+                const title = tr('event_' + ev.event_type, ev.event_type.replace(/_/g, ' '));
+                const metaIcon = eventIcons[ev.event_type] || { cls: '', svg: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>' };
+                const ua = window.GilosUI.parseUserAgent(ev.user_agent);
+                const deviceLabel = ua.shortLabel || tr('unknown', 'Unknown');
+                const relTime = window.GilosUI.formatRelativeTime(ev.created_at, T);
+                const exactTime = window.GilosUI.formatExactTime(ev.created_at);
+
+                return `
+                    <div class="activity-item">
+                        <div class="activity-left">
+                            <span class="activity-dot ${metaIcon.cls}">${metaIcon.svg}</span>
+                            <div class="activity-body">
+                                <div class="activity-title">${escapeHtml(title)}</div>
+                                <div class="activity-meta">
+                                    ${ev.user_agent ? `<span>${escapeHtml(deviceLabel)}</span><span>&middot;</span>` : ''}
+                                    <span>${escapeHtml(ev.ip_address || tr('unknown', 'Unknown'))}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <span class="activity-time" title="${escapeHtml(exactTime)}">${escapeHtml(relTime)}</span>
+                    </div>
+                `;
+            }).join('');
+
+            box.innerHTML = `<div class="activity-list">${rowsHtml}</div>` + loadMoreHtml;
+        }
+
         async function loadActivity(page = 1) {
             const box = document.getElementById('activity-list-container');
             if (!box) return;
             activityPage = page;
             if (page === 1) {
+                activityFilter = 'all';
+                document.querySelectorAll('#activity-filter-bar .filter-pill').forEach(btn => {
+                    btn.classList.toggle('active', btn.dataset.activityFilter === 'all');
+                });
                 allActivity = [];
                 box.innerHTML = `<div class="skeleton" style="height:52px;margin-bottom:8px;"></div><div class="skeleton" style="height:52px;"></div>`;
             }
@@ -2862,49 +3165,7 @@
                 const pag = payload.pagination || {};
                 hasMoreActivity = Boolean(pag.has_next_page);
                 allActivity = page === 1 ? items : allActivity.concat(items);
-
-                if (allActivity.length === 0) {
-                    box.innerHTML = `<p class="card-desc">${escapeHtml(tr('no_activity', 'No recent security events recorded.'))}</p>`;
-                    return;
-                }
-
-                const eventIcons = {
-                    login_success: { cls: 'activity-dot--success', svg: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>' },
-                    login_failed: { cls: 'activity-dot--danger', svg: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>' },
-                    security_blocked: { cls: 'activity-dot--danger', svg: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>' },
-                    brute_force_blocked: { cls: 'activity-dot--danger', svg: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>' },
-                    password_changed: { cls: 'activity-dot--warning', svg: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>' },
-                    password_reset: { cls: 'activity-dot--warning', svg: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>' },
-                    oauth_authorized: { cls: 'activity-dot--info', svg: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>' }
-                };
-
-                const rowsHtml = allActivity.map(ev => {
-                    const title = tr('event_' + ev.event_type, ev.event_type.replace(/_/g, ' '));
-                    const metaIcon = eventIcons[ev.event_type] || { cls: '', svg: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>' };
-                    const ua = window.GilosUI.parseUserAgent(ev.user_agent);
-                    const deviceLabel = ua.shortLabel || tr('unknown', 'Unknown');
-                    const relTime = window.GilosUI.formatRelativeTime(ev.created_at, T);
-                    const exactTime = window.GilosUI.formatExactTime(ev.created_at);
-
-                    return `
-                        <div class="activity-item">
-                            <div class="activity-left">
-                                <span class="activity-dot ${metaIcon.cls}">${metaIcon.svg}</span>
-                                <div class="activity-body">
-                                    <div class="activity-title">${escapeHtml(title)}</div>
-                                    <div class="activity-meta">
-                                        ${ev.user_agent ? `<span>${escapeHtml(deviceLabel)}</span><span>&middot;</span>` : ''}
-                                        <span>${escapeHtml(ev.ip_address || tr('unknown', 'Unknown'))}</span>
-                                    </div>
-                                </div>
-                            </div>
-                            <span class="activity-time" title="${escapeHtml(exactTime)}">${escapeHtml(relTime)}</span>
-                        </div>
-                    `;
-                }).join('');
-
-                box.innerHTML = `<div class="activity-list">${rowsHtml}</div>` +
-                    (hasMoreActivity ? `<div class="load-more-wrap"><button type="button" class="btn btn-secondary btn-sm" onclick="loadActivity(${activityPage + 1})">${escapeHtml(tr('load_more', 'Load more'))}</button></div>` : '');
+                renderActivityList();
             } catch (e) {
                 box.innerHTML = `<p class="card-desc">${escapeHtml(tr('failed_load_activity', 'Could not load recent activity.'))}</p>`;
             }
@@ -2912,8 +3173,31 @@
 
         // Sessions
         function setSessionsFilter(filter) {
-            sessionsFilter = filter;
-            renderSessionsGrid();
+            sessionsFilter = ['all', 'browser', 'apps'].includes(filter) ? filter : 'all';
+            document.querySelectorAll('#sessions-filter-bar .filter-pill').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.sessionsFilter === sessionsFilter);
+            });
+            renderSessionsCards();
+        }
+
+        function setSessionsQuery(value) {
+            sessionsQuery = value || '';
+            const clr = document.getElementById('sessions-search-clear');
+            if (clr) clr.classList.toggle('hidden', sessionsQuery.trim() === '');
+            renderSessionsCards();
+        }
+
+        function clearSessionsFilters() {
+            sessionsFilter = 'all';
+            sessionsQuery = '';
+            const inp = document.getElementById('sessions-search-input');
+            if (inp) inp.value = '';
+            const clr = document.getElementById('sessions-search-clear');
+            if (clr) clr.classList.add('hidden');
+            document.querySelectorAll('#sessions-filter-bar .filter-pill').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.sessionsFilter === 'all');
+            });
+            renderSessionsCards();
         }
 
         async function loadSessions(page = 1) {
@@ -2960,13 +3244,7 @@
             const appsCount = allSessions.filter(s => s.type !== 'native').length;
             const hasOthers = allSessions.some(s => s.id !== currentSessionID);
 
-            const filtered = allSessions.filter(s => {
-                if (sessionsFilter === 'browser') return s.type === 'native';
-                if (sessionsFilter === 'apps') return s.type !== 'native';
-                return true;
-            });
-
-            const headerHtml = `
+            container.innerHTML = `
                 <div class="section-toolbar">
                     <div class="section-toolbar-titles">
                         <h2>${escapeHtml(tr('sessions', 'Sessions'))}</h2>
@@ -2977,30 +3255,81 @@
                         ${hasOthers ? `<button type="button" class="btn btn-danger-outline btn-sm" onclick="terminateOtherSessions()">${escapeHtml(tr('terminate_all_others', 'Terminate all others'))}</button>` : ''}
                     </div>
                 </div>
-                <div class="filter-pills">
-                    <button type="button" class="filter-pill ${sessionsFilter === 'all' ? 'active' : ''}" onclick="setSessionsFilter('all')">
-                        <span>${escapeHtml(tr('sessions_filter_all', 'All'))}</span>
-                        <span class="filter-pill-count">${totalCount}</span>
-                    </button>
-                    <button type="button" class="filter-pill ${sessionsFilter === 'browser' ? 'active' : ''}" onclick="setSessionsFilter('browser')">
-                        <span>${escapeHtml(tr('sessions_filter_browser', 'Browser Sessions'))}</span>
-                        <span class="filter-pill-count">${browserCount}</span>
-                    </button>
-                    <button type="button" class="filter-pill ${sessionsFilter === 'apps' ? 'active' : ''}" onclick="setSessionsFilter('apps')">
-                        <span>${escapeHtml(tr('sessions_filter_apps', 'Connected Apps'))}</span>
-                        <span class="filter-pill-count">${appsCount}</span>
-                    </button>
-                </div>
+                ${allSessions.length > 0 ? `
+                <div class="filter-toolbar">
+                    <div class="filter-pills" id="sessions-filter-bar">
+                        <button type="button" class="filter-pill ${sessionsFilter === 'all' ? 'active' : ''}" data-sessions-filter="all" onclick="setSessionsFilter('all')">
+                            <span>${escapeHtml(tr('sessions_filter_all', 'All'))}</span>
+                            <span class="filter-pill-count">${totalCount}</span>
+                        </button>
+                        <button type="button" class="filter-pill ${sessionsFilter === 'browser' ? 'active' : ''}" data-sessions-filter="browser" onclick="setSessionsFilter('browser')">
+                            <span>${escapeHtml(tr('sessions_filter_browser', 'Browser Sessions'))}</span>
+                            <span class="filter-pill-count">${browserCount}</span>
+                        </button>
+                        <button type="button" class="filter-pill ${sessionsFilter === 'apps' ? 'active' : ''}" data-sessions-filter="apps" onclick="setSessionsFilter('apps')">
+                            <span>${escapeHtml(tr('sessions_filter_apps', 'Connected Apps'))}</span>
+                            <span class="filter-pill-count">${appsCount}</span>
+                        </button>
+                    </div>
+                    <div class="console-search-wrap">
+                        <span class="console-search-icon" aria-hidden="true">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                        </span>
+                        <input type="search" id="sessions-search-input" class="console-search-input" value="${escapeHtml(sessionsQuery)}"
+                               placeholder="${escapeHtml(tr('sessions_search_placeholder', 'Search by app, device, or IP address...'))}"
+                               oninput="setSessionsQuery(this.value)">
+                        <button type="button" id="sessions-search-clear" class="console-search-clear ${sessionsQuery.trim() === '' ? 'hidden' : ''}"
+                                onclick="setSessionsQuery(''); const i=document.getElementById('sessions-search-input'); if(i){i.value=''; i.focus();}"
+                                aria-label="${escapeHtml(tr('clear_filters', 'Clear filters'))}">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                        </button>
+                    </div>
+                </div>` : ''}
+                <div id="sessions-cards-region"></div>
             `;
 
-            if (filtered.length === 0) {
-                container.innerHTML = headerHtml + `
+            renderSessionsCards();
+        }
+
+        function renderSessionsCards() {
+            const region = document.getElementById('sessions-cards-region');
+            if (!region) return;
+
+            const q = sessionsQuery.trim().toLowerCase();
+            const filtered = allSessions.filter(s => {
+                if (sessionsFilter === 'browser' && s.type !== 'native') return false;
+                if (sessionsFilter === 'apps' && s.type === 'native') return false;
+                if (!q) return true;
+                const parsedUA = window.GilosUI.parseUserAgent(s.device_info);
+                const appName = s.client && s.client.name ? s.client.name : '';
+                const haystack = `${appName} ${parsedUA.shortLabel || ''} ${s.device_info || ''} ${s.ip_address || ''} ${s.scopes || ''} #${s.id}`.toLowerCase();
+                return haystack.includes(q);
+            });
+
+            const loadMoreHtml = hasMoreSessions
+                ? `<div class="load-more-wrap"><button type="button" class="btn btn-secondary" onclick="loadSessions(${sessionsPage + 1})">${escapeHtml(tr('load_more', 'Load more'))}</button></div>`
+                : '';
+
+            if (allSessions.length === 0) {
+                region.innerHTML = `
                     <div class="empty-state">
                         <div class="empty-state-icon" aria-hidden="true">
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
                         </div>
                         <p style="font-weight:600;color:var(--text);margin-bottom:4px;">${escapeHtml(tr('no_active_sessions', 'No active sessions found.'))}</p>
                         <p class="card-desc" style="margin:0 auto;">${escapeHtml(tr('empty_sessions_hint', 'Signed-in browsers and connected apps will appear here once authorized.'))}</p>
+                    </div>`;
+                return;
+            }
+
+            if (filtered.length === 0) {
+                region.innerHTML = `
+                    <div class="empty-state">
+                        <p style="font-weight:600;color:var(--text);margin-bottom:4px;">${escapeHtml(tr('sessions_no_matches', 'No sessions match your current filters.'))}</p>
+                        <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:12px;">
+                            <button type="button" class="btn btn-secondary btn-sm" onclick="clearSessionsFilters()">${escapeHtml(tr('clear_filters', 'Clear filters'))}</button>
+                            ${hasMoreSessions ? `<button type="button" class="btn btn-ghost btn-sm" onclick="loadSessions(${sessionsPage + 1})">${escapeHtml(tr('load_more', 'Load more'))}</button>` : ''}
+                        </div>
                     </div>`;
                 return;
             }
@@ -3029,7 +3358,7 @@
                                     </div>
                                 </div>
                             </div>
-                            ${isCurrent ? `<span class="badge badge-success">${escapeHtml(tr('this_device', 'This device'))}</span>` : `<span class="badge badge-neutral">#${escapeHtml(String(session.id))}</span>`}
+                            ${isCurrent ? `<span class="badge badge-success"><span class="status-live-dot" aria-hidden="true"></span>${escapeHtml(tr('this_device', 'This device'))}</span>` : `<span class="badge badge-neutral">#${escapeHtml(String(session.id))}</span>`}
                         </div>
 
                         <div class="entity-rows">
@@ -3047,7 +3376,7 @@
                             </div>
                             ${scopeItems.length > 0 ? `
                             <div class="scope-chips" style="padding-top:4px;">
-                                ${scopeItems.map(s => `<span class="scope-chip">${escapeHtml(getScopeLabel(s))}</span>`).join('')}
+                                ${scopeItems.map(s => `<span class="scope-chip" title="${escapeHtml(s)}">${escapeHtml(getScopeLabel(s))}</span>`).join('')}
                             </div>` : ''}
                             ${session.device_info ? `
                             <details class="raw-ua-details">
@@ -3064,11 +3393,7 @@
                 `;
             }).join('');
 
-            const loadMoreHtml = hasMoreSessions
-                ? `<div class="load-more-wrap"><button type="button" class="btn btn-secondary" onclick="loadSessions(${sessionsPage + 1})">${escapeHtml(tr('load_more', 'Load more'))}</button></div>`
-                : '';
-
-            container.innerHTML = headerHtml + `<div class="cards-grid">${cardsHtml}</div>` + loadMoreHtml;
+            region.innerHTML = `<div class="cards-grid">${cardsHtml}</div>` + loadMoreHtml;
         }
 
         async function terminateSession(id) {
@@ -3115,6 +3440,51 @@
         }
 
         // OAuth Clients
+        function normalizeClient(c) {
+            if (!c || typeof c !== 'object') return null;
+            return {
+                id: Number(c.id ?? c.ID ?? 0),
+                user_id: Number(c.user_id ?? c.UserID ?? 0),
+                name: String(c.name ?? c.Name ?? ''),
+                type: String(c.type ?? c.Type ?? 'public').toLowerCase(),
+                redirect_uris: String(c.redirect_uris ?? c.RedirectURIs ?? ''),
+                scopes: String(c.scopes ?? c.Scopes ?? ''),
+                required_scopes: String(c.required_scopes ?? c.RequiredScopes ?? ''),
+                secret_prefix: String(c.secret_prefix ?? c.SecretPrefix ?? ''),
+                secret_created_at: c.secret_created_at ?? c.SecretCreatedAt ?? null,
+                created_at: c.created_at ?? c.CreatedAt ?? null,
+                updated_at: c.updated_at ?? c.UpdatedAt ?? null
+            };
+        }
+
+        function setClientsFilter(filter) {
+            clientsFilter = ['all', 'confidential', 'public'].includes(filter) ? filter : 'all';
+            document.querySelectorAll('#clients-filter-bar .filter-pill').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.clientsFilter === clientsFilter);
+            });
+            renderClientsCards();
+        }
+
+        function setClientsQuery(value) {
+            clientsQuery = value || '';
+            const clr = document.getElementById('clients-search-clear');
+            if (clr) clr.classList.toggle('hidden', clientsQuery.trim() === '');
+            renderClientsCards();
+        }
+
+        function clearClientsFilters() {
+            clientsFilter = 'all';
+            clientsQuery = '';
+            const inp = document.getElementById('clients-search-input');
+            if (inp) inp.value = '';
+            const clr = document.getElementById('clients-search-clear');
+            if (clr) clr.classList.add('hidden');
+            document.querySelectorAll('#clients-filter-bar .filter-pill').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.clientsFilter === 'all');
+            });
+            renderClientsCards();
+        }
+
         async function loadClients() {
             const container = document.getElementById('clients-content');
             container.innerHTML = `<div class="cards-grid"><div class="skeleton" style="height:240px;border-radius:18px;"></div><div class="skeleton" style="height:240px;border-radius:18px;"></div></div>`;
@@ -3123,30 +3493,74 @@
                 if (response.status === 401) { window.location.href = '/'; return; }
                 if (!response.ok) throw new Error(tr('failed_load_clients', 'Failed to load clients.'));
                 const result = await response.json();
-                allClients = result.data || [];
+                const rawList = Array.isArray(result) ? result : (Array.isArray(result && result.data) ? result.data : []);
+                allClients = rawList.map(normalizeClient).filter(Boolean);
                 renderClientsGrid();
             } catch (err) {
-                container.innerHTML = `<div class="empty-state"><p>${escapeHtml(tr('failed_load_clients', 'Failed to load clients.'))}</p></div>`;
+                container.innerHTML = `<div class="empty-state"><p>${escapeHtml(tr('failed_load_clients', 'Failed to load clients.'))}</p><button type="button" class="btn btn-secondary btn-sm" onclick="loadClients()">${escapeHtml(tr('refresh_list', 'Refresh'))}</button></div>`;
             }
         }
 
         function renderClientsGrid() {
             const container = document.getElementById('clients-content');
-            const headerHtml = `
+            const totalCount = allClients.length;
+            const confCount = allClients.filter(c => c.type === 'confidential').length;
+            const pubCount = allClients.filter(c => c.type !== 'confidential').length;
+
+            container.innerHTML = `
                 <div class="section-toolbar">
                     <div class="section-toolbar-titles">
                         <h2>${escapeHtml(tr('clients', 'Clients'))}</h2>
                         <p>${escapeHtml(tr('clients_subtitle', 'Register and manage OAuth 2.1 / OpenID Connect applications using Gilos ID.'))}</p>
                     </div>
                     <div class="section-toolbar-actions">
+                        <button type="button" class="btn btn-secondary btn-sm" onclick="copyDiscoveryURL(this)" title="/.well-known/openid-configuration">${escapeHtml(tr('discovery_endpoint', 'OIDC Discovery'))}</button>
                         <a href="/docs" class="btn btn-secondary btn-sm">${escapeHtml(tr('docs', 'Docs'))}</a>
                         <button type="button" class="btn btn-primary btn-sm" onclick="openModal()">+ ${escapeHtml(tr('new_client', 'New Client'))}</button>
                     </div>
                 </div>
+                ${allClients.length > 0 ? `
+                <div class="filter-toolbar">
+                    <div class="filter-pills" id="clients-filter-bar">
+                        <button type="button" class="filter-pill ${clientsFilter === 'all' ? 'active' : ''}" data-clients-filter="all" onclick="setClientsFilter('all')">
+                            <span>${escapeHtml(tr('clients_filter_all', 'All'))}</span>
+                            <span class="filter-pill-count">${totalCount}</span>
+                        </button>
+                        <button type="button" class="filter-pill ${clientsFilter === 'confidential' ? 'active' : ''}" data-clients-filter="confidential" onclick="setClientsFilter('confidential')">
+                            <span>${escapeHtml(tr('clients_filter_confidential', 'Confidential'))}</span>
+                            <span class="filter-pill-count">${confCount}</span>
+                        </button>
+                        <button type="button" class="filter-pill ${clientsFilter === 'public' ? 'active' : ''}" data-clients-filter="public" onclick="setClientsFilter('public')">
+                            <span>${escapeHtml(tr('clients_filter_public', 'Public'))}</span>
+                            <span class="filter-pill-count">${pubCount}</span>
+                        </button>
+                    </div>
+                    <div class="console-search-wrap">
+                        <span class="console-search-icon" aria-hidden="true">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                        </span>
+                        <input type="search" id="clients-search-input" class="console-search-input" value="${escapeHtml(clientsQuery)}"
+                               placeholder="${escapeHtml(tr('clients_search_placeholder', 'Search clients by name, ID, URI, or scope...'))}"
+                               oninput="setClientsQuery(this.value)">
+                        <button type="button" id="clients-search-clear" class="console-search-clear ${clientsQuery.trim() === '' ? 'hidden' : ''}"
+                                onclick="setClientsQuery(''); const i=document.getElementById('clients-search-input'); if(i){i.value=''; i.focus();}"
+                                aria-label="${escapeHtml(tr('clear_filters', 'Clear filters'))}">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                        </button>
+                    </div>
+                </div>` : ''}
+                <div id="clients-cards-region"></div>
             `;
 
+            renderClientsCards();
+        }
+
+        function renderClientsCards() {
+            const region = document.getElementById('clients-cards-region');
+            if (!region) return;
+
             if (allClients.length === 0) {
-                container.innerHTML = headerHtml + `
+                region.innerHTML = `
                     <div class="empty-state">
                         <div class="empty-state-icon" aria-hidden="true">
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
@@ -3158,11 +3572,31 @@
                 return;
             }
 
-            const cardsHtml = allClients.map(c => {
+            const q = clientsQuery.trim().toLowerCase();
+            const filtered = allClients.filter(c => {
+                if (clientsFilter === 'confidential' && c.type !== 'confidential') return false;
+                if (clientsFilter === 'public' && c.type === 'confidential') return false;
+                if (!q) return true;
+                const haystack = `${c.name} ${c.id} ${c.redirect_uris} ${c.scopes}`.toLowerCase();
+                return haystack.includes(q);
+            });
+
+            if (filtered.length === 0) {
+                region.innerHTML = `
+                    <div class="empty-state">
+                        <p style="font-weight:600;color:var(--text);margin-bottom:4px;">${escapeHtml(tr('clients_no_matches', 'No clients match your current filters.'))}</p>
+                        <button type="button" class="btn btn-secondary btn-sm" style="margin-top:10px;" onclick="clearClientsFilters()">${escapeHtml(tr('clear_filters', 'Clear filters'))}</button>
+                    </div>`;
+                return;
+            }
+
+            const cardsHtml = filtered.map(c => {
                 const isConf = c.type === 'confidential';
                 const uris = (c.redirect_uris || '').split(',').map(u => u.trim()).filter(Boolean);
                 const scopes = (c.scopes || '').split(',').map(s => s.trim()).filter(Boolean);
                 const reqScopes = (c.required_scopes || '').split(',').map(s => s.trim()).filter(Boolean);
+                const createdRel = c.created_at ? window.GilosUI.formatRelativeTime(c.created_at, T) : '';
+                const createdExact = c.created_at ? window.GilosUI.formatExactTime(c.created_at) : '';
 
                 return `
                     <article class="entity-card">
@@ -3173,6 +3607,7 @@
                                     <div class="entity-title" title="${escapeHtml(c.name)}">${escapeHtml(c.name)}</div>
                                     <div class="entity-subtitle">
                                         <span class="badge ${isConf ? 'badge-accent' : 'badge-neutral'}">${escapeHtml(tr(c.type, c.type))}</span>
+                                        ${createdRel ? `<span title="${escapeHtml(createdExact)}">&middot; ${escapeHtml(tr('created_label', 'Created'))} ${escapeHtml(createdRel)}</span>` : ''}
                                     </div>
                                 </div>
                             </div>
@@ -3202,20 +3637,24 @@
                             <div class="field" style="gap:5px;">
                                 <span class="entity-label">${escapeHtml(tr('redirect_uris', 'Redirect URIs'))}</span>
                                 <div class="uri-list">
-                                    ${uris.map(u => `<div class="uri-item" title="${escapeHtml(u)}">${escapeHtml(u)}</div>`).join('')}
+                                    ${uris.map(u => `
+                                        <button type="button" class="uri-item" data-uri="${escapeHtml(u)}" onclick="copyToClipboard(this.dataset.uri, this)" title="${escapeHtml(tr('copy_uri', 'Click to copy URI'))}: ${escapeHtml(u)}">
+                                            <span class="uri-item-text">${escapeHtml(u)}</span>
+                                            <svg class="uri-item-copy-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+                                        </button>`).join('')}
                                 </div>
                             </div>
 
                             <div class="field" style="gap:5px;">
                                 <span class="entity-label">${escapeHtml(tr('scopes', 'Scopes'))}</span>
                                 <div class="scope-chips">
-                                    ${scopes.map(s => `<span class="scope-chip ${reqScopes.includes(s) ? 'scope-chip--req' : ''}">${escapeHtml(s)}${reqScopes.includes(s) ? ' *' : ''}</span>`).join('')}
+                                    ${scopes.map(s => `<span class="scope-chip ${reqScopes.includes(s) ? 'scope-chip--req' : ''}" title="${escapeHtml(getScopeLabel(s))}">${escapeHtml(s)}${reqScopes.includes(s) ? ' *' : ''}</span>`).join('')}
                                 </div>
                             </div>
                         </div>
 
                         <div class="entity-footer">
-                            ${isConf ? `<button type="button" class="btn btn-secondary btn-sm" onclick="regenerateSecret(${Number(c.id)}, '${escapeHtml(c.name)}')">${escapeHtml(tr('regenerate_secret', 'Regenerate'))}</button>` : ''}
+                            ${isConf ? `<button type="button" class="btn btn-secondary btn-sm" onclick="regenerateSecret(${Number(c.id)})">${escapeHtml(tr('regenerate_secret', 'Regenerate'))}</button>` : ''}
                             <div class="entity-footer-actions">
                                 <button type="button" class="btn btn-secondary btn-sm" onclick="openModal(${Number(c.id)})">${escapeHtml(tr('edit', 'Edit'))}</button>
                                 <button type="button" class="btn btn-danger-outline btn-sm" onclick="deleteClient(${Number(c.id)})">${escapeHtml(tr('delete', 'Delete'))}</button>
@@ -3225,7 +3664,7 @@
                 `;
             }).join('');
 
-            container.innerHTML = headerHtml + `<div class="cards-grid">${cardsHtml}</div>`;
+            region.innerHTML = `<div class="cards-grid">${cardsHtml}</div>`;
         }
 
         function toggleRequired(scopeCheckbox, scopeName) {
@@ -3276,13 +3715,14 @@
                 try {
                     const response = await fetch(`/clients/edit?id=${id}`);
                     if (!response.ok) throw new Error(tr('failed_load_client', 'Failed to load client'));
-                    const c = await response.json();
-                    _editingClientType = c.Type || c.type || '';
-                    document.getElementById('name').value = c.Name || c.name || '';
+                    const rawClient = await response.json();
+                    const c = normalizeClient(rawClient) || {};
+                    _editingClientType = c.type || '';
+                    document.getElementById('name').value = c.name || '';
                     document.getElementById('type').value = _editingClientType;
-                    setRedirectURIs((c.RedirectURIs || c.redirect_uris || '').split(',').map(u => u.trim()).filter(Boolean));
-                    const scopes = (c.Scopes || c.scopes || '').split(',').map(s => s.trim());
-                    const reqScopes = (c.RequiredScopes || c.required_scopes || '').split(',').map(s => s.trim());
+                    setRedirectURIs((c.redirect_uris || '').split(',').map(u => u.trim()).filter(Boolean));
+                    const scopes = (c.scopes || '').split(',').map(s => s.trim());
+                    const reqScopes = (c.required_scopes || '').split(',').map(s => s.trim());
                     scopes.forEach(s => {
                         const sc = document.getElementById('scope-' + s);
                         const rc = document.getElementById('req-' + s);
@@ -3363,8 +3803,9 @@
         });
 
         async function deleteClient(id) {
+            const targetClient = allClients.find(item => item.id === Number(id));
             const conf = await Swal.fire({
-                title: tr('delete', 'Delete'),
+                title: targetClient && targetClient.name ? targetClient.name : tr('delete', 'Delete'),
                 text: tr('delete_client_confirm', 'Are you sure you want to delete this client?'),
                 icon: 'warning',
                 showCancelButton: true,
@@ -3384,9 +3825,11 @@
             }
         }
 
-        async function regenerateSecret(clientId, clientName) {
+        async function regenerateSecret(clientId) {
+            const targetClient = allClients.find(item => item.id === Number(clientId));
+            const clientName = targetClient ? targetClient.name : '';
             const conf = await Swal.fire({
-                title: tr('regenerate_secret', 'Regenerate Secret'),
+                title: clientName || tr('regenerate_secret', 'Regenerate Secret'),
                 text: tr('regenerate_secret_warning', 'The current secret will be invalidated immediately.'),
                 icon: 'warning',
                 showCancelButton: true,
@@ -3416,17 +3859,30 @@
             document.getElementById('secret-reveal-client-name').textContent = `${clientName} (#${clientId})`;
             document.getElementById('revealed-secret-value').textContent = secret;
             document.getElementById('secret-reveal-meta').textContent = secretPrefix ? `${tr('secret_prefix', 'Prefix')}: ${secretPrefix}` : '';
+            const envEl = document.getElementById('revealed-env-snippet');
+            if (envEl) {
+                envEl.textContent = `GILOS_ISSUER=${window.location.origin}\nGILOS_CLIENT_ID=${clientId}\nGILOS_CLIENT_SECRET=${secret}`;
+            }
             showModal('secret-reveal-modal');
         }
 
         function closeSecretRevealModal() {
             document.getElementById('revealed-secret-value').textContent = '';
+            const envEl = document.getElementById('revealed-env-snippet');
+            if (envEl) envEl.textContent = '';
             hideModal('secret-reveal-modal');
         }
 
         function copyRevealedSecret() {
             const sec = document.getElementById('revealed-secret-value').textContent;
-            if (sec) copyToClipboard(sec, document.getElementById('copy-secret-btn'));
+            if (sec) copyToClipboard(sec, document.getElementById('copy-secret-btn'), tr('secret_copied_msg', 'Client secret copied to clipboard!'));
+        }
+
+        function copyRevealedEnv() {
+            const envEl = document.getElementById('revealed-env-snippet');
+            if (envEl && envEl.textContent) {
+                copyToClipboard(envEl.textContent, document.getElementById('copy-env-btn'));
+            }
         }
 
         // OTP Modal Utilities
@@ -3672,6 +4128,7 @@
         document.addEventListener('DOMContentLoaded', () => {
             initOAuthTargetBanner();
             initHomePasswordToggles();
+            initTablistKeyboard();
 
             if (window.GilosUI) {
                 window.GilosUI.bindModalA11y(document.getElementById('client-modal'), closeModal);
@@ -3688,7 +4145,21 @@
             }
 
             document.addEventListener('keydown', (e) => {
-                if (e.key === 'Escape') closeDropdown();
+                if (e.key === 'Escape') {
+                    closeDropdown();
+                    return;
+                }
+                if (e.key === '/' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+                    const tag = document.activeElement?.tagName;
+                    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || document.querySelector('.modal.is-open')) return;
+                    const searchEl = currentTab === 'clients'
+                        ? document.getElementById('clients-search-input')
+                        : (currentTab === 'sessions' ? document.getElementById('sessions-search-input') : null);
+                    if (searchEl) {
+                        e.preventDefault();
+                        searchEl.focus();
+                    }
+                }
             });
 
             let initialTab = new URLSearchParams(window.location.search).get('tab');
