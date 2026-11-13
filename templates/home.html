@@ -1561,6 +1561,7 @@
 </style>
 
 <body>
+    <a href="#main-content" class="skip-link">{{ index .T "skip_to_content" }}</a>
     {{template "ribbon" .}}
 
     <header class="console-header">
@@ -1626,7 +1627,7 @@
         </div>
     </header>
 
-    <main class="console-main">
+    <main id="main-content" class="console-main" tabindex="-1">
         <div id="oauth-target-banner"></div>
         <div id="global-deletion-banner"></div>
         <div id="account-content" class="tab-content"></div>
@@ -1972,12 +1973,23 @@
 
         function showModal(id) {
             const el = document.getElementById(id);
-            if (el) el.classList.add('is-open');
+            if (!el) return;
+            if (!el.classList.contains('is-open')) {
+                el._previousFocus = document.activeElement;
+            }
+            el.classList.add('is-open');
         }
 
         function hideModal(id) {
             const el = document.getElementById(id);
-            if (el) el.classList.remove('is-open');
+            if (!el) return;
+            const prevFocus = el._previousFocus;
+            el._previousFocus = null;
+            el.classList.remove('is-open');
+            const remaining = document.querySelectorAll('.modal.is-open');
+            if (remaining.length === 0 && prevFocus && prevFocus.isConnected !== false && typeof prevFocus.focus === 'function') {
+                prevFocus.focus({ preventScroll: true });
+            }
         }
 
         function toggleDropdown(event) {
@@ -1987,13 +1999,21 @@
             const show = !dd.classList.contains('show');
             dd.classList.toggle('show', show);
             if (btn) btn.setAttribute('aria-expanded', show ? 'true' : 'false');
+            if (show && (!event || event.detail === 0)) {
+                const firstItem = dd.querySelector('[role="menuitem"]');
+                if (firstItem && typeof firstItem.focus === 'function') firstItem.focus();
+            }
         }
 
-        function closeDropdown() {
+        function closeDropdown(restoreFocus = false) {
             const dd = document.getElementById('account-dropdown');
             const btn = document.getElementById('appbar-user-btn');
+            const hadFocus = dd && dd.contains && document.activeElement && dd.contains(document.activeElement);
             if (dd) dd.classList.remove('show');
             if (btn) btn.setAttribute('aria-expanded', 'false');
+            if ((restoreFocus || hadFocus) && btn && typeof btn.focus === 'function') {
+                btn.focus({ preventScroll: true });
+            }
         }
 
         function focusHomeField(id) {
@@ -2114,8 +2134,9 @@
             try {
                 const params = new URLSearchParams({ session_id: String(currentSessionID) });
                 const response = await fetch('/sessions/terminate', { method: 'POST', body: params });
-                const data = await response.json();
+                const data = await parseJSONSafe(response, tr('failed_logout', 'Failed to sign out'));
                 if (!data.success) throw new Error(data.error || tr('failed_logout', 'Failed to sign out'));
+                allowProgrammaticUnload = true;
                 window.location.href = '/';
             } catch (err) {
                 window.GilosUI.toast(err.message || tr('failed_logout', 'Failed to sign out'), 'error');
@@ -2259,7 +2280,7 @@
                 if (response.status === 401) { redirectOnSessionExpiry(); return; }
                 if (!response.ok) throw new Error(tr('failed_load_profile', 'Failed to load profile'));
 
-                const user = await response.json();
+                const user = await parseJSONSafe(response, tr('failed_load_profile', 'Failed to load profile'));
                 currentUser = user;
 
                 // Update top app bar
@@ -2693,7 +2714,7 @@
                         const params = new URLSearchParams();
                         for (const [k, v] of formData.entries()) params.append(k, v);
                         const response = await fetch('/profile/names', { method: 'POST', body: params });
-                        const data = await response.json();
+                        const data = await parseJSONSafe(response, tr('failed_update_names', 'Failed to update names'));
                         if (!data.success) throw new Error(data.error || tr('failed_update_names', 'Failed to update names'));
                         window.GilosUI.toast(tr('names_updated', 'Names updated successfully'), 'success');
                         loadAccount();
@@ -2974,7 +2995,8 @@
             usernameTimer = setTimeout(async () => {
                 try {
                     const response = await fetch(`/profile/username/check?username=${encodeURIComponent(val)}`);
-                    const data = await response.json();
+                    if (!response.ok) return;
+                    const data = await parseJSONSafe(response, tr('update_failed', 'Check failed'));
                     if (data.available) {
                         if (indicator) indicator.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--green-500)" stroke-width="2.4"><polyline points="20 6 9 17 4 12"/></svg>';
                         if (msgEl) { msgEl.textContent = tr('username_available', 'Username is available'); msgEl.className = 'field-status-note is-ok'; }
@@ -2995,7 +3017,10 @@
             clearOTPInputs('totp-otp');
             showModal('totp-modal');
             fetch('/profile/totp/generate')
-                .then(r => { if (!r.ok) throw new Error(tr('failed_load_qr', 'Failed to load QR code')); return r.json(); })
+                .then(async (r) => {
+                    if (!r.ok) throw new Error(tr('failed_load_qr', 'Failed to load QR code'));
+                    return parseJSONSafe(r, tr('failed_load_qr', 'Failed to load QR code'));
+                })
                 .then(data => {
                     document.getElementById('totp-qr').src = 'data:image/png;base64,' + data.qr_base64;
                     document.getElementById('totp-secret').textContent = data.secret;
@@ -3091,7 +3116,7 @@
             try {
                 const response = await fetch('/profile/contact/pending');
                 if (!response.ok) return;
-                const data = await response.json();
+                const data = await parseJSONSafe(response, '');
                 pendingVerifications = data.pending || [];
                 maskedContacts = data.masked || {};
                 attempts = data.attempts || {};
@@ -3420,7 +3445,7 @@
                     headers: { 'Accept': 'application/json' }
                 });
                 if (!response.ok) throw new Error('Activity load error');
-                const payload = await response.json();
+                const payload = await parseJSONSafe(response, tr('failed_load_activity', 'Could not load recent activity.'));
                 const items = payload.data || [];
                 const pag = payload.pagination || {};
                 hasMoreActivity = Boolean(pag.has_next_page);
@@ -3475,16 +3500,16 @@
 
             try {
                 const response = await fetch(`/sessions?page=${page}&limit=${ITEMS_PER_PAGE}`);
-                if (response.status === 401) { window.location.href = '/'; return; }
+                if (response.status === 401) { redirectOnSessionExpiry(); return; }
                 if (!response.ok) throw new Error(tr('failed_load_sessions', 'Failed to load sessions'));
 
-                const result = await response.json();
+                const result = await parseJSONSafe(response, tr('failed_load_sessions', 'Failed to load sessions'));
                 const list = result.data || [];
                 allSessions = page === 1 ? list : allSessions.concat(list);
                 hasMoreSessions = Boolean(result.pagination && result.pagination.has_next_page);
                 renderSessionsGrid();
             } catch (err) {
-                container.innerHTML = `<div class="empty-state"><p>${escapeHtml(tr('failed_load_sessions', 'Failed to load sessions.'))}</p></div>`;
+                container.innerHTML = `<div class="empty-state"><p>${escapeHtml(tr('failed_load_sessions', 'Failed to load sessions.'))}</p><button type="button" class="btn btn-secondary btn-sm" onclick="loadSessions(1)">${escapeHtml(tr('refresh_list', 'Refresh'))}</button></div>`;
             }
         }
 
@@ -3767,7 +3792,7 @@
                 const response = await fetch('/clients');
                 if (response.status === 401) { redirectOnSessionExpiry(); return; }
                 if (!response.ok) throw new Error(tr('failed_load_clients', 'Failed to load clients.'));
-                const result = await response.json();
+                const result = await parseJSONSafe(response, tr('failed_load_clients', 'Failed to load clients.'));
                 const rawList = Array.isArray(result) ? result : (Array.isArray(result && result.data) ? result.data : []);
                 allClients = rawList.map(normalizeClient).filter(Boolean);
                 renderClientsGrid();
@@ -3979,13 +4004,25 @@
             if (!scopeCheckbox.checked) req.checked = false;
         }
 
+        function removeURIRow(btn) {
+            const wrap = document.getElementById('uri-rows-container');
+            const row = btn && btn.parentElement;
+            if (!wrap || !row) return;
+            if (wrap.querySelectorAll('.uri-row').length <= 1) {
+                const inp = row.querySelector('input');
+                if (inp) { inp.value = ''; inp.focus(); }
+                return;
+            }
+            row.remove();
+        }
+
         function addURIRow(value = '') {
             const wrap = document.getElementById('uri-rows-container');
             const row = document.createElement('div');
             row.className = 'uri-row';
             row.innerHTML = `
                 <input type="url" class="console-input uri-input" value="${escapeHtml(value)}" placeholder="https://example.com/callback" required>
-                <button type="button" class="btn btn-ghost btn-sm" onclick="this.parentElement.remove()" aria-label="${escapeHtml(tr('delete', 'Delete'))}">
+                <button type="button" class="btn btn-ghost btn-sm" onclick="removeURIRow(this)" aria-label="${escapeHtml(tr('delete', 'Delete'))}">
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                 </button>
             `;
@@ -4000,7 +4037,8 @@
         }
 
         function collectRedirectURIs() {
-            return Array.from(document.querySelectorAll('#uri-rows-container .uri-input')).map(i => i.value.trim()).filter(Boolean);
+            const list = Array.from(document.querySelectorAll('#uri-rows-container .uri-input')).map(i => i.value.trim()).filter(Boolean);
+            return Array.from(new Set(list));
         }
 
         async function openModal(id = null) {
@@ -4021,7 +4059,7 @@
                 try {
                     const response = await fetch(`/clients/edit?id=${id}`);
                     if (!response.ok) throw new Error(tr('failed_load_client', 'Failed to load client'));
-                    const rawClient = await response.json();
+                    const rawClient = await parseJSONSafe(response, tr('failed_load_client', 'Failed to load client'));
                     const c = normalizeClient(rawClient) || {};
                     _editingClientType = c.type || '';
                     document.getElementById('name').value = c.name || '';
@@ -4094,7 +4132,7 @@
             try {
                 const url = id ? `/clients/edit?id=${id}` : '/clients';
                 const response = await fetch(url, { method: 'POST', body: params });
-                const data = await response.json();
+                const data = await parseJSONSafe(response, tr('failed_save_client', 'Failed to save client'));
                 if (!data.success) throw new Error(data.error || tr('failed_save_client', 'Failed to save client'));
                 closeModal();
                 loadClients();
@@ -4322,7 +4360,7 @@
                 const formData = new FormData();
                 formData.append('icon', blob, 'avatar.jpg');
                 const response = await fetch('/profile/icon', { method: 'POST', body: formData });
-                const data = await response.json();
+                const data = await parseJSONSafe(response, tr('update_failed', 'Update failed'));
                 if (!data.success) throw new Error(data.error || tr('update_failed', 'Update failed'));
                 closeCropModal();
                 window.GilosUI.toast(tr('avatar_updated', 'Profile photo updated'), 'success');
@@ -4339,7 +4377,7 @@
             try {
                 const response = await fetch('/profile/delete/status');
                 if (!response.ok) return;
-                const data = await response.json();
+                const data = await parseJSONSafe(response, '');
                 renderGlobalDeletionBanner(data);
                 const container = document.getElementById('deletion-status-container');
                 if (!container) return;
@@ -4528,9 +4566,33 @@
                 }
             });
 
+            const accountDd = document.getElementById('account-dropdown');
+            if (accountDd) {
+                accountDd.addEventListener('keydown', (e) => {
+                    if (!accountDd.classList.contains('show')) return;
+                    const items = Array.from(accountDd.querySelectorAll('[role="menuitem"]'));
+                    if (!items.length) return;
+                    const idx = items.indexOf(document.activeElement);
+                    if (e.key === 'ArrowDown') {
+                        e.preventDefault();
+                        items[(idx + 1 + items.length) % items.length].focus();
+                    } else if (e.key === 'ArrowUp') {
+                        e.preventDefault();
+                        items[(idx - 1 + items.length) % items.length].focus();
+                    } else if (e.key === 'Home') {
+                        e.preventDefault();
+                        items[0].focus();
+                    } else if (e.key === 'End') {
+                        e.preventDefault();
+                        items[items.length - 1].focus();
+                    }
+                });
+            }
+
             document.addEventListener('keydown', (e) => {
                 if (e.key === 'Escape') {
-                    closeDropdown();
+                    const dd = document.getElementById('account-dropdown');
+                    if (dd && dd.classList.contains('show')) closeDropdown(true);
                     return;
                 }
                 if (e.key === '/' && !e.ctrlKey && !e.metaKey && !e.altKey) {

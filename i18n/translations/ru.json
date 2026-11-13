@@ -533,5 +533,16 @@
   "testing_endpoint": "Выполняется...",
   "test_success": "Успешно",
   "test_error": "Ошибка — повторить",
-  "select_client_first": "Сначала выберите OAuth-клиент"
+  "select_client_first": "Сначала выберите OAuth-клиент",
+  "skip_to_content": "Перейти к основному содержимому",
+  "open_auth_url_cta": "Открыть URL авторизации ->",
+  "select_client_placeholder": "Сначала выберите клиент",
+  "token_step_wait": "Сначала получите токен на шаге 2",
+  "refresh_step_wait": "Сначала получите refresh-токен на шаге 2",
+  "oauth_error_returned": "Ошибка авторизации",
+  "state_verified": "Параметр state совпал",
+  "state_mismatch_warn": "Параметр state не совпадает с текущей сессией",
+  "ready_to_test_pkce": "Готово к проверке (PKCE verifier прикреплён)",
+  "ready_to_test_short": "Готово к проверке!",
+  "no_code_in_url": "Код авторизации не найден в URL"
 }

@@ -1107,6 +1107,26 @@ body {
     color: var(--text-tertiary);
 }
 
+.skip-link {
+    position: fixed;
+    left: 16px;
+    top: -64px;
+    z-index: 200;
+    padding: 10px 16px;
+    border-radius: var(--radius-sm);
+    background: var(--accent);
+    color: var(--accent-contrast);
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-decoration: none;
+    box-shadow: var(--card-shadow-hover);
+    transition: top 0.14s ease;
+}
+
+.skip-link:focus {
+    top: 16px;
+}
+
 @media (prefers-reduced-motion: reduce) {
     *,
     *::before,

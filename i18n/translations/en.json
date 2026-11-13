@@ -533,5 +533,16 @@
   "testing_endpoint": "Testing...",
   "test_success": "Success",
   "test_error": "Error - Try again",
-  "select_client_first": "Please select a client first"
+  "select_client_first": "Please select a client first",
+  "skip_to_content": "Skip to main content",
+  "open_auth_url_cta": "Open Authorization URL ->",
+  "select_client_placeholder": "Select a client first",
+  "token_step_wait": "Get a token from Step 2 first",
+  "refresh_step_wait": "Get a refresh token from Step 2 first",
+  "oauth_error_returned": "Authorization error",
+  "state_verified": "State matched",
+  "state_mismatch_warn": "State mismatch (differs from this session)",
+  "ready_to_test_pkce": "Ready to test (PKCE verifier attached)!",
+  "ready_to_test_short": "Ready to test!",
+  "no_code_in_url": "No authorization code found in URL"
 }

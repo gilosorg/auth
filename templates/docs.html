@@ -149,6 +149,7 @@
     </style>
 </head>
 <body>
+    <a href="#main-content" class="skip-link">{{ index .T "skip_to_content" }}</a>
     <div class="docs-mobile-bar">
         <button type="button" class="mobile-menu-btn" id="mobileMenuBtn" onclick="toggleMobileSidebar()" aria-label="{{ index .T "toggle_menu" }}" aria-expanded="false">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
@@ -232,7 +233,7 @@
         </aside>
 
         <!-- Main Content -->
-        <main class="docs-main">
+        <main id="main-content" class="docs-main" tabindex="-1">
             <div class="docs-content">
                 
                 <!-- Introduction -->
@@ -395,7 +396,7 @@
                         <h4>🚀 Try It Live</h4>
                         <p style="margin-bottom: 16px; color: var(--doc-text-secondary);">Select a client above, then click the button to start an OAuth 2.1 authorization flow (a fresh <code>state</code> and PKCE <code>S256</code> challenge are generated automatically):</p>
                         <button type="button" id="openAuthBtn" class="btn btn-primary" onclick="openAuthUrl()" disabled>
-                            Select a client first
+                            {{ index .T "select_client_placeholder" }}
                         </button>
                     </div>
                     {{ end }}{{ end }}
@@ -411,9 +412,10 @@
                             <label for="redirectUrlInput">Redirect URL</label>
                             <input type="text" id="redirectUrlInput" placeholder="https://yourapp.com/callback?code=abc123...&state=..." oninput="parseRedirectUrl()">
                         </div>
-                        <div id="extractedCodeInfo" class="hidden" style="margin-top: 12px; padding: 12px; background: var(--method-get-bg); border-radius: 8px;">
-                            <span style="color: var(--method-get); font-weight: 600;">✓ Code extracted:</span>
-                            <code id="extractedCode" style="margin-left: 8px;"></code>
+                        <div id="extractedCodeInfo" class="hidden" style="margin-top: 12px; padding: 12px; background: var(--method-get-bg); border-radius: 8px; display: flex; align-items: center; flex-wrap: wrap; gap: 8px;">
+                            <span id="extractedCodeLabel" style="color: var(--method-get); font-weight: 600;">✓ Code extracted:</span>
+                            <code id="extractedCode"></code>
+                            <span id="extractedStateBadge" class="http-status-pill hidden"></span>
                         </div>
                     </div>
                     {{ end }}{{ end }}
@@ -512,7 +514,7 @@ Authorization: Bearer <span class="var-access-token">YOUR_ACCESS_TOKEN</span></c
                         <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
                             <div>
                                 <h4 style="margin: 0;">👤 Test UserInfo Endpoint</h4>
-                                <p id="userInfoTestStatus" style="margin: 4px 0 0; font-size: 0.85rem; color: var(--doc-text-muted);">Get a token from Step 2 first</p>
+                                <p id="userInfoTestStatus" style="margin: 4px 0 0; font-size: 0.85rem; color: var(--doc-text-muted);">{{ index .T "token_step_wait" }}</p>
                             </div>
                             <button type="button" id="testUserInfoBtn" class="btn btn-primary" onclick="testUserInfoEndpoint()" disabled>
                                 Test /api/userinfo
@@ -578,7 +580,7 @@ Authorization: Bearer <span class="var-access-token">YOUR_ACCESS_TOKEN</span></c
                         <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
                             <div>
                                 <h4 style="margin: 0;">🔄 Test Refresh Token</h4>
-                                <p id="refreshTestStatus" style="margin: 4px 0 0; font-size: 0.85rem; color: var(--doc-text-muted);">Get a refresh token from Step 2 first</p>
+                                <p id="refreshTestStatus" style="margin: 4px 0 0; font-size: 0.85rem; color: var(--doc-text-muted);">{{ index .T "refresh_step_wait" }}</p>
                             </div>
                             <button type="button" id="testRefreshBtn" class="btn btn-primary" onclick="testRefreshEndpoint()" disabled>
                                 Test Refresh
@@ -1005,7 +1007,17 @@ func CallbackHandler(onSuccess AuthCallback) http.HandlerFunc {
             testingEndpoint: {{ index .T "testing_endpoint" }},
             testSuccess: {{ index .T "test_success" }},
             testError: {{ index .T "test_error" }},
-            selectClientFirst: {{ index .T "select_client_first" }}
+            selectClientFirst: {{ index .T "select_client_first" }},
+            openAuthUrlCta: {{ index .T "open_auth_url_cta" }},
+            selectClientPlaceholder: {{ index .T "select_client_placeholder" }},
+            tokenStepWait: {{ index .T "token_step_wait" }},
+            refreshStepWait: {{ index .T "refresh_step_wait" }},
+            oauthErrorReturned: {{ index .T "oauth_error_returned" }},
+            stateVerified: {{ index .T "state_verified" }},
+            stateMismatchWarn: {{ index .T "state_mismatch_warn" }},
+            readyToTestPkce: {{ index .T "ready_to_test_pkce" }},
+            readyToTestShort: {{ index .T "ready_to_test_short" }},
+            noCodeInUrl: {{ index .T "no_code_in_url" }}
         };
 
         const DOCS_THEME_ICONS = {
@@ -1043,22 +1055,29 @@ func CallbackHandler(onSuccess AuthCallback) http.HandlerFunc {
             if (btn) btn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
         }
 
-        function closeMobileSidebar() {
+        function closeMobileSidebar(restoreFocus = false) {
             const sidebar = document.getElementById('docsSidebar');
             const backdrop = document.getElementById('sidebarBackdrop');
             const btn = document.getElementById('mobileMenuBtn');
+            const wasOpen = sidebar && sidebar.classList.contains('open');
             if (sidebar) sidebar.classList.remove('open');
             if (backdrop) backdrop.classList.remove('open');
-            if (btn) btn.setAttribute('aria-expanded', 'false');
+            if (btn) {
+                btn.setAttribute('aria-expanded', 'false');
+                if (restoreFocus && wasOpen && typeof btn.focus === 'function') btn.focus();
+            }
         }
 
         document.querySelectorAll('.sidebar-nav a').forEach(link => {
             link.addEventListener('click', () => {
-                if (window.innerWidth <= 900) closeMobileSidebar();
+                if (window.innerWidth <= 900) closeMobileSidebar(false);
             });
         });
         document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') closeMobileSidebar();
+            if (e.key === 'Escape') {
+                const sidebar = document.getElementById('docsSidebar');
+                if (sidebar && sidebar.classList.contains('open')) closeMobileSidebar(true);
+            }
         });
 
         // Current client context, PKCE state, and tokens
@@ -1092,6 +1111,43 @@ func CallbackHandler(onSuccess AuthCallback) http.HandlerFunc {
             }
         } catch (e) {}
 
+        function resetInteractiveTesterState() {
+            extractedCode = null;
+            accessToken = null;
+            refreshToken = null;
+            const redirInp = document.getElementById('redirectUrlInput');
+            if (redirInp) redirInp.value = '';
+            const infoBox = document.getElementById('extractedCodeInfo');
+            if (infoBox) infoBox.classList.add('hidden');
+            const codeEl = document.getElementById('extractedCode');
+            if (codeEl) codeEl.textContent = '';
+            const stateBadge = document.getElementById('extractedStateBadge');
+            if (stateBadge) { stateBadge.classList.add('hidden'); stateBadge.textContent = ''; }
+            ['tokenResponse', 'userInfoResponse', 'refreshResponse'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.classList.add('hidden');
+            });
+            const jwtBox = document.getElementById('tokenJwtInspector');
+            if (jwtBox) { jwtBox.classList.add('hidden'); jwtBox.innerHTML = ''; }
+            ['testTokenBtn', 'testUserInfoBtn', 'testRefreshBtn'].forEach(id => {
+                const b = document.getElementById(id);
+                if (b) b.disabled = true;
+            });
+            const tokenStatus = document.getElementById('tokenTestStatus');
+            if (tokenStatus) {
+                if (!tokenStatus.dataset.defaultText) tokenStatus.dataset.defaultText = tokenStatus.textContent;
+                tokenStatus.textContent = tokenStatus.dataset.defaultText;
+            }
+            const uStatus = document.getElementById('userInfoTestStatus');
+            if (uStatus) uStatus.textContent = DOCS_I18N.tokenStepWait || 'Get a token from Step 2 first';
+            const rStatus = document.getElementById('refreshTestStatus');
+            if (rStatus) rStatus.textContent = DOCS_I18N.refreshStepWait || 'Get a refresh token from Step 2 first';
+            document.querySelectorAll('.var-auth-code').forEach(el => {
+                el.textContent = 'AUTHORIZATION_CODE';
+                el.classList.remove('highlight');
+            });
+        }
+
         // Update all dynamic examples when client is selected
         function updateClientContext() {
             const select = document.getElementById('clientSelect');
@@ -1102,12 +1158,14 @@ func CallbackHandler(onSuccess AuthCallback) http.HandlerFunc {
             const secretInputRow = document.getElementById('infoSecretInputRow');
             const publicNoteRow = document.getElementById('infoPublicNoteRow');
 
+            resetInteractiveTesterState();
+
             if (!option.value) {
                 currentClient = null;
                 if (clientInfo) clientInfo.classList.add('hidden');
                 if (authBtn) {
                     authBtn.disabled = true;
-                    authBtn.textContent = 'Select a client first';
+                    authBtn.textContent = DOCS_I18N.selectClientPlaceholder || 'Select a client first';
                 }
                 resetToPlaceholders();
                 return;
@@ -1145,7 +1203,7 @@ func CallbackHandler(onSuccess AuthCallback) http.HandlerFunc {
             // Update auth button
             if (authBtn) {
                 authBtn.disabled = false;
-                authBtn.textContent = 'Open Authorization URL →';
+                authBtn.textContent = DOCS_I18N.openAuthUrlCta || 'Open Authorization URL ->';
             }
 
             updateAllExamples();
@@ -1227,7 +1285,9 @@ func CallbackHandler(onSuccess AuthCallback) http.HandlerFunc {
         function parseRedirectUrl() {
             const input = document.getElementById('redirectUrlInput');
             const infoBox = document.getElementById('extractedCodeInfo');
+            const codeLabel = document.getElementById('extractedCodeLabel');
             const codeEl = document.getElementById('extractedCode');
+            const stateBadge = document.getElementById('extractedStateBadge');
             const testBtn = document.getElementById('testTokenBtn');
             const statusEl = document.getElementById('tokenTestStatus');
 
@@ -1235,12 +1295,52 @@ func CallbackHandler(onSuccess AuthCallback) http.HandlerFunc {
 
             try {
                 const url = new URL(input.value.trim());
+                const errCode = url.searchParams.get('error');
+                const errDesc = url.searchParams.get('error_description');
                 const code = url.searchParams.get('code');
+                const returnedState = url.searchParams.get('state');
+
+                if (errCode) {
+                    extractedCode = null;
+                    if (infoBox) {
+                        infoBox.classList.remove('hidden');
+                        infoBox.style.background = 'var(--red-100, rgba(239, 68, 68, 0.14))';
+                    }
+                    if (codeLabel) {
+                        codeLabel.style.color = 'var(--red-600, #dc2626)';
+                        codeLabel.textContent = (DOCS_I18N.oauthErrorReturned || 'Authorization error') + ':';
+                    }
+                    if (codeEl) codeEl.textContent = errDesc ? `${errCode} (${errDesc})` : errCode;
+                    if (stateBadge) { stateBadge.classList.add('hidden'); stateBadge.textContent = ''; }
+                    if (testBtn) testBtn.disabled = true;
+                    if (statusEl) statusEl.textContent = errDesc || errCode;
+                    return;
+                }
 
                 if (code) {
                     extractedCode = code;
-                    if (infoBox) infoBox.classList.remove('hidden');
+                    if (infoBox) {
+                        infoBox.classList.remove('hidden');
+                        infoBox.style.background = 'var(--method-get-bg)';
+                    }
+                    if (codeLabel) {
+                        codeLabel.style.color = 'var(--method-get)';
+                        codeLabel.textContent = '✓ Code extracted:';
+                    }
                     if (codeEl) codeEl.textContent = code;
+
+                    if (stateBadge) {
+                        if (oauthState && returnedState) {
+                            const matched = returnedState === oauthState;
+                            stateBadge.textContent = matched
+                                ? (DOCS_I18N.stateVerified || 'State matched')
+                                : (DOCS_I18N.stateMismatchWarn || 'State mismatch (differs from this session)');
+                            stateBadge.className = 'http-status-pill ' + (matched ? 'http-status-ok' : 'http-status-err');
+                        } else {
+                            stateBadge.classList.add('hidden');
+                            stateBadge.textContent = '';
+                        }
+                    }
 
                     document.querySelectorAll('.var-auth-code').forEach(el => {
                         el.textContent = code;
@@ -1249,17 +1349,23 @@ func CallbackHandler(onSuccess AuthCallback) http.HandlerFunc {
 
                     if (testBtn && currentClient) {
                         testBtn.disabled = false;
-                        if (statusEl) statusEl.textContent = pkceVerifier ? 'Ready to test (PKCE verifier attached)!' : 'Ready to test!';
+                        if (statusEl) {
+                            statusEl.textContent = pkceVerifier
+                                ? (DOCS_I18N.readyToTestPkce || 'Ready to test (PKCE verifier attached)!')
+                                : (DOCS_I18N.readyToTestShort || 'Ready to test!');
+                        }
                     }
                 } else {
                     extractedCode = null;
                     if (infoBox) infoBox.classList.add('hidden');
+                    if (stateBadge) { stateBadge.classList.add('hidden'); stateBadge.textContent = ''; }
                     if (testBtn) testBtn.disabled = true;
-                    if (statusEl) statusEl.textContent = 'No code found in URL';
+                    if (statusEl) statusEl.textContent = DOCS_I18N.noCodeInUrl || 'No authorization code found in URL';
                 }
             } catch (e) {
                 extractedCode = null;
                 if (infoBox) infoBox.classList.add('hidden');
+                if (stateBadge) { stateBadge.classList.add('hidden'); stateBadge.textContent = ''; }
                 if (testBtn) testBtn.disabled = true;
                 document.querySelectorAll('.var-auth-code').forEach(el => {
                     el.textContent = 'AUTHORIZATION_CODE';
@@ -1359,6 +1465,7 @@ func CallbackHandler(onSuccess AuthCallback) http.HandlerFunc {
             const responseBox = document.getElementById('tokenResponse');
             const responseCode = document.getElementById('tokenResponseCode');
 
+            const baseLabel = btn.dataset.baseLabel || (btn.dataset.baseLabel = btn.textContent.trim());
             btn.disabled = true;
             btn.textContent = DOCS_I18N.testingEndpoint || 'Testing...';
 
@@ -1436,7 +1543,7 @@ func CallbackHandler(onSuccess AuthCallback) http.HandlerFunc {
 
             setTimeout(() => {
                 btn.disabled = false;
-                btn.textContent = 'Test /o/token';
+                btn.textContent = baseLabel;
                 btn.style.background = '';
             }, 3000);
         }
@@ -1449,6 +1556,7 @@ func CallbackHandler(onSuccess AuthCallback) http.HandlerFunc {
             const responseBox = document.getElementById('userInfoResponse');
             const responseCode = document.getElementById('userInfoResponseCode');
 
+            const baseLabel = btn.dataset.baseLabel || (btn.dataset.baseLabel = btn.textContent.trim());
             btn.disabled = true;
             btn.textContent = DOCS_I18N.testingEndpoint || 'Testing...';
 
@@ -1480,7 +1588,7 @@ func CallbackHandler(onSuccess AuthCallback) http.HandlerFunc {
 
             setTimeout(() => {
                 btn.disabled = false;
-                btn.textContent = 'Test /api/userinfo';
+                btn.textContent = baseLabel;
                 btn.style.background = '';
             }, 3000);
         }
@@ -1493,6 +1601,7 @@ func CallbackHandler(onSuccess AuthCallback) http.HandlerFunc {
             const responseBox = document.getElementById('refreshResponse');
             const responseCode = document.getElementById('refreshResponseCode');
 
+            const baseLabel = btn.dataset.baseLabel || (btn.dataset.baseLabel = btn.textContent.trim());
             btn.disabled = true;
             btn.textContent = DOCS_I18N.testingEndpoint || 'Testing...';
 
@@ -1546,7 +1655,7 @@ func CallbackHandler(onSuccess AuthCallback) http.HandlerFunc {
 
             setTimeout(() => {
                 btn.disabled = false;
-                btn.textContent = 'Test Refresh';
+                btn.textContent = baseLabel;
                 btn.style.background = '';
             }, 3000);
         }

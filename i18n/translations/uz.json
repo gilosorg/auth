@@ -533,5 +533,16 @@
   "testing_endpoint": "Tekshirilmoqda...",
   "test_success": "Muvaffaqiyatli",
   "test_error": "Xato — qayta urinish",
-  "select_client_first": "Avval OAuth mijozini tanlang"
+  "select_client_first": "Avval OAuth mijozini tanlang",
+  "skip_to_content": "Asosiy tarkibga o'tish",
+  "open_auth_url_cta": "Avtorizatsiya havolasini ochish ->",
+  "select_client_placeholder": "Avval mijozni tanlang",
+  "token_step_wait": "Avval 2-bosqichda token oling",
+  "refresh_step_wait": "Avval 2-bosqichda yangilash tokenini oling",
+  "oauth_error_returned": "Avtorizatsiya xatosi",
+  "state_verified": "State parametri mos keldi",
+  "state_mismatch_warn": "State parametri joriy seansnikiga mos kelmadi",
+  "ready_to_test_pkce": "Sinashga tayyor (PKCE verifier biriktirildi)!",
+  "ready_to_test_short": "Sinashga tayyor!",
+  "no_code_in_url": "Havolada avtorizatsiya kodi topilmadi"
 }

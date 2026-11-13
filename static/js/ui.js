@@ -349,8 +349,25 @@
         return update;
     }
 
+    function getFocusableElements(container) {
+        if (!container || typeof container.querySelectorAll !== 'function') return [];
+        var candidates = container.querySelectorAll(
+            'button:not([disabled]), [href], input:not([type="hidden"]):not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        );
+        return Array.prototype.filter.call(candidates, function (el) {
+            if (!el) return false;
+            if (el.hidden) return false;
+            if (typeof window.getComputedStyle === 'function' && el.style) {
+                if (el.style.display === 'none' || el.style.visibility === 'hidden') return false;
+            }
+            return el.offsetParent === undefined || el.offsetParent !== null || el === document.activeElement;
+        });
+    }
+
     function bindModalA11y(modalEl, closeFn, options) {
         if (!modalEl || typeof closeFn !== 'function') return;
+        if (modalEl.dataset && modalEl.dataset.a11yBound === '1') return;
+        if (modalEl.dataset) modalEl.dataset.a11yBound = '1';
         var opts = options || {};
         if (opts.closeOnBackdrop !== false) {
             modalEl.addEventListener('click', function (e) {
@@ -359,16 +376,37 @@
                 }
             });
         }
-        if (opts.closeOnEscape !== false) {
-            document.addEventListener('keydown', function (e) {
-                if (e.key !== 'Escape' || !modalEl.classList.contains('is-open')) return;
-                if (document.querySelector('.swal2-container')) return;
-                var openModals = document.querySelectorAll('.modal.is-open');
-                if (openModals.length && openModals[openModals.length - 1] !== modalEl) return;
+        document.addEventListener('keydown', function (e) {
+            if (!modalEl.classList.contains('is-open')) return;
+            if (document.querySelector('.swal2-container')) return;
+            var openModals = document.querySelectorAll('.modal.is-open');
+            if (openModals.length && openModals[openModals.length - 1] !== modalEl) return;
+
+            if (e.key === 'Escape' && opts.closeOnEscape !== false) {
                 e.preventDefault();
                 closeFn();
-            });
-        }
+                return;
+            }
+
+            if (e.key === 'Tab') {
+                var focusables = getFocusableElements(modalEl);
+                if (!focusables.length) return;
+                var first = focusables[0];
+                var last = focusables[focusables.length - 1];
+                var active = document.activeElement;
+                if (e.shiftKey) {
+                    if (!modalEl.contains || !modalEl.contains(active) || active === first) {
+                        e.preventDefault();
+                        if (typeof last.focus === 'function') last.focus();
+                    }
+                } else {
+                    if (!modalEl.contains || !modalEl.contains(active) || active === last) {
+                        e.preventDefault();
+                        if (typeof first.focus === 'function') first.focus();
+                    }
+                }
+            }
+        });
     }
 
     function attachCapsLockWarning(inputEl, badgeEl, labelText) {

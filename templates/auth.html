@@ -1748,13 +1748,27 @@
             }
         }
 
+        async function parseAuthJSON(response, fallbackMsg) {
+            const raw = await response.text();
+            if (!raw) {
+                if (!response.ok) throw new Error(fallbackMsg || `HTTP ${response.status}`);
+                return {};
+            }
+            try {
+                return JSON.parse(raw);
+            } catch (_) {
+                if (!response.ok) throw new Error(fallbackMsg || `HTTP ${response.status}`);
+                throw new Error(fallbackMsg || (T.network_error || 'Unexpected server response.'));
+            }
+        }
+
         async function loadAuthState() {
             try {
                 const response = await fetch('/auth/state', {
                     method: 'GET',
                     headers: { 'Accept': 'application/json' }
                 });
-                const data = await response.json();
+                const data = await parseAuthJSON(response, `HTTP ${response.status}`);
                 if (!response.ok) {
                     if (response.status === 429 && data.is_blocked) {
                         state.isBlocked = true;
@@ -1812,7 +1826,7 @@
                     headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
                     body: JSON.stringify({ step: step })
                 });
-                const data = await response.json();
+                const data = await parseAuthJSON(response, 'Failed to navigate');
                 if (data.success) {
                     state.currentStep = data.step;
                     state.userData = {
@@ -1858,7 +1872,7 @@
                     method: 'GET',
                     headers: { 'Accept': 'application/json' }
                 });
-                const data = await response.json();
+                const data = await parseAuthJSON(response, T.network_error || 'Unable to verify Gilos ID. Please try again.');
                 if (!response.ok) {
                     if (response.status === 429 && data.is_blocked) {
                         state.isBlocked = true;
@@ -1901,7 +1915,7 @@
                         password: document.getElementById('password').value
                     })
                 });
-                const data = await response.json();
+                const data = await parseAuthJSON(response, T.network_error || 'Unable to proceed. Please try again.');
                 if (data.success) {
                     if (data.redirect) {
                         stepChanged = true;
@@ -1959,7 +1973,7 @@
                         contact: contactType
                     })
                 });
-                const data = await response.json();
+                const data = await parseAuthJSON(response, T.network_error || 'Unable to send code. Please try again.');
                 if (data.success) {
                     state.currentStep = data.step;
                     state.resends = data.resends || 0;
@@ -2011,7 +2025,7 @@
                         otp: code
                     })
                 });
-                const data = await response.json();
+                const data = await parseAuthJSON(response, T.network_error || 'Unable to verify code. Please try again.');
                 if (data.success) {
                     if (data.redirect) {
                         stepChanged = true;
@@ -2068,7 +2082,7 @@
                         contact: contact
                     })
                 });
-                const data = await response.json();
+                const data = await parseAuthJSON(response, T.network_error || 'Unable to resend code. Please try again.');
                 if (response.ok) {
                     state.resends = typeof data.resends === 'number' ? data.resends : (state.resends + 1);
                     state.timeRemaining = data.time_remaining || 300;
@@ -2121,7 +2135,7 @@
                         last_name: lastName
                     })
                 });
-                const data = await response.json();
+                const data = await parseAuthJSON(response, 'Failed to save details');
                 if (!response.ok || !data.success) {
                     throw new Error(data.error || 'Failed to save details');
                 }
@@ -2190,7 +2204,7 @@
                     headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
                     body: JSON.stringify(formData)
                 });
-                const data = await response.json();
+                const data = await parseAuthJSON(response, 'Invalid contact');
                 if (!response.ok || !data.success) {
                     throw new Error(data.error || 'Invalid contact');
                 }
@@ -2242,7 +2256,7 @@
                     headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
                     body: JSON.stringify(formData)
                 });
-                const data = await response.json();
+                const data = await parseAuthJSON(response, 'Failed to register');
                 if (!response.ok || !data.success) {
                     throw new Error(data.error || 'Failed to register');
                 }
