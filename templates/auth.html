@@ -125,6 +125,9 @@
     }
 
     .method-option {
+    font-family: inherit;
+    background: transparent;
+    border: none;
         flex: 1;
         text-align: center;
         padding: 10px 16px;
@@ -184,19 +187,19 @@
     }
 
     .form-container:not(.hidden) .form-element:nth-child(1) {
-        transition-delay: 0.3s;
+        transition-delay: 0.03s;
     }
 
     .form-container:not(.hidden) .form-element:nth-child(2) {
-        transition-delay: 0.35s;
+        transition-delay: 0.06s;
     }
 
     .form-container:not(.hidden) .form-element:nth-child(3) {
-        transition-delay: 0.4s;
+        transition-delay: 0.09s;
     }
 
     .form-container:not(.hidden) .form-element:nth-child(4) {
-        transition-delay: 0.45s;
+        transition-delay: 0.12s;
     }
 
     .input-wrapper {
@@ -373,15 +376,15 @@
     }
 
     /* Entrance animation scoped to auth forms only */
-    .auth-container button:not(.trailing-button):not(.password-toggle) {
+    .auth-container button:not(.trailing-button):not(.password-toggle):not(.method-option) {
         opacity: 0;
         transform: translateY(10px);
     }
 
-    .button-container:not(:empty) button:not(.trailing-button):not(.password-toggle) {
+    .button-container:not(:empty) button:not(.trailing-button):not(.password-toggle):not(.method-option) {
         opacity: 1;
         transform: translateY(0);
-        transition-delay: 0.45s;
+        transition-delay: 0.08s;
     }
 
     button.bg-gray {
@@ -466,7 +469,7 @@
 
     .message-container:not(:empty) {
         opacity: 1;
-        transition-delay: 0.5s;
+        transition-delay: 0.02s;
     }
 
     .message-container.success {
@@ -595,9 +598,9 @@
                     <form id="gilos-form" class="form-container">
                         <div class="form-element input-wrapper">
                             <input type="text" id="gilos-id" name="username" required autocomplete="username" placeholder="{{ index .T "enter_gilos_id" }}"
-                                oninput="cleanGilosID(this)" onchange="cleanGilosID(this)" aria-describedby="gilos-id-error">
+                                oninput="cleanGilosID(this)" onchange="cleanGilosID(this)" aria-describedby="message">
                             <button id="continue-button" type="button" onclick="checkGilosID()" class="trailing-button"
-                                aria-label="Continue">
+                                aria-label="{{ index .T "continue" }}">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
                                     <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="m9 5l6 7l-6 7" />
                                 </svg>
@@ -610,7 +613,7 @@
                             <p id="password-info" class="verification-info"></p>
                             <div class="password-input-wrap">
                                 <input type="password" id="password" name="password" required autocomplete="current-password" placeholder="{{ index .T "enter_password" }}"
-                                    oninput="validateForm()" onchange="validateForm()" aria-describedby="password-error">
+                                    oninput="validateForm()" onchange="validateForm()" aria-describedby="message">
                                 <button type="button" class="password-toggle" onclick="togglePasswordField('password', this)" aria-label="{{ index .T "show_password" }}"></button>
                             </div>
                             <a href="#" class="forgot-password"
@@ -667,11 +670,11 @@
                         <div class="form-element">
                             <p id="register-info" class="verification-info"></p>
                             <input type="text" id="first-name" name="first_name" required placeholder="{{ index .T "first_name" }}"
-                                oninput="validateForm()" onchange="validateForm()" aria-describedby="first-name-error">
+                                oninput="validateForm()" onchange="validateForm()" aria-describedby="message">
                         </div>
                         <div class="form-element">
                             <input type="text" id="last-name" name="last_name" placeholder="{{ index .T "last_name" }}"
-                                oninput="validateForm()" onchange="validateForm()" aria-describedby="last-name-error">
+                                oninput="validateForm()" onchange="validateForm()" aria-describedby="message">
                         </div>
                     </form>
                     <form id="register-contact-form" autocomplete="off" class="form-container hidden">
@@ -680,19 +683,19 @@
                         <input type="hidden" name="last_name" id="register-contact-last-name">
                         <div class="form-element">
                             <p class="verification-info">{{ index .T "verify_human" }}</p>
-                            <div class="method-selector" id="register-method-selector">
-                                <div class="method-option active" data-method="email" onclick="switchMethod('register', 'email')">
+                            <div class="method-selector" id="register-method-selector" role="tablist">
+                                <button type="button" role="tab" aria-selected="true" class="method-option active" data-method="email" onclick="switchMethod('register', 'email')">
                                     <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
                                         <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/>
                                     </svg>
                                     {{ index .T "email" }}
-                                </div>
-                                <div class="method-option" data-method="phone" onclick="switchMethod('register', 'phone')">
+                                </button>
+                                <button type="button" role="tab" aria-selected="false" class="method-option" data-method="phone" onclick="switchMethod('register', 'phone')">
                                     <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
                                         <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l2.27-2.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
                                     </svg>
                                     {{ index .T "phone" }}
-                                </div>
+                                </button>
                             </div>
                             
                             <div id="register-email-wrapper">
@@ -717,7 +720,7 @@
                             <div class="password-input-wrap">
                                 <input type="password" id="register-password" name="password" required autocomplete="new-password"
                                     placeholder="{{ index .T "password" }}" oninput="validateForm(); validatePasswordMatch()" onchange="validateForm(); validatePasswordMatch()"
-                                    aria-describedby="register-password-error">
+                                    aria-describedby="message">
                                 <button type="button" class="password-toggle" onclick="togglePasswordField('register-password', this)" aria-label="{{ index .T "show_password" }}"></button>
                             </div>
                         </div>
@@ -725,7 +728,7 @@
                             <div class="password-input-wrap">
                                 <input type="password" id="confirm-password" required autocomplete="new-password" placeholder="{{ index .T "confirm_password" }}"
                                     oninput="validateForm(); validatePasswordMatch()" onchange="validateForm(); validatePasswordMatch()"
-                                    aria-describedby="confirm-password-error">
+                                    aria-describedby="message">
                                 <button type="button" class="password-toggle" onclick="togglePasswordField('confirm-password', this)" aria-label="{{ index .T "show_password" }}"></button>
                             </div>
                         </div>
@@ -734,29 +737,31 @@
                         <input type="hidden" name="username" id="forgot-password-username">
                         <div class="form-element">
                             <p id="recovery-info" class="recovery-info"></p>
-                            <div class="method-selector" id="recovery-method-selector">
-                                <div class="method-option active" data-method="email" onclick="switchMethod('recovery', 'email')">
-                                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
-                                        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/>
-                                    </svg>
-                                    {{ index .T "email" }}
+                            <div id="recovery-methods-wrap">
+                                <div class="method-selector" id="recovery-method-selector" role="tablist">
+                                    <button type="button" role="tab" aria-selected="true" id="recovery-email-option" class="method-option active" data-method="email" onclick="switchMethod('recovery', 'email')">
+                                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                                            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/>
+                                        </svg>
+                                        {{ index .T "email" }}
+                                    </button>
+                                    <button type="button" role="tab" aria-selected="false" id="recovery-phone-option" class="method-option" data-method="phone" onclick="switchMethod('recovery', 'phone')">
+                                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                                            <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l2.27-2.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+                                        </svg>
+                                        {{ index .T "phone" }}
+                                    </button>
                                 </div>
-                                <div class="method-option" data-method="phone" onclick="switchMethod('recovery', 'phone')">
-                                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
-                                        <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l2.27-2.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
-                                    </svg>
-                                    {{ index .T "phone" }}
+
+                                <div id="recovery-email-wrapper">
+                                    <input type="email" id="recovery-email" name="recovery_contact"
+                                        placeholder="{{ index .T "email" }}" oninput="validateForm()" onchange="validateForm()">
                                 </div>
-                            </div>
 
-                            <div id="recovery-email-wrapper">
-                                <input type="email" id="recovery-email" name="recovery_contact"
-                                    placeholder="{{ index .T "email" }}" oninput="validateForm()" onchange="validateForm()">
-                            </div>
-
-                            <div id="recovery-phone-wrapper" class="hidden" style="width: 100%;">
-                                <input type="tel" id="recovery-phone" name="recovery_contact"
-                                    placeholder="{{ index .T "phone" }}" oninput="validateForm()" onchange="validateForm()">
+                                <div id="recovery-phone-wrapper" class="hidden" style="width: 100%;">
+                                    <input type="tel" id="recovery-phone" name="recovery_contact"
+                                        placeholder="{{ index .T "phone" }}" oninput="validateForm()" onchange="validateForm()">
+                                </div>
                             </div>
 
                             <input type="hidden" id="recovery-input" name="recovery_contact_value">
@@ -769,7 +774,7 @@
                             <div class="password-input-wrap">
                                 <input type="password" id="reset-password" name="password" required autocomplete="new-password"
                                     placeholder="{{ index .T "new_password" }}" oninput="validateForm(); validateResetPasswordMatch()" onchange="validateForm(); validateResetPasswordMatch()"
-                                    aria-describedby="reset-password-error">
+                                    aria-describedby="message">
                                 <button type="button" class="password-toggle" onclick="togglePasswordField('reset-password', this)" aria-label="{{ index .T "show_password" }}"></button>
                             </div>
                         </div>
@@ -778,7 +783,7 @@
                                 <input type="password" id="reset-confirm-password" required autocomplete="new-password"
                                     placeholder="{{ index .T "confirm_new_password" }}"
                                     oninput="validateForm(); validateResetPasswordMatch()" onchange="validateForm(); validateResetPasswordMatch()"
-                                    aria-describedby="reset-confirm-password-error">
+                                    aria-describedby="message">
                                 <button type="button" class="password-toggle" onclick="togglePasswordField('reset-confirm-password', this)" aria-label="{{ index .T "show_password" }}"></button>
                             </div>
                         </div>
@@ -823,7 +828,9 @@
             // UI Toggle
             const selector = document.getElementById(`${prefix}-method-selector`);
             selector.querySelectorAll('.method-option').forEach(opt => {
-                opt.classList.toggle('active', opt.dataset.method === method);
+                const isSelected = opt.dataset.method === method;
+                opt.classList.toggle('active', isSelected);
+                opt.setAttribute('aria-selected', isSelected ? 'true' : 'false');
             });
 
             // Input Visibility
@@ -833,11 +840,17 @@
             if (method === 'email') {
                 emailWrapper.classList.remove('hidden');
                 phoneWrapper.classList.add('hidden');
-                setTimeout(() => document.getElementById(`${prefix}-email`).focus(), 50);
+                setTimeout(() => {
+                    const el = document.getElementById(`${prefix}-email`);
+                    if (el && el.offsetParent !== null) el.focus();
+                }, 50);
             } else {
                 emailWrapper.classList.add('hidden');
                 phoneWrapper.classList.remove('hidden');
-                setTimeout(() => document.getElementById(`${prefix}-phone`).focus(), 50);
+                setTimeout(() => {
+                    const el = document.getElementById(`${prefix}-phone`);
+                    if (el && el.offsetParent !== null) el.focus();
+                }, 50);
             }
             
             validateForm();
@@ -885,31 +898,42 @@
                 inputs.forEach((input, index) => {
                     input.addEventListener('input', (e) => {
                         const value = e.target.value.replace(/[^0-9]/g, '');
-                        e.target.value = value;
                         e.target.classList.remove('error');
-                        if (value && index < inputs.length - 1) {
-                            inputs[index + 1].focus();
+                        if (value.length > 1) {
+                            for (let i = 0; i < Math.min(value.length, inputs.length - index); i++) {
+                                inputs[index + i].value = value[i];
+                                inputs[index + i].classList.remove('error');
+                            }
+                            const nextIdx = Math.min(index + value.length, inputs.length - 1);
+                            inputs[nextIdx].focus();
+                        } else {
+                            e.target.value = value;
+                            if (value && index < inputs.length - 1) {
+                                inputs[index + 1].focus();
+                            }
                         }
                         validateOTPForm();
                     });
 
                     input.addEventListener('paste', (e) => {
                         e.preventDefault();
-                        const paste = (e.clipboardData || window.clipboardData).getData('text').replace(/[^0-9]/g, '');
-                        if (paste.length <= 6) {
-                            for (let i = 0; i < paste.length && i < inputs.length; i++) {
-                                inputs[i].value = paste[i];
-                                inputs[i].classList.remove('error');
-                            }
+                        const paste = (e.clipboardData || window.clipboardData).getData('text').replace(/[^0-9]/g, '').slice(0, inputs.length);
+                        for (let i = 0; i < paste.length; i++) {
+                            inputs[i].value = paste[i];
+                            inputs[i].classList.remove('error');
+                        }
+                        if (paste.length > 0) {
                             const nextIndex = Math.min(paste.length, inputs.length - 1);
                             inputs[nextIndex].focus();
-                            validateOTPForm();
                         }
+                        validateOTPForm();
                     });
 
                     input.addEventListener('keydown', (e) => {
                         if (e.key === 'Backspace' && !e.target.value && index > 0) {
+                            inputs[index - 1].value = '';
                             inputs[index - 1].focus();
+                            validateOTPForm();
                         } else if (e.key === 'ArrowLeft' && index > 0) {
                             e.preventDefault();
                             inputs[index - 1].focus();
@@ -1023,7 +1047,9 @@
             }, 100);
 
             document.addEventListener('keydown', (event) => {
-                if (event.key === 'Enter') {
+                if (event.key === 'Enter' && !event.isComposing) {
+                    const tag = event.target && event.target.tagName;
+                    if (tag === 'A' || tag === 'BUTTON' || tag === 'SELECT' || tag === 'TEXTAREA') return;
                     event.preventDefault();
                     const continueButton = document.getElementById('continue-button');
                     const actionButton = document.getElementById('action-button');
@@ -1317,10 +1343,16 @@
         async function moveToState(step) {
             const messageDiv = document.getElementById('message');
             messageDiv.innerHTML = '';
-            const button = document.querySelector(`button[onclick="moveToState('${step}')"]`) || document.querySelector('.forgot-password');
+            if (step === 'gilos-id') {
+                state.isBlocked = false;
+                state.blockedUntil = '';
+            }
+            const button = document.querySelector(`button[onclick="moveToState('${step}')"]`);
             const originalContent = button ? button.innerHTML : '';
             if (button) {
-                button.innerHTML = '<span class="spinner"></span>';
+                button.innerHTML = button.classList.contains('bg-gray')
+                    ? '<span class="spinner gray"></span>'
+                    : '<span class="spinner"></span>';
                 button.disabled = true;
             }
 
@@ -1472,6 +1504,11 @@
                     state.contact = data.contact || '';
                     syncFormData(data);
                     updateUI(data);
+                    if (data.contact_type !== 'totp') {
+                        state.timeRemaining = data.time_remaining || 300;
+                        state.resendAvailableIn = data.resend_available_in || 60;
+                        startCountdown();
+                    }
                     showMessage(data.success_message || 'OTP sent successfully', true);
                 } else {
                     showMessage(data.error || 'Failed to send OTP', false);
@@ -1686,9 +1723,16 @@
                 if (data.success) {
                     state.currentStep = data.step;
                     state.contact = data.contact || '';
+                    state.contactType = data.contact_type || (method === 'email' ? 'email' : 'phone');
                     syncFormData(data);
                     updateUI(data);
-                    showMessage(data.success_message || 'Contact verified', true);
+                    if (data.step === 'otp' && data.contact_type !== 'totp') {
+                        state.resends = data.resends || 0;
+                        state.timeRemaining = data.time_remaining || 300;
+                        state.resendAvailableIn = data.resend_available_in || 60;
+                        startCountdown();
+                    }
+                    showMessage(data.success_message || (T.details_saved || 'Contact verified'), true);
                 } else {
                     throw new Error(data.error || 'Invalid contact');
                 }
@@ -1847,7 +1891,7 @@
                     `;
                     break;
                 case 'two-step-select':
-                    actionLabel = 'Continue';
+                    actionLabel = T.continue || 'Continue';
                     actionFunction = 'sendOTP()';
                     const emailOption = document.getElementById('two-step-email-option');
                     const phoneOption = document.getElementById('two-step-phone-option');
@@ -1877,7 +1921,7 @@
                         const type = options[0];
                         document.getElementById(`two-step-${type}`).checked = true;
                         state.contactType = type;
-                    } else {
+                    } else if (options.length > 0) {
                         if (options.includes(state.contactType)) {
                             document.getElementById(`two-step-${state.contactType}`).checked = true;
                         } else {
@@ -1887,18 +1931,18 @@
                         }
                     }
 
-                    emailRadio.addEventListener('change', () => {
+                    emailRadio.onchange = () => {
                         state.contactType = 'email';
                         validateForm();
-                    });
-                    phoneRadio.addEventListener('change', () => {
+                    };
+                    phoneRadio.onchange = () => {
                         state.contactType = 'phone';
                         validateForm();
-                    });
-                    totpRadio.addEventListener('change', () => {
+                    };
+                    totpRadio.onchange = () => {
                         state.contactType = 'totp';
                         validateForm();
-                    });
+                    };
 
                     buttonContainer.innerHTML = `
                         <div class="button-group">
@@ -1913,6 +1957,9 @@
                     let otpHintText;
                     if (data.contact_type === 'totp') {
                         otpHintText = T.otp_enter_authenticator || 'Enter the code from your authenticator app';
+                        if (countdownInterval) clearInterval(countdownInterval);
+                        const otpCountdown = document.getElementById('otp-countdown-container');
+                        if (otpCountdown) otpCountdown.style.display = 'none';
                     } else {
                         otpHintText = (T.otp_sent_to || 'Enter code sent to %s').replace('%s', data.contact);
                     }
@@ -1967,17 +2014,25 @@
                     actionLabel = T.submit || 'Submit';
                     actionFunction = 'submitContact()';
                     const recoveryInfo = document.getElementById('recovery-info');
-                    const recoveryInput = document.getElementById('recovery-input');
+                    const recoveryMethodsWrap = document.getElementById('recovery-methods-wrap');
+                    const recEmailOpt = document.getElementById('recovery-email-option');
+                    const recPhoneOpt = document.getElementById('recovery-phone-option');
+                    const recSelector = document.getElementById('recovery-method-selector');
                     let recoveryText = '';
                     if (data.has_email || data.has_phone) {
                         const options = [];
                         if (data.email) options.push(`${escapeHtml(T.email || 'email')}: ${escapeHtml(data.email)}`);
                         if (data.phone) options.push(`${escapeHtml(T.phone || 'phone')}: ${escapeHtml(data.phone)}`);
                         recoveryText = escapeHtml(T.recovery_options_set || 'You have set the following recovery options: %s. Please enter one to proceed.').replace('%s', options.join(` ${escapeHtml(T.or || 'or')} `));
-                        recoveryInput.classList.remove('hidden');
+                        if (recoveryMethodsWrap) recoveryMethodsWrap.classList.remove('hidden');
+                        if (recEmailOpt) recEmailOpt.style.display = data.has_email ? 'flex' : 'none';
+                        if (recPhoneOpt) recPhoneOpt.style.display = data.has_phone ? 'flex' : 'none';
+                        if (recSelector) recSelector.style.display = (data.has_email && data.has_phone) ? 'flex' : 'none';
+                        if (data.has_email && !data.has_phone) switchMethod('recovery', 'email');
+                        else if (!data.has_email && data.has_phone) switchMethod('recovery', 'phone');
                     } else {
                         recoveryText = `${escapeHtml(T.recovery_no_options || 'You have no recovery options available, contact')} <a href="https://t.me/gilos247" class="support-link" target="_blank" rel="noopener noreferrer">${escapeHtml(T.support || 'support')}</a>.`;
-                        recoveryInput.classList.add('hidden');
+                        if (recoveryMethodsWrap) recoveryMethodsWrap.classList.add('hidden');
                     }
                     recoveryInfo.innerHTML = recoveryText;
                     buttonContainer.innerHTML = `
@@ -2010,7 +2065,7 @@
                 const blockedMsg = (T.security_block_active || 'Your account is temporarily blocked for security until %s.').replace('%s', blockedDate.toLocaleString());
                 showMessage(blockedMsg, false);
                 
-                document.querySelectorAll('.auth-container input, .auth-container button, .auth-container .resend-link').forEach(el => {
+                document.querySelectorAll('.auth-container input, .auth-container button:not(.bg-gray), .auth-container .resend-link').forEach(el => {
                     el.disabled = true;
                     if (el.classList.contains('resend-link')) el.style.pointerEvents = 'none';
                 });
@@ -2019,10 +2074,13 @@
             validateForm();
             adjustCardHeight();
 
-            const firstInput = document.querySelector(`#${activeForm.id} input:not([type="hidden"]):not(.otp-input)`);
-            if (firstInput) firstInput.focus();
-            else {
-                const otpInputs = document.querySelectorAll(`#${activeForm.id} .otp-input`);
+            const visibleInputs = Array.from(document.querySelectorAll(`#${activeForm.id} input:not([type="hidden"]):not(.otp-input)`))
+                .filter(el => el.offsetParent !== null && !el.disabled);
+            if (visibleInputs.length > 0) {
+                visibleInputs[0].focus();
+            } else {
+                const otpInputs = Array.from(document.querySelectorAll(`#${activeForm.id} .otp-input`))
+                    .filter(el => el.offsetParent !== null && !el.disabled);
                 if (otpInputs.length > 0) otpInputs[0].focus();
             }
         }
@@ -2082,7 +2140,7 @@
             const otpCountdown = document.getElementById('otp-countdown-container');
             const resendLink = document.getElementById('resend-link');
 
-            if (state.timeRemaining > 0 && state.currentStep === 'otp') {
+            if (state.contactType !== 'totp' && state.timeRemaining > 0 && state.currentStep === 'otp') {
                 if (otpCountdown) otpCountdown.style.display = 'flex';
                 if (otpTimer) {
                     const mins = Math.floor(state.timeRemaining / 60);
@@ -2091,7 +2149,7 @@
                 }
             } else {
                 if (otpCountdown) otpCountdown.style.display = 'none';
-                if (state.timeRemaining <= 0 && state.currentStep === 'otp' && !state.error) {
+                if (state.contactType !== 'totp' && state.timeRemaining <= 0 && state.currentStep === 'otp' && !state.error) {
                     showMessage(T.otp_expired || 'Verification code expired. Please request a new one.', false);
                 }
             }

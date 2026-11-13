@@ -43,7 +43,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/intl-tel-input@19.2.16/build/css/intlTelInput.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.14.5"></script>
     <script src="https://cdn.jsdelivr.net/npm/intl-tel-input@19.2.16/build/js/intlTelInput.min.js"></script>
 
     <style>
@@ -214,7 +214,9 @@
         input:focus-visible,
         select:focus-visible,
         textarea:focus-visible {
-            outline: none !important;
+            outline: 2px solid transparent !important;
+            border-color: var(--primary) !important;
+            box-shadow: 0 0 0 3px var(--primary-glow) !important;
         }
         input[type="checkbox"]:focus-visible,
         input[type="radio"]:focus-visible {
@@ -303,7 +305,7 @@
         :root[data-theme="dark"] .theme-logo-light { display: none; }
         :root[data-theme="dark"] .theme-logo-dark { display: inline-block; }
 
-        /* SweetAlert2 light/dark theme integration */
+        /* ===== SweetAlert2 Custom Styling ===== */
         .swal2-popup {
             background: var(--card-bg-solid) !important;
             color: var(--text) !important;
@@ -362,20 +364,6 @@
             margin: 0 auto;
             padding: 0 16px;
         }
-
-        /* ===== SweetAlert2 Custom Styling ===== */
-        .swal2-popup {
-            background: var(--card-bg) !important;
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border-radius: 16px !important;
-            color: var(--text) !important;
-            font-family: 'Inter', sans-serif !important;
-            box-shadow: var(--card-shadow) !important;
-        }
-        .swal2-title, .swal2-html-container {
-            color: var(--text) !important;
-        }
         .swal2-confirm {
             background: var(--primary-gradient) !important;
             color: var(--primary-contrast) !important;
@@ -432,7 +420,7 @@
             padding: 8px !important;
             z-index: 10000 !important;
             overflow-x: hidden !important;
-            width: 300px !important;
+            width: min(300px, calc(100vw - 32px)) !important;
         }
         .iti__search-input {
             width: 100% !important;

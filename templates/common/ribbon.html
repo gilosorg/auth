@@ -12,7 +12,7 @@
         <div class="ribbon-actions">
             <a href="https://play.google.com/store/apps/details?id=org.gilos.auth" class="ribbon-cta" target="_blank" rel="noopener noreferrer">{{ index .T "get_app" }}</a>
             
-            <button type="button" class="ribbon-close" aria-label="{{ index .T "cancel" }}" onclick="dismissAppRibbon(this)">
+            <button type="button" class="ribbon-close" aria-label="{{ index .T "close" }}" onclick="dismissAppRibbon(this)">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M18 6L6 18M6 6l12 12"/>
                 </svg>
@@ -42,7 +42,7 @@
     */
 
     .app-ribbon {
-        position: fixed;
+        position: sticky;
         top: 0;
         left: 0;
         right: 0;
@@ -54,8 +54,8 @@
         color: var(--text);
         /* Very slim vertical padding */
         padding: 8px 16px; 
-        /* Premium border */
-        border-bottom: 1px solid var(--card-border); 
+        /* Crisp border in both light & dark themes */
+        border-bottom: 1px solid var(--slate-200); 
         box-shadow: var(--card-shadow);
         animation: slideDown 0.4s ease-out;
     }

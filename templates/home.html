@@ -65,6 +65,8 @@
         font-size: 16px;
         font-weight: 500;
         cursor: pointer;
+        border: none;
+        padding: 0;
         transition: transform 0.2s ease, filter 0.2s ease, box-shadow 0.2s ease;
     }
 
@@ -72,6 +74,13 @@
         filter: brightness(1.1);
         transform: scale(1.05);
         box-shadow: 0 4px 12px var(--primary-glow);
+    }
+
+    .profile-circle:focus-visible,
+    .tab:focus-visible,
+    .icon-preview-large:focus-visible {
+        outline: 2px solid var(--primary);
+        outline-offset: 2px;
     }
 
     .profile-circle img {
@@ -102,6 +111,10 @@
         font-weight: 600;
         overflow: hidden;
         box-shadow: var(--card-shadow);
+        border: none;
+        padding: 0;
+        cursor: pointer;
+        position: relative;
     }
 
     .icon-preview-large img {
@@ -130,8 +143,18 @@
         color: white;
     }
 
-    .icon-preview-large:hover .icon-edit-overlay {
+    .icon-preview-large:hover .icon-edit-overlay,
+    .icon-preview-large:focus-visible .icon-edit-overlay {
         opacity: 1;
+    }
+
+    @media (hover: none), (pointer: coarse) {
+        .icon-edit-overlay {
+            opacity: 1;
+            top: auto;
+            height: 34px;
+            background: rgba(0, 0, 0, 0.45);
+        }
     }
 
     .profile-card-info {
@@ -156,11 +179,19 @@
         width: 100%;
         max-width: 500px;
         height: 400px;
+        max-height: 55vh;
         margin: 0 auto;
         background-color: var(--slate-100);
         border-radius: 12px;
         overflow: hidden;
         position: relative;
+    }
+
+    @media (max-width: 640px), (max-height: 760px) {
+        .crop-container {
+            height: 280px;
+            max-height: 50vh;
+        }
     }
 
     #crop-image {
@@ -215,14 +246,30 @@
         display: flex;
         justify-content: center;
         margin-bottom: 16px;
+        gap: 4px;
     }
 
     .tab {
         padding: 8px 16px;
         cursor: pointer;
+        background: transparent !important;
+        border: none;
         border-bottom: 2px solid transparent;
+        border-radius: 0;
         color: var(--slate-500);
+        font-family: inherit;
+        font-size: 14px;
         font-weight: 500;
+        box-shadow: none !important;
+        filter: none !important;
+        transform: none !important;
+    }
+
+    .tab:hover:not(:disabled) {
+        color: var(--text);
+        filter: none !important;
+        transform: none !important;
+        box-shadow: none !important;
     }
 
     .tab.active {
@@ -577,17 +624,21 @@
         color: var(--primary-contrast);
         width: 32px;
         height: 32px;
+        padding: 0;
+        border: none;
         border-radius: 9999px;
         display: flex;
         align-items: center;
         justify-content: center;
+        gap: 6px;
         cursor: pointer;
         transition: transform 0.2s ease, filter 0.2s ease, box-shadow 0.2s ease;
-        font-size: 20px;
+        font-size: 18px;
+        font-weight: 500;
     }
 
-    .new-client-btn::after {
-        content: "+";
+    .new-client-btn .new-client-label {
+        display: none;
     }
 
     .new-client-btn:hover {
@@ -620,12 +671,12 @@
             border-radius: 9999px;
             width: auto;
             height: 32px;
-            padding: 0 12px;
+            padding: 0 14px;
             font-size: 14px;
         }
 
-        .new-client-btn::after {
-            content: "New Client";
+        .new-client-btn .new-client-label {
+            display: inline;
         }
     }
 
@@ -737,19 +788,22 @@
     }
 
     .qr-card {
-        background: var(--white);
+        background: #ffffff;
+        color: #1d1d1f;
         border-radius: 16px;
         padding: 20px;
         display: inline-block;
         margin: 0 auto 16px;
         box-shadow: 0 2px 12px rgba(0,0,0,0.06);
         border: 1px solid var(--slate-200);
+        text-align: center;
     }
 
     .qr-card img {
         width: 200px;
         height: 200px;
         display: block;
+        margin: 0 auto;
         image-rendering: pixelated;
     }
 
@@ -766,6 +820,13 @@
         user-select: all;
         cursor: pointer;
         border: 1px solid var(--slate-200);
+        transition: border-color 0.2s ease, background-color 0.2s ease;
+    }
+
+    .totp-secret:hover,
+    .totp-secret:focus-visible {
+        border-color: var(--primary);
+        outline: none;
     }
 
     /* OTP separated digit inputs */
@@ -913,14 +974,17 @@
     }
 
     .modal-content input:hover,
-    .modal-content select:hover {
+    .modal-content select:hover,
+    .modal-content textarea:hover {
         border-color: var(--slate-300);
     }
 
     .modal-content input:focus,
-    .modal-content select:focus {
+    .modal-content select:focus,
+    .modal-content textarea:focus {
         outline: none;
         border-color: var(--primary);
+        box-shadow: 0 0 0 3px var(--primary-glow);
     }
 
     .scopes {
@@ -1070,7 +1134,7 @@
 
     .deletion-cancel-btn:hover {
         background: var(--slate-100);
-        border-color: var(--slate-400);
+        border-color: var(--slate-300);
     }
 
     /* Delete modal warning banner */
@@ -1119,7 +1183,7 @@
     }
 
     .deletion-reason-option:hover {
-        background: var(--slate-50);
+        background: var(--slate-100);
         border-color: var(--slate-300);
     }
 
@@ -1184,14 +1248,6 @@
         color: var(--text);
         margin-top: 8px;
         margin-bottom: 0;
-    }
-
-    .qr-card {
-        background-color: var(--slate-100);
-        border-radius: 12px;
-        padding: 16px;
-        margin: 16px 0;
-        text-align: center;
     }
 
     .modal-content p {
@@ -1357,7 +1413,7 @@
         align-items: center;
         gap: 4px;
         background: none !important;
-        border: 1px dashed var(--border) !important;
+        border: 1px dashed var(--slate-200) !important;
         color: var(--text-secondary) !important;
         cursor: pointer;
         padding: 5px 12px;
@@ -1392,12 +1448,18 @@
 
     .card-token .copy-btn {
         cursor: pointer;
-        opacity: 0.5;
+        opacity: 0.65;
         transition: all 0.2s ease;
         display: inline-flex;
         align-items: center;
-        padding: 2px;
-        border-radius: 3px;
+        padding: 3px;
+        border-radius: 4px;
+        background: transparent !important;
+        border: none !important;
+        color: inherit !important;
+        box-shadow: none !important;
+        transform: none !important;
+        filter: none !important;
     }
 
     .card-token .copy-btn svg {
@@ -1533,7 +1595,7 @@
         background: var(--slate-100);
         border: 1px solid var(--slate-200);
         border-radius: 12px;
-        padding: 16px 48px 16px 16px;
+        padding: 16px 96px 16px 16px;
         margin-bottom: 16px;
         font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
         font-size: 13px;
@@ -1740,6 +1802,73 @@
         color: var(--text-secondary);
     }
 
+    .top-alert-banner {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        flex-wrap: wrap;
+        padding: 14px 18px;
+        border-radius: 14px;
+        margin-bottom: 18px;
+        background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(239, 68, 68, 0.05) 100%);
+        border: 1px solid rgba(239, 68, 68, 0.28);
+        color: var(--text);
+        font-size: 13px;
+    }
+
+    .top-alert-banner strong {
+        color: #ef4444;
+    }
+
+    .top-target-banner {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        flex-wrap: wrap;
+        padding: 12px 18px;
+        border-radius: 14px;
+        margin-bottom: 18px;
+        background: var(--card-bg);
+        border: 1px solid var(--slate-200);
+        box-shadow: var(--card-shadow);
+        font-size: 13px;
+        color: var(--text-secondary);
+    }
+
+    .sessions-filter-bar {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-bottom: 16px;
+    }
+
+    .filter-pill {
+        background: var(--card-bg) !important;
+        color: var(--text-secondary) !important;
+        border: 1px solid var(--slate-200) !important;
+        border-radius: 999px;
+        padding: 6px 14px;
+        font-size: 13px;
+        font-weight: 500;
+        box-shadow: none !important;
+        filter: none !important;
+        transform: none !important;
+    }
+
+    .filter-pill:hover:not(:disabled) {
+        border-color: var(--primary) !important;
+        color: var(--text) !important;
+    }
+
+    .filter-pill.active {
+        background: var(--primary-gradient) !important;
+        color: var(--primary-contrast) !important;
+        border-color: transparent !important;
+    }
+
 </style>
 
 <body>
@@ -1751,15 +1880,17 @@
                 <span>{{ if .AppName }}{{ .AppName }}{{ else }}Gilos ID{{ end }}</span>
             </div>
             <div class="header-center">
-                <div class="tabs">
-                    <div class="tab active" data-tab="account">{{ index .T "account" }}</div>
-                    <div class="tab" data-tab="sessions">{{ index .T "sessions" }}</div>
-                    <div class="tab" data-tab="clients">{{ index .T "clients" }}</div>
+                <div class="tabs" role="tablist">
+                    <button type="button" role="tab" aria-selected="true" class="tab active" data-tab="account">{{ index .T "account" }}</button>
+                    <button type="button" role="tab" aria-selected="false" class="tab" data-tab="sessions">{{ index .T "sessions" }}</button>
+                    <button type="button" role="tab" aria-selected="false" class="tab" data-tab="clients">{{ index .T "clients" }}</button>
                 </div>
             </div>
             <div class="header-right">
-                <div class="new-client-btn hidden" id="new-client-btn"></div>
-                <div class="profile-circle" id="appbar-profile-circle" onclick="toggleDropdown()">
+                <button type="button" class="new-client-btn hidden" id="new-client-btn" aria-label="{{ index .T "create_new_client" }}">
+                    <span aria-hidden="true">+</span><span class="new-client-label">{{ index .T "create_new_client" }}</span>
+                </button>
+                <button type="button" class="profile-circle" id="appbar-profile-circle" onclick="toggleDropdown()" aria-haspopup="menu" aria-expanded="false" aria-label="{{ index .T "account" }}">
                     {{ if .User.Icon }}
                         <img src="{{ .User.Icon }}" alt="User Icon" id="appbar-profile-img">
                         <span style="display: none;">{{ printf "%.1s" .User.Username | upper }}</span>
@@ -1767,21 +1898,23 @@
                         <img src="" alt="User Icon" id="appbar-profile-img" style="display: none;">
                         <span>{{ printf "%.1s" .User.Username | upper }}</span>
                     {{ end }}
-                </div>
-                <div class="dropdown" id="dropdown">
-                    <a href="https://my.gilos.app" target="_blank" rel="noopener noreferrer">{{ index .T "manage" }}</a>
-                    <a href="#" onclick="logout(); return false;">{{ index .T "logout" }}</a>
+                </button>
+                <div class="dropdown" id="dropdown" role="menu">
+                    <a href="https://my.gilos.app" target="_blank" rel="noopener noreferrer" role="menuitem">{{ index .T "manage" }}</a>
+                    <a href="#" onclick="logout(); return false;" role="menuitem">{{ index .T "logout" }}</a>
                 </div>
             </div>
         </div>
     </header>
     <main>
-        <div class="tabs tabs-mobile">
-            <div class="tab active" data-tab="account">{{ index .T "account" }}</div>
-            <div class="tab" data-tab="sessions">{{ index .T "sessions" }}</div>
-            <div class="tab" data-tab="clients">{{ index .T "clients" }}</div>
+        <div class="tabs tabs-mobile" role="tablist">
+            <button type="button" role="tab" aria-selected="true" class="tab active" data-tab="account">{{ index .T "account" }}</button>
+            <button type="button" role="tab" aria-selected="false" class="tab" data-tab="sessions">{{ index .T "sessions" }}</button>
+            <button type="button" role="tab" aria-selected="false" class="tab" data-tab="clients">{{ index .T "clients" }}</button>
         </div>
         <div class="content">
+            <div id="oauth-target-banner"></div>
+            <div id="global-deletion-banner"></div>
             <div id="account-content" class="tab-content"></div>
             <div id="sessions-content" class="tab-content" style="display: none;"></div>
             <div id="clients-content" class="tab-content" style="display: none;"></div>
@@ -1851,7 +1984,7 @@
                 <div class="qr-card">
                     <img id="totp-qr" src="" alt="QR Code">
                 </div>
-                <div class="totp-secret" id="totp-secret"></div>
+                <div class="totp-secret" id="totp-secret" role="button" tabindex="0" title="{{ index .T "totp_secret_copy_hint" }}" onclick="copyTotpSecret()" onkeydown="if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); copyTotpSecret(); }"></div>
                 <label style="text-align:center; margin-bottom: 8px;">{{ index .T "six_digit_code" }}</label>
                 <div class="otp-container" id="totp-otp-inputs">
                     <input type="text" class="otp-digit" maxlength="1" inputmode="numeric" pattern="[0-9]*" autocomplete="one-time-code" aria-label="Digit 1">
@@ -1908,7 +2041,7 @@
                 </div>
                 <div class="secret-reveal-block" id="secret-reveal-value">
                     <!-- Secret will be injected here -->
-                    <button class="secret-reveal-copy-btn" id="secret-reveal-copy-btn" onclick="copyRevealedSecret()">
+                    <button type="button" class="secret-reveal-copy-btn" id="secret-reveal-copy-btn" onclick="copyRevealedSecret()">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
                         {{ or (index .T "copy") "Copy" }}
                     </button>
@@ -2027,6 +2160,8 @@
         const contactVerifyForm = document.getElementById('contact-verify-form');
 
         let activeTab = 'account';
+        let sessionsFilter = 'all';
+        let _editingClientType = null;
         let wasMFA_TOTP_Enabled = false;
         let setupSuccess = false;
         let currentUser = null;
@@ -2047,22 +2182,25 @@
         let allClients = [];
         let clientsDisplayed = 0;
 
+        function setActiveTab(tabName, shouldLoad = true) {
+            if (!['account', 'sessions', 'clients'].includes(tabName)) tabName = 'account';
+            tabs.forEach(t => {
+                const isActive = t.dataset.tab === tabName;
+                t.classList.toggle('active', isActive);
+                t.setAttribute('aria-selected', isActive ? 'true' : 'false');
+            });
+            activeTab = tabName;
+            try { sessionStorage.setItem('gilos_home_active_tab', tabName); } catch (e) {}
+            document.querySelectorAll('.tab-content').forEach(content => content.style.display = 'none');
+            const targetContent = document.getElementById(`${activeTab}-content`);
+            if (targetContent) targetContent.style.display = 'block';
+            newClientBtn.classList.toggle('hidden', activeTab !== 'clients');
+            if (shouldLoad) loadContent();
+        }
+
         tabs.forEach(tab => {
             tab.addEventListener('click', () => {
-                const tabName = tab.dataset.tab;
-                // Sync active state across all tabs (both desktop and mobile)
-                tabs.forEach(t => {
-                    if (t.dataset.tab === tabName) {
-                        t.classList.add('active');
-                    } else {
-                        t.classList.remove('active');
-                    }
-                });
-                activeTab = tabName;
-                document.querySelectorAll('.tab-content').forEach(content => content.style.display = 'none');
-                document.getElementById(`${activeTab}-content`).style.display = 'block';
-                newClientBtn.classList.toggle('hidden', activeTab !== 'clients');
-                loadContent();
+                setActiveTab(tab.dataset.tab, true);
             });
         });
 
@@ -2073,16 +2211,42 @@
         });
 
         function toggleDropdown() {
-            document.getElementById('dropdown').classList.toggle('active');
+            const dropdown = document.getElementById('dropdown');
+            const trigger = document.getElementById('appbar-profile-circle');
+            const isOpen = dropdown.classList.toggle('active');
+            if (trigger) trigger.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
         }
 
         // Close dropdown on click outside
         window.addEventListener('click', (event) => {
             if (!event.target.closest('.profile-circle') && !event.target.closest('.dropdown')) {
                 const dropdown = document.getElementById('dropdown');
+                const trigger = document.getElementById('appbar-profile-circle');
                 if (dropdown) dropdown.classList.remove('active');
+                if (trigger) trigger.setAttribute('aria-expanded', 'false');
             }
         });
+
+        function initOAuthTargetBanner() {
+            const container = document.getElementById('oauth-target-banner');
+            if (!container) return;
+            try {
+                const params = new URLSearchParams(window.location.search);
+                const rawTarget = params.get('target');
+                if (!rawTarget) return;
+                const parsed = new URL(rawTarget, window.location.origin);
+                if (parsed.origin !== window.location.origin || !parsed.pathname.startsWith('/o/')) return;
+                const safeHref = parsed.pathname + parsed.search + parsed.hash;
+                container.innerHTML = `
+                    <div class="top-target-banner">
+                        <span>${escapeHtml(T.verify_contact_desc || 'Update your account details and return to your application when ready.')}</span>
+                        <a href="${escapeHtml(safeHref)}" class="btn" style="text-decoration:none;background:var(--primary-gradient);color:var(--primary-contrast);padding:7px 14px;border-radius:8px;font-size:13px;font-weight:500;">
+                            ${escapeHtml(T.continue || 'Continue')} &rarr;
+                        </a>
+                    </div>
+                `;
+            } catch (e) {}
+        }
 
         async function copyToClipboard(text) {
             try {
@@ -2128,9 +2292,11 @@
 
         // --- Universal Password Confirmation Modal ---
         let _passwordCallback = null;
+        let _passwordCancelCallback = null;
 
-        function requirePassword(callback) {
+        function requirePassword(callback, onCancel = null) {
             _passwordCallback = callback;
+            _passwordCancelCallback = onCancel;
             const modal = document.getElementById('password-modal');
             const input = document.getElementById('confirm-password-input');
             const errorEl = document.getElementById('password-modal-error');
@@ -2142,9 +2308,14 @@
             setTimeout(() => input.focus(), 100);
         }
 
-        function closePasswordModal() {
+        function closePasswordModal(confirmed = false) {
             document.getElementById('password-modal').classList.remove('active');
+            const cancelCb = _passwordCancelCallback;
             _passwordCallback = null;
+            _passwordCancelCallback = null;
+            if (!confirmed && typeof cancelCb === 'function') {
+                cancelCb();
+            }
         }
 
         function confirmPasswordModal() {
@@ -2154,7 +2325,7 @@
                 return;
             }
             const cb = _passwordCallback;
-            closePasswordModal();
+            closePasswordModal(true);
             if (cb) {
                 cb(password);
             }
@@ -2180,14 +2351,14 @@
         });
 
         // Helper to handle password-required API errors
-        function handlePasswordError(data, retryFn) {
+        function handlePasswordError(data, retryFn, onCancel = null) {
             if (data.error === 'password_required') {
-                requirePassword(retryFn);
+                requirePassword(retryFn, onCancel);
                 return true;
             }
             if (data.error === 'incorrect_password') {
                 const remaining = data.attempts_remaining;
-                requirePassword(retryFn);
+                requirePassword(retryFn, onCancel);
                 setTimeout(() => {
                     showPasswordError(
                         (T.incorrect_password || 'Incorrect password') +
@@ -2266,12 +2437,12 @@
                     <div class="profile-grid">
                     <div class="section" style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 32px 24px;">
                         <div class="icon-upload-container" style="position: relative;">
-                            <div class="icon-preview-large" onclick="document.getElementById('icon-input').click()" style="cursor: pointer; position: relative; width: 120px; height: 120px;">
+                            <button type="button" class="icon-preview-large" onclick="document.getElementById('icon-input').click()" aria-label="${escapeHtml(T.select_profile_photo || 'Select profile photo')}" style="width: 120px; height: 120px;">
                                 ${user.icon ? `<img src="${escapeHtml(user.icon)}" alt="Icon">` : `<span>${avatarInitial}</span>`}
                                 <div class="icon-edit-overlay">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
                                 </div>
-                            </div>
+                            </button>
                             <input type="file" id="icon-input" accept="image/*" style="display: none;" onchange="handleIconSelect(event)">
                         </div>
                         <div class="profile-card-info">
@@ -2355,8 +2526,8 @@
                                 <div id="username-status-icon" style="position: absolute; right: 12px; display: none; align-items: center; justify-content: center;"></div>
                             </div>
                             <p id="username-hint" class="verification-info" style="margin-top: 8px; font-size: 11px; opacity: 1; transition: color 0.2s ease;">
-                                ${escapeHtml(T.username_requirements || 'Use 5-30 lowercase letters and numbers only.')} 
-                                <span style="display: block; margin-top: 4px; opacity: 0.8;">
+                                <span id="username-status-msg">${escapeHtml(T.username_requirements || 'Use 5-30 lowercase letters and numbers only.')}</span>
+                                <span id="username-changes-remaining" style="display: block; margin-top: 4px; opacity: 0.8; color: var(--text-muted);">
                                     ${escapeHtml((T.username_changes_left || 'Changes remaining: %d/3 in 30 days').replace('%d', Math.max(0, 3 - (user.username_changes_count || 0))))}
                                 </span>
                             </p>
@@ -2405,7 +2576,7 @@
             }
         }
 
-        function showContactVerifyModal() {
+        function showContactVerifyModal(preserveInputs = false) {
             const contactVerifyModal = document.getElementById('contact-verify-modal');
             if (!contactVerifyModal) return;
 
@@ -2420,11 +2591,12 @@
             safeSetTextContent('resends-email', resends.email || 0);
             safeSetTextContent('resends-phone', resends.phone || 0);
 
-            clearOTPInputs('email-otp-inputs');
-            clearOTPInputs('phone-otp-inputs');
-            
-            safeSetTextContent('message-email', '');
-            safeSetTextContent('message-phone', '');
+            if (!preserveInputs) {
+                clearOTPInputs('email-otp-inputs');
+                clearOTPInputs('phone-otp-inputs');
+                safeSetTextContent('message-email', '');
+                safeSetTextContent('message-phone', '');
+            }
             
             // Re-enable everything initially
             document.querySelectorAll('#contact-verify-modal input, #contact-verify-modal button:not(.bg-gray)').forEach(el => {
@@ -2481,14 +2653,14 @@
                 } else {
                     Swal.fire({
                         icon: 'error',
-                        title: 'Error',
+                        title: T.error || 'Error',
                         text: 'Failed to cancel: ' + (data.error || 'Unknown error')
                     });
                 }
             } catch (error) {
                 Swal.fire({
                     icon: 'error',
-                    title: 'Error',
+                    title: T.error || 'Error',
                     text: error.message
                 });
             }
@@ -2496,8 +2668,10 @@
 
         async function resendContactOTP(typ) {
             const link = document.getElementById(`resend-${typ}`);
-            const originalText = link.textContent;
-            link.textContent = 'Resending...';
+            if (link) {
+                link.style.pointerEvents = 'none';
+                link.style.opacity = '0.6';
+            }
             
             try {
                 const response = await fetch(`/profile/contact/resend?type=${typ}`, { method: 'POST' });
@@ -2505,30 +2679,24 @@
                 if (response.ok) {
                     timeRemainingMap[typ] = data.time_remaining || 300;
                     resendAvailableMap[typ] = data.resend_available_in || 60;
-                    resends[typ] = data.resends || (resends[typ] || 0) + 1;
-                    showContactVerifyModal();
+                    resends[typ] = typeof data.resends === 'number' ? data.resends : ((resends[typ] || 0) + 1);
                     startCountdown();
-                safeSetTextContent(`message-${typ}`, data.success_message || 'Code resent');
-                const msgEl = document.getElementById(`message-${typ}`);
-                if (msgEl) msgEl.className = 'message success';
-            } else {
-                if (data.resend_available_in) {
-                    resendAvailableMap[typ] = data.resend_available_in;
-                    startCountdown();
+                    const msgEl = safeSetTextContent(`message-${typ}`, data.success_message || (T.code_sent || 'Code resent'));
+                    if (msgEl) msgEl.className = 'message success';
+                } else {
+                    if (data.resend_available_in) {
+                        resendAvailableMap[typ] = data.resend_available_in;
+                        startCountdown();
+                    }
+                    const msgEl = safeSetTextContent(`message-${typ}`, data.error || 'Failed to resend');
+                    if (msgEl) msgEl.className = 'message error';
+                    updateCountdownUI();
                 }
-                safeSetTextContent(`message-${typ}`, data.error || 'Failed to resend');
-                const msgEl = document.getElementById(`message-${typ}`);
+            } catch (error) {
+                const msgEl = safeSetTextContent(`message-${typ}`, T.network_error || 'An error occurred. Please try again.');
                 if (msgEl) msgEl.className = 'message error';
-                updateCountdownUI(); // Update UI to reflect rate limit state
+                updateCountdownUI();
             }
-            if (link) link.textContent = originalText.replace(/\d/, resends[typ]);
-        } catch (error) {
-            safeSetTextContent(`message-${typ}`, 'An error occurred. Please try again.');
-            const msgEl = document.getElementById(`message-${typ}`);
-            if (msgEl) msgEl.className = 'message error';
-        } finally {
-            if (link) link.textContent = originalText.replace(/\d+/, resends[typ] || 0);
-        }
         }
 
         contactVerifyForm.addEventListener('submit', async (e) => {
@@ -2536,9 +2704,43 @@
             const emailOTP = getOTPValue('email-otp-inputs');
             const phoneOTP = getOTPValue('phone-otp-inputs');
             const body = {};
-            if (pendingVerifications.includes('email') && emailOTP) body.email_otp = emailOTP;
-            if (pendingVerifications.includes('phone') && phoneOTP) body.phone_otp = phoneOTP;
-            if (Object.keys(body).length === 0) return;
+
+            if (pendingVerifications.includes('email') && emailOTP) {
+                if (!/^\d{6}$/.test(emailOTP)) {
+                    const el = safeSetTextContent('message-email', T.otp_must_be_6 || 'Code must be 6 digits');
+                    if (el) el.className = 'message error';
+                    return;
+                }
+                body.email_otp = emailOTP;
+            }
+            if (pendingVerifications.includes('phone') && phoneOTP) {
+                if (!/^\d{6}$/.test(phoneOTP)) {
+                    const el = safeSetTextContent('message-phone', T.otp_must_be_6 || 'Code must be 6 digits');
+                    if (el) el.className = 'message error';
+                    return;
+                }
+                body.phone_otp = phoneOTP;
+            }
+
+            if (Object.keys(body).length === 0) {
+                if (pendingVerifications.includes('email')) {
+                    const el = safeSetTextContent('message-email', T.otp_must_be_6 || 'Code must be 6 digits');
+                    if (el) el.className = 'message error';
+                }
+                if (pendingVerifications.includes('phone')) {
+                    const el = safeSetTextContent('message-phone', T.otp_must_be_6 || 'Code must be 6 digits');
+                    if (el) el.className = 'message error';
+                }
+                return;
+            }
+
+            const submitBtn = contactVerifyForm.querySelector('button[type="submit"]');
+            const origText = submitBtn ? submitBtn.textContent : '';
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<span class="spinner"></span>';
+            }
+
             try {
                 const response = await fetch('/profile/contact/verify', {
                     method: 'POST',
@@ -2549,13 +2751,16 @@
                 for (const [key, res] of Object.entries(data)) {
                     const typ = key;
                     if (res.success) {
-                        safeSetTextContent(`message-${typ}`, 'Verified!');
+                        const el = safeSetTextContent(`message-${typ}`, T.verified_badge || 'Verified!');
+                        if (el) el.className = 'message success';
                         clearPending(typ);
                     } else {
-                        attempts[typ]++;
-                        const attemptsLeft = 3 - attempts[typ];
-                        safeSetTextContent(`message-${typ}`, res.error);
-                        if (attempts[typ] >= 3) {
+                        attempts[typ] = (attempts[typ] || 0) + 1;
+                        const el = safeSetTextContent(`message-${typ}`, res.error || (T.invalid_otp || 'Invalid code'));
+                        if (el) el.className = 'message error';
+                        if (res.is_blocked) {
+                            await checkPendingVerifications();
+                        } else if (attempts[typ] > 3) {
                             clearPending(typ);
                         }
                     }
@@ -2567,9 +2772,14 @@
             } catch (error) {
                 Swal.fire({
                     icon: 'error',
-                    title: 'Verification Error',
+                    title: T.error || 'Verification Error',
                     text: error.message
                 });
+            } finally {
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = origText;
+                }
             }
         });
 
@@ -2776,34 +2986,28 @@
                         cancelButtonText: T.cancel || 'Cancel'
                     }).then((result) => {
                         if (result.isConfirmed) {
-                            requirePassword((password) => {
+                            const resetTotpToggle = () => { e.target.checked = true; };
+                            const attemptDisable = (pw) => {
                                 fetch('/profile/totp/disable', {
                                     method: 'POST',
-                                    headers: { 'X-Current-Password': password }
+                                    headers: { 'X-Current-Password': pw }
                                 })
                                 .then(res => res.json())
                                 .then(data => {
                                     if (data.success) {
                                         loadAccount();
                                     } else {
-                                        if (handlePasswordError(data, (pw) => {
-                                            fetch('/profile/totp/disable', {
-                                                method: 'POST',
-                                                headers: { 'X-Current-Password': pw }
-                                            }).then(r => r.json()).then(d => {
-                                                if (d.success) loadAccount();
-                                                else { Swal.fire(T.error || 'Error', d.error || 'Failed to disable', 'error'); e.target.checked = true; }
-                                            });
-                                        })) return;
+                                        if (handlePasswordError(data, attemptDisable, resetTotpToggle)) return;
                                         Swal.fire(T.error || 'Error', data.error || 'Failed to disable', 'error');
-                                        e.target.checked = true;
+                                        resetTotpToggle();
                                     }
                                 })
                                 .catch(err => {
                                     Swal.fire(T.error || 'Error', err.message, 'error');
-                                    e.target.checked = true;
+                                    resetTotpToggle();
                                 });
-                            });
+                            };
+                            requirePassword(attemptDisable, resetTotpToggle);
                         } else {
                             e.target.checked = true;
                         }
@@ -2849,11 +3053,14 @@
         // Scope label translations
         function getScopeLabel(scope) {
             const labels = {
+                'openid': T.scope_openid || 'OpenID Connect',
+                'offline_access': T.offline_access || 'Offline Access',
                 'phone': T.scope_phone || 'Phone Number',
                 'email': T.scope_email || 'Email Address',
                 'profile': T.scope_basic_info || 'Basic Info',
                 'user_sessions': T.scope_sessions || 'Sessions',
-                'user_totps': T.scope_totps || 'TOTP synchronization'
+                'user_totps': T.scope_totps || 'TOTP synchronization',
+                'user_manage_account': T.scope_manage_account || 'Manage Account'
             };
             return labels[scope.trim()] || scope;
         }
@@ -2929,24 +3136,45 @@
             `;
         }
 
+        function setSessionsFilter(filter) {
+            sessionsFilter = filter;
+            renderSessionsGrid();
+        }
+
         function renderSessionsGrid() {
             if (allSessions.length === 0) {
-                sessionsContent.innerHTML = `<div class="empty-state">${T.no_active_sessions || 'No active sessions.'}</div>`;
+                sessionsContent.innerHTML = `<div class="empty-state">${escapeHtml(T.no_active_sessions || 'No active sessions.')}</div>`;
                 return;
             }
 
-            let html = '<div class="items-grid">';
-            html += allSessions.map(renderSessionCard).join('');
-            html += '</div>';
+            const filtered = sessionsFilter === 'all'
+                ? allSessions
+                : allSessions.filter(s => s.type === sessionsFilter);
+
+            let html = `
+                <div class="sessions-filter-bar" role="tablist" aria-label="Session type filter">
+                    <button type="button" role="tab" aria-selected="${sessionsFilter === 'all'}" class="filter-pill ${sessionsFilter === 'all' ? 'active' : ''}" onclick="setSessionsFilter('all')">${escapeHtml(T.sessions_filter_all || 'All')}</button>
+                    <button type="button" role="tab" aria-selected="${sessionsFilter === 'native'}" class="filter-pill ${sessionsFilter === 'native' ? 'active' : ''}" onclick="setSessionsFilter('native')">${escapeHtml(T.sessions_filter_browser || 'Browser Sessions')}</button>
+                    <button type="button" role="tab" aria-selected="${sessionsFilter === 'client'}" class="filter-pill ${sessionsFilter === 'client' ? 'active' : ''}" onclick="setSessionsFilter('client')">${escapeHtml(T.sessions_filter_apps || 'Connected Apps')}</button>
+                </div>
+            `;
+
+            if (filtered.length === 0) {
+                html += `<div class="empty-state">${escapeHtml(T.no_active_sessions || 'No matching sessions.')}</div>`;
+            } else {
+                html += '<div class="items-grid">';
+                html += filtered.map(renderSessionCard).join('');
+                html += '</div>';
+            }
 
             if (sessionsHasNextPage) {
                 html += `
                     <div class="load-more-container">
-                        <button id="sessions-load-more" class="load-more-btn" onclick="loadMoreSessions()">${T.load_more || 'Load More'}</button>
+                        <button id="sessions-load-more" class="load-more-btn" onclick="loadMoreSessions()">${escapeHtml(T.load_more || 'Load More')}</button>
                     </div>
                 `;
             } else if (allSessions.length > ITEMS_PER_PAGE) {
-                html += `<div class="no-more-text">${T.all_sessions_loaded || 'All sessions loaded'}</div>`;
+                html += `<div class="no-more-text">${escapeHtml(T.all_sessions_loaded || 'All sessions loaded')}</div>`;
             }
 
             sessionsContent.innerHTML = html;
@@ -2955,7 +3183,7 @@
             if (allSessions.length > 1) {
                 const terminateOthersBtn = document.createElement('div');
                 terminateOthersBtn.className = 'load-more-container';
-                terminateOthersBtn.innerHTML = `<button class="bg-red" style="padding: 12px 24px; border-radius: 12px;" onclick="terminateOtherSessions()">${T.terminate_all_others || 'Terminate All Other Sessions'}</button>`;
+                terminateOthersBtn.innerHTML = `<button class="bg-red" style="padding: 12px 24px; border-radius: 12px;" onclick="terminateOtherSessions()">${escapeHtml(T.terminate_all_others || 'Terminate All Other Sessions')}</button>`;
                 sessionsContent.appendChild(terminateOthersBtn);
             }
         }
@@ -3088,7 +3316,14 @@
                     <div class="card-body">
                         <div class="card-row">
                             <span class="card-label">${icons.tag} ${escapeHtml(T.client_id || 'Client ID')}</span>
-                            <span class="card-value">${escapeHtml(String(client.ID))}</span>
+                            <span class="card-value">
+                                <span class="card-token">
+                                    <span>${escapeHtml(String(client.ID))}</span>
+                                    <button type="button" class="copy-btn" onclick="copyToClipboard('${escapeHtml(String(client.ID))}')" aria-label="${escapeHtml(T.copy || 'Copy')}" title="${escapeHtml(T.copy || 'Copy')}">
+                                        ${icons.copy}
+                                    </button>
+                                </span>
+                            </span>
                         </div>
                         ${secretRowHtml}
                         <div class="card-row">
@@ -3154,6 +3389,16 @@
         }
 
         async function terminateSession(id) {
+            const result = await Swal.fire({
+                title: T.confirm || 'Confirm',
+                text: T.terminate_session_confirm || 'Are you sure you want to terminate this session?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: T.terminate || 'Terminate',
+                cancelButtonText: T.cancel || 'Cancel'
+            });
+            if (!result.isConfirmed) return;
+
             const params = new URLSearchParams();
             params.append('session_id', id);
             try {
@@ -3166,10 +3411,20 @@
                 if (id === currentSessionID) {
                     window.location.href = '/';
                 } else {
+                    Swal.fire({
+                        icon: 'success',
+                        title: T.success || 'Success',
+                        text: T.session_terminated_success || 'Session terminated.',
+                        toast: true,
+                        position: 'top-end',
+                        showConfirmButton: false,
+                        timer: 2000,
+                        timerProgressBar: true
+                    });
                     loadSessions();
                 }
             } catch (error) {
-                Swal.fire('Error', error.message, 'error');
+                Swal.fire(T.error || 'Error', error.message, 'error');
             }
         }
 
@@ -3316,12 +3571,14 @@
             const clientForm = document.getElementById('client-form');
             
             clientIdInput.value = id || '';
+            _editingClientType = null;
             modalTitle.textContent = id ? (T.edit_client || 'Edit Client') : (T.create_new_client || 'Create New Client');
             if (id) {
                 try {
                     const response = await fetch(`/clients/edit?id=${id}`);
                     if (!response.ok) throw new Error('Failed to load client');
                     const client = await response.json();
+                    _editingClientType = client.Type;
                     document.getElementById('name').value = client.Name;
                     document.getElementById('type').value = client.Type;
                     setRedirectURIs((client.RedirectURIs || '').split(',').map(u => u.trim()).filter(Boolean));
@@ -3442,6 +3699,20 @@
                 const clientIdInput = document.getElementById('client-id');
                 const isEdit = !!clientIdInput.value;
                 const formData = new FormData(clientForm);
+                const newType = formData.get('type');
+
+                if (isEdit && _editingClientType === 'confidential' && newType === 'public') {
+                    const confirmRes = await Swal.fire({
+                        title: T.confirm || 'Confirm',
+                        text: T.confirm_public_client_wipe || 'Switching to a public client removes the stored client secret. Continue?',
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonText: T.confirm || 'Confirm',
+                        cancelButtonText: T.cancel || 'Cancel'
+                    });
+                    if (!confirmRes.isConfirmed) return;
+                }
+
                 const params = new URLSearchParams(formData);
                 let url = isEdit ? '/clients/edit' : '/clients';
                 if (isEdit) {
@@ -3457,11 +3728,11 @@
                     closeModal();
                     loadClients();
 
-                    // On creation, show the secret reveal modal with the one-time plaintext secret
-                    if (!isEdit && data.client_secret) {
+                    // Reveal one-time plaintext secret on creation or public -> confidential upgrade
+                    if (data.client_secret) {
                         showSecretRevealModal({
                             secret: data.client_secret,
-                            clientName: data.client_name || 'New Client',
+                            clientName: data.client_name || formData.get('name') || 'Client',
                             clientId: data.client_id,
                             secretPrefix: data.secret_prefix || ''
                         });
@@ -3484,10 +3755,19 @@
             inputs.forEach((input, index) => {
                 input.addEventListener('input', (e) => {
                     const value = e.target.value.replace(/[^0-9]/g, '');
-                    e.target.value = value ? value[value.length - 1] : '';
-                    e.target.classList.toggle('filled', !!e.target.value);
-                    if (value && index < inputs.length - 1) {
-                        inputs[index + 1].focus();
+                    if (value.length > 1) {
+                        for (let i = 0; i < Math.min(value.length, inputs.length - index); i++) {
+                            inputs[index + i].value = value[i];
+                            inputs[index + i].classList.add('filled');
+                        }
+                        const focusIdx = Math.min(index + value.length, inputs.length - 1);
+                        inputs[focusIdx].focus();
+                    } else {
+                        e.target.value = value;
+                        e.target.classList.toggle('filled', !!e.target.value);
+                        if (value && index < inputs.length - 1) {
+                            inputs[index + 1].focus();
+                        }
                     }
                     if (getOTPValue(containerId).length === 6 && onComplete) {
                         onComplete();
@@ -3589,6 +3869,13 @@
             }
         }
 
+        function copyTotpSecret() {
+            const secretEl = document.getElementById('totp-secret');
+            if (secretEl && secretEl.textContent.trim()) {
+                copyToClipboard(secretEl.textContent.trim());
+            }
+        }
+
         async function verifyTOTP() {
             const code = getOTPValue('totp-otp-inputs');
             if (code.length !== 6) {
@@ -3632,11 +3919,12 @@
         let cropper;
         function handleIconSelect(event) {
             const file = event.target.files[0];
+            event.target.value = '';
             if (!file) return;
             if (!file.type.startsWith('image/')) {
                 Swal.fire({
                     icon: 'warning',
-                    title: 'Invalid File',
+                    title: T.error || 'Invalid File',
                     text: 'Please select an image file'
                 });
                 return;
@@ -3644,8 +3932,17 @@
             const reader = new FileReader();
             reader.onload = (e) => {
                 const img = document.getElementById('crop-image');
+                img.onload = () => {
+                    openCropModal();
+                };
+                img.onerror = () => {
+                    Swal.fire({
+                        icon: 'error',
+                        title: T.error || 'Error',
+                        text: 'Failed to decode selected image'
+                    });
+                };
                 img.src = e.target.result;
-                openCropModal();
             };
             reader.readAsDataURL(file);
         }
@@ -3682,6 +3979,33 @@
 
         // ─── Smart Account Deletion System ─────────────────────────────────
 
+        function renderGlobalDeletionBanner(data) {
+            const banner = document.getElementById('global-deletion-banner');
+            if (!banner) return;
+            if (!data || !data.pending) {
+                banner.innerHTML = '';
+                return;
+            }
+            const daysRemaining = Number(data.days_remaining) || 0;
+            banner.innerHTML = `
+                <div class="top-alert-banner" role="alert">
+                    <div>
+                        <strong>${escapeHtml(T.deletion_scheduled || 'Account Deletion Scheduled')}</strong>
+                        &mdash; ${escapeHtml((T.deletion_days_remaining || '%d days remaining').replace('%d', daysRemaining))}
+                    </div>
+                    <button type="button" class="bg-gray" onclick="reviewPendingDeletion()">${escapeHtml(T.pending_deletion_banner_action || 'Review / Cancel')}</button>
+                </div>
+            `;
+        }
+
+        function reviewPendingDeletion() {
+            setActiveTab('account', false);
+            setTimeout(() => {
+                const section = document.getElementById('deletion-section');
+                if (section) section.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 50);
+        }
+
         async function loadDeletionStatus() {
             if (!currentUser) return;
             const container = document.getElementById('deletion-section-content');
@@ -3691,12 +4015,14 @@
                 const response = await fetch('/profile/delete/status');
                 const data = await response.json();
 
+                renderGlobalDeletionBanner(data);
                 if (data.pending) {
                     renderDeletionPending(container, data);
                 } else {
                     renderDeletionIdle(container);
                 }
             } catch (error) {
+                renderGlobalDeletionBanner({ pending: false });
                 renderDeletionIdle(container);
             }
         }
@@ -3708,7 +4034,7 @@
                     <button type="button" onclick="openDeleteModal()" class="bg-red">${escapeHtml(T.delete || 'Delete')}</button>
                 </div>
                 <p class="verification-info" style="margin-top: 8px; font-size: 11px; opacity: 0.7;">
-                    ${escapeHtml(T.gilos_id_warning || "Careful, changing your Gilos ID may affect external services tied to it. Deleting your account will permanently erase all of your data and sessions.")}
+                    ${escapeHtml(T.delete_account_warning || T.gilos_id_warning || "Deleting your account will permanently erase all of your data and sessions after a 30-day grace period.")}
                 </p>
             `;
         }
@@ -3831,18 +4157,19 @@
         }
 
         async function doPerformDelete(password) {
-            const submitBtn = document.getElementById('confirm-delete-btn');
-            const originalText = submitBtn.textContent;
-            
             const selectedReason = document.querySelector('input[name="deletion-reason"]:checked');
             if (!selectedReason) return;
             
             const reason = selectedReason.value;
             const customReason = reason === 'other' ? (document.getElementById('deletion-custom-reason')?.value?.trim() || '') : '';
+            const deleteBtn = document.querySelector('#deletion-section-content button');
+            const origText = deleteBtn ? deleteBtn.textContent : '';
 
             try {
-                submitBtn.disabled = true;
-                submitBtn.textContent = '...';
+                if (deleteBtn) {
+                    deleteBtn.disabled = true;
+                    deleteBtn.innerHTML = '<span class="spinner"></span>';
+                }
                 
                 const response = await fetch('/profile/delete', {
                     method: 'POST',
@@ -3855,7 +4182,6 @@
                 const data = await response.json();
                 
                 if (data.success) {
-                    closeDeleteModal();
                     Swal.fire({
                         icon: 'warning',
                         title: T.deletion_request_submitted || 'Deletion Request Submitted',
@@ -3871,8 +4197,6 @@
                             ? (T.deletion_already_pending || 'A deletion request is already pending for this account.')
                             : (data.error || T.failed_delete_account || 'Failed to delete account')
                     });
-                    submitBtn.disabled = false;
-                    submitBtn.textContent = originalText;
                 }
             } catch (error) {
                 Swal.fire({
@@ -3880,8 +4204,11 @@
                     title: T.error || 'Error',
                     text: error.message
                 });
-                submitBtn.disabled = false;
-                submitBtn.textContent = originalText;
+            } finally {
+                if (deleteBtn && document.body.contains(deleteBtn)) {
+                    deleteBtn.disabled = false;
+                    deleteBtn.textContent = origText;
+                }
             }
         }
 
@@ -3982,6 +4309,12 @@
         async function uploadIcon(blob) {
             const formData = new FormData();
             formData.append('icon', blob, 'icon.jpg');
+            const applyBtn = document.getElementById('crop-apply-btn');
+            const origText = applyBtn ? applyBtn.textContent : '';
+            if (applyBtn) {
+                applyBtn.disabled = true;
+                applyBtn.innerHTML = '<span class="spinner"></span>';
+            }
 
             try {
                 const response = await fetch('/profile/icon', {
@@ -3995,7 +4328,7 @@
                 loadAccount();
                 Swal.fire({
                     icon: 'success',
-                    title: 'Updated',
+                    title: T.updated || 'Updated',
                     text: 'Icon updated successfully',
                     timer: 2000,
                     showConfirmButton: false
@@ -4003,9 +4336,14 @@
             } catch (error) {
                 Swal.fire({
                     icon: 'error',
-                    title: 'Upload Failed',
+                    title: T.error || 'Upload Failed',
                     text: error.message
                 });
+            } finally {
+                if (applyBtn) {
+                    applyBtn.disabled = false;
+                    applyBtn.textContent = origText;
+                }
             }
         }
 
@@ -4015,15 +4353,15 @@
             input.value = value;
             
             const hintEl = document.getElementById('username-hint');
+            const msgEl = document.getElementById('username-status-msg') || hintEl;
             const submitBtn = document.getElementById('username-submit');
             const statusIcon = document.getElementById('username-status-icon');
             const currentUsername = document.querySelector('.profile-card-handle').textContent.replace('@', '');
             const defaultHint = T.username_requirements || 'Use 5-30 lowercase letters and numbers only.';
 
             statusIcon.style.display = 'none';
-            hintEl.textContent = defaultHint;
-            hintEl.style.color = 'var(--text-muted)';
-            hintEl.style.opacity = '0.7';
+            msgEl.textContent = defaultHint;
+            msgEl.style.color = 'var(--text-muted)';
             submitBtn.disabled = true;
 
             if (value === currentUsername || value.length === 0) {
@@ -4031,9 +4369,8 @@
             }
 
             if (value.length < 5) {
-                hintEl.textContent = T.username_too_short || 'Username must be at least 5 characters';
-                hintEl.style.color = 'var(--red-500)';
-                hintEl.style.opacity = '1';
+                msgEl.textContent = T.username_too_short || 'Username must be at least 5 characters';
+                msgEl.style.color = 'var(--red-500)';
                 return;
             }
 
@@ -4048,15 +4385,13 @@
                     
                     if (data.available) {
                         statusIcon.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--green-500)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>';
-                        hintEl.textContent = T.username_available || 'Username is available';
-                        hintEl.style.color = 'var(--green-500)';
-                        hintEl.style.opacity = '1';
+                        msgEl.textContent = T.username_available || 'Username is available';
+                        msgEl.style.color = 'var(--green-500)';
                         submitBtn.disabled = false;
                     } else {
                         statusIcon.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--red-500)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>';
-                        hintEl.textContent = data.error || (T.username_taken || 'Username is already taken');
-                        hintEl.style.color = 'var(--red-500)';
-                        hintEl.style.opacity = '1';
+                        msgEl.textContent = data.error || (T.username_taken || 'Username is already taken');
+                        msgEl.style.color = 'var(--red-500)';
                         submitBtn.disabled = true;
                     }
                 } catch (error) {
@@ -4187,21 +4522,66 @@
             });
         }
 
+        // Global modal keyboard & backdrop dismiss handlers
+        [
+            ['client-modal', closeModal],
+            ['totp-modal', closeTOTPModal],
+            ['crop-modal', closeCropModal],
+            ['delete-modal', closeDeleteModal],
+            ['contact-verify-modal', closeContactVerifyModal]
+        ].forEach(([modalId, closeFn]) => {
+            const modalEl = document.getElementById(modalId);
+            if (modalEl) {
+                modalEl.addEventListener('click', (e) => {
+                    if (e.target === e.currentTarget) closeFn();
+                });
+            }
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key !== 'Escape') return;
+            const activeClosers = [
+                ['password-modal', () => closePasswordModal(false)],
+                ['delete-modal', closeDeleteModal],
+                ['crop-modal', closeCropModal],
+                ['totp-modal', closeTOTPModal],
+                ['client-modal', closeModal],
+                ['contact-verify-modal', closeContactVerifyModal]
+            ];
+            for (const [id, fn] of activeClosers) {
+                const el = document.getElementById(id);
+                if (el && el.classList.contains('active')) {
+                    fn();
+                    break;
+                }
+            }
+        });
+
         // Initial load
         initHomePasswordToggles();
-        loadContent();
+        initOAuthTargetBanner();
+        let initialTab = 'account';
+        try {
+            const urlTab = new URLSearchParams(window.location.search).get('tab');
+            const storedTab = sessionStorage.getItem('gilos_home_active_tab');
+            if (['account', 'sessions', 'clients'].includes(urlTab)) initialTab = urlTab;
+            else if (['account', 'sessions', 'clients'].includes(storedTab)) initialTab = storedTab;
+        } catch (e) {}
+        setActiveTab(initialTab, true);
     </script>
     <!-- Crop Modal -->
     <div class="modal" id="crop-modal">
         <div class="modal-content" style="max-width: 600px;">
             <h2 id="crop-modal-title">{{ index .T "crop_photo" }}</h2>
-            <p id="crop-modal-description">{{ index .T "select_profile_photo" }}</p>
-            <div class="crop-container">
-                <img id="crop-image" alt="Crop preview">
+            <div class="modal-form-body">
+                <p id="crop-modal-description">{{ index .T "select_profile_photo" }}</p>
+                <div class="crop-container">
+                    <img id="crop-image" alt="Crop preview">
+                </div>
             </div>
-            <div class="modal-buttons" style="margin-top: 24px;">
+            <div class="modal-buttons">
                 <button type="button" class="bg-gray" onclick="closeCropModal()">{{ index .T "cancel" }}</button>
-                <button type="button" onclick="performCrop()">{{ index .T "apply" }}</button>
+                <button type="button" id="crop-apply-btn" onclick="performCrop()">{{ index .T "apply" }}</button>
             </div>
         </div>
     </div>

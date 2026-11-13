@@ -145,10 +145,14 @@
                     <img src="/static/img/logo.svg" alt="{{ .AppName }}" class="theme-logo-light">
                     <img src="/static/img/logo-dark.svg" alt="{{ .AppName }}" class="theme-logo-dark">
                 </a>
-                <nav class="legal-nav" aria-label="Legal navigation">
+                <nav class="legal-nav" aria-label="{{ index .T "terms" }} / {{ index .T "privacy" }}">
                     <a href="/terms" class="legal-nav-link{{ if eq .PageType "terms" }} active{{ end }}">{{ index .T "terms" }}</a>
                     <a href="/privacy" class="legal-nav-link{{ if eq .PageType "privacy" }} active{{ end }}">{{ index .T "privacy" }}</a>
+                    {{ if .IsLoggedIn }}
                     <a href="/home" class="legal-nav-link">{{ index .T "back_to_home" }}</a>
+                    {{ else }}
+                    <a href="/" class="legal-nav-link">{{ index .T "back_to_sign_in" }}</a>
+                    {{ end }}
                 </nav>
             </div>
 

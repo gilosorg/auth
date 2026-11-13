@@ -226,6 +226,12 @@
     .otp-input:focus {
         outline: none;
         border-color: var(--primary);
+        box-shadow: 0 0 0 3px var(--primary-glow);
+    }
+
+    .otp-input.invalid {
+        border-color: var(--red-500);
+        box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.16);
     }
 
     .button-container {
@@ -334,6 +340,21 @@
         filter: none !important;
     }
 
+    .switch-account-btn:focus-visible {
+        outline: 2px solid var(--primary) !important;
+        outline-offset: 2px !important;
+        border-radius: 4px !important;
+    }
+
+    .header {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+        flex-wrap: wrap;
+        text-align: center;
+    }
+
     button:disabled {
         opacity: 0.5;
         cursor: not-allowed;
@@ -402,7 +423,7 @@
 
                         <div class="button-container form-element">
                             <div class="button-group">
-                                <button type="button" class="bg-gray" onclick="submitDeny()">{{ index .T "deny" }}</button>
+                                <button type="button" class="bg-gray" id="deny-btn" onclick="submitDeny()">{{ index .T "deny" }}</button>
                                 <button type="button" onclick="handleApprove()" id="approve-btn" {{if .HasMissingRequired}}disabled{{end}}>{{ index .T "approve" }}</button>
                             </div>
                         </div>
@@ -425,7 +446,7 @@
                         <div class="button-container form-element">
                             <div class="button-group">
                                 <button type="button" class="bg-gray" onclick="moveToState('consent')">{{ index .T "back" }}</button>
-                                <button type="button" onclick="submitApprove()">{{ index .T "verify" }}</button>
+                                <button type="button" id="totp-verify-btn" onclick="submitApprove()">{{ index .T "verify" }}</button>
                             </div>
                         </div>
                     </form>
@@ -456,6 +477,8 @@
         const missingFields = {{ .MissingFields | json }};
         const hasMissingRequired = {{.HasMissingRequired}};
 
+        const currentUsername = {{ if .User }}{{ .User.Username | json }}{{ else }}""{{ end }};
+
         function escapeHtml(str) {
             return String(str ?? '')
                 .replace(/&/g, '&amp;')
@@ -466,6 +489,23 @@
         }
 
         async function switchAccount() {
+            const promptText = (T.switch_account_confirm || 'Sign out of @%s and sign in with another account?').replace('%s', currentUsername || '');
+            let confirmed = false;
+            if (typeof Swal !== 'undefined') {
+                const res = await Swal.fire({
+                    title: T.switch_account || 'Switch account',
+                    text: promptText,
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonText: T.switch_account || 'Switch account',
+                    cancelButtonText: T.cancel || 'Cancel'
+                });
+                confirmed = !!res.isConfirmed;
+            } else {
+                confirmed = confirm(promptText);
+            }
+            if (!confirmed) return;
+
             try {
                 await fetch('/auth/logout', {
                     method: 'POST',
@@ -483,7 +523,9 @@
             const consentForm = document.getElementById('consent-form');
             const totpForm = document.getElementById('totp-form');
             const header = document.getElementById('auth-header');
-            document.getElementById('message').innerText = '';
+            const msgEl = document.getElementById('message');
+            if (msgEl) msgEl.innerText = '';
+            document.querySelectorAll('.otp-input.invalid').forEach(el => el.classList.remove('invalid'));
 
             if (state === 'totp') {
                 consentForm.classList.add('hidden');
@@ -494,10 +536,19 @@
                     if (firstInput) firstInput.focus();
                 }, 50);
             } else {
+                const errAlert = document.getElementById('error-alert');
+                if (errAlert) errAlert.style.display = 'none';
                 consentForm.classList.remove('hidden');
                 totpForm.classList.add('hidden');
                 header.innerText = T.authorize || 'Authorize';
             }
+        }
+
+        function setConsentSubmitting(isSubmitting) {
+            ['approve-btn', 'deny-btn', 'totp-verify-btn'].forEach(id => {
+                const btn = document.getElementById(id);
+                if (btn) btn.disabled = isSubmitting || (id === 'approve-btn' && hasMissingRequired);
+            });
         }
 
         function handleApprove() {
@@ -514,20 +565,28 @@
             let code = "";
             
             if (mfaEnabled) {
-                totpInputs.forEach(input => code += input.value);
+                totpInputs.forEach(input => {
+                    input.classList.remove('invalid');
+                    code += input.value;
+                });
                 if (!/^\d{6}$/.test(code)) {
+                    totpInputs.forEach(input => {
+                        if (!/^\d$/.test(input.value)) input.classList.add('invalid');
+                    });
                     document.getElementById('message').innerText = T.enter_code || T.enter_the_code || "Enter the 6-digit code";
                     return;
                 }
                 document.getElementById('final-totp-code').value = code;
             }
 
+            setConsentSubmitting(true);
             document.getElementById('final-approve').value = "true";
             finalForm.submit();
         }
 
         function submitDeny() {
             const finalForm = document.getElementById('final-form');
+            setConsentSubmitting(true);
             document.getElementById('final-approve').value = "false";
             finalForm.submit();
         }
@@ -537,11 +596,15 @@
             const inputs = document.querySelectorAll('.otp-input');
             inputs.forEach((input, index) => {
                 input.addEventListener('input', (e) => {
+                    input.classList.remove('invalid');
                     const clean = (e.target.value || '').replace(/[^0-9]/g, '');
                     if (clean.length > 1) {
                         const chars = clean.slice(0, inputs.length - index).split('');
                         chars.forEach((ch, offset) => {
-                            if (inputs[index + offset]) inputs[index + offset].value = ch;
+                            if (inputs[index + offset]) {
+                                inputs[index + offset].value = ch;
+                                inputs[index + offset].classList.remove('invalid');
+                            }
                         });
                         const nextIdx = Math.min(index + chars.length, inputs.length - 1);
                         inputs[nextIdx].focus();
@@ -555,6 +618,8 @@
 
                 input.addEventListener('keydown', (e) => {
                     if (e.key === 'Backspace' && !e.target.value && index > 0) {
+                        inputs[index - 1].value = '';
+                        inputs[index - 1].classList.remove('invalid');
                         inputs[index - 1].focus();
                     }
                     if (e.key === 'Enter') {
@@ -595,7 +660,8 @@
             const warningDiv = document.getElementById('missing-warning');
             if (!warningDiv || !hasMissingRequired) return;
             const fieldsList = Array.isArray(missingFields) ? missingFields.map(escapeHtml).join(', ') : '';
-            const profileLink = `<a href="/home">${escapeHtml(T.profile_settings || 'profile settings')}</a>`;
+            const target = encodeURIComponent(window.location.pathname + window.location.search);
+            const profileLink = `<a href="/home?target=${target}">${escapeHtml(T.profile_settings || 'profile settings')}</a>`;
             const template = escapeHtml(T.scope_data_missing_warning || 'This service requires your %fields%. Set them in your %link%.');
             warningDiv.innerHTML = template.replace('%fields%', '<strong>' + fieldsList + '</strong>').replace('%link%', profileLink);
         }

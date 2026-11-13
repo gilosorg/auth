@@ -183,7 +183,12 @@
         .input-group { margin-bottom: 16px; }
         .input-group label { display: block; font-weight: 500; color: var(--doc-text); margin-bottom: 6px; font-size: 0.9rem; }
         .input-group input { width: 100%; padding: 12px 16px; border: 1px solid var(--doc-border); border-radius: 8px; background: var(--doc-content-bg); color: var(--doc-text); font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; }
-        .input-group input:focus { outline: none; border-color: var(--doc-primary); }
+        .input-group input:focus { outline: none; border-color: var(--doc-primary); box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12); }
+        button:focus-visible, a:focus-visible, select:focus-visible, input:focus-visible { outline: 2px solid var(--doc-primary); outline-offset: 2px; }
+        .docs-toast { position: fixed; bottom: 24px; right: 24px; z-index: 9999; padding: 12px 18px; border-radius: 10px; background: var(--doc-primary); color: var(--doc-gradient-contrast); font-size: 0.875rem; font-weight: 500; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2); opacity: 0; transform: translateY(10px); pointer-events: none; transition: opacity 0.2s ease, transform 0.2s ease; }
+        .docs-toast.visible { opacity: 1; transform: translateY(0); }
+        .docs-toast.error { background: #EF4444; color: #FFFFFF; }
+        .lang-select-compact { margin-top: 8px; width: 100%; padding: 7px 10px; border-radius: 8px; border: 1px solid var(--doc-border); background: var(--doc-content-bg); color: var(--doc-text-secondary); font-size: 0.8rem; font-family: inherit; cursor: pointer; }
         .response-preview { background: var(--doc-code-bg); border-radius: 10px; padding: 20px; margin-top: 16px; }
         .response-preview pre { margin: 0; background: none; border: none; padding: 0; }
         .hidden { display: none !important; }
@@ -262,6 +267,13 @@
                     <span id="docsThemeToggleIcon" aria-hidden="true"></span>
                     <span id="docsThemeToggleLabel">{{ index .T "theme_system" }}</span>
                 </button>
+                {{ if .Languages }}
+                <select class="lang-select-compact" aria-label="Language selector" onchange="setDocsLanguage(this.value)">
+                    {{ range .Languages }}
+                    <option value="{{ .Code }}" {{ if eq .Code $.Lang }}selected{{ end }}>{{ .Name }}</option>
+                    {{ end }}
+                </select>
+                {{ end }}
             </div>
         </aside>
 
@@ -560,7 +572,7 @@ Authorization: Bearer <span class="var-access-token">YOUR_ACCESS_TOKEN</span></c
   "preferred_username": "johndoe",
   "given_name": "John",
   "family_name": "Doe",
-  "picture": "https://auth.gilos.org/uploads/icons/avatar.png",
+  "picture": "https://auth.gilos.org/media/user/icon/avatar.png",
   "email": "john@example.com",
   "email_verified": true
 }</code></pre>
@@ -654,9 +666,13 @@ Authorization: Bearer <span class="var-access-token">YOUR_ACCESS_TOKEN</span></c
                             <thead><tr><th>Scope</th><th>Description</th><th>Returns</th></tr></thead>
                             <tbody>
                                 <tr><td><code>openid</code></td><td>Enable OpenID Connect (issues signed <code>id_token</code>)</td><td><code>sub</code>, <code>id_token</code></td></tr>
-                                <tr><td><code>profile</code></td><td>User's profile info (name, username, picture)</td><td><code>preferred_username, given_name, family_name, picture</code></td></tr>
+                                <tr><td><code>profile</code></td><td>User's profile info (name, username, picture)</td><td><code>preferred_username, given_name, middle_name, family_name, nickname, picture</code></td></tr>
                                 <tr><td><code>email</code></td><td>User's email address and verification status</td><td><code>email, email_verified</code></td></tr>
                                 <tr><td><code>phone</code></td><td>User's phone number and verification status</td><td><code>phone_number, phone_number_verified</code></td></tr>
+                                <tr><td><code>offline_access</code></td><td>Issue a rotating <code>refresh_token</code> for offline sessions</td><td><code>refresh_token</code></td></tr>
+                                <tr><td><code>user_sessions</code></td><td>View and revoke active client/user sessions</td><td><code>/api/sessions</code> access</td></tr>
+                                <tr><td><code>user_totps</code></td><td>Synchronize authenticator entries for trusted apps</td><td><code>/api/totps</code> access</td></tr>
+                                <tr><td><code>user_manage_account</code></td><td>Manage profile details, contacts, and security settings</td><td><code>/api/profile/*</code> access</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -665,11 +681,11 @@ Authorization: Bearer <span class="var-access-token">YOUR_ACCESS_TOKEN</span></c
                 <!-- Errors -->
                 <section id="errors">
                     <h2>Error Handling</h2>
-                    <p>API errors return JSON with an <code>error</code> field:</p>
+                    <p>API errors return JSON with an <code>error</code> and optional <code>error_description</code> field:</p>
 
 <pre><code>{
   "error": "invalid_grant",
-  "message": "Invalid or expired authorization code"
+  "error_description": "Invalid or expired authorization code"
 }</code></pre>
 
                     <div class="table-wrapper">
@@ -719,9 +735,10 @@ type Config struct {
 }
 
 // DefaultConfig returns the default configuration for Gilos Auth.
+// Leave ClientSecret empty when building a public client (SPA, mobile, desktop) using PKCE.
 var DefaultConfig = Config{
 	ClientID:     os.Getenv("GILOS_CLIENT_ID"),
-	ClientSecret: os.Getenv("GILOS_CLIENT_SECRET"),
+	ClientSecret: os.Getenv("GILOS_CLIENT_SECRET"), // Optional for public PKCE clients
 	RedirectURI:  "https://yourapp.com/callback",
 	Scopes:       "openid profile email",
 	AuthURL:      "{{ if .IssuerURL }}{{ .IssuerURL }}{{ else }}https://auth.gilos.org{{ end }}/o/authorize",
@@ -793,7 +810,9 @@ func ExchangeCode(code, codeVerifier string) (*TokenResponse, error) {
 	data.Set("code", code)
 	data.Set("redirect_uri", cfg.RedirectURI)
 	data.Set("client_id", cfg.ClientID)
-	data.Set("client_secret", cfg.ClientSecret)
+	if cfg.ClientSecret != "" {
+		data.Set("client_secret", cfg.ClientSecret)
+	}
 	data.Set("code_verifier", codeVerifier) // PKCE (OAuth 2.1)
 
 	resp, err := httpClient.Post(cfg.TokenURL, "application/x-www-form-urlencoded", strings.NewReader(data.Encode()))
@@ -820,7 +839,9 @@ func RefreshToken(refreshToken string) (*TokenResponse, error) {
 	data.Set("grant_type", "refresh_token")
 	data.Set("refresh_token", refreshToken)
 	data.Set("client_id", cfg.ClientID)
-	data.Set("client_secret", cfg.ClientSecret)
+	if cfg.ClientSecret != "" {
+		data.Set("client_secret", cfg.ClientSecret)
+	}
 
 	resp, err := httpClient.Post(cfg.TokenURL, "application/x-www-form-urlencoded", strings.NewReader(data.Encode()))
 	if err != nil {
@@ -982,9 +1003,11 @@ func CallbackHandler(onSuccess AuthCallback) http.HandlerFunc {
                     <p>&copy; {{ if .Year }}{{ .Year }}{{ else }}2026{{ end }} {{ index .T "company_name_llc" }}.
                         <a href="/terms" style="color: var(--doc-text-secondary); margin: 0 8px;">{{ index .T "terms" }}</a>
                         <a href="/privacy" style="color: var(--doc-text-secondary); margin: 0 8px;">{{ index .T "privacy" }}</a>
+                        <a href="/home" style="color: var(--doc-text-secondary); margin: 0 8px;">{{ index .T "account" }}</a>
                         <a href="https://gilos.org/contact" target="_blank" rel="noopener noreferrer" style="color: var(--doc-text-secondary); margin: 0 8px;">{{ index .T "help" }}</a>
                     </p>
                 </footer>
+                <div id="docsToast" class="docs-toast" role="status" aria-live="polite"></div>
             </div>
         </main>
     </div>
@@ -1444,8 +1467,30 @@ func CallbackHandler(onSuccess AuthCallback) http.HandlerFunc {
             }, 3000);
         }
 
+        let docsToastTimer = null;
+        function showDocsToast(message, isError = false) {
+            const toast = document.getElementById('docsToast');
+            if (!toast) return;
+            toast.textContent = message;
+            toast.classList.toggle('error', !!isError);
+            toast.classList.add('visible');
+            if (docsToastTimer) clearTimeout(docsToastTimer);
+            docsToastTimer = setTimeout(() => toast.classList.remove('visible'), 3000);
+        }
+
+        function setDocsLanguage(code) {
+            const expires = new Date();
+            expires.setFullYear(expires.getFullYear() + 1);
+            const secure = window.location.protocol === 'https:' ? '; Secure' : '';
+            document.cookie = `lang=${encodeURIComponent(code)};path=/;expires=${expires.toUTCString()};SameSite=Lax${secure}`;
+            window.location.href = window.location.pathname + window.location.search + window.location.hash;
+        }
+
         async function openAuthUrl() {
-            if (!currentClient) return alert('Please select a client first');
+            if (!currentClient) {
+                showDocsToast('Please select a client first', true);
+                return;
+            }
 
             oauthState = randomBase64Url(16);
             pkceVerifier = randomBase64Url(32);
@@ -1491,8 +1536,22 @@ func CallbackHandler(onSuccess AuthCallback) http.HandlerFunc {
                     btn.style.background = '';
                     btn.style.color = '';
                 }, 2000);
+            }).catch(() => {
+                showDocsToast('Failed to copy to clipboard', true);
             });
         }
+
+        document.querySelectorAll('.docs-content section pre').forEach(pre => {
+            if (pre.closest('.response-preview')) return;
+            if (!pre.querySelector('.copy-btn') && pre.querySelector('code')) {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'copy-btn';
+                btn.textContent = 'Copy';
+                btn.onclick = () => copyCode(btn);
+                pre.appendChild(btn);
+            }
+        });
 
         // Active link highlighting
         const sections = document.querySelectorAll('section[id]');

@@ -72,6 +72,13 @@
         background: var(--slate-100) !important;
     }
 
+    .lang-switcher .lang-toggle:focus-visible,
+    .theme-toggle-btn:focus-visible,
+    .lang-option:focus-visible {
+        outline: 2px solid var(--primary) !important;
+        outline-offset: 2px !important;
+    }
+
     .lang-switcher.open .lang-toggle {
         color: var(--text) !important;
         background: var(--slate-100) !important;
@@ -131,11 +138,16 @@
         display: flex;
         align-items: center;
         gap: 10px;
+        width: 100%;
         padding: 10px 12px;
         cursor: pointer;
         color: var(--text);
         font-size: 13px;
+        font-family: inherit;
+        text-align: left;
         text-decoration: none;
+        background: transparent;
+        border: none;
         border-radius: 8px;
         transition: all 0.15s ease;
     }
@@ -265,24 +277,24 @@
             </button>
             <!-- Language Switcher - outside footer-links for mobile ordering -->
             <div class="lang-switcher" id="lang-switcher">
-                <button class="lang-toggle" onclick="toggleLangDropdown(event)" type="button" aria-haspopup="true" aria-expanded="false">
+                <button class="lang-toggle" onclick="toggleLangDropdown(event)" type="button" aria-haspopup="menu" aria-expanded="false">
                     <img class="lang-flag" src="{{ if .CurrentLanguage }}{{ .CurrentLanguage.Flag }}{{ else }}/static/img/i18n/gb.svg{{ end }}" alt="">
                     <span class="lang-name">{{ if .CurrentLanguage }}{{ .CurrentLanguage.Name }}{{ else }}English{{ end }}</span>
                     <svg class="lang-arrow" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                         <polyline points="6 9 12 15 18 9"></polyline>
                     </svg>
                 </button>
-                <div class="lang-dropdown" id="lang-dropdown">
+                <div class="lang-dropdown" id="lang-dropdown" role="menu">
                     {{ range .Languages }}
-                    <a href="#" class="lang-option{{ if eq .Code $.Lang }} active{{ end }}" onclick="setLanguage('{{ .Code }}'); return false;">
+                    <button type="button" role="menuitem" class="lang-option{{ if eq .Code $.Lang }} active{{ end }}" onclick="setLanguage('{{ .Code }}')">
                         <img src="{{ .Flag }}" alt="">
                         <span>{{ .Name }}</span>
-                    </a>
+                    </button>
                     {{ else }}
-                    <a href="#" class="lang-option" onclick="setLanguage('en'); return false;">
+                    <button type="button" role="menuitem" class="lang-option" onclick="setLanguage('en')">
                         <img src="/static/img/i18n/gb.svg" alt="">
                         <span>English</span>
-                    </a>
+                    </button>
                     {{ end }}
                 </div>
             </div>
@@ -338,9 +350,21 @@
         const isOpen = switcher.classList.toggle('open');
         const btn = switcher.querySelector('.lang-toggle');
         if (btn) btn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+        if (isOpen) {
+            const items = Array.from(switcher.querySelectorAll('.lang-option'));
+            const activeItem = items.find(el => el.classList.contains('active')) || items[0];
+            if (activeItem) activeItem.focus();
+        }
     }
 
     function setLanguage(code) {
+        try {
+            const activeTab = document.querySelector('.tabs .tab.active[data-tab]');
+            if (activeTab) {
+                sessionStorage.setItem('gilos_home_active_tab', activeTab.dataset.tab);
+            }
+        } catch (e) {}
+
         // Set cookie for 1 year
         const expires = new Date();
         expires.setFullYear(expires.getFullYear() + 1);
@@ -360,15 +384,33 @@
         }
     });
 
-    // Close dropdown when pressing Escape
+    // Keyboard navigation for language dropdown
     document.addEventListener('keydown', function(event) {
+        const switcher = document.getElementById('lang-switcher');
+        if (!switcher || !switcher.classList.contains('open')) return;
+
         if (event.key === 'Escape') {
-            const switcher = document.getElementById('lang-switcher');
-            if (switcher) {
-                switcher.classList.remove('open');
-                const btn = switcher.querySelector('.lang-toggle');
-                if (btn) btn.setAttribute('aria-expanded', 'false');
+            switcher.classList.remove('open');
+            const btn = switcher.querySelector('.lang-toggle');
+            if (btn) {
+                btn.setAttribute('aria-expanded', 'false');
+                btn.focus();
             }
+            return;
+        }
+
+        if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+            const items = Array.from(switcher.querySelectorAll('.lang-option'));
+            if (items.length === 0) return;
+            event.preventDefault();
+            const currentIndex = items.indexOf(document.activeElement);
+            let nextIndex;
+            if (event.key === 'ArrowDown') {
+                nextIndex = currentIndex >= 0 ? (currentIndex + 1) % items.length : 0;
+            } else {
+                nextIndex = currentIndex >= 0 ? (currentIndex - 1 + items.length) % items.length : items.length - 1;
+            }
+            items[nextIndex].focus();
         }
     });
 </script>

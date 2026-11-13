@@ -154,3 +154,12 @@ func GetTranslations(lang string) map[string]string {
 	return result
 }
 
+// ScopeDescriptionKey maps an OAuth/OIDC scope identifier to its i18n description key.
+func ScopeDescriptionKey(scope string) string {
+	normalized := strings.TrimPrefix(scope, "user_")
+	if normalized == "profile" {
+		normalized = "basic_info"
+	}
+	return "access_" + normalized
+}
+
