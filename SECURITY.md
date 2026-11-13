@@ -8,7 +8,7 @@ We take the security of this project seriously. If you discover a security vulne
 
 ### How to Report
 
-Email your findings to: **info@gilos.email**
+Email your findings to: **salom@mail.gilos.org**
 
 Please include:
 - Description of the vulnerability
