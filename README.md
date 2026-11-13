@@ -87,6 +87,8 @@ All configuration is via environment variables (or `.env` file). See [`.env.exam
 | `COOKIE_DOMAIN` | Cookie domain for cross-subdomain | _(empty)_ |
 | `ENCRYPTION_KEY` | 64-char hex for AES-256-GCM | _(required)_ |
 | `DB_PATH` | SQLite database path | `database/auth.db` |
+| `RESEND_API_KEY` | Resend API key for transactional email | _(empty)_ |
+| `RESEND_FROM_EMAIL` | Verified sender address (`Name <email>`) | _(empty)_ |
 
 ## API Endpoints
 

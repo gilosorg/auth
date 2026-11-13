@@ -34,8 +34,8 @@ var (
 
 // Email API configuration
 var (
-	EmailAPIEndpoint string
-	EmailAPIToken    string
+	ResendAPIKey    string
+	ResendFromEmail string
 )
 
 // Server configuration
@@ -75,9 +75,9 @@ func Init() {
 	EskizPassword = getEnv("ESKIZ_PASSWORD", "")
 	EskizFromName = getEnv("ESKIZ_FROM_NAME", "")
 
-	// Email API
-	EmailAPIEndpoint = getEnv("EMAIL_API_ENDPOINT", "")
-	EmailAPIToken = getEnv("EMAIL_API_TOKEN", "")
+	// Email API (Resend)
+	ResendAPIKey = getEnv("RESEND_API_KEY", "")
+	ResendFromEmail = getEnv("RESEND_FROM_EMAIL", "")
 
 	// Server
 	Port = getEnv("PORT", "5001")
