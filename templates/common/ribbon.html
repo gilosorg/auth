@@ -1,119 +1,104 @@
 {{define "ribbon"}}
-<div id="app-ribbon" class="app-ribbon">
+<div id="app-ribbon" class="app-ribbon" role="region" aria-label="{{ index .T "gilos_authenticator" }}">
     <div class="ribbon-inner">
-        <div class="ribbon-content">
+        <div class="ribbon-brand">
             <img src="/static/img/app.svg" alt="{{ index .T "gilos_authenticator" }}" class="ribbon-icon">
             <div class="ribbon-text">
-                <div class="ribbon-title">{{ index .T "gilos_authenticator" }}</div>
-                <div class="ribbon-desc">{{ index .T "faster_access_better_security" }}</div>
+                <span class="ribbon-title">{{ index .T "gilos_authenticator" }}</span>
+                <span class="ribbon-subtitle">{{ index .T "faster_access_better_security" }}</span>
             </div>
         </div>
-
         <div class="ribbon-actions">
-            <a href="https://play.google.com/store/apps/details?id=org.gilos.auth" class="ribbon-cta" target="_blank" rel="noopener noreferrer">{{ index .T "get_app" }}</a>
-            
-            <button type="button" class="ribbon-close" aria-label="{{ index .T "close" }}" onclick="dismissAppRibbon(this)">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M18 6L6 18M6 6l12 12"/>
-                </svg>
+            <a href="https://play.google.com/store/apps/details?id=org.gilos.auth" class="ribbon-cta" target="_blank" rel="noopener noreferrer">
+                <span>{{ index .T "get_app" }}</span>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7"/><path d="M7 7h10v10"/></svg>
+            </a>
+            <button type="button" class="ribbon-close" onclick="dismissAppRibbon()" aria-label="{{ index .T "close" }}">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
             </button>
         </div>
     </div>
 </div>
 <script>
-    (function() {
-        try {
-            if (sessionStorage.getItem('gilos_ribbon_dismissed') === '1') {
-                var el = document.getElementById('app-ribbon');
-                if (el) el.remove();
-            }
-        } catch (e) {}
+    (function () {
+        if (sessionStorage.getItem('gilos_ribbon_dismissed') === '1') {
+            var r = document.getElementById('app-ribbon');
+            if (r) r.style.display = 'none';
+        }
     })();
-    function dismissAppRibbon(btn) {
-        try { sessionStorage.setItem('gilos_ribbon_dismissed', '1'); } catch (e) {}
-        var el = btn ? btn.closest('#app-ribbon') : document.getElementById('app-ribbon');
-        if (el) el.remove();
+    function dismissAppRibbon() {
+        var r = document.getElementById('app-ribbon');
+        if (r) {
+            r.style.opacity = '0';
+            r.style.transform = 'translateY(-6px)';
+            setTimeout(function () { r.style.display = 'none'; }, 180);
+        }
+        sessionStorage.setItem('gilos_ribbon_dismissed', '1');
     }
 </script>
-
 <style>
-    /* RIBBON STYLES 
-       Scoped specifically to avoid conflict with auth-container 
-    */
-
     .app-ribbon {
+        width: 100%;
         position: sticky;
         top: 0;
-        left: 0;
-        right: 0;
-        z-index: 9999;
-        /* Glassmorphism card style */
-        background: var(--card-bg); 
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
-        color: var(--text);
-        /* Very slim vertical padding */
-        padding: 8px 16px; 
-        /* Crisp border in both light & dark themes */
-        border-bottom: 1px solid var(--slate-200); 
-        box-shadow: var(--card-shadow);
-        animation: slideDown 0.4s ease-out;
+        z-index: 40;
+        background: rgba(255, 255, 255, 0.85);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border-bottom: 1px solid var(--border-subtle);
+        transition: opacity 0.18s ease, transform 0.18s ease;
     }
 
-    /* Inner container for desktop max-width consistency */
+    :root[data-theme="dark"] .app-ribbon {
+        background: rgba(22, 22, 25, 0.85);
+    }
+
     .ribbon-inner {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 10px 24px;
         display: flex;
         align-items: center;
         justify-content: space-between;
-        width: 100%;
-        max-width: 1200px;
-        margin: 0 auto;
+        gap: 16px;
     }
 
-    /* Desktop: more side padding for professional look */
-    @media (min-width: 768px) {
-        .app-ribbon {
-            padding: 8px 32px;
-        }
-    }
-
-    .ribbon-content {
+    .ribbon-brand {
         display: flex;
         align-items: center;
         gap: 12px;
-        overflow: hidden;
+        min-width: 0;
     }
 
     .ribbon-icon {
-        width: 32px;
-        height: 32px;
-        object-fit: cover;
+        width: 30px;
+        height: 30px;
+        border-radius: 8px;
         flex-shrink: 0;
+        object-fit: cover;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
     }
 
     .ribbon-text {
         display: flex;
-        flex-direction: column;
-        justify-content: center;
-        line-height: 1.1; /* Tight line height for compactness */
+        align-items: baseline;
+        gap: 8px;
+        flex-wrap: wrap;
+        min-width: 0;
     }
 
     .ribbon-title {
-        font-size: 13px;
+        font-size: 0.875rem;
         font-weight: 600;
         color: var(--text);
+        letter-spacing: -0.01em;
     }
 
-    .ribbon-desc {
-        font-size: 11px;
-        opacity: 0.7; /* Uses opacity so it works on dark/light automatically */
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        max-width: 300px;
+    .ribbon-subtitle {
+        font-size: 0.825rem;
+        color: var(--text-muted);
     }
 
-    /* RIGHT SIDE ACTIONS */
     .ribbon-actions {
         display: flex;
         align-items: center;
@@ -121,64 +106,53 @@
         flex-shrink: 0;
     }
 
-    /* GET APP BUTTON */
     .ribbon-cta {
         display: inline-flex;
         align-items: center;
-        justify-content: center;
-        background: var(--primary-gradient);
+        gap: 5px;
+        background: var(--primary);
         color: var(--primary-contrast);
-        text-decoration: none;
-        font-size: 12px;
+        padding: 6px 13px;
+        border-radius: var(--radius-pill);
+        font-size: 0.8rem;
         font-weight: 600;
-        padding: 6px 14px;
-        border-radius: 99px;
-        transition: transform 0.2s ease, filter 0.2s ease, box-shadow 0.2s ease;
-        white-space: nowrap;
+        text-decoration: none;
+        transition: background-color 0.16s ease, transform 0.12s ease;
     }
 
     .ribbon-cta:hover {
-        filter: brightness(1.1);
+        background: var(--primary-gradient-hover);
         transform: translateY(-1px);
-        box-shadow: 0 4px 12px var(--primary-glow);
     }
 
-    /* CLOSE BUTTON FIXES */
-    /* We use !important here to override the global 'button' styles in your main file 
-       which set opacity: 0 and transform: translateY(10px) */
     .ribbon-close {
-        background: none !important;
-        border: none !important;
-        padding: 6px !important;
-        cursor: pointer;
-        color: var(--text-secondary) !important;
-        opacity: 1 !important;
-        transform: none !important;
-        display: flex;
+        width: 28px;
+        height: 28px;
+        padding: 0;
+        margin: 0;
+        border-radius: 50%;
+        border: none;
+        background: transparent;
+        color: var(--text-muted);
+        display: inline-flex;
         align-items: center;
         justify-content: center;
-        border-radius: 6px;
-        transition: color 0.2s ease, opacity 0.2s ease;
-        margin: 0 !important;
-        width: auto !important;
-        box-shadow: none !important;
+        cursor: pointer;
+        transition: background-color 0.15s ease, color 0.15s ease;
     }
 
-    /* HOVER STATE - No background, just color change */
     .ribbon-close:hover {
-        color: var(--text) !important;
-        background: none !important;
-        box-shadow: none !important;
-        opacity: 1 !important;
+        background: var(--surface-subtle);
+        color: var(--text);
     }
 
-    @media (max-width: 480px) {
-        .ribbon-desc { display: none; } /* Hide text on mobile to save space */
-    }
-
-    @keyframes slideDown {
-        from { transform: translateY(-100%); }
-        to   { transform: translateY(0); }
+    @media (max-width: 600px) {
+        .ribbon-inner {
+            padding: 10px 16px;
+        }
+        .ribbon-subtitle {
+            display: none;
+        }
     }
 </style>
 {{end}}

@@ -1,641 +1,739 @@
 <!DOCTYPE html>
 <html lang="{{ .Lang }}">
-
 {{ template "common/head" . }}
-
 <style>
-    main {
+    .oauth-stage {
         flex: 1;
+        width: 100%;
         display: flex;
+        flex-direction: column;
         align-items: center;
         justify-content: center;
+        padding: 28px 16px 40px;
     }
 
-    .auth-container {
-        transition: height 0.3s ease;
+    .oauth-card {
         width: 100%;
-        max-width: 400px;
-    }
-
-    .content-wrapper {
-        padding: 24px;
+        max-width: 480px;
         background: var(--card-bg);
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
-        border-radius: 16px;
-        border: none;
+        border: 1px solid var(--card-border);
+        border-radius: 24px;
         box-shadow: var(--card-shadow);
-        transition: box-shadow 0.3s ease, z-index 0.3s ease;
-        position: relative;
-        z-index: 10;
+        padding: 32px 28px 26px;
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
     }
 
-    .content-wrapper:hover {
-        box-shadow: var(--card-shadow-hover);
+    .oauth-top {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        gap: 10px;
     }
 
-    .alert {
-        padding: 12px;
-        margin-bottom: 16px;
-        border-radius: 8px;
-        font-size: 14px;
+    .oauth-logo {
+        height: 34px;
+        width: auto;
     }
 
-    .alert.error {
-        background-color: var(--red-50);
-        border-left: 4px solid var(--red-500);
+    .oauth-top h1 {
+        font-size: 1.4rem;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        color: var(--text);
+        line-height: 1.25;
+    }
+
+    .oauth-app-card {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 14px 16px;
+        border-radius: 16px;
+        background: var(--surface-subtle);
+        border: 1px solid var(--border-subtle);
+    }
+
+    .oauth-app-badge {
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
+        background: var(--primary);
+        color: var(--primary-contrast);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.15rem;
+        font-weight: 700;
+        flex-shrink: 0;
+        box-shadow: 0 2px 8px var(--primary-glow);
+    }
+
+    .oauth-app-info {
+        min-width: 0;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    .oauth-app-name {
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--text);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .oauth-app-redirect {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 0.78rem;
+        color: var(--text-muted);
+        overflow: hidden;
+    }
+
+    .oauth-redirect-host {
+        color: var(--text-secondary);
+        font-weight: 600;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .oauth-wants-text {
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+        line-height: 1.5;
+        text-align: left;
+    }
+
+    .scope-list {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .scope-card {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        padding: 12px 14px;
+        border-radius: 14px;
+        border: 1px solid var(--border-default);
+        background: var(--surface-elevated);
+        transition: border-color 0.15s ease;
+    }
+
+    .scope-card.is-missing {
+        border-color: rgba(224, 36, 36, 0.35);
+        background: var(--red-50);
+    }
+
+    .scope-icon {
+        width: 34px;
+        height: 34px;
+        border-radius: 10px;
+        background: var(--surface-subtle);
+        color: var(--text);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        margin-top: 1px;
+    }
+
+    .scope-card.is-missing .scope-icon {
+        background: rgba(224, 36, 36, 0.12);
+        color: var(--red-600);
+    }
+
+    .scope-content {
+        flex: 1;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .scope-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    .scope-desc {
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: var(--text);
+        line-height: 1.4;
+    }
+
+    .scope-value {
+        display: inline-flex;
+        align-items: center;
+        align-self: flex-start;
+        padding: 2px 8px;
+        border-radius: 6px;
+        background: var(--surface-subtle);
+        color: var(--text-secondary);
+        font-size: 0.78rem;
+        font-weight: 500;
+        max-width: 100%;
+        word-break: break-all;
+    }
+
+    .scope-missing-msg {
+        font-size: 0.78rem;
+        font-weight: 600;
         color: var(--red-700);
     }
 
-    .header {
+    .alert-box {
         display: flex;
-        flex-direction: row;
-        align-items: center;
-        justify-content: flex-start;
-        margin-bottom: 16px;
-        gap: 14px;
+        align-items: flex-start;
+        gap: 10px;
+        padding: 12px 14px;
+        border-radius: 12px;
+        font-size: 0.85rem;
+        font-weight: 500;
+        line-height: 1.45;
     }
 
-    .header img {
-        height: 44px;
-        width: 44px;
-        object-fit: contain;
-        flex-shrink: 0;
+    .alert-box--error {
+        background: var(--red-50);
+        color: var(--red-700);
+        border: 1px solid rgba(224, 36, 36, 0.22);
     }
 
-    .header h1 {
-        font-size: 20px;
-        font-weight: 600;
-        color: var(--text);
-        margin: 0;
-        line-height: 1.3;
+    .alert-box--warning {
+        background: var(--amber-50);
+        color: var(--amber-700);
+        border: 1px solid rgba(245, 158, 11, 0.28);
     }
 
-    .form-wrapper {
-        position: relative;
-        min-height: 50px;
+    .alert-box a {
+        color: inherit;
+        font-weight: 700;
+        text-decoration: underline;
+    }
+
+    .message-container {
+        display: none;
+        align-items: flex-start;
+        gap: 10px;
+        padding: 11px 14px;
+        border-radius: 12px;
+        font-size: 0.86rem;
+        font-weight: 500;
+    }
+
+    .message-container.is-visible {
+        display: flex;
+    }
+
+    .message-container.is-error {
+        background: var(--red-50);
+        color: var(--red-700);
+        border: 1px solid rgba(224, 36, 36, 0.22);
     }
 
     .form-container {
         display: flex;
         flex-direction: column;
         gap: 16px;
-        opacity: 1;
-        position: relative;
-        transition: opacity 0.2s ease;
     }
 
-    .form-container.hidden {
-        opacity: 0;
-        position: absolute;
-        pointer-events: none;
-        display: none;
+    .hidden {
+        display: none !important;
     }
 
-    .form-element {
-        opacity: 0;
-        transform: translateY(10px);
-        transition: opacity 0.3s ease, transform 0.3s ease;
-    }
-
-    .form-container:not(.hidden) .form-element {
-        opacity: 1;
-        transform: translateY(0);
-    }
-
-    .form-container:not(.hidden) .form-element:nth-child(1) { transition-delay: 0.1s; }
-    .form-container:not(.hidden) .form-element:nth-child(2) { transition-delay: 0.15s; }
-    .form-container:not(.hidden) .form-element:nth-child(3) { transition-delay: 0.2s; }
-
-    .scopes-list {
-        margin: 16px 0;
-        padding: 0;
-        list-style: none;
-        background: var(--slate-100);
-        border-radius: 12px;
-        padding: 12px;
-    }
-
-    .scopes-list li {
-        font-size: 13px;
-        color: var(--text);
-        margin-bottom: 8px;
-        display: flex;
-        align-items: flex-start;
+    .oauth-actions-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
         gap: 10px;
     }
 
-    .scopes-list li:last-child { margin-bottom: 0; }
-
-    .scopes-list li svg {
-        width: 16px;
-        height: 16px;
-        flex-shrink: 0;
-        color: var(--primary);
-        margin-top: 2px;
+    .oauth-actions-stack {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
     }
 
-    .scopes-list li.missing {
-        color: var(--red-700);
-    }
-
-    .scopes-list li.missing svg {
-        color: var(--red-500);
-    }
-
-    .scope-value {
-        font-size: 12px;
+    .oauth-hint {
+        font-size: 0.76rem;
         color: var(--text-muted);
-        margin-left: 26px;
-        margin-top: 2px;
-        font-family: monospace;
+        text-align: center;
     }
 
-    .scope-value.not-set {
-        color: var(--red-500);
-        font-style: italic;
-        font-family: inherit;
+    .oauth-security-details {
+        border: 1px solid var(--border-default);
+        border-radius: 12px;
+        background: var(--surface-subtle);
+        padding: 10px 13px;
+        font-size: 0.8rem;
+        color: var(--text-secondary);
     }
 
-    .scope-badge-required {
-        font-size: 10px;
-        color: var(--red-600);
-        background: var(--red-50);
-        padding: 1px 6px;
-        border-radius: 4px;
-        margin-left: 6px;
+    .oauth-security-details summary {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
         font-weight: 600;
-        vertical-align: middle;
+        color: var(--text);
+        cursor: pointer;
+        list-style: none;
     }
 
-    .missing-warning {
-        background: var(--red-50);
-        border-left: 4px solid var(--red-500);
-        border-radius: 8px;
-        padding: 12px;
-        margin-top: 12px;
-        font-size: 13px;
-        color: var(--red-700);
+    .oauth-security-details summary::-webkit-details-marker {
+        display: none;
+    }
+
+    .oauth-security-details[open] .oauth-chevron {
+        transform: rotate(180deg);
+    }
+
+    .oauth-chevron {
+        transition: transform 0.16s ease;
+        flex-shrink: 0;
+        color: var(--text-tertiary);
+    }
+
+    .oauth-security-body {
+        margin-top: 8px;
+        padding-top: 8px;
+        border-top: 1px solid var(--border-subtle);
+        line-height: 1.48;
+    }
+
+    .otp-info {
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+        text-align: center;
         line-height: 1.5;
     }
 
-    .missing-warning a {
-        color: var(--primary);
-        text-decoration: underline;
-        font-weight: 500;
-    }
-
-    button:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-        filter: grayscale(0.5);
-    }
-
-    button:disabled:hover {
-        transform: none;
-        box-shadow: none;
-        filter: grayscale(0.5);
-    }
-
     .otp-container {
-        display: flex;
+        display: grid;
+        grid-template-columns: repeat(6, minmax(0, 1fr));
         gap: 8px;
-        justify-content: center;
-        padding: 12px 0;
-        width: 100%;
-        max-width: 312px;
-        margin: 0 auto;
     }
 
     .otp-input {
-        width: 48px !important;
-        height: 48px !important;
-        font-size: 18px;
+        width: 100%;
+        height: 54px;
         text-align: center;
-        border: 2px solid var(--slate-200);
-        border-radius: 8px;
-        background-color: var(--card-bg);
+        font-size: 1.3rem;
+        font-weight: 700;
+        font-variant-numeric: tabular-nums;
         color: var(--text);
-        outline: none;
-        transition: border-color 0.2s ease, box-shadow 0.2s ease;
-        line-height: 48px;
-        padding: 0;
-        box-sizing: border-box;
+        background: var(--surface-elevated);
+        border: 1.5px solid var(--border-default);
+        border-radius: 12px;
+        transition: border-color 0.16s ease, box-shadow 0.16s ease;
     }
 
     .otp-input:focus {
         outline: none;
-        border-color: var(--primary);
-        box-shadow: 0 0 0 3px var(--primary-glow);
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px var(--focus-ring);
     }
 
-    .otp-input.invalid {
+    .otp-input.error {
         border-color: var(--red-500);
-        box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.16);
-    }
-
-    .button-container {
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-        margin-top: 16px;
-    }
-
-    .button-group {
-        display: flex;
-        gap: 8px;
-    }
-
-    .button-group button {
-        flex: 1;
-    }
-
-    button {
-        background: var(--primary-gradient);
-        color: var(--primary-contrast);
-        padding: 12px 16px;
-        border-radius: 12px;
-        font-size: 14px;
-        font-weight: 500;
-        cursor: pointer;
-        transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
-        border: none;
-    }
-
-    button:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 24px var(--primary-glow);
-        filter: brightness(1.1);
-    }
-
-    button.bg-gray {
-        color: var(--text-secondary);
-        background: var(--slate-200);
-    }
-
-    button.bg-gray:hover {
-        background: var(--slate-300);
-        box-shadow: none;
-        filter: none;
-        transform: translateY(-2px);
-    }
-
-    .message-container {
-        min-height: 20px;
-        margin: 4px 0;
-        font-size: 14px;
+        background: var(--red-50);
         color: var(--red-700);
-        text-align: center;
     }
 
     .terms-text {
-        font-size: 12px;
+        font-size: 0.78rem;
         color: var(--text-muted);
         text-align: center;
-        margin-top: 16px;
-    }
-
-    .terms-link {
-        color: var(--primary);
-        text-decoration: none;
-    }
-
-    .verification-info {
-        font-size: 13px;
-        color: var(--text-secondary);
-        margin-bottom: 12px;
         line-height: 1.5;
-        text-align: center;
     }
 
-    .signed-in-pill {
-        margin-top: 8px;
-        font-size: 12px;
-        color: var(--text-secondary);
-        display: inline-flex;
+    .terms-text a {
+        color: var(--accent);
+        text-decoration: none;
+        font-weight: 500;
+    }
+
+    .terms-text a:hover {
+        text-decoration: underline;
+    }
+
+    .trust-foot {
+        display: flex;
         align-items: center;
         justify-content: center;
         gap: 6px;
-        flex-wrap: wrap;
-        background: var(--slate-100);
-        border: 1px solid var(--slate-200);
-        padding: 4px 10px;
-        border-radius: 99px;
+        padding-top: 12px;
+        border-top: 1px solid var(--border-subtle);
+        font-size: 0.76rem;
+        color: var(--text-muted);
     }
 
-    .switch-account-btn {
-        all: unset !important;
-        cursor: pointer !important;
-        color: var(--primary) !important;
-        font-weight: 600 !important;
-        font-size: 12px !important;
-        text-decoration: underline !important;
-        text-underline-offset: 2px;
-    }
-
-    .switch-account-btn:hover {
-        opacity: 0.8 !important;
-        transform: none !important;
-        box-shadow: none !important;
-        filter: none !important;
-    }
-
-    .switch-account-btn:focus-visible {
-        outline: 2px solid var(--primary) !important;
-        outline-offset: 2px !important;
-        border-radius: 4px !important;
-    }
-
-    .header {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 6px;
-        flex-wrap: wrap;
-        text-align: center;
-    }
-
-    button:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-        transform: none !important;
-        box-shadow: none !important;
-        filter: none !important;
+    @media (max-width: 480px) {
+        .oauth-stage {
+            padding: 18px 14px 32px;
+        }
+        .oauth-card {
+            padding: 26px 20px 22px;
+            border-radius: 20px;
+        }
+        .oauth-actions-row {
+            grid-template-columns: 1fr;
+        }
+        .oauth-actions-row .btn-primary {
+            order: -1;
+        }
+        .otp-input {
+            height: 48px;
+        }
     }
 </style>
 
 <body>
     {{template "ribbon" .}}
-    <main>
-        <div class="auth-container">
-            <div class="content-wrapper">
-                <div class="header">
-                    <img src="/static/img/logo.svg" alt="Gilos Logo" class="theme-logo-light">
-                    <img src="/static/img/logo-dark.svg" alt="Gilos Logo" class="theme-logo-dark">
-                    <h1 id="auth-header">{{ index .T "authorize" }}</h1>
-                    {{if .User}}
-                        <div class="signed-in-pill">
-                            <span>{{ printf (index .T "signed_in_as") .User.Username }}</span>
-                            <span>&middot;</span>
-                            <button type="button" class="switch-account-btn" onclick="switchAccount()">{{ index .T "switch_account" }}</button>
+
+    <main class="oauth-stage">
+        <section class="oauth-card" aria-labelledby="auth-header">
+            <div class="oauth-top">
+                <img src="/static/img/logo.svg" alt="Gilos Logo" class="oauth-logo theme-logo-light">
+                <img src="/static/img/logo-dark.svg" alt="Gilos Logo" class="oauth-logo theme-logo-dark">
+                <h1 id="auth-header">{{ index .T "authorize" }}</h1>
+                {{if .User}}
+                <div class="identity-chip">
+                    <span class="identity-chip-avatar" id="oauth-user-avatar" data-username="{{.User.Username}}" data-has-icon="{{if .User.Icon}}1{{else}}0{{end}}">
+                        {{upper (printf "%.1s" .User.Username)}}
+                    </span>
+                    <span class="identity-chip-handle">{{ printf (index .T "signed_in_as") .User.Username }}</span>
+                    <button type="button" class="identity-chip-action" onclick="switchAccount()">{{ index .T "switch_account" }}</button>
+                </div>
+                {{end}}
+            </div>
+
+            {{if .Error}}
+            <div class="alert-box alert-box--error" id="error-alert" role="alert">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:2px;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                <span>{{.Error}}</span>
+            </div>
+            {{end}}
+
+            <div id="message" class="message-container" role="alert" aria-live="polite"></div>
+
+            <!-- Step 1: Review Permissions & Consent -->
+            <form id="consent-form" class="form-container">
+                <div class="oauth-app-card">
+                    <div class="oauth-app-badge" id="oauth-app-badge" data-app-name="{{.Client.Name}}">A</div>
+                    <div class="oauth-app-info">
+                        <div class="oauth-app-name">{{.Client.Name}}</div>
+                        <div class="oauth-app-redirect">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                            <span>{{ index .T "redirecting_to" }}</span>
+                            <span class="oauth-redirect-host" id="oauth-redirect-host">{{.RedirectURI}}</span>
                         </div>
+                    </div>
+                </div>
+
+                <p class="oauth-wants-text">{{ printf (index .T "wants_access") .Client.Name }}</p>
+
+                <div class="scope-list">
+                    {{range .ScopeDetails}}
+                    <div class="scope-card {{if .IsMissing}}is-missing{{end}}">
+                        <div class="scope-icon" data-scope-id="{{.ID}}" aria-hidden="true"></div>
+                        <div class="scope-content">
+                            <div class="scope-head">
+                                <span class="scope-desc">{{.Description}}</span>
+                                {{if .IsRequired}}
+                                <span class="badge badge-neutral">{{index $.T "scope_required"}}</span>
+                                {{else}}
+                                <span class="badge badge-neutral" style="opacity:0.78;">{{index $.T "optional_badge"}}</span>
+                                {{end}}
+                            </div>
+                            {{if .MaskedValue}}
+                            <span class="scope-value">{{.MaskedValue}}</span>
+                            {{end}}
+                            {{if .IsMissing}}
+                            <span class="scope-missing-msg">{{index $.T "not_set"}}</span>
+                            {{end}}
+                        </div>
+                    </div>
                     {{end}}
                 </div>
 
-                {{if .Error}}
-                    <div class="alert error" id="error-alert">
-                        {{.Error}}
-                    </div>
+                {{if .HasMissingRequired}}
+                <div class="alert-box alert-box--warning" id="missing-warning"></div>
                 {{end}}
 
-                <div id="message" class="message-container" role="alert" aria-live="polite"></div>
+                <details class="oauth-security-details">
+                    <summary>
+                        <span style="display:inline-flex;align-items:center;gap:7px;">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                            <span>{{ index .T "oauth_security_summary" }}</span>
+                        </span>
+                        <svg class="oauth-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+                    </summary>
+                    <div class="oauth-security-body">{{ index .T "oauth_security_detail" }}</div>
+                </details>
 
-                <div class="form-wrapper">
-                    <!-- Step 1: Consent -->
-                    <form id="consent-form" class="form-container">
-                        <div class="form-element">
-                            <p style="margin-bottom: 4px;">{{ printf (index .T "wants_access") .Client.Name }}</p>
-                            <ul class="scopes-list">
-                                {{range .ScopeDetails}}
-                                    <li{{if .IsMissing}} class="missing"{{end}}>
-                                        {{if .IsMissing}}
-                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
-                                        {{else}}
-                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                                        {{end}}
-                                        <div>
-                                            <span>{{.Description}}</span>
-                                            {{if .IsRequired}}<span class="scope-badge-required">{{ index $.T "required" }}</span>{{end}}
-                                            {{if .MaskedValue}}
-                                                <div class="scope-value">{{.MaskedValue}}</div>
-                                            {{else if .IsMissing}}
-                                                <div class="scope-value not-set">{{ index $.T "not_set" }}</div>
-                                            {{end}}
-                                        </div>
-                                    </li>
-                                {{end}}
-                            </ul>
-
-                            {{if .HasMissingRequired}}
-                                <div class="missing-warning" id="missing-warning"></div>
-                            {{end}}
-                        </div>
-
-                        <div class="button-container form-element">
-                            <div class="button-group">
-                                <button type="button" class="bg-gray" id="deny-btn" onclick="submitDeny()">{{ index .T "deny" }}</button>
-                                <button type="button" onclick="handleApprove()" id="approve-btn" {{if .HasMissingRequired}}disabled{{end}}>{{ index .T "approve" }}</button>
-                            </div>
-                        </div>
-                    </form>
-
-                    <!-- Step 2: TOTP -->
-                    <form id="totp-form" class="form-container hidden" onsubmit="event.preventDefault(); submitApprove();">
-                        <div class="form-element">
-                            <p class="verification-info">{{ index .T "otp_enter_authenticator" }}</p>
-                            <div class="otp-container" id="otp-inputs">
-                                <input type="text" class="otp-input" maxlength="1" inputmode="numeric" pattern="[0-9]*" autocomplete="one-time-code" aria-label="Digit 1">
-                                <input type="text" class="otp-input" maxlength="1" inputmode="numeric" pattern="[0-9]*" aria-label="Digit 2">
-                                <input type="text" class="otp-input" maxlength="1" inputmode="numeric" pattern="[0-9]*" aria-label="Digit 3">
-                                <input type="text" class="otp-input" maxlength="1" inputmode="numeric" pattern="[0-9]*" aria-label="Digit 4">
-                                <input type="text" class="otp-input" maxlength="1" inputmode="numeric" pattern="[0-9]*" aria-label="Digit 5">
-                                <input type="text" class="otp-input" maxlength="1" inputmode="numeric" pattern="[0-9]*" aria-label="Digit 6">
-                            </div>
-                        </div>
-
-                        <div class="button-container form-element">
-                            <div class="button-group">
-                                <button type="button" class="bg-gray" onclick="moveToState('consent')">{{ index .T "back" }}</button>
-                                <button type="button" id="totp-verify-btn" onclick="submitApprove()">{{ index .T "verify" }}</button>
-                            </div>
-                        </div>
-                    </form>
-
-                    <!-- Hidden form for actual submission -->
-                    <form id="final-form" method="POST" style="display: none;">
-                        <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
-                        <input type="hidden" name="client_id" value="{{.Client.ID}}">
-                        <input type="hidden" name="redirect_uri" value="{{.RedirectURI}}">
-                        <input type="hidden" name="state" value="{{.State}}">
-                        <input type="hidden" name="approve" id="final-approve" value="true">
-                        <input type="hidden" name="totp_code" id="final-totp-code">
-                    </form>
+                <div class="oauth-actions-row">
+                    <button type="button" class="btn btn-secondary btn-lg" id="deny-btn" onclick="submitDeny()">{{ index .T "deny" }}</button>
+                    <button type="button" class="btn btn-primary btn-lg" id="approve-btn" onclick="handleApprove()" {{if .HasMissingRequired}}disabled{{end}}>{{ index .T "approve" }}</button>
                 </div>
+                <p class="oauth-hint">{{ index .T "oauth_cancel_hint" }}</p>
+            </form>
 
-                <div id="terms-text" class="terms-text"></div>
+            <!-- Step 2: Optional Authenticator TOTP Confirmation -->
+            <form id="totp-form" class="form-container hidden" onsubmit="event.preventDefault(); submitApprove();">
+                <p class="otp-info">{{ index .T "otp_enter_authenticator" }}</p>
+                <div class="otp-container" id="otp-inputs">
+                    <input type="text" class="otp-input" maxlength="1" pattern="[0-9]*" inputmode="numeric" autocomplete="one-time-code" aria-label="Digit 1">
+                    <input type="text" class="otp-input" maxlength="1" pattern="[0-9]*" inputmode="numeric" aria-label="Digit 2">
+                    <input type="text" class="otp-input" maxlength="1" pattern="[0-9]*" inputmode="numeric" aria-label="Digit 3">
+                    <input type="text" class="otp-input" maxlength="1" pattern="[0-9]*" inputmode="numeric" aria-label="Digit 4">
+                    <input type="text" class="otp-input" maxlength="1" pattern="[0-9]*" inputmode="numeric" aria-label="Digit 5">
+                    <input type="text" class="otp-input" maxlength="1" pattern="[0-9]*" inputmode="numeric" aria-label="Digit 6">
+                </div>
+                <div class="oauth-actions-stack">
+                    <button type="button" class="btn btn-primary btn-lg" id="totp-verify-btn" onclick="submitApprove()" disabled>{{ index .T "verify" }}</button>
+                    <button type="button" class="btn btn-secondary" onclick="moveToState('consent')">{{ index .T "back" }}</button>
+                </div>
+            </form>
+
+            <!-- Final POST submission form -->
+            <form id="final-form" method="POST" style="display: none;">
+                <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+                <input type="hidden" name="client_id" value="{{.Client.ID}}">
+                <input type="hidden" name="redirect_uri" value="{{.RedirectURI}}">
+                <input type="hidden" name="state" value="{{.State}}">
+                <input type="hidden" name="approve" id="final-approve" value="true">
+                <input type="hidden" name="totp_code" id="final-totp-code">
+            </form>
+
+            <div id="terms-text" class="terms-text"></div>
+
+            <div class="trust-foot">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                <span>{{ index .T "trust_encrypted_notice" }}</span>
             </div>
-        </div>
+        </section>
     </main>
 
     {{ template "common/footer" . }}
 
     <script>
-        const T = {{ .T | json }};
-        const csrfToken = {{ .CSRFToken | json }};
-        const clientName = {{ .Client.Name | json }};
-        const mfaEnabled = {{.User.MFATOTPEnabled}};
-        const missingFields = {{ .MissingFields | json }};
-        const hasMissingRequired = {{.HasMissingRequired}};
+        var T = {{ json .T }};
+        const userMFAEnabled = {{if .User}}{{.User.MFATOTPEnabled}}{{else}}false{{end}};
+        const hasMissingRequired = {{if .HasMissingRequired}}true{{else}}false{{end}};
+        const missingFieldsList = {{ json .MissingFields }};
+        const redirectURIValue = "{{.RedirectURI}}";
 
-        const currentUsername = {{ if .User }}{{ .User.Username | json }}{{ else }}""{{ end }};
+        function tr(key, fallback) {
+            return (T && typeof T[key] === 'string' && T[key]) ? T[key] : (fallback || '');
+        }
 
         function escapeHtml(str) {
-            return String(str ?? '')
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;')
-                .replace(/"/g, '&quot;')
-                .replace(/'/g, '&#39;');
+            return window.GilosUI ? window.GilosUI.escapeHtml(str) : String(str || '');
+        }
+
+        function initAppAndUserPresentation() {
+            const appBadge = document.getElementById('oauth-app-badge');
+            if (appBadge) {
+                const name = (appBadge.dataset.appName || 'A').trim();
+                appBadge.textContent = name ? name.charAt(0).toUpperCase() : 'A';
+            }
+
+            const hostEl = document.getElementById('oauth-redirect-host');
+            if (hostEl && redirectURIValue) {
+                try {
+                    const parsed = new URL(redirectURIValue);
+                    hostEl.textContent = parsed.host || redirectURIValue;
+                    hostEl.title = redirectURIValue;
+                } catch (e) {}
+            }
+
+            const avatarEl = document.getElementById('oauth-user-avatar');
+            if (avatarEl && avatarEl.dataset.hasIcon === '1' && avatarEl.dataset.username) {
+                const img = document.createElement('img');
+                img.src = `/media/user/icon/${encodeURIComponent(avatarEl.dataset.username)}.png`;
+                img.alt = '';
+                img.onerror = function () { this.remove(); };
+                avatarEl.textContent = '';
+                avatarEl.appendChild(img);
+            }
+        }
+
+        function renderScopeIcons() {
+            const icons = {
+                openid: '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 1 0-16 0"/></svg>',
+                email: '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>',
+                phone: '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/></svg>',
+                user_basic_info: '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="14" x="3" y="5" rx="2"/><line x1="7" y1="10" x2="11" y2="10"/><line x1="7" y1="14" x2="17" y2="14"/></svg>',
+                user_sessions: '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>',
+                user_totps: '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>',
+                user_manage_account: '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>',
+                offline_access: '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>'
+            };
+            const fallbackIcon = '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+
+            document.querySelectorAll('.scope-icon[data-scope-id]').forEach(el => {
+                el.innerHTML = icons[el.dataset.scopeId] || fallbackIcon;
+            });
+        }
+
+        function showMessage(msg, isError) {
+            const box = document.getElementById('message');
+            if (!box) return;
+            if (!msg) {
+                box.className = 'message-container';
+                box.innerHTML = '';
+                return;
+            }
+            box.className = 'message-container is-visible' + (isError ? ' is-error' : '');
+            box.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:1px;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><span>' + escapeHtml(msg) + '</span>';
         }
 
         async function switchAccount() {
-            const promptText = (T.switch_account_confirm || 'Sign out of @%s and sign in with another account?').replace('%s', currentUsername || '');
-            let confirmed = false;
-            if (typeof Swal !== 'undefined') {
-                const res = await Swal.fire({
-                    title: T.switch_account || 'Switch account',
-                    text: promptText,
-                    icon: 'question',
-                    showCancelButton: true,
-                    confirmButtonText: T.switch_account || 'Switch account',
-                    cancelButtonText: T.cancel || 'Cancel'
-                });
-                confirmed = !!res.isConfirmed;
-            } else {
-                confirmed = confirm(promptText);
-            }
-            if (!confirmed) return;
+            const username = "{{if .User}}{{.User.Username}}{{end}}";
+            const confirmMsg = tr('switch_account_confirm', 'Sign out of @%s and sign in with another account?').replace('%s', username);
+
+            const result = await Swal.fire({
+                title: tr('switch_account', 'Switch account'),
+                text: confirmMsg,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: tr('switch_account', 'Switch account'),
+                cancelButtonText: tr('cancel', 'Cancel')
+            });
+
+            if (!result.isConfirmed) return;
 
             try {
                 await fetch('/auth/logout', {
                     method: 'POST',
                     headers: {
-                        'X-CSRF-Token': csrfToken,
-                        'Accept': 'application/json'
+                        'Content-Type': 'application/json',
+                        'X-CSRF-Token': '{{.CSRFToken}}'
                     }
                 });
             } catch (e) {}
-            const target = encodeURIComponent(window.location.pathname + window.location.search);
-            window.location.href = '/?target=' + target;
+
+            window.location.href = `/?target=${encodeURIComponent(window.location.href)}`;
         }
-        
-        function moveToState(state) {
+
+        function moveToState(target) {
             const consentForm = document.getElementById('consent-form');
             const totpForm = document.getElementById('totp-form');
             const header = document.getElementById('auth-header');
-            const msgEl = document.getElementById('message');
-            if (msgEl) msgEl.innerText = '';
-            document.querySelectorAll('.otp-input.invalid').forEach(el => el.classList.remove('invalid'));
+            showMessage('', false);
 
-            if (state === 'totp') {
+            if (target === 'totp') {
                 consentForm.classList.add('hidden');
                 totpForm.classList.remove('hidden');
-                header.innerText = T.verify || 'Verify';
-                setTimeout(() => {
-                    const firstInput = totpForm.querySelector('.otp-input');
-                    if (firstInput) firstInput.focus();
-                }, 50);
+                header.textContent = tr('two_step_verification', 'Two-Step Verification');
+                const firstInput = totpForm.querySelector('.otp-input');
+                if (firstInput) firstInput.focus();
             } else {
-                const errAlert = document.getElementById('error-alert');
-                if (errAlert) errAlert.style.display = 'none';
-                consentForm.classList.remove('hidden');
                 totpForm.classList.add('hidden');
-                header.innerText = T.authorize || 'Authorize';
+                consentForm.classList.remove('hidden');
+                header.textContent = tr('authorize', 'Authorize');
             }
         }
 
         function setConsentSubmitting(isSubmitting) {
-            ['approve-btn', 'deny-btn', 'totp-verify-btn'].forEach(id => {
-                const btn = document.getElementById(id);
-                if (btn) btn.disabled = isSubmitting || (id === 'approve-btn' && hasMissingRequired);
-            });
+            const approveBtn = document.getElementById('approve-btn');
+            const denyBtn = document.getElementById('deny-btn');
+            const totpBtn = document.getElementById('totp-verify-btn');
+            if (approveBtn) window.GilosUI.setButtonLoading(approveBtn, isSubmitting, tr('loading', 'Loading...'));
+            if (totpBtn) window.GilosUI.setButtonLoading(totpBtn, isSubmitting, tr('loading', 'Loading...'));
+            if (denyBtn) denyBtn.disabled = isSubmitting;
         }
 
         function handleApprove() {
-            if (mfaEnabled) {
+            if (hasMissingRequired) return;
+            if (userMFAEnabled) {
                 moveToState('totp');
             } else {
                 submitApprove();
             }
         }
 
+        function getOtpCode() {
+            const inputs = document.querySelectorAll('#totp-form .otp-input');
+            return Array.from(inputs).map(i => i.value).join('');
+        }
+
         function submitApprove() {
-            const finalForm = document.getElementById('final-form');
-            const totpInputs = document.querySelectorAll('#totp-form .otp-input');
-            let code = "";
-            
-            if (mfaEnabled) {
-                totpInputs.forEach(input => {
-                    input.classList.remove('invalid');
-                    code += input.value;
-                });
-                if (!/^\d{6}$/.test(code)) {
-                    totpInputs.forEach(input => {
-                        if (!/^\d$/.test(input.value)) input.classList.add('invalid');
-                    });
-                    document.getElementById('message').innerText = T.enter_code || T.enter_the_code || "Enter the 6-digit code";
+            if (userMFAEnabled) {
+                const otpInputs = document.querySelectorAll('#totp-form .otp-input');
+                const code = getOtpCode();
+                if (code.length !== 6) {
+                    otpInputs.forEach(i => i.classList.add('error'));
+                    showMessage(tr('enter_full_code', 'Please enter the full 6-digit verification code.'), true);
                     return;
                 }
                 document.getElementById('final-totp-code').value = code;
             }
-
+            document.getElementById('final-approve').value = 'true';
             setConsentSubmitting(true);
-            document.getElementById('final-approve').value = "true";
-            finalForm.submit();
+            document.getElementById('final-form').submit();
         }
 
         function submitDeny() {
-            const finalForm = document.getElementById('final-form');
+            document.getElementById('final-approve').value = 'false';
             setConsentSubmitting(true);
-            document.getElementById('final-approve').value = "false";
-            finalForm.submit();
+            document.getElementById('final-form').submit();
         }
 
-        // OTP Input Logic
         function setupOTPInputs() {
-            const inputs = document.querySelectorAll('.otp-input');
-            inputs.forEach((input, index) => {
+            const otpInputs = document.querySelectorAll('#totp-form .otp-input');
+            const verifyBtn = document.getElementById('totp-verify-btn');
+
+            function updateVerifyBtn() {
+                if (verifyBtn) verifyBtn.disabled = getOtpCode().length !== 6;
+            }
+
+            otpInputs.forEach((input, idx) => {
                 input.addEventListener('input', (e) => {
-                    input.classList.remove('invalid');
-                    const clean = (e.target.value || '').replace(/[^0-9]/g, '');
-                    if (clean.length > 1) {
-                        const chars = clean.slice(0, inputs.length - index).split('');
-                        chars.forEach((ch, offset) => {
-                            if (inputs[index + offset]) {
-                                inputs[index + offset].value = ch;
-                                inputs[index + offset].classList.remove('invalid');
-                            }
-                        });
-                        const nextIdx = Math.min(index + chars.length, inputs.length - 1);
-                        inputs[nextIdx].focus();
-                        return;
+                    e.target.value = e.target.value.replace(/\D/g, '').slice(-1);
+                    otpInputs.forEach(i => i.classList.remove('error'));
+                    showMessage('', false);
+                    if (e.target.value && idx < otpInputs.length - 1) {
+                        otpInputs[idx + 1].focus();
                     }
-                    e.target.value = clean;
-                    if (clean && index < inputs.length - 1) {
-                        inputs[index + 1].focus();
+                    updateVerifyBtn();
+                    if (getOtpCode().length === 6) {
+                        submitApprove();
                     }
                 });
 
                 input.addEventListener('keydown', (e) => {
-                    if (e.key === 'Backspace' && !e.target.value && index > 0) {
-                        inputs[index - 1].value = '';
-                        inputs[index - 1].classList.remove('invalid');
-                        inputs[index - 1].focus();
-                    }
-                    if (e.key === 'Enter') {
-                        e.preventDefault();
-                        submitApprove();
+                    if (e.key === 'Backspace' && !e.target.value && idx > 0) {
+                        otpInputs[idx - 1].focus();
+                        otpInputs[idx - 1].value = '';
+                        updateVerifyBtn();
                     }
                 });
 
                 input.addEventListener('paste', (e) => {
                     e.preventDefault();
-                    const data = (e.clipboardData.getData('text') || '').replace(/[^0-9]/g, '').slice(0, 6).split('');
-                    data.forEach((char, i) => {
-                        if (inputs[i]) inputs[i].value = char;
+                    const pasteData = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '').slice(0, 6);
+                    if (!pasteData) return;
+                    pasteData.split('').forEach((char, cIdx) => {
+                        if (otpInputs[cIdx]) otpInputs[cIdx].value = char;
                     });
-                    if (data.length > 0 && inputs[data.length - 1]) {
-                        inputs[data.length - 1].focus();
+                    otpInputs[Math.min(pasteData.length, 5)].focus();
+                    updateVerifyBtn();
+                    if (pasteData.length === 6) {
+                        submitApprove();
                     }
                 });
             });
@@ -644,42 +742,30 @@
         function renderTermsText() {
             const termsDiv = document.getElementById('terms-text');
             if (!termsDiv) return;
-            const termsAgreement = escapeHtml(T.terms_agreement || 'By continuing, you agree to our %privacy% and %terms%.');
-            const privacyPolicy = escapeHtml(T.privacy_policy || 'Privacy Policy');
-            const termsOfService = escapeHtml(T.terms_of_service || 'Terms of Service');
-            
-            const privacyLink = `<a href="/privacy" target="_blank" rel="noopener noreferrer" class="terms-link">${privacyPolicy}</a>`;
-            const termsLink = `<a href="/terms" target="_blank" rel="noopener noreferrer" class="terms-link">${termsOfService}</a>`;
-            
-            termsDiv.innerHTML = termsAgreement
-                .replace('%privacy%', privacyLink)
-                .replace('%terms%', termsLink);
+            let template = escapeHtml(tr('terms_agreement', 'By continuing, you agree to our %privacy% and %terms%.'));
+            template = template
+                .replace('%privacy%', `<a href="/privacy" target="_blank" rel="noopener noreferrer">${escapeHtml(tr('privacy_policy', 'Privacy Policy'))}</a>`)
+                .replace('%terms%', `<a href="/terms" target="_blank" rel="noopener noreferrer">${escapeHtml(tr('terms_of_service', 'Terms of Service'))}</a>`);
+            termsDiv.innerHTML = template;
         }
 
         function renderMissingWarning() {
-            const warningDiv = document.getElementById('missing-warning');
-            if (!warningDiv || !hasMissingRequired) return;
-            const fieldsList = Array.isArray(missingFields) ? missingFields.map(escapeHtml).join(', ') : '';
-            const target = encodeURIComponent(window.location.pathname + window.location.search);
-            const profileLink = `<a href="/home?target=${target}">${escapeHtml(T.profile_settings || 'profile settings')}</a>`;
-            const template = escapeHtml(T.scope_data_missing_warning || 'This service requires your %fields%. Set them in your %link%.');
-            warningDiv.innerHTML = template.replace('%fields%', '<strong>' + fieldsList + '</strong>').replace('%link%', profileLink);
+            const container = document.getElementById('missing-warning');
+            if (!container || !hasMissingRequired) return;
+            const fieldsStr = (missingFieldsList || []).map(escapeHtml).join(', ');
+            const warningTpl = escapeHtml(tr('scope_data_missing_warning', 'This service requires your %fields%. Set them in your %link%.'));
+            const profileLink = `<a href="/home">${escapeHtml(tr('profile_settings', 'profile settings'))}</a>`;
+            container.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:2px;"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg><span>' +
+                warningTpl.replace('%fields%', `<strong>${fieldsStr}</strong>`).replace('%link%', profileLink) + '</span>';
         }
-        
+
         document.addEventListener('DOMContentLoaded', () => {
+            initAppAndUserPresentation();
+            renderScopeIcons();
+            setupOTPInputs();
             renderTermsText();
             renderMissingWarning();
-            setupOTPInputs();
-
-            // If there's an error and MFA is enabled, we likely failed at the TOTP step
-            const hasError = {{if .Error}}true{{else}}false{{end}};
-            if (hasError && mfaEnabled) {
-                moveToState('totp');
-            }
         });
-        
-        document.title = (T.authorize || "Authorize") + " " + clientName;
     </script>
 </body>
-
 </html>

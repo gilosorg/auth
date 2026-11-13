@@ -1,144 +1,94 @@
-{{ define "docs-head" }}
+<!DOCTYPE html>
+<html lang="{{ if .Lang }}{{ .Lang }}{{ else }}en{{ end }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ if .AppName }}{{ .AppName }}{{ else }}Gilos Auth{{ end }} - Developer Documentation</title>
     <meta name="description" content="Integrate Gilos Auth OAuth 2.1 and OpenID Connect into your application.">
-    <script>
-        (function() {
-            function applyTheme(pref) {
-                var effective = pref;
-                if (pref !== 'light' && pref !== 'dark') {
-                    effective = (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
-                    pref = 'system';
-                }
-                document.documentElement.setAttribute('data-theme', effective);
-                document.documentElement.setAttribute('data-theme-pref', pref);
-                document.documentElement.style.colorScheme = effective;
-            }
-            var saved = 'system';
-            try { saved = localStorage.getItem('gilos_theme') || 'system'; } catch (e) {}
-            applyTheme(saved);
-            window.__setTheme = function(pref) {
-                try { localStorage.setItem('gilos_theme', pref); } catch (e) {}
-                applyTheme(pref);
-                window.dispatchEvent(new CustomEvent('gilos-theme-change', { detail: { pref: pref, theme: document.documentElement.getAttribute('data-theme') } }));
-            };
-            if (window.matchMedia) {
-                var mq = window.matchMedia('(prefers-color-scheme: dark)');
-                var onChange = function() {
-                    if ((document.documentElement.getAttribute('data-theme-pref') || 'system') === 'system') {
-                        applyTheme('system');
-                    }
-                };
-                if (mq.addEventListener) mq.addEventListener('change', onChange);
-                else if (mq.addListener) mq.addListener(onChange);
-            }
-        })();
-    </script>
-    <link rel="icon" href="/static/img/icon.svg" type="image/svg+xml">
-    <link rel="icon" href="/static/img/icon-dark.svg" type="image/svg+xml" media="(prefers-color-scheme: dark)">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    {{ template "common/head" . }}
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <style>
         :root {
-            --doc-primary: #1D1D1F;
-            --doc-primary-dark: #000000;
-            --doc-primary-light: #424245;
-            --doc-gradient: #1D1D1F;
-            --doc-gradient-contrast: #FFFFFF;
-            --doc-bg: #FFFFFF;
-            --doc-sidebar-bg: #F5F5F7;
-            --doc-content-bg: #FFFFFF;
-            --doc-card-bg: #F5F5F7;
-            --doc-border: #E8E8ED;
-            --doc-text: #1D1D1F;
-            --doc-text-secondary: #424245;
-            --doc-text-muted: #86868B;
-            --doc-code-bg: #1D1D1F;
+            --doc-primary: var(--primary);
+            --doc-primary-dark: var(--primary-gradient-hover);
+            --doc-primary-light: var(--accent);
+            --doc-gradient: var(--primary);
+            --doc-gradient-contrast: var(--primary-contrast);
+            --doc-bg: var(--surface-page);
+            --doc-sidebar-bg: var(--surface-elevated);
+            --doc-content-bg: var(--card-bg);
+            --doc-card-bg: var(--surface-subtle);
+            --doc-border: var(--border-default);
+            --doc-text: var(--text);
+            --doc-text-secondary: var(--text-secondary);
+            --doc-text-muted: var(--text-tertiary);
+            --doc-code-bg: #111215;
             --doc-code-text: #F5F5F7;
-            --doc-inline-code-bg: #F5F5F7;
-            --doc-inline-code-text: #1D1D1F;
-            --method-get: #34C759;
-            --method-get-bg: #F0FDF4;
-            --method-post: #007AFF;
-            --method-post-bg: #EFF6FF;
-            --success-color: #34C759;
-            --warning-color: #FF9F0A;
-            --warning-bg: #FEF3C7;
+            --doc-inline-code-bg: var(--surface-subtle);
+            --doc-inline-code-text: var(--text);
+            --method-get: var(--green-600);
+            --method-get-bg: var(--green-50);
+            --method-post: var(--accent);
+            --method-post-bg: var(--accent-subtle);
+            --success-color: var(--green-500);
+            --warning-color: var(--amber-600);
+            --warning-bg: var(--amber-50);
         }
         :root[data-theme="dark"] {
-            --doc-primary: #F5F5F7;
-            --doc-primary-dark: #E8E8ED;
-            --doc-primary-light: #A1A1A6;
-            --doc-gradient: #F5F5F7;
-            --doc-gradient-contrast: #1D1D1F;
-            --doc-bg: #000000;
-            --doc-sidebar-bg: #1C1C1E;
-            --doc-content-bg: #1C1C1E;
-            --doc-card-bg: #2C2C2E;
-            --doc-border: #2C2C2E;
-            --doc-text: #F5F5F7;
-            --doc-text-secondary: #A1A1A6;
-            --doc-text-muted: #8E8E93;
-            --doc-code-bg: #1C1C1E;
+            --doc-code-bg: #161619;
             --doc-code-text: #F5F5F7;
-            --doc-inline-code-bg: #2C2C2E;
-            --doc-inline-code-text: #F5F5F7;
-            --method-get-bg: #1D3A2A;
-            --method-post-bg: #1D2C3E;
-            --warning-bg: #332200;
         }
-        .theme-logo-light { display: inline-block; }
-        .theme-logo-dark { display: none; }
-        :root[data-theme="dark"] .theme-logo-light { display: none; }
-        :root[data-theme="dark"] .theme-logo-dark { display: inline-block; }
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        html { scroll-behavior: smooth; }
-        body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background: var(--doc-bg); color: var(--doc-text); line-height: 1.6; }
+        body { background: var(--doc-bg); color: var(--doc-text); line-height: 1.6; }
         .docs-wrapper { display: flex; min-height: 100vh; }
-        .docs-sidebar { width: 280px; background: var(--doc-sidebar-bg); border-right: 1px solid var(--doc-border); position: fixed; top: 0; left: 0; height: 100vh; overflow-y: auto; padding: 24px 0; z-index: 100; }
-        .sidebar-header { padding: 0 24px 24px; border-bottom: 1px solid var(--doc-border); margin-bottom: 16px; }
-        .sidebar-logo { display: flex; align-items: center; gap: 12px; text-decoration: none; color: var(--doc-text); }
-        .sidebar-logo img { width: 32px; height: 32px; }
-        .sidebar-logo span { font-weight: 700; font-size: 1.1rem; }
-        .sidebar-version { display: inline-block; background: var(--doc-gradient); color: var(--doc-gradient-contrast); font-size: 0.7rem; font-weight: 600; padding: 2px 8px; border-radius: 20px; margin-left: 8px; }
-        .sidebar-section { padding: 0 16px; margin-bottom: 8px; }
-        .sidebar-section-title { font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--doc-text-muted); padding: 8px; margin-bottom: 4px; }
-        .sidebar-nav { list-style: none; }
+        .docs-sidebar { width: 284px; background: var(--doc-sidebar-bg); border-right: 1px solid var(--doc-border); position: fixed; top: 0; left: 0; height: 100vh; overflow-y: auto; padding: 20px 0 24px; z-index: 100; display: flex; flex-direction: column; }
+        .sidebar-header { padding: 0 20px 18px; border-bottom: 1px solid var(--doc-border); margin-bottom: 14px; }
+        .sidebar-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--doc-text); }
+        .sidebar-logo img { width: 28px; height: 28px; }
+        .sidebar-logo span { font-weight: 700; font-size: 1.05rem; letter-spacing: -0.015em; }
+        .sidebar-version { display: inline-block; background: var(--surface-subtle); border: 1px solid var(--border-default); color: var(--text-secondary); font-size: 0.7rem; font-weight: 600; padding: 2px 8px; border-radius: var(--radius-pill); }
+        .sidebar-search-wrap { padding: 0 16px 12px; }
+        .sidebar-search-input { width: 100%; height: 34px; padding: 0 10px; border-radius: var(--radius-sm); border: 1px solid var(--doc-border); background: var(--doc-card-bg); color: var(--doc-text); font-family: inherit; font-size: 0.82rem; transition: border-color 0.15s ease, box-shadow 0.15s ease; }
+        .sidebar-search-input::placeholder { color: var(--doc-text-muted); }
+        .sidebar-search-input:focus { outline: none; background: var(--surface-elevated); border-color: var(--accent); box-shadow: 0 0 0 3px var(--focus-ring); }
+        .sidebar-no-matches { padding: 10px 20px; font-size: 0.82rem; color: var(--doc-text-muted); }
+        .sidebar-section { padding: 0 14px; margin-bottom: 6px; }
+        .sidebar-section-title { font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--doc-text-muted); padding: 8px 10px 4px; }
+        .sidebar-nav { list-style: none; margin: 0; padding: 0; }
         .sidebar-nav li { margin: 2px 0; }
-        .sidebar-nav a { display: block; padding: 8px 12px; color: var(--doc-text-secondary); text-decoration: none; font-size: 0.9rem; border-radius: 6px; transition: all 0.15s ease; }
-        .sidebar-nav a:hover { background: var(--doc-card-bg); color: var(--doc-primary); }
+        .sidebar-nav a { display: block; padding: 7px 12px; color: var(--doc-text-secondary); text-decoration: none; font-size: 0.875rem; font-weight: 500; border-radius: var(--radius-xs); transition: background-color 0.15s ease, color 0.15s ease; }
+        .sidebar-nav a:hover { background: var(--doc-card-bg); color: var(--doc-text); }
         .sidebar-nav a.active { background: var(--doc-primary); color: var(--doc-gradient-contrast); }
-        .docs-main { flex: 1; margin-left: 280px; padding: 48px 64px; max-width: calc(100% - 280px); }
+        .docs-main { flex: 1; margin-left: 284px; padding: 48px 56px; max-width: calc(100% - 284px); }
         .docs-content { max-width: 900px; }
-        h1 { font-size: 2.5rem; font-weight: 700; margin-bottom: 16px; color: var(--doc-text); }
-        h2 { font-size: 1.6rem; font-weight: 600; margin: 48px 0 20px; padding-bottom: 12px; border-bottom: 1px solid var(--doc-border); color: var(--doc-text); }
-        h3 { font-size: 1.2rem; font-weight: 600; margin: 32px 0 12px; color: var(--doc-text); }
-        h4 { font-size: 0.95rem; font-weight: 600; margin: 20px 0 8px; color: var(--doc-text-secondary); }
+        .docs-content section[id] { scroll-margin-top: 72px; }
+        h1 { font-size: 2.35rem; font-weight: 700; letter-spacing: -0.025em; margin-bottom: 14px; color: var(--doc-text); }
+        h2 { font-size: 1.55rem; font-weight: 600; letter-spacing: -0.02em; margin: 46px 0 18px; padding-bottom: 12px; border-bottom: 1px solid var(--doc-border); color: var(--doc-text); }
+        h3 { font-size: 1.15rem; font-weight: 600; margin: 30px 0 12px; color: var(--doc-text); }
+        h4 { font-size: 0.92rem; font-weight: 600; margin: 18px 0 8px; color: var(--doc-text-secondary); }
         p { color: var(--doc-text-secondary); margin-bottom: 16px; }
-        .lead { font-size: 1.1rem; color: var(--doc-text-secondary); margin-bottom: 32px; }
-        ul, ol { color: var(--doc-text-secondary); margin: 0 0 16px 24px; }
-        li { margin-bottom: 8px; }
-        code { font-family: 'JetBrains Mono', monospace; font-size: 0.875em; background: var(--doc-inline-code-bg); color: var(--doc-inline-code-text); padding: 2px 6px; border-radius: 4px; }
-        pre { background: var(--doc-code-bg); border-radius: 10px; padding: 20px 24px; overflow-x: auto; margin: 12px 0 20px; border: 1px solid var(--doc-border); position: relative; }
-        pre code { background: none; color: var(--doc-code-text); padding: 0; font-size: 0.85rem; line-height: 1.7; }
-        .copy-btn { position: absolute; top: 12px; right: 12px; background: var(--doc-card-bg); border: 1px solid var(--doc-border); color: var(--doc-text-muted); padding: 6px 12px; border-radius: 6px; font-size: 0.75rem; cursor: pointer; transition: all 0.2s; }
-        .copy-btn:hover { background: var(--doc-primary); color: var(--doc-gradient-contrast); border-color: var(--doc-primary); }
-        .endpoint { background: var(--doc-content-bg); border: 1px solid var(--doc-border); border-radius: 10px; padding: 20px; margin: 20px 0; }
+        .lead { font-size: 1.08rem; color: var(--doc-text-secondary); margin-bottom: 28px; }
+        .docs-content ul, .docs-content ol { color: var(--doc-text-secondary); margin: 0 0 16px 24px; }
+        .docs-content li { margin-bottom: 8px; }
+        code { font-family: 'JetBrains Mono', monospace; font-size: 0.86em; background: var(--doc-inline-code-bg); color: var(--doc-inline-code-text); padding: 2px 6px; border-radius: 5px; border: 1px solid var(--border-subtle); }
+        pre { background: var(--doc-code-bg); border-radius: var(--radius-md); padding: 18px 22px; overflow-x: auto; margin: 12px 0 20px; border: 1px solid var(--doc-border); position: relative; }
+        pre code { background: none; color: var(--doc-code-text); padding: 0; border: none; font-size: 0.84rem; line-height: 1.65; }
+        .copy-btn { position: absolute; top: 10px; right: 10px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.16); color: #D4D4D8; padding: 5px 11px; border-radius: 7px; font-family: inherit; font-size: 0.74rem; font-weight: 500; cursor: pointer; transition: background-color 0.16s ease, color 0.16s ease; }
+        .copy-btn:hover { background: rgba(255,255,255,0.18); color: #FFFFFF; }
+        .endpoint { background: var(--doc-content-bg); border: 1px solid var(--doc-border); border-radius: var(--radius-md); padding: 18px 20px; margin: 20px 0; box-shadow: var(--card-shadow); }
         .endpoint-header { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; flex-wrap: wrap; }
-        .method-badge { display: inline-flex; align-items: center; justify-content: center; padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.025em; font-family: 'JetBrains Mono', monospace; }
+        .method-badge { display: inline-flex; align-items: center; justify-content: center; padding: 4px 10px; border-radius: 6px; font-size: 0.74rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; font-family: 'JetBrains Mono', monospace; }
         .method-get { background: var(--method-get-bg); color: var(--method-get); }
         .method-post { background: var(--method-post-bg); color: var(--method-post); }
         .endpoint-path { font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; font-weight: 500; color: var(--doc-text); }
-        .table-wrapper { overflow-x: auto; margin: 12px 0; border: 1px solid var(--doc-border); border-radius: 10px; }
+        .table-wrapper { overflow-x: auto; margin: 12px 0; border: 1px solid var(--doc-border); border-radius: var(--radius-md); background: var(--doc-content-bg); }
         table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
-        th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--doc-border); }
+        th, td { text-align: left; padding: 11px 14px; border-bottom: 1px solid var(--doc-border); }
         th { background: var(--doc-card-bg); font-weight: 600; color: var(--doc-text); }
         tr:last-child td { border-bottom: none; }
-        .callout { padding: 14px 18px; border-radius: 8px; margin: 16px 0; border-left: 4px solid; }
-        .callout-info { background: var(--method-post-bg); border-color: var(--method-post); }
-        .callout-success { background: var(--method-get-bg); border-color: var(--method-get); }
-        .callout-warning { background: var(--warning-bg); border-color: var(--warning-color); }
+        .callout { padding: 14px 18px; border-radius: var(--radius-sm); margin: 16px 0; border: 1px solid var(--doc-border); border-left: 4px solid; }
+        .callout-info { background: var(--method-post-bg); border-left-color: var(--method-post); }
+        .callout-success { background: var(--method-get-bg); border-left-color: var(--method-get); }
+        .callout-warning { background: var(--warning-bg); border-left-color: var(--warning-color); }
         .callout-title { font-weight: 600; margin-bottom: 4px; color: var(--doc-text); }
         .callout p { margin: 0; font-size: 0.9rem; }
         .step { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; background: var(--doc-gradient); color: var(--doc-gradient-contrast); font-weight: 700; font-size: 0.85rem; border-radius: 50%; margin-right: 12px; }
@@ -146,62 +96,50 @@
         .label { display: inline-block; font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--doc-text-muted); margin-bottom: 6px; }
         .label-success { color: var(--method-get); }
         .docs-mobile-bar { display: none; position: sticky; top: 0; z-index: 90; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px; background: var(--doc-sidebar-bg); border-bottom: 1px solid var(--doc-border); }
-        .mobile-menu-btn { display: inline-flex; align-items: center; justify-content: center; width: 38px; height: 38px; border-radius: 8px; border: 1px solid var(--doc-border); background: var(--doc-content-bg); color: var(--doc-text); cursor: pointer; }
-        .sidebar-backdrop { display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.45); z-index: 95; }
+        .mobile-menu-btn { display: inline-flex; align-items: center; justify-content: center; width: 38px; height: 38px; border-radius: 8px; border: 1px solid var(--doc-border); background: var(--doc-card-bg); color: var(--doc-text); cursor: pointer; }
+        .sidebar-backdrop { display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.45); z-index: 95; backdrop-filter: blur(2px); }
         .sidebar-backdrop.open { display: block; }
-        .sidebar-footer { padding: 16px 24px 0; margin-top: 20px; border-top: 1px solid var(--doc-border); }
-        .theme-toggle-btn { display: inline-flex; align-items: center; gap: 8px; padding: 7px 12px; border-radius: 8px; border: 1px solid var(--doc-border); background: var(--doc-content-bg); color: var(--doc-text-secondary); font-size: 0.8rem; font-weight: 500; cursor: pointer; width: 100%; justify-content: center; transition: all 0.15s ease; }
-        .theme-toggle-btn:hover { border-color: var(--doc-primary); color: var(--doc-text); }
+        .sidebar-footer { padding: 16px 18px 0; margin-top: auto; border-top: 1px solid var(--doc-border); }
+        .theme-toggle-btn { display: inline-flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: var(--radius-sm); border: 1px solid var(--doc-border); background: var(--doc-card-bg); color: var(--doc-text-secondary); font-family: inherit; font-size: 0.82rem; font-weight: 500; cursor: pointer; width: 100%; justify-content: center; transition: border-color 0.15s ease, color 0.15s ease, background-color 0.15s ease; }
+        .theme-toggle-btn:hover { border-color: var(--border-strong); color: var(--doc-text); background: var(--surface-hover); }
         @media (max-width: 900px) {
             .docs-wrapper { flex-direction: column; }
             .docs-mobile-bar { display: flex; }
             .docs-sidebar { transform: translateX(-100%); transition: transform 0.2s ease; z-index: 100; }
             .docs-sidebar.open { transform: translateX(0); }
-            .docs-main { margin-left: 0; max-width: 100%; padding: 24px; }
+            .docs-main { margin-left: 0; max-width: 100%; padding: 24px 18px; }
         }
-        .docs-footer { margin-top: 48px; padding-top: 20px; border-top: 1px solid var(--doc-border); text-align: center; color: var(--doc-text-muted); font-size: 0.85rem; }
-        /* Interactive components */
-        .client-panel { background: linear-gradient(135deg, var(--doc-card-bg) 0%, var(--doc-content-bg) 100%); border: 1px solid var(--doc-border); border-radius: 12px; padding: 20px; margin: 20px 0; }
+        .docs-footer { margin-top: 52px; padding-top: 22px; border-top: 1px solid var(--doc-border); text-align: center; color: var(--doc-text-muted); font-size: 0.85rem; }
+        .client-panel { background: var(--doc-content-bg); border: 1px solid var(--doc-border); border-radius: var(--radius-lg); padding: 20px; margin: 20px 0; box-shadow: var(--card-shadow); }
         .client-selector { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
         .client-selector label { font-weight: 600; color: var(--doc-text); }
-        .client-selector select { padding: 10px 16px; border: 1px solid var(--doc-border); border-radius: 8px; background: var(--doc-content-bg); color: var(--doc-text); font-size: 0.9rem; min-width: 250px; cursor: pointer; }
+        .client-selector select { padding: 9px 14px; border: 1px solid var(--doc-border); border-radius: var(--radius-sm); background: var(--doc-card-bg); color: var(--doc-text); font-family: inherit; font-size: 0.88rem; min-width: 240px; cursor: pointer; }
         .client-info { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--doc-border); display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
-        .client-info-item { background: var(--doc-content-bg); padding: 12px; border-radius: 8px; border: 1px solid var(--doc-border); }
-        .client-info-label { font-size: 0.75rem; color: var(--doc-text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
-        .client-info-value { font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; color: var(--doc-text); word-break: break-all; }
-        .secret-toggle { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; color: var(--doc-primary); font-size: 0.8rem; }
-        .empty-state { text-align: center; padding: 48px 24px; background: var(--doc-card-bg); border-radius: 12px; margin: 24px 0; }
-        .empty-state h3 { color: var(--doc-text); margin-bottom: 12px; }
-        .empty-state p { color: var(--doc-text-secondary); margin-bottom: 20px; }
-        .btn { display: inline-flex; align-items: center; gap: 8px; padding: 12px 24px; border-radius: 8px; font-weight: 600; font-size: 0.9rem; text-decoration: none; cursor: pointer; transition: all 0.2s; border: none; }
-        .btn-primary { background: var(--doc-gradient); color: var(--doc-gradient-contrast); }
-        .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); }
-        .btn-secondary { background: var(--doc-content-bg); color: var(--doc-text); border: 1px solid var(--doc-border); }
-        .btn-secondary:hover { border-color: var(--doc-primary); color: var(--doc-primary); }
-        .interactive-box { background: var(--doc-card-bg); border: 2px dashed var(--doc-border); border-radius: 12px; padding: 24px; margin: 20px 0; }
-        .interactive-box.active { border-color: var(--doc-primary); border-style: solid; }
-        .input-group { margin-bottom: 16px; }
-        .input-group label { display: block; font-weight: 500; color: var(--doc-text); margin-bottom: 6px; font-size: 0.9rem; }
-        .input-group input { width: 100%; padding: 12px 16px; border: 1px solid var(--doc-border); border-radius: 8px; background: var(--doc-content-bg); color: var(--doc-text); font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; }
-        .input-group input:focus { outline: none; border-color: var(--doc-primary); box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12); }
-        button:focus-visible, a:focus-visible, select:focus-visible, input:focus-visible { outline: 2px solid var(--doc-primary); outline-offset: 2px; }
-        .docs-toast { position: fixed; bottom: 24px; right: 24px; z-index: 9999; padding: 12px 18px; border-radius: 10px; background: var(--doc-primary); color: var(--doc-gradient-contrast); font-size: 0.875rem; font-weight: 500; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2); opacity: 0; transform: translateY(10px); pointer-events: none; transition: opacity 0.2s ease, transform 0.2s ease; }
-        .docs-toast.visible { opacity: 1; transform: translateY(0); }
-        .docs-toast.error { background: #EF4444; color: #FFFFFF; }
-        .lang-select-compact { margin-top: 8px; width: 100%; padding: 7px 10px; border-radius: 8px; border: 1px solid var(--doc-border); background: var(--doc-content-bg); color: var(--doc-text-secondary); font-size: 0.8rem; font-family: inherit; cursor: pointer; }
-        .response-preview { background: var(--doc-code-bg); border-radius: 10px; padding: 20px; margin-top: 16px; }
+        .client-info-item { background: var(--doc-card-bg); padding: 12px; border-radius: var(--radius-sm); border: 1px solid var(--doc-border); }
+        .client-info-label { font-size: 0.72rem; color: var(--doc-text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
+        .client-info-value { font-family: 'JetBrains Mono', monospace; font-size: 0.84rem; color: var(--doc-text); word-break: break-all; }
+        .secret-toggle { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; color: var(--accent); font-size: 0.8rem; }
+        .empty-state { text-align: center; padding: 42px 24px; background: var(--doc-content-bg); border: 1px solid var(--doc-border); border-radius: var(--radius-lg); margin: 24px 0; }
+        .empty-state h3 { color: var(--doc-text); margin-bottom: 10px; }
+        .empty-state p { color: var(--doc-text-secondary); margin-bottom: 18px; }
+        .docs-content .btn { display: inline-flex; align-items: center; gap: 8px; padding: 10px 18px; border-radius: var(--radius-sm); font-weight: 600; font-size: 0.88rem; text-decoration: none; cursor: pointer; transition: background-color 0.16s ease, transform 0.1s ease; border: none; }
+        .docs-content .btn-primary { background: var(--doc-gradient); color: var(--doc-gradient-contrast); }
+        .docs-content .btn-primary:hover:not(:disabled) { background: var(--doc-primary-dark); }
+        .docs-content .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+        .interactive-box { background: var(--doc-content-bg); border: 1.5px dashed var(--border-strong); border-radius: var(--radius-lg); padding: 22px; margin: 20px 0; }
+        .interactive-box.active { border-color: var(--accent); border-style: solid; }
+        .input-group { margin-bottom: 14px; }
+        .input-group label { display: block; font-weight: 500; color: var(--doc-text); margin-bottom: 6px; font-size: 0.88rem; }
+        .input-group input { width: 100%; padding: 11px 14px; border: 1px solid var(--doc-border); border-radius: var(--radius-sm); background: var(--doc-card-bg); color: var(--doc-text); font-family: 'JetBrains Mono', monospace; font-size: 0.88rem; }
+        .input-group input:focus { outline: none; background: var(--surface-elevated); border-color: var(--accent); box-shadow: 0 0 0 3px var(--focus-ring); }
+        .lang-select-compact { margin-top: 8px; width: 100%; padding: 7px 10px; border-radius: var(--radius-sm); border: 1px solid var(--doc-border); background: var(--doc-card-bg); color: var(--doc-text-secondary); font-size: 0.8rem; font-family: inherit; cursor: pointer; }
+        .response-preview { background: var(--doc-code-bg); border-radius: var(--radius-md); padding: 18px; margin-top: 16px; border: 1px solid var(--doc-border); }
         .response-preview pre { margin: 0; background: none; border: none; padding: 0; }
-        .hidden { display: none !important; }
-        .highlight { color: var(--doc-primary-light); }
-        .user-badge { display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; background: var(--doc-card-bg); border-radius: 20px; font-size: 0.85rem; color: var(--doc-text); margin-bottom: 20px; }
-        .user-badge svg { width: 16px; height: 16px; }
+        .highlight { color: var(--accent); }
+        .user-badge { display: inline-flex; align-items: center; gap: 8px; padding: 7px 14px; background: var(--surface-subtle); border: 1px solid var(--doc-border); border-radius: var(--radius-pill); font-size: 0.84rem; color: var(--doc-text); margin-bottom: 18px; }
+        .user-badge svg { width: 15px; height: 15px; color: var(--green-500); }
     </style>
 </head>
-{{ end }}
-
-<!DOCTYPE html>
-<html lang="{{ if .Lang }}{{ .Lang }}{{ else }}en{{ end }}">
-{{ template "docs-head" . }}
 <body>
     <div class="docs-mobile-bar">
         <button type="button" class="mobile-menu-btn" id="mobileMenuBtn" onclick="toggleMobileSidebar()" aria-label="{{ index .T "toggle_menu" }}" aria-expanded="false">
@@ -226,6 +164,11 @@
                 </a>
                 <a href="https://github.com/gilosorg/auth/releases/tag/{{.AppVersion}}" target="_blank" class="sidebar-version" rel="noopener noreferrer">{{.AppVersion}}</a>
             </div>
+
+            <div class="sidebar-search-wrap">
+                <input type="search" id="docsFilterInput" class="sidebar-search-input" placeholder="{{ index .T "docs_filter_placeholder" }}" aria-label="{{ index .T "docs_filter_placeholder" }}" autocomplete="off">
+            </div>
+            <div id="docsNoMatches" class="sidebar-no-matches hidden">{{ index .T "docs_no_matches" }}</div>
 
             <div class="sidebar-section">
                 <div class="sidebar-section-title">Getting Started</div>
@@ -263,6 +206,9 @@
             </div>
 
             <div class="sidebar-footer">
+                <a href="/home" class="theme-toggle-btn" style="text-decoration: none; margin-bottom: 8px;">
+                    {{ if .IsLoggedIn }}{{ index .T "account" }}{{ else }}{{ index .T "sign_in" }}{{ end }}
+                </a>
                 <button type="button" class="theme-toggle-btn" id="docsThemeToggleBtn" onclick="cycleDocsTheme()" aria-label="{{ index .T "switch_theme" }}" title="{{ index .T "switch_theme" }}">
                     <span id="docsThemeToggleIcon" aria-hidden="true"></span>
                     <span id="docsThemeToggleLabel">{{ index .T "theme_system" }}</span>
@@ -430,13 +376,13 @@
   &amp;scope=<span class="var-scopes">openid profile email</span>
   &amp;state=<span class="var-state">RANDOM_STATE_TOKEN</span>
   &amp;code_challenge=<span class="var-code-challenge">BASE64URL_SHA256_CHALLENGE</span>
-  &amp;code_challenge_method=S256</code><button class="copy-btn" onclick="copyCode(this)">{{ index .T "copy" }}</button></pre>
+  &amp;code_challenge_method=S256</code><button type="button" class="copy-btn" onclick="copyCode(this)">{{ index .T "copy" }}</button></pre>
 
                     {{ if .IsLoggedIn }}{{ if .Clients }}
                     <div class="interactive-box" id="authInteractive">
                         <h4>🚀 Try It Live</h4>
                         <p style="margin-bottom: 16px; color: var(--doc-text-secondary);">Select a client above, then click the button to start an OAuth 2.1 authorization flow (a fresh <code>state</code> and PKCE <code>S256</code> challenge are generated automatically):</p>
-                        <button id="openAuthBtn" class="btn btn-primary" onclick="openAuthUrl()" disabled>
+                        <button type="button" id="openAuthBtn" class="btn btn-primary" onclick="openAuthUrl()" disabled>
                             Select a client first
                         </button>
                     </div>
@@ -482,7 +428,7 @@ grant_type=authorization_code
 <span class="var-secret-form-line">&amp;client_secret=<span class="var-client-secret">YOUR_CLIENT_SECRET</span>
 </span>&amp;code=<span class="var-auth-code">AUTHORIZATION_CODE</span>
 &amp;redirect_uri=<span class="var-redirect-uri">https://yourapp.com/callback</span>
-&amp;code_verifier=<span class="var-code-verifier">PKCE_CODE_VERIFIER</span></code><button class="copy-btn" onclick="copyCode(this)">{{ index .T "copy" }}</button></pre>
+&amp;code_verifier=<span class="var-code-verifier">PKCE_CODE_VERIFIER</span></code><button type="button" class="copy-btn" onclick="copyCode(this)">{{ index .T "copy" }}</button></pre>
 
                     <h4>cURL Command</h4>
 <pre><code id="curlTokenExample">curl -X POST <span class="var-base-url">{{ if .IssuerURL }}{{ .IssuerURL }}{{ else }}https://auth.gilos.org{{ end }}</span>/o/token \
@@ -492,7 +438,7 @@ grant_type=authorization_code
 <span class="var-secret-curl-line">  -d "client_secret=<span class="var-client-secret">YOUR_CLIENT_SECRET</span>" \
 </span>  -d "code=<span class="var-auth-code">AUTHORIZATION_CODE</span>" \
   -d "redirect_uri=<span class="var-redirect-uri">https://yourapp.com/callback</span>" \
-  -d "code_verifier=<span class="var-code-verifier">PKCE_CODE_VERIFIER</span>"</code><button class="copy-btn" onclick="copyCode(this)">{{ index .T "copy" }}</button></pre>
+  -d "code_verifier=<span class="var-code-verifier">PKCE_CODE_VERIFIER</span>"</code><button type="button" class="copy-btn" onclick="copyCode(this)">{{ index .T "copy" }}</button></pre>
 
                     {{ if .IsLoggedIn }}{{ if .Clients }}
                     <div class="interactive-box" id="tokenTestBox">
@@ -501,7 +447,7 @@ grant_type=authorization_code
                                 <h4 style="margin: 0;">🧪 Test Token Endpoint</h4>
                                 <p id="tokenTestStatus" style="margin: 4px 0 0; font-size: 0.85rem; color: var(--doc-text-muted);">Extract a code from Step 1 first</p>
                             </div>
-                            <button id="testTokenBtn" class="btn btn-primary" onclick="testTokenEndpoint()" disabled>
+                            <button type="button" id="testTokenBtn" class="btn btn-primary" onclick="testTokenEndpoint()" disabled>
                                 Test /o/token
                             </button>
                         </div>
@@ -549,7 +495,7 @@ Authorization: Bearer <span class="var-access-token">YOUR_ACCESS_TOKEN</span></c
                                 <h4 style="margin: 0;">👤 Test UserInfo Endpoint</h4>
                                 <p id="userInfoTestStatus" style="margin: 4px 0 0; font-size: 0.85rem; color: var(--doc-text-muted);">Get a token from Step 2 first</p>
                             </div>
-                            <button id="testUserInfoBtn" class="btn btn-primary" onclick="testUserInfoEndpoint()" disabled>
+                            <button type="button" id="testUserInfoBtn" class="btn btn-primary" onclick="testUserInfoEndpoint()" disabled>
                                 Test /api/userinfo
                             </button>
                         </div>
@@ -564,7 +510,7 @@ Authorization: Bearer <span class="var-access-token">YOUR_ACCESS_TOKEN</span></c
 
                     <h4>cURL Command</h4>
 <pre><code id="curlMeExample">curl <span class="var-base-url">{{ if .IssuerURL }}{{ .IssuerURL }}{{ else }}https://auth.gilos.org{{ end }}</span>/api/userinfo \
-  -H "Authorization: Bearer <span class="var-access-token">YOUR_ACCESS_TOKEN</span>"</code><button class="copy-btn" onclick="copyCode(this)">{{ index .T "copy" }}</button></pre>
+  -H "Authorization: Bearer <span class="var-access-token">YOUR_ACCESS_TOKEN</span>"</code><button type="button" class="copy-btn" onclick="copyCode(this)">{{ index .T "copy" }}</button></pre>
 
                     <span class="label label-success">Response</span>
 <pre><code>{
@@ -600,7 +546,7 @@ Authorization: Bearer <span class="var-access-token">YOUR_ACCESS_TOKEN</span></c
   -d "grant_type=refresh_token" \
   -d "client_id=<span class="var-client-id">YOUR_CLIENT_ID</span>" \
 <span class="var-secret-curl-line">  -d "client_secret=<span class="var-client-secret">YOUR_CLIENT_SECRET</span>" \
-</span>  -d "refresh_token=<span class="var-refresh-token">YOUR_REFRESH_TOKEN</span>"</code><button class="copy-btn" onclick="copyCode(this)">{{ index .T "copy" }}</button></pre>
+</span>  -d "refresh_token=<span class="var-refresh-token">YOUR_REFRESH_TOKEN</span>"</code><button type="button" class="copy-btn" onclick="copyCode(this)">{{ index .T "copy" }}</button></pre>
 
                     {{ if .IsLoggedIn }}{{ if .Clients }}
                     <div class="interactive-box" id="refreshTestBox">
@@ -609,7 +555,7 @@ Authorization: Bearer <span class="var-access-token">YOUR_ACCESS_TOKEN</span></c
                                 <h4 style="margin: 0;">🔄 Test Refresh Token</h4>
                                 <p id="refreshTestStatus" style="margin: 4px 0 0; font-size: 0.85rem; color: var(--doc-text-muted);">Get a refresh token from Step 2 first</p>
                             </div>
-                            <button id="testRefreshBtn" class="btn btn-primary" onclick="testRefreshEndpoint()" disabled>
+                            <button type="button" id="testRefreshBtn" class="btn btn-primary" onclick="testRefreshEndpoint()" disabled>
                                 Test Refresh
                             </button>
                         </div>
@@ -996,7 +942,7 @@ func CallbackHandler(onSuccess AuthCallback) http.HandlerFunc {
 		
 		http.Redirect(w, r, redirectURL, http.StatusSeeOther)
 	}
-}</code><button class="copy-btn" onclick="copyCode(this)">Copy</button></pre>
+}</code><button type="button" class="copy-btn" onclick="copyCode(this)">Copy</button></pre>
                 </section>
 
                 <footer class="docs-footer">
@@ -1007,7 +953,6 @@ func CallbackHandler(onSuccess AuthCallback) http.HandlerFunc {
                         <a href="https://gilos.org/contact" target="_blank" rel="noopener noreferrer" style="color: var(--doc-text-secondary); margin: 0 8px;">{{ index .T "help" }}</a>
                     </p>
                 </footer>
-                <div id="docsToast" class="docs-toast" role="status" aria-live="polite"></div>
             </div>
         </main>
     </div>
@@ -1467,15 +1412,10 @@ func CallbackHandler(onSuccess AuthCallback) http.HandlerFunc {
             }, 3000);
         }
 
-        let docsToastTimer = null;
         function showDocsToast(message, isError = false) {
-            const toast = document.getElementById('docsToast');
-            if (!toast) return;
-            toast.textContent = message;
-            toast.classList.toggle('error', !!isError);
-            toast.classList.add('visible');
-            if (docsToastTimer) clearTimeout(docsToastTimer);
-            docsToastTimer = setTimeout(() => toast.classList.remove('visible'), 3000);
+            if (window.GilosUI) {
+                window.GilosUI.toast(message, isError ? 'error' : 'info');
+            }
         }
 
         function setDocsLanguage(code) {
@@ -1553,29 +1493,73 @@ func CallbackHandler(onSuccess AuthCallback) http.HandlerFunc {
             }
         });
 
-        // Active link highlighting
-        const sections = document.querySelectorAll('section[id]');
-        const navLinks = document.querySelectorAll('.sidebar-nav a');
-
-        function setActiveLink() {
-            let current = '';
-            sections.forEach(section => {
-                const sectionTop = section.offsetTop - 100;
-                if (scrollY >= sectionTop) {
-                    current = section.getAttribute('id');
-                }
-            });
-
-            navLinks.forEach(link => {
-                link.classList.remove('active');
-                if (link.getAttribute('href') === '#' + current) {
-                    link.classList.add('active');
+        // Quick filter for sidebar sections
+        const filterInput = document.getElementById('docsFilterInput');
+        const noMatchesEl = document.getElementById('docsNoMatches');
+        if (filterInput) {
+            const applyFilter = () => {
+                const q = filterInput.value.trim().toLowerCase();
+                let visibleLinks = 0;
+                document.querySelectorAll('.sidebar-section').forEach(section => {
+                    let sectionVisible = 0;
+                    section.querySelectorAll('.sidebar-nav li').forEach(li => {
+                        const match = !q || li.textContent.toLowerCase().includes(q);
+                        li.classList.toggle('hidden', !match);
+                        if (match) sectionVisible++;
+                    });
+                    section.classList.toggle('hidden', sectionVisible === 0);
+                    visibleLinks += sectionVisible;
+                });
+                if (noMatchesEl) noMatchesEl.classList.toggle('hidden', visibleLinks > 0);
+            };
+            filterInput.addEventListener('input', applyFilter);
+            document.addEventListener('keydown', (e) => {
+                if (e.key === '/' && !e.metaKey && !e.ctrlKey && !e.altKey) {
+                    const tag = e.target && e.target.tagName;
+                    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || (e.target && e.target.isContentEditable)) return;
+                    e.preventDefault();
+                    filterInput.focus();
+                    filterInput.select();
+                } else if (e.key === 'Escape' && document.activeElement === filterInput && filterInput.value) {
+                    filterInput.value = '';
+                    applyFilter();
                 }
             });
         }
 
-        window.addEventListener('scroll', setActiveLink);
-        setActiveLink();
+        // Active link highlighting via IntersectionObserver with scroll fallback
+        const sections = document.querySelectorAll('section[id]');
+        const navLinks = document.querySelectorAll('.sidebar-nav a');
+
+        function markActiveNav(id) {
+            navLinks.forEach(link => {
+                link.classList.toggle('active', link.getAttribute('href') === '#' + id);
+            });
+        }
+
+        if ('IntersectionObserver' in window && sections.length > 0) {
+            const observer = new IntersectionObserver(entries => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        markActiveNav(entry.target.getAttribute('id'));
+                    }
+                });
+            }, { rootMargin: '-18% 0px -70% 0px', threshold: 0 });
+            sections.forEach(section => observer.observe(section));
+            markActiveNav(sections[0].getAttribute('id'));
+        } else {
+            const setActiveLink = () => {
+                let current = '';
+                sections.forEach(section => {
+                    if (window.scrollY >= section.offsetTop - 100) {
+                        current = section.getAttribute('id');
+                    }
+                });
+                markActiveNav(current);
+            };
+            window.addEventListener('scroll', setActiveLink);
+            setActiveLink();
+        }
     </script>
 </body>
 </html>

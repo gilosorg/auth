@@ -1,183 +1,117 @@
 {{ define "common/footer" }}
+<footer class="site-footer">
+    <div class="footer-container">
+        <div class="footer-brand">
+            &copy; <span id="footer-year">{{ if .Year }}{{ .Year }}{{ else }}2026{{ end }}</span> {{ index .T "company_name_llc" }}
+        </div>
+        <div class="footer-right">
+            <nav class="footer-links" aria-label="Footer">
+                <a href="/docs" class="footer-link">{{ index .T "docs" }}</a>
+                <a href="https://github.com/gilosorg/auth" class="footer-link" target="_blank" rel="noopener noreferrer">{{ index .T "source_code" }}{{ if .AppVersion }} {{ .AppVersion }}{{ end }}</a>
+                <a href="/terms" class="footer-link">{{ index .T "terms" }}</a>
+                <a href="/privacy" class="footer-link">{{ index .T "privacy" }}</a>
+                <a href="https://gilos.org/contact" class="footer-link" target="_blank" rel="noopener noreferrer">{{ index .T "help" }}</a>
+            </nav>
+            <div class="footer-controls">
+                <button type="button"
+                        class="footer-pill-btn theme-toggle-btn"
+                        id="theme-toggle-btn"
+                        onclick="cycleThemePreference()"
+                        data-label-system="{{ index .T "theme_system" }}"
+                        data-label-light="{{ index .T "theme_light" }}"
+                        data-label-dark="{{ index .T "theme_dark" }}"
+                        aria-label="{{ index .T "switch_theme" }}"
+                        title="{{ index .T "switch_theme" }}">
+                    <span id="theme-toggle-icon" aria-hidden="true"></span>
+                    <span id="theme-toggle-label">{{ index .T "theme_system" }}</span>
+                </button>
+                <div class="lang-switcher" id="lang-switcher">
+                    <button type="button"
+                            class="footer-pill-btn lang-btn"
+                            id="lang-btn"
+                            onclick="toggleLangDropdown(event)"
+                            aria-label="{{ index .T "language" }}"
+                            aria-haspopup="true"
+                            aria-expanded="false">
+                        <img class="lang-flag" src="{{ if .CurrentLanguage }}{{ .CurrentLanguage.Flag }}{{ else }}/static/img/i18n/gb.svg{{ end }}" alt="">
+                        <span>{{ if .CurrentLanguage }}{{ .CurrentLanguage.Name }}{{ else }}English{{ end }}</span>
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+                    </button>
+                    <div class="lang-dropdown" id="lang-dropdown" role="menu">
+                        {{ if .Languages }}
+                        {{ range .Languages }}
+                        <button type="button" class="lang-option {{ if eq .Code $.Lang }}active{{ end }}" role="menuitem" onclick="setLanguage('{{ .Code }}')">
+                            <img src="{{ .Flag }}" alt="">
+                            <span>{{ .Name }}</span>
+                            {{ if eq .Code $.Lang }}
+                            <svg class="lang-check" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+                            {{ end }}
+                        </button>
+                        {{ end }}
+                        {{ else }}
+                        <button type="button" class="lang-option active" role="menuitem" onclick="setLanguage('en')">
+                            <img src="/static/img/i18n/gb.svg" alt="">
+                            <span>English</span>
+                        </button>
+                        {{ end }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</footer>
 
 <style>
-    footer {
-        color: var(--text-muted);
-        font-size: 12px;
-        display: flex;
-        justify-content: center;
-        padding: 16px 0;
+    .site-footer {
+        width: 100%;
+        margin-top: auto;
+        padding: 20px 24px 28px;
+        border-top: 1px solid var(--border-subtle);
+        background: transparent;
     }
 
-    footer .container {
+    .footer-container {
+        max-width: 1200px;
+        margin: 0 auto;
         display: flex;
         align-items: center;
-        gap: 4px;
+        justify-content: space-between;
+        gap: 16px 24px;
+        flex-wrap: wrap;
+        font-size: 0.8125rem;
+        color: var(--text-muted);
     }
 
-    .footer-copyright {
-        text-align: left;
-        flex: 1;
+    .footer-brand {
+        font-weight: 500;
         color: var(--text-muted);
+    }
+
+    .footer-right {
+        display: flex;
+        align-items: center;
+        gap: 16px 24px;
+        flex-wrap: wrap;
     }
 
     .footer-links {
         display: flex;
         align-items: center;
+        gap: 16px;
         flex-wrap: wrap;
-        gap: 4px;
     }
 
     .footer-link {
-        color: var(--text-muted);
+        color: var(--text-secondary);
         text-decoration: none;
-        padding: 4px 8px;
-        border-radius: 6px;
-        transition: all 0.2s ease;
+        font-weight: 500;
+        transition: color 0.15s ease;
     }
 
     .footer-link:hover {
-        color: var(--primary);
-        background: var(--primary-gradient-subtle);
-    }
-
-    /* ===== Modern Language Switcher ===== */
-    .lang-switcher {
-        position: relative;
-    }
-
-    /* Make toggle look like other footer links - no outline */
-    .lang-switcher .lang-toggle {
-        all: unset !important;
-        display: flex !important;
-        align-items: center !important;
-        gap: 6px !important;
-        padding: 4px 8px !important;
-        background: transparent !important;
-        border: none !important;
-        border-radius: 6px !important;
-        cursor: pointer !important;
-        color: var(--slate-500) !important;
-        font-size: 12px !important;
-        font-family: inherit !important;
-        font-weight: 400 !important;
-        transition: all 0.2s ease !important;
-        opacity: 1 !important;
-        transform: none !important;
-        visibility: visible !important;
-    }
-
-    .lang-switcher .lang-toggle:hover {
-        color: var(--text) !important;
-        background: var(--slate-100) !important;
-    }
-
-    .lang-switcher .lang-toggle:focus-visible,
-    .theme-toggle-btn:focus-visible,
-    .lang-option:focus-visible {
-        outline: 2px solid var(--primary) !important;
-        outline-offset: 2px !important;
-    }
-
-    .lang-switcher.open .lang-toggle {
-        color: var(--text) !important;
-        background: var(--slate-100) !important;
-    }
-
-    .lang-toggle .lang-flag {
-        width: 18px;
-        height: 13px;
-        object-fit: cover;
-        border-radius: 2px;
-        box-shadow: 0 0 0 1px rgba(0,0,0,0.1);
-    }
-
-    .lang-toggle .lang-code {
-        text-transform: uppercase;
-        letter-spacing: 0.3px;
-    }
-
-    .lang-toggle .lang-arrow {
-        width: 12px;
-        height: 12px;
-        transition: transform 0.2s ease;
-        opacity: 0.6;
-    }
-
-    .lang-switcher.open .lang-toggle .lang-arrow {
-        transform: rotate(180deg);
-    }
-
-    /* Dropdown Panel - glassmorphism with premium shadow */
-    .lang-dropdown {
-        position: absolute;
-        bottom: calc(100% + 8px);
-        right: 0;
-        background: var(--card-bg);
-        backdrop-filter: blur(16px);
-        -webkit-backdrop-filter: blur(16px);
-        border: none;
-        border-radius: 12px;
-        box-shadow: var(--card-shadow-hover);
-        min-width: 150px;
-        padding: 6px;
-        opacity: 0;
-        visibility: hidden;
-        transform: translateY(8px);
-        transition: all 0.2s ease;
-        z-index: 9999;
-    }
-
-    .lang-switcher.open .lang-dropdown {
-        opacity: 1;
-        visibility: visible;
-        transform: translateY(0);
-    }
-
-    .lang-option {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        width: 100%;
-        padding: 10px 12px;
-        cursor: pointer;
         color: var(--text);
-        font-size: 13px;
-        font-family: inherit;
-        text-align: left;
-        text-decoration: none;
-        background: transparent;
-        border: none;
-        border-radius: 8px;
-        transition: all 0.15s ease;
-    }
-
-    .lang-option:hover {
-        background: var(--slate-100);
-    }
-
-    .lang-option.active {
-        background: var(--primary-glow);
-        color: var(--primary);
-    }
-
-    .lang-option.active::after {
-        content: "✓";
-        margin-left: auto;
-        font-size: 12px;
-        color: var(--primary);
-    }
-
-    .lang-option img {
-        width: 22px;
-        height: 16px;
-        object-fit: cover;
-        border-radius: 3px;
-        box-shadow: 0 0 0 1px rgba(0,0,0,0.1);
-    }
-
-    .lang-option span {
-        font-weight: 500;
+        text-decoration: underline;
+        text-underline-offset: 3px;
     }
 
     .footer-controls {
@@ -186,233 +120,222 @@
         gap: 8px;
     }
 
-    .theme-toggle-btn {
-        all: unset !important;
-        display: inline-flex !important;
-        align-items: center !important;
-        gap: 5px !important;
-        padding: 4px 8px !important;
-        border-radius: 6px !important;
-        cursor: pointer !important;
-        color: var(--slate-500) !important;
-        font-size: 12px !important;
-        font-family: inherit !important;
-        font-weight: 400 !important;
-        transition: all 0.2s ease !important;
-        opacity: 1 !important;
-        transform: none !important;
+    .footer-pill-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 11px;
+        border-radius: var(--radius-pill);
+        border: 1px solid var(--border-default);
+        background: var(--surface-elevated);
+        color: var(--text-secondary);
+        font-size: 0.8rem;
+        font-weight: 500;
+        line-height: 1.25;
+        cursor: pointer;
+        transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
     }
 
-    .theme-toggle-btn:hover {
-        color: var(--text) !important;
-        background: var(--slate-100) !important;
+    .footer-pill-btn:hover {
+        background: var(--surface-subtle);
+        border-color: var(--border-strong);
+        color: var(--text);
     }
 
-    .theme-toggle-btn svg {
-        width: 14px;
-        height: 14px;
+    #theme-toggle-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .lang-switcher {
+        position: relative;
+        display: inline-flex;
+    }
+
+    .lang-flag {
+        width: 15px;
+        height: 11px;
+        border-radius: 2px;
+        object-fit: cover;
         flex-shrink: 0;
     }
 
-    /* Mobile Only - stacked layout */
-    @media (max-width: 600px) {
-        footer .container {
+    .lang-dropdown {
+        position: absolute;
+        bottom: calc(100% + 8px);
+        right: 0;
+        min-width: 170px;
+        padding: 6px;
+        background: var(--surface-elevated);
+        border: 1px solid var(--border-default);
+        border-radius: var(--radius-md);
+        box-shadow: var(--popover-shadow);
+        display: none;
+        flex-direction: column;
+        gap: 2px;
+        z-index: 200;
+    }
+
+    .lang-dropdown.show {
+        display: flex;
+        animation: gilosPopoverIn 0.15s var(--ease-out);
+    }
+
+    @keyframes gilosPopoverIn {
+        from { opacity: 0; transform: translateY(4px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .lang-option {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        width: 100%;
+        padding: 8px 10px;
+        border: none;
+        border-radius: 8px;
+        background: transparent;
+        color: var(--text);
+        font-size: 0.825rem;
+        font-weight: 500;
+        text-align: left;
+        cursor: pointer;
+        transition: background-color 0.14s ease;
+    }
+
+    .lang-option:hover {
+        background: var(--surface-subtle);
+    }
+
+    .lang-option.active {
+        background: var(--surface-subtle);
+        font-weight: 600;
+    }
+
+    .lang-option img {
+        width: 16px;
+        height: 12px;
+        border-radius: 2px;
+        object-fit: cover;
+        flex-shrink: 0;
+    }
+
+    .lang-option .lang-check {
+        margin-left: auto;
+        color: var(--accent);
+    }
+
+    @media (max-width: 680px) {
+        .site-footer {
+            padding: 18px 16px 24px;
+        }
+        .footer-container {
             flex-direction: column;
             align-items: center;
             text-align: center;
+            gap: 14px;
+        }
+        .footer-right {
+            flex-direction: column;
+            align-items: center;
             gap: 12px;
         }
-
         .footer-links {
             justify-content: center;
-            flex-wrap: wrap;
-            order: 3;
         }
-
-        .footer-copyright {
-            order: 2;
-        }
-
-        .footer-controls {
-            order: -1;
-            margin-left: 0;
-            width: 100%;
-            justify-content: center;
-        }
-
-        .lang-switcher {
-            margin-left: 0;
-            display: flex;
-            justify-content: center;
-        }
-
         .lang-dropdown {
-            right: 50%;
-            transform: translateX(50%) translateY(8px);
-        }
-
-        .lang-switcher.open .lang-dropdown {
-            transform: translateX(50%) translateY(0);
+            left: 50%;
+            right: auto;
+            transform: translateX(-50%);
         }
     }
 </style>
 
-
-<footer>
-    <div class="container">
-        <div class="footer-copyright">
-            &copy; <span id="footer-year">{{ if .Year }}{{ .Year }}{{ else }}2026{{ end }}</span> {{ index .T "company_name_llc" }}
-        </div>
-        <div class="footer-links">
-            <a href="/docs" class="footer-link">{{ index .T "docs" }}</a>
-            <a href="https://github.com/gilosorg/auth" class="footer-link" target="_blank" rel="noopener noreferrer">{{ index .T "source_code" }} {{.AppVersion}}</a>
-            <a href="/terms" class="footer-link">{{ index .T "terms" }}</a>
-            <a href="/privacy" class="footer-link">{{ index .T "privacy" }}</a>
-            <a href="https://gilos.org/contact" class="footer-link" target="_blank" rel="noopener noreferrer">{{ index .T "help" }}</a>
-        </div>
-        <div class="footer-controls">
-            <button type="button" class="theme-toggle-btn" id="theme-toggle-btn" onclick="cycleThemePreference()" aria-label="{{ index .T "switch_theme" }}" title="{{ index .T "switch_theme" }}">
-                <span id="theme-toggle-icon" aria-hidden="true"></span>
-                <span id="theme-toggle-label">{{ index .T "theme_system" }}</span>
-            </button>
-            <!-- Language Switcher - outside footer-links for mobile ordering -->
-            <div class="lang-switcher" id="lang-switcher">
-                <button class="lang-toggle" onclick="toggleLangDropdown(event)" type="button" aria-haspopup="menu" aria-expanded="false">
-                    <img class="lang-flag" src="{{ if .CurrentLanguage }}{{ .CurrentLanguage.Flag }}{{ else }}/static/img/i18n/gb.svg{{ end }}" alt="">
-                    <span class="lang-name">{{ if .CurrentLanguage }}{{ .CurrentLanguage.Name }}{{ else }}English{{ end }}</span>
-                    <svg class="lang-arrow" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                        <polyline points="6 9 12 15 18 9"></polyline>
-                    </svg>
-                </button>
-                <div class="lang-dropdown" id="lang-dropdown" role="menu">
-                    {{ range .Languages }}
-                    <button type="button" role="menuitem" class="lang-option{{ if eq .Code $.Lang }} active{{ end }}" onclick="setLanguage('{{ .Code }}')">
-                        <img src="{{ .Flag }}" alt="">
-                        <span>{{ .Name }}</span>
-                    </button>
-                    {{ else }}
-                    <button type="button" role="menuitem" class="lang-option" onclick="setLanguage('en')">
-                        <img src="/static/img/i18n/gb.svg" alt="">
-                        <span>English</span>
-                    </button>
-                    {{ end }}
-                </div>
-            </div>
-        </div>
-    </div>
-</footer>
-
 <script>
-    (function() {
-        var yearEl = document.getElementById('footer-year');
-        if (yearEl && !yearEl.textContent.trim()) {
-            yearEl.textContent = new Date().getFullYear();
+    (function () {
+        var yr = document.getElementById('footer-year');
+        if (yr && (!yr.textContent || yr.textContent.trim() === '')) {
+            yr.textContent = new Date().getFullYear();
         }
     })();
 
-    var THEME_LABELS = {
-        system: "{{ index .T "theme_system" }}",
-        light: "{{ index .T "theme_light" }}",
-        dark: "{{ index .T "theme_dark" }}"
-    };
-
-    var THEME_ICONS = {
-        system: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>',
-        light: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>',
-        dark: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>'
+    var __themeIcons = {
+        system: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>',
+        light: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>',
+        dark: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>'
     };
 
     function renderThemeToggle() {
-        var pref = document.documentElement.getAttribute('data-theme-pref') || 'system';
-        if (!THEME_LABELS[pref]) pref = 'system';
+        var btn = document.getElementById('theme-toggle-btn');
         var iconEl = document.getElementById('theme-toggle-icon');
         var labelEl = document.getElementById('theme-toggle-label');
-        if (iconEl) iconEl.innerHTML = THEME_ICONS[pref];
-        if (labelEl) labelEl.textContent = THEME_LABELS[pref];
+        if (!btn || !iconEl || !labelEl) return;
+
+        var pref = document.documentElement.getAttribute('data-theme-pref') || 'system';
+        if (pref !== 'light' && pref !== 'dark') pref = 'system';
+
+        iconEl.innerHTML = __themeIcons[pref] || __themeIcons.system;
+        var label = btn.getAttribute('data-label-' + pref) || pref;
+        labelEl.textContent = label;
     }
 
     function cycleThemePreference() {
         var order = ['system', 'light', 'dark'];
-        var current = document.documentElement.getAttribute('data-theme-pref') || 'system';
-        var next = order[(order.indexOf(current) + 1) % order.length];
+        var cur = document.documentElement.getAttribute('data-theme-pref') || 'system';
+        var next = order[(order.indexOf(cur) + 1) % order.length];
         if (typeof window.__setTheme === 'function') {
             window.__setTheme(next);
         }
-        renderThemeToggle();
     }
 
-    window.addEventListener('gilos-theme-change', renderThemeToggle);
     renderThemeToggle();
+    window.addEventListener('gilos-theme-change', renderThemeToggle);
 
     function toggleLangDropdown(event) {
-        event.stopPropagation();
-        const switcher = document.getElementById('lang-switcher');
-        const isOpen = switcher.classList.toggle('open');
-        const btn = switcher.querySelector('.lang-toggle');
-        if (btn) btn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
-        if (isOpen) {
-            const items = Array.from(switcher.querySelectorAll('.lang-option'));
-            const activeItem = items.find(el => el.classList.contains('active')) || items[0];
-            if (activeItem) activeItem.focus();
-        }
+        if (event) event.stopPropagation();
+        var dropdown = document.getElementById('lang-dropdown');
+        var btn = document.getElementById('lang-btn');
+        if (!dropdown) return;
+        var willShow = !dropdown.classList.contains('show');
+        dropdown.classList.toggle('show', willShow);
+        if (btn) btn.setAttribute('aria-expanded', willShow ? 'true' : 'false');
     }
 
-    function setLanguage(code) {
-        try {
-            const activeTab = document.querySelector('.tabs .tab.active[data-tab]');
-            if (activeTab) {
-                sessionStorage.setItem('gilos_home_active_tab', activeTab.dataset.tab);
-            }
-        } catch (e) {}
-
-        // Set cookie for 1 year
-        const expires = new Date();
-        expires.setFullYear(expires.getFullYear() + 1);
-        document.cookie = `lang=${encodeURIComponent(code)};path=/;expires=${expires.toUTCString()};SameSite=Lax`;
-        
-        // Reload the page to apply the new language safely
-        window.location.href = window.location.pathname + window.location.search;
-    }
-
-    // Close dropdown when clicking outside
-    document.addEventListener('click', function(event) {
-        const switcher = document.getElementById('lang-switcher');
-        if (switcher && !switcher.contains(event.target)) {
-            switcher.classList.remove('open');
-            const btn = switcher.querySelector('.lang-toggle');
+    document.addEventListener('click', function (event) {
+        var switcher = document.getElementById('lang-switcher');
+        var dropdown = document.getElementById('lang-dropdown');
+        var btn = document.getElementById('lang-btn');
+        if (switcher && dropdown && !switcher.contains(event.target)) {
+            dropdown.classList.remove('show');
             if (btn) btn.setAttribute('aria-expanded', 'false');
         }
     });
 
-    // Keyboard navigation for language dropdown
-    document.addEventListener('keydown', function(event) {
-        const switcher = document.getElementById('lang-switcher');
-        if (!switcher || !switcher.classList.contains('open')) return;
-
+    document.addEventListener('keydown', function (event) {
         if (event.key === 'Escape') {
-            switcher.classList.remove('open');
-            const btn = switcher.querySelector('.lang-toggle');
-            if (btn) {
-                btn.setAttribute('aria-expanded', 'false');
-                btn.focus();
+            var dropdown = document.getElementById('lang-dropdown');
+            var btn = document.getElementById('lang-btn');
+            if (dropdown && dropdown.classList.contains('show')) {
+                dropdown.classList.remove('show');
+                if (btn) btn.setAttribute('aria-expanded', 'false');
             }
-            return;
-        }
-
-        if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
-            const items = Array.from(switcher.querySelectorAll('.lang-option'));
-            if (items.length === 0) return;
-            event.preventDefault();
-            const currentIndex = items.indexOf(document.activeElement);
-            let nextIndex;
-            if (event.key === 'ArrowDown') {
-                nextIndex = currentIndex >= 0 ? (currentIndex + 1) % items.length : 0;
-            } else {
-                nextIndex = currentIndex >= 0 ? (currentIndex - 1 + items.length) % items.length : items.length - 1;
-            }
-            items[nextIndex].focus();
         }
     });
-</script>
 
+    function setLanguage(code) {
+        var expires = new Date();
+        expires.setFullYear(expires.getFullYear() + 1);
+        var cookieStr = 'lang=' + encodeURIComponent(code) + '; path=/; expires=' + expires.toUTCString() + '; SameSite=Lax';
+        if (window.location.protocol === 'https:') {
+            cookieStr += '; Secure';
+        }
+        document.cookie = cookieStr;
+        var activeTabBtn = document.querySelector('.tab-btn.active');
+        if (activeTabBtn && activeTabBtn.dataset && activeTabBtn.dataset.tab) {
+            try { sessionStorage.setItem('gilos_home_active_tab', activeTabBtn.dataset.tab); } catch (e) {}
+        }
+        window.location.href = window.location.pathname + window.location.search;
+    }
+</script>
 {{ end }}

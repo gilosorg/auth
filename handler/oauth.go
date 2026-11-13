@@ -382,6 +382,7 @@ func renderConsentPage(w http.ResponseWriter, tmpls *template.Template, client d
 		"T":                  i18n.GetTranslations(lang),
 		"AppVersion":         config.Version,
 		"AppName":            config.AppName,
+		"AppIDLabel":         config.AppIDLabel,
 		"Error":              errorMessage,
 		"User":               user,
 		"HasMissingRequired": hasMissingRequired,

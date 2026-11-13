@@ -130,6 +130,7 @@ func main() {
 	mux.HandleFunc("GET /profile/totp/generate", middleware.RequireCookieToken(handler.TOTPGenerateHandler))
 	mux.HandleFunc("POST /profile/totp/verify", middleware.RequireCookieToken(handler.TOTPVerifyHandler))
 	mux.HandleFunc("POST /profile/totp/disable", middleware.RequireCookieToken(handler.TOTPDisableHandler))
+	mux.HandleFunc("GET /profile/activity", middleware.RequireCookieToken(handler.ProfileActivityHandler))
 
 	// OAuth endpoints
 	mux.HandleFunc("GET /o/authorize", middleware.RequireCookieToken(handler.OAuthAuthorizeHandler(tmpls)))
