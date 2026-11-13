@@ -2274,22 +2274,26 @@
                 contact: document.getElementById('reset-password-contact').value
             };
 
+            let redirected = false;
             try {
                 const response = await fetch('/auth/reset-password', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
                     body: JSON.stringify(formData)
                 });
-                const data = await response.json();
+                const rawText = await response.text();
+                let data = {};
+                try { data = rawText ? JSON.parse(rawText) : {}; } catch (_) {}
                 if (!response.ok || !data.success) {
                     throw new Error(data.error || 'Failed to reset password');
                 }
+                redirected = true;
                 window.location.href = targetUrl;
             } catch (error) {
                 console.error('Error submitting reset password:', error);
                 showMessage(error.message, false);
             } finally {
-                if (button) {
+                if (button && !redirected) {
                     button.textContent = buttonText;
                     validateForm();
                 }

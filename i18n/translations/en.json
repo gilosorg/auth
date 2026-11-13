@@ -521,5 +521,17 @@
   "toggle_checkup_details": "Details",
   "session_expired_redirect": "Your session has expired. Redirecting to sign in...",
   "copy_ip": "Copy IP address",
-  "copy_response": "Copy JSON"
+  "copy_response": "Copy JSON",
+  "offline_notice": "You appear to be offline. Changes may not save until reconnected.",
+  "online_restored": "Connection restored.",
+  "live_response": "Live response",
+  "decoded_id_token": "Decoded id_token (JWT)",
+  "jwt_header": "Header",
+  "jwt_claims": "Claims (Payload)",
+  "token_ready_hint": "Token ready! Click to test.",
+  "refresh_ready_hint": "Refresh token ready! Click to test.",
+  "testing_endpoint": "Testing...",
+  "test_success": "Success",
+  "test_error": "Error - Try again",
+  "select_client_first": "Please select a client first"
 }

@@ -521,5 +521,17 @@
   "toggle_checkup_details": "Подробнее",
   "session_expired_redirect": "Срок действия сессии истёк. Перенаправление...",
   "copy_ip": "Копировать IP-адрес",
-  "copy_response": "Копировать JSON"
+  "copy_response": "Копировать JSON",
+  "offline_notice": "Нет подключения к интернету. Изменения не сохранятся до восстановления связи.",
+  "online_restored": "Подключение восстановлено.",
+  "live_response": "Ответ сервера",
+  "decoded_id_token": "Декодированный id_token (JWT)",
+  "jwt_header": "Заголовок",
+  "jwt_claims": "Данные (Claims)",
+  "token_ready_hint": "Токен получен. Нажмите для проверки.",
+  "refresh_ready_hint": "Refresh-токен получен. Нажмите для проверки.",
+  "testing_endpoint": "Выполняется...",
+  "test_success": "Успешно",
+  "test_error": "Ошибка — повторить",
+  "select_client_first": "Сначала выберите OAuth-клиент"
 }

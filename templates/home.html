@@ -2201,9 +2201,11 @@
         }
 
         let isSessionRedirecting = false;
+        let allowProgrammaticUnload = false;
         function redirectOnSessionExpiry() {
             if (isSessionRedirecting) return;
             isSessionRedirecting = true;
+            allowProgrammaticUnload = true;
             if (window.GilosUI) {
                 window.GilosUI.toast(tr('session_expired_redirect', 'Your session has expired. Redirecting to sign in...'), 'warning');
             }
@@ -2714,22 +2716,29 @@
                     }
                     if (newUsername === currentUser.username) return;
 
+                    const updateBtn = document.getElementById('username-update-btn');
                     const attemptUpdate = async (pw) => {
+                        let reloading = false;
+                        window.GilosUI.setButtonLoading(updateBtn, true, tr('loading', 'Loading...'));
                         try {
                             const response = await fetch('/profile/username/update', {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json', 'X-Current-Password': pw },
                                 body: JSON.stringify({ username: newUsername })
                             });
-                            const data = await response.json();
+                            const data = await parseJSONSafe(response, tr('update_failed', 'Update failed'));
                             if (!response.ok) {
                                 if (handlePasswordError(data, attemptUpdate)) return;
                                 throw new Error(data.error || tr('update_failed', 'Update failed'));
                             }
+                            reloading = true;
+                            allowProgrammaticUnload = true;
                             window.GilosUI.toast(tr('username_updated', 'Username updated successfully!'), 'success');
                             setTimeout(() => window.location.reload(), 650);
                         } catch (err) {
                             Swal.fire(tr('error', 'Error'), err.message, 'error');
+                        } finally {
+                            if (!reloading) window.GilosUI.setButtonLoading(updateBtn, false);
                         }
                     };
                     requirePassword(attemptUpdate);
@@ -2767,14 +2776,16 @@
                     params.append('password', p);
                     params.append('confirm_password', cp);
 
+                    const pwBtn = document.getElementById('password-save-btn');
                     const attemptPw = async (curPw) => {
+                        window.GilosUI.setButtonLoading(pwBtn, true, tr('loading', 'Loading...'));
                         try {
                             const response = await fetch('/profile/password', {
                                 method: 'POST',
                                 headers: { 'X-Current-Password': curPw },
                                 body: params
                             });
-                            const data = await response.json();
+                            const data = await parseJSONSafe(response, tr('failed_update_password', 'Failed to update password'));
                             if (!data.success) {
                                 if (handlePasswordError(data, attemptPw)) return;
                                 throw new Error(data.error || tr('failed_update_password', 'Failed to update password'));
@@ -2782,8 +2793,12 @@
                             window.GilosUI.toast(tr('password_updated', 'Password updated successfully'), 'success');
                             e.target.reset();
                             if (matchEl) matchEl.textContent = '';
+                            const strengthEl = document.getElementById('home-pw-strength');
+                            if (strengthEl) strengthEl.innerHTML = '';
                         } catch (err) {
                             Swal.fire(tr('error', 'Error'), err.message, 'error');
+                        } finally {
+                            window.GilosUI.setButtonLoading(pwBtn, false);
                         }
                     };
                     requirePassword(attemptPw);
@@ -2860,18 +2875,22 @@
                     if (mfaE && mfaE.checked) params.append('mfa_email_enabled', 'on');
                     if (mfaP && mfaP.checked) params.append('mfa_phone_enabled', 'on');
 
+                    const contactBtn = document.getElementById('contact-save-btn');
                     const attemptContact = async (curPw) => {
+                        window.GilosUI.setButtonLoading(contactBtn, true, tr('loading', 'Loading...'));
                         try {
                             const response = await fetch('/profile/contact', {
                                 method: 'POST',
                                 headers: { 'X-Current-Password': curPw },
                                 body: params
                             });
-                            const data = await response.json();
+                            const data = await parseJSONSafe(response, tr('failed_update_contact', 'Failed to update contact'));
                             if (!data.success) {
                                 if (handlePasswordError(data, attemptContact)) return;
                                 throw new Error(data.error || tr('failed_update_contact', 'Failed to update contact'));
                             }
+                            if (contactDirtyBadge) contactDirtyBadge.classList.add('hidden');
+                            if (contactDiscardBtn) contactDiscardBtn.classList.add('hidden');
                             if (data.verification_needed && data.verification_needed.length > 0) {
                                 checkPendingVerifications(true);
                             } else {
@@ -2880,6 +2899,8 @@
                             }
                         } catch (err) {
                             Swal.fire(tr('error', 'Error'), err.message, 'error');
+                        } finally {
+                            window.GilosUI.setButtonLoading(contactBtn, false);
                         }
                     };
                     requirePassword(attemptContact);
@@ -2900,13 +2921,14 @@
 
                 const rollback = () => { cb.checked = !cb.checked; };
                 const attemptMfa = async (curPw) => {
+                    cb.disabled = true;
                     try {
                         const response = await fetch('/profile/contact', {
                             method: 'POST',
                             headers: { 'X-Current-Password': curPw },
                             body: params
                         });
-                        const data = await response.json();
+                        const data = await parseJSONSafe(response, tr('mfa_update_failed', 'Could not update two-step setting'));
                         if (!data.success) {
                             if (handlePasswordError(data, attemptMfa, rollback)) return;
                             throw new Error(data.error || tr('mfa_update_failed', 'Could not update two-step setting'));
@@ -2916,6 +2938,8 @@
                     } catch (err) {
                         rollback();
                         window.GilosUI.toast(err.message, 'error');
+                    } finally {
+                        cb.disabled = false;
                     }
                 };
                 requirePassword(attemptMfa, rollback);
@@ -2993,12 +3017,20 @@
             if (secret) copyToClipboard(secret);
         }
 
+        let isVerifyingTOTP = false;
         async function verifyTOTP() {
+            if (isVerifyingTOTP) return;
             const code = getOTPValue('totp-otp');
             const errEl = document.getElementById('totp-error');
+            const verifyBtn = document.getElementById('totp-verify-btn');
             if (code.length !== 6) {
                 if (errEl) { errEl.textContent = tr('enter_all_6_digits', 'Enter all 6 digits'); errEl.classList.add('is-visible'); }
                 return;
+            }
+            isVerifyingTOTP = true;
+            if (verifyBtn) {
+                verifyBtn.setAttribute('aria-busy', 'true');
+                window.GilosUI.setButtonLoading(verifyBtn, true, tr('loading', 'Loading...'));
             }
             try {
                 const response = await fetch('/profile/totp/verify', {
@@ -3006,7 +3038,7 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ code })
                 });
-                const data = await response.json();
+                const data = await parseJSONSafe(response, tr('invalid_code', 'Invalid code'));
                 if (!data.success) throw new Error(data.error || tr('invalid_code', 'Invalid code'));
                 closeTOTPModal();
                 window.GilosUI.toast(tr('authenticator_enabled', 'Authenticator app enabled!'), 'success');
@@ -3014,6 +3046,12 @@
             } catch (err) {
                 if (errEl) { errEl.textContent = err.message; errEl.classList.add('is-visible'); }
                 clearOTPInputs('totp-otp');
+            } finally {
+                isVerifyingTOTP = false;
+                if (verifyBtn) {
+                    verifyBtn.removeAttribute('aria-busy');
+                    window.GilosUI.setButtonLoading(verifyBtn, false);
+                }
             }
         }
 
@@ -3027,21 +3065,22 @@
                 cancelButtonText: tr('cancel', 'Cancel')
             }).then((result) => {
                 if (!result.isConfirmed) return;
-                const attemptDisable = (pw) => {
-                    fetch('/profile/totp/disable', {
-                        method: 'POST',
-                        headers: { 'X-Current-Password': pw }
-                    })
-                    .then(r => r.json())
-                    .then(data => {
+                const attemptDisable = async (pw) => {
+                    try {
+                        const r = await fetch('/profile/totp/disable', {
+                            method: 'POST',
+                            headers: { 'X-Current-Password': pw }
+                        });
+                        const data = await parseJSONSafe(r, tr('failed_disable_totp', 'Failed to disable'));
                         if (data.success) {
                             window.GilosUI.toast(tr('authenticator_disabled', 'Authenticator app disabled.'), 'success');
                             loadAccount();
                         } else if (!handlePasswordError(data, attemptDisable)) {
                             Swal.fire(tr('error', 'Error'), data.error || tr('failed_disable_totp', 'Failed to disable'), 'error');
                         }
-                    })
-                    .catch(err => Swal.fire(tr('error', 'Error'), err.message, 'error'));
+                    } catch (err) {
+                        Swal.fire(tr('error', 'Error'), err.message, 'error');
+                    }
                 };
                 requirePassword(attemptDisable);
             });
@@ -3078,6 +3117,8 @@
                 if (pendingVerifications.length > 0 && openIfAny) {
                     showContactVerifyModal();
                 } else if (pendingVerifications.length === 0) {
+                    Object.values(contactTimers).forEach(clearInterval);
+                    contactTimers = {};
                     hideModal('contact-verify-modal');
                 }
             } catch (e) {}
@@ -3111,7 +3152,27 @@
             `).join('');
 
             pendingVerifications.forEach(typ => {
-                setupOTPInputs(`otp-${typ}`, null);
+                setupOTPInputs(`otp-${typ}`, () => {
+                    if (pendingVerifications.length === 1) verifyContactOTPs();
+                });
+                const otpContainer = document.getElementById(`otp-${typ}`);
+                if (otpContainer) {
+                    otpContainer.querySelectorAll('.otp-input').forEach(inp => {
+                        inp.addEventListener('input', () => {
+                            const msgEl = document.getElementById(`message-${typ}`);
+                            if (msgEl && msgEl.style.color === 'var(--red-600)') msgEl.textContent = '';
+                        });
+                        inp.addEventListener('keydown', (e) => {
+                            if (e.key === 'Enter' && pendingVerifications.length > 1) {
+                                const allReady = pendingVerifications.every(p => getOTPValue(`otp-${p}`).length === 6);
+                                if (allReady) {
+                                    e.preventDefault();
+                                    verifyContactOTPs();
+                                }
+                            }
+                        });
+                    });
+                }
                 startContactCountdown(typ);
             });
             showModal('contact-verify-modal');
@@ -3130,7 +3191,7 @@
                     const s = (timeRemainingMap[typ] || 0) % 60;
                     timerEl.textContent = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
                 }
-                if (resendBtn) {
+                if (resendBtn && resendBtn.dataset.resending !== '1') {
                     if ((resends[typ] || 0) >= 3) {
                         resendBtn.disabled = true;
                         resendBtn.textContent = tr('max_resend_reached', 'Max resends reached');
@@ -3149,20 +3210,32 @@
 
         async function cancelContactVerify() {
             const types = pendingVerifications.join(',');
-            if (!types) { hideModal('contact-verify-modal'); return; }
+            if (!types) {
+                Object.values(contactTimers).forEach(clearInterval);
+                contactTimers = {};
+                hideModal('contact-verify-modal');
+                return;
+            }
             try {
                 await fetch(`/profile/contact/cancel?type=${encodeURIComponent(types)}`, { method: 'POST' });
             } catch (e) {}
             Object.values(contactTimers).forEach(clearInterval);
+            contactTimers = {};
             hideModal('contact-verify-modal');
             loadAccount();
         }
 
         async function resendContactOTP(typ) {
+            const resendBtn = document.getElementById(`resend-${typ}`);
+            const msgEl = document.getElementById(`message-${typ}`);
+            if (resendBtn && resendBtn.dataset.resending === '1') return;
+            if (resendBtn) {
+                resendBtn.dataset.resending = '1';
+                window.GilosUI.setButtonLoading(resendBtn, true, tr('loading', 'Loading...'));
+            }
             try {
                 const response = await fetch(`/profile/contact/resend?type=${encodeURIComponent(typ)}`, { method: 'POST' });
-                const data = await response.json();
-                const msgEl = document.getElementById(`message-${typ}`);
+                const data = await parseJSONSafe(response, tr('failed_resend', 'Failed to resend.'));
                 if (data.success) {
                     timeRemainingMap[typ] = data.time_remaining || 300;
                     resendAvailableMap[typ] = data.resend_available_in || 60;
@@ -3171,10 +3244,19 @@
                 } else {
                     if (msgEl) { msgEl.style.color = 'var(--red-600)'; msgEl.textContent = data.error || tr('failed_resend', 'Failed to resend.'); }
                 }
-            } catch (e) {}
+            } catch (e) {
+                if (msgEl) { msgEl.style.color = 'var(--red-600)'; msgEl.textContent = e.message || tr('failed_resend', 'Failed to resend.'); }
+            } finally {
+                if (resendBtn) {
+                    delete resendBtn.dataset.resending;
+                    window.GilosUI.setButtonLoading(resendBtn, false);
+                }
+            }
         }
 
+        let isVerifyingContactOTP = false;
         async function verifyContactOTPs() {
+            if (isVerifyingContactOTP) return;
             const body = {};
             for (const typ of pendingVerifications) {
                 const val = getOTPValue(`otp-${typ}`);
@@ -3187,13 +3269,19 @@
                 window.GilosUI.toast(tr('enter_full_code', 'Please enter the full 6-digit verification code.'), 'warning');
                 return;
             }
+            const submitBtn = document.getElementById('contact-verify-submit-btn');
+            isVerifyingContactOTP = true;
+            if (submitBtn) {
+                submitBtn.setAttribute('aria-busy', 'true');
+                window.GilosUI.setButtonLoading(submitBtn, true, tr('loading', 'Loading...'));
+            }
             try {
                 const response = await fetch('/profile/contact/verify', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(body)
                 });
-                const data = await response.json();
+                const data = await parseJSONSafe(response, tr('verification_failed', 'Verification failed'));
                 let allDone = true;
                 for (const [typ, res] of Object.entries(data)) {
                     const msgEl = document.getElementById(`message-${typ}`);
@@ -3206,6 +3294,7 @@
                 }
                 if (allDone) {
                     Object.values(contactTimers).forEach(clearInterval);
+                    contactTimers = {};
                     hideModal('contact-verify-modal');
                     window.GilosUI.toast(tr('contact_verified', 'Contact verified'), 'success');
                     loadAccount();
@@ -3213,7 +3302,13 @@
                     checkPendingVerifications(false);
                 }
             } catch (err) {
-                window.GilosUI.toast(tr('verification_failed', 'Verification failed'), 'error');
+                window.GilosUI.toast(err.message || tr('verification_failed', 'Verification failed'), 'error');
+            } finally {
+                isVerifyingContactOTP = false;
+                if (submitBtn) {
+                    submitBtn.removeAttribute('aria-busy');
+                    window.GilosUI.setButtonLoading(submitBtn, false);
+                }
             }
         }
 
@@ -4112,12 +4207,22 @@
         function setupOTPInputs(containerId, onComplete) {
             const container = document.getElementById(containerId);
             if (!container) return;
+            container._otpOnComplete = onComplete;
+            if (container.dataset.otpBound === '1') return;
+            container.dataset.otpBound = '1';
             const inputs = container.querySelectorAll('.otp-input');
+            const runComplete = () => {
+                if (typeof container._otpOnComplete === 'function') container._otpOnComplete();
+            };
             inputs.forEach((inp, idx) => {
                 inp.addEventListener('input', (e) => {
                     e.target.value = e.target.value.replace(/\D/g, '').slice(-1);
+                    if (containerId === 'totp-otp') {
+                        const errEl = document.getElementById('totp-error');
+                        if (errEl) { errEl.textContent = ''; errEl.classList.remove('is-visible'); }
+                    }
                     if (e.target.value && idx < inputs.length - 1) inputs[idx + 1].focus();
-                    if (typeof onComplete === 'function' && getOTPValue(containerId).length === 6) onComplete();
+                    if (getOTPValue(containerId).length === 6) runComplete();
                 });
                 inp.addEventListener('keydown', (e) => {
                     if (e.key === 'Backspace' && !e.target.value && idx > 0) {
@@ -4129,16 +4234,18 @@
                     } else if (e.key === 'ArrowRight' && idx < inputs.length - 1) {
                         e.preventDefault();
                         inputs[idx + 1].focus();
-                    } else if (e.key === 'Enter' && typeof onComplete === 'function' && getOTPValue(containerId).length === 6) {
+                    } else if (e.key === 'Enter' && getOTPValue(containerId).length === 6) {
                         e.preventDefault();
-                        onComplete();
+                        runComplete();
                     }
                 });
                 inp.addEventListener('paste', (e) => {
                     e.preventDefault();
                     const clip = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '').slice(0, 6);
+                    if (!clip) return;
                     clip.split('').forEach((c, ci) => { if (inputs[ci]) inputs[ci].value = c; });
-                    if (typeof onComplete === 'function' && clip.length === 6) onComplete();
+                    if (inputs.length) inputs[Math.min(clip.length, inputs.length - 1)].focus();
+                    if (clip.length === 6) runComplete();
                 });
             });
         }
@@ -4385,6 +4492,41 @@
                     tr('caps_lock_on', 'Caps Lock is on')
                 );
             }
+
+            const curPwInput = document.getElementById('current-password-input');
+            if (curPwInput) {
+                curPwInput.addEventListener('input', () => {
+                    const errEl = document.getElementById('password-modal-error');
+                    if (errEl) { errEl.textContent = ''; errEl.classList.remove('is-visible'); }
+                });
+            }
+
+            let wasOffline = typeof navigator !== 'undefined' && navigator.onLine === false;
+            window.addEventListener('offline', () => {
+                wasOffline = true;
+                if (window.GilosUI) {
+                    window.GilosUI.toast(tr('offline_notice', 'You appear to be offline. Changes may not save until reconnected.'), 'warning', 5000);
+                }
+            });
+            window.addEventListener('online', () => {
+                if (wasOffline) {
+                    wasOffline = false;
+                    if (window.GilosUI) {
+                        window.GilosUI.toast(tr('online_restored', 'Connection restored.'), 'success', 3000);
+                    }
+                }
+            });
+
+            window.addEventListener('beforeunload', (e) => {
+                if (allowProgrammaticUnload) return;
+                const secretOpen = document.getElementById('secret-reveal-modal')?.classList.contains('is-open');
+                const namesDirty = document.getElementById('names-dirty-badge') && !document.getElementById('names-dirty-badge').classList.contains('hidden');
+                const contactDirty = document.getElementById('contact-dirty-badge') && !document.getElementById('contact-dirty-badge').classList.contains('hidden');
+                if (secretOpen || namesDirty || contactDirty) {
+                    e.preventDefault();
+                    e.returnValue = '';
+                }
+            });
 
             document.addEventListener('keydown', (e) => {
                 if (e.key === 'Escape') {

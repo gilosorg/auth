@@ -644,21 +644,24 @@
             } else {
                 totpForm.classList.add('hidden');
                 consentForm.classList.remove('hidden');
+                totpForm.querySelectorAll('.otp-input').forEach(i => i.classList.remove('error'));
                 header.textContent = tr('authorize', 'Authorize');
             }
         }
 
+        let isConsentSubmitting = false;
         function setConsentSubmitting(isSubmitting) {
+            isConsentSubmitting = Boolean(isSubmitting);
             const approveBtn = document.getElementById('approve-btn');
             const denyBtn = document.getElementById('deny-btn');
             const totpBtn = document.getElementById('totp-verify-btn');
-            if (approveBtn) window.GilosUI.setButtonLoading(approveBtn, isSubmitting, tr('loading', 'Loading...'));
-            if (totpBtn) window.GilosUI.setButtonLoading(totpBtn, isSubmitting, tr('loading', 'Loading...'));
-            if (denyBtn) denyBtn.disabled = isSubmitting;
+            if (approveBtn) window.GilosUI.setButtonLoading(approveBtn, isConsentSubmitting, tr('loading', 'Loading...'));
+            if (totpBtn) window.GilosUI.setButtonLoading(totpBtn, isConsentSubmitting, tr('loading', 'Loading...'));
+            if (denyBtn) denyBtn.disabled = isConsentSubmitting;
         }
 
         function handleApprove() {
-            if (hasMissingRequired) return;
+            if (hasMissingRequired || isConsentSubmitting) return;
             if (userMFAEnabled) {
                 moveToState('totp');
             } else {
@@ -672,6 +675,7 @@
         }
 
         function submitApprove() {
+            if (isConsentSubmitting) return;
             if (userMFAEnabled) {
                 const otpInputs = document.querySelectorAll('#totp-form .otp-input');
                 const code = getOtpCode();
@@ -688,6 +692,7 @@
         }
 
         function submitDeny() {
+            if (isConsentSubmitting) return;
             document.getElementById('final-approve').value = 'false';
             setConsentSubmitting(true);
             document.getElementById('final-form').submit();
@@ -720,6 +725,15 @@
                         otpInputs[idx - 1].focus();
                         otpInputs[idx - 1].value = '';
                         updateVerifyBtn();
+                    } else if (e.key === 'ArrowLeft' && idx > 0) {
+                        e.preventDefault();
+                        otpInputs[idx - 1].focus();
+                    } else if (e.key === 'ArrowRight' && idx < otpInputs.length - 1) {
+                        e.preventDefault();
+                        otpInputs[idx + 1].focus();
+                    } else if (e.key === 'Enter' && getOtpCode().length === 6) {
+                        e.preventDefault();
+                        submitApprove();
                     }
                 });
 
@@ -766,6 +780,12 @@
             setupOTPInputs();
             renderTermsText();
             renderMissingWarning();
+        });
+
+        window.addEventListener('pageshow', (e) => {
+            if (e.persisted && isConsentSubmitting) {
+                setConsentSubmitting(false);
+            }
         });
     </script>
 </body>

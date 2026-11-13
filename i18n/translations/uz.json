@@ -521,5 +521,17 @@
   "toggle_checkup_details": "Tafsilotlar",
   "session_expired_redirect": "Seans muddati tugadi. Kirish sahifasiga yo'naltirilmoqda...",
   "copy_ip": "IP-manzilni nusxalash",
-  "copy_response": "JSON nusxalash"
+  "copy_response": "JSON nusxalash",
+  "offline_notice": "Internet aloqasi uzilgan ko'rinadi. Ulanish tiklanmaguncha o'zgarishlar saqlanmasligi mumkin.",
+  "online_restored": "Internet aloqasi tiklandi.",
+  "live_response": "Jonli javob",
+  "decoded_id_token": "Dekodlangan id_token (JWT)",
+  "jwt_header": "Sarlavha",
+  "jwt_claims": "Ma'lumotlar (Claims)",
+  "token_ready_hint": "Token tayyor! Sinab ko'rish uchun bosing.",
+  "refresh_ready_hint": "Yangilash tokeni tayyor! Sinab ko'rish uchun bosing.",
+  "testing_endpoint": "Tekshirilmoqda...",
+  "test_success": "Muvaffaqiyatli",
+  "test_error": "Xato — qayta urinish",
+  "select_client_first": "Avval OAuth mijozini tanlang"
 }

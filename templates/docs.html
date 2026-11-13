@@ -135,6 +135,14 @@
         .lang-select-compact { margin-top: 8px; width: 100%; padding: 7px 10px; border-radius: var(--radius-sm); border: 1px solid var(--doc-border); background: var(--doc-card-bg); color: var(--doc-text-secondary); font-size: 0.8rem; font-family: inherit; cursor: pointer; }
         .response-preview { background: var(--doc-code-bg); border-radius: var(--radius-md); padding: 18px; margin-top: 16px; border: 1px solid var(--doc-border); }
         .response-preview pre { margin: 0; background: none; border: none; padding: 0; }
+        .http-status-pill { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 999px; font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.02em; }
+        .http-status-ok { background: var(--method-get-bg); color: var(--method-get); }
+        .http-status-err { background: var(--red-100, rgba(239, 68, 68, 0.14)); color: var(--red-600, #dc2626); }
+        .jwt-inspector { margin-top: 12px; padding: 14px 16px; border-radius: var(--radius-md); border: 1px solid var(--doc-border); background: var(--doc-card-bg); }
+        .jwt-inspector-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 10px; font-size: 0.82rem; font-weight: 600; color: var(--doc-text); }
+        .jwt-inspector-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; }
+        .jwt-part-title { font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--doc-text-muted); margin-bottom: 6px; }
+        .jwt-part-pre { margin: 0; padding: 10px 12px; border-radius: var(--radius-sm); background: var(--doc-code-bg); border: 1px solid var(--doc-border); font-size: 0.78rem; max-height: 240px; overflow: auto; }
         .highlight { color: var(--accent); }
         .user-badge { display: inline-flex; align-items: center; gap: 8px; padding: 7px 14px; background: var(--surface-subtle); border: 1px solid var(--doc-border); border-radius: var(--radius-pill); font-size: 0.84rem; color: var(--doc-text); margin-bottom: 18px; }
         .user-badge svg { width: 15px; height: 15px; color: var(--green-500); }
@@ -456,13 +464,17 @@ grant_type=authorization_code
                             </button>
                         </div>
                         <div id="tokenResponse" class="hidden" style="margin-top: 16px;">
-                            <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px;">
-                                <span class="label label-success" style="margin: 0;">Live Response</span>
+                            <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; margin-bottom: 8px;">
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <span class="label label-success" style="margin: 0;">{{ index .T "live_response" }}</span>
+                                    <span id="tokenResponseStatus" class="http-status-pill hidden"></span>
+                                </div>
                                 <button type="button" class="btn btn-secondary" style="font-size: 0.76rem; padding: 4px 10px;" onclick="copyResponseJSON('tokenResponseCode', this)">{{ index .T "copy_response" }}</button>
                             </div>
                             <div class="response-preview">
                                 <pre><code id="tokenResponseCode"></code></pre>
                             </div>
+                            <div id="tokenJwtInspector" class="jwt-inspector hidden"></div>
                         </div>
                     </div>
                     {{ end }}{{ end }}
@@ -507,8 +519,11 @@ Authorization: Bearer <span class="var-access-token">YOUR_ACCESS_TOKEN</span></c
                             </button>
                         </div>
                         <div id="userInfoResponse" class="hidden" style="margin-top: 16px;">
-                            <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px;">
-                                <span class="label label-success" style="margin: 0;">Live Response</span>
+                            <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; margin-bottom: 8px;">
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <span class="label label-success" style="margin: 0;">{{ index .T "live_response" }}</span>
+                                    <span id="userInfoResponseStatus" class="http-status-pill hidden"></span>
+                                </div>
                                 <button type="button" class="btn btn-secondary" style="font-size: 0.76rem; padding: 4px 10px;" onclick="copyResponseJSON('userInfoResponseCode', this)">{{ index .T "copy_response" }}</button>
                             </div>
                             <div class="response-preview">
@@ -570,8 +585,11 @@ Authorization: Bearer <span class="var-access-token">YOUR_ACCESS_TOKEN</span></c
                             </button>
                         </div>
                         <div id="refreshResponse" class="hidden" style="margin-top: 16px;">
-                            <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px;">
-                                <span class="label label-success" style="margin: 0;">Live Response</span>
+                            <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; margin-bottom: 8px;">
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <span class="label label-success" style="margin: 0;">{{ index .T "live_response" }}</span>
+                                    <span id="refreshResponseStatus" class="http-status-pill hidden"></span>
+                                </div>
                                 <button type="button" class="btn btn-secondary" style="font-size: 0.76rem; padding: 4px 10px;" onclick="copyResponseJSON('refreshResponseCode', this)">{{ index .T "copy_response" }}</button>
                             </div>
                             <div class="response-preview">
@@ -977,7 +995,17 @@ func CallbackHandler(onSuccess AuthCallback) http.HandlerFunc {
             themeDark: {{ index .T "theme_dark" }},
             copy: {{ index .T "copy" }},
             copied: {{ index .T "copied" }},
-            copyFailed: {{ index .T "copy_failed" }}
+            copyFailed: {{ index .T "copy_failed" }},
+            liveResponse: {{ index .T "live_response" }},
+            decodedIdToken: {{ index .T "decoded_id_token" }},
+            jwtHeader: {{ index .T "jwt_header" }},
+            jwtClaims: {{ index .T "jwt_claims" }},
+            tokenReadyHint: {{ index .T "token_ready_hint" }},
+            refreshReadyHint: {{ index .T "refresh_ready_hint" }},
+            testingEndpoint: {{ index .T "testing_endpoint" }},
+            testSuccess: {{ index .T "test_success" }},
+            testError: {{ index .T "test_error" }},
+            selectClientFirst: {{ index .T "select_client_first" }}
         };
 
         const DOCS_THEME_ICONS = {
@@ -1240,6 +1268,89 @@ func CallbackHandler(onSuccess AuthCallback) http.HandlerFunc {
             }
         }
 
+        function docsEscapeHtml(val) {
+            if (window.GilosUI && typeof window.GilosUI.escapeHtml === 'function') {
+                return window.GilosUI.escapeHtml(val);
+            }
+            return String(val ?? '').replace(/[&<>"']/g, (ch) => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+            }[ch]));
+        }
+
+        function decodeBase64UrlUTF8(segment) {
+            const b64 = String(segment || '').replace(/-/g, '+').replace(/_/g, '/');
+            const padded = b64 + '==='.slice((b64.length + 3) % 4);
+            const bin = atob(padded);
+            const bytes = new Uint8Array(bin.length);
+            for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+            return new TextDecoder().decode(bytes);
+        }
+
+        function decodeJWTClaims(jwt) {
+            if (typeof jwt !== 'string') return null;
+            const parts = jwt.split('.');
+            if (parts.length !== 3) return null;
+            try {
+                const header = JSON.parse(decodeBase64UrlUTF8(parts[0]));
+                const payload = JSON.parse(decodeBase64UrlUTF8(parts[1]));
+                ['exp', 'iat', 'nbf', 'auth_time'].forEach((k) => {
+                    if (typeof payload[k] === 'number' && Number.isFinite(payload[k])) {
+                        payload[k + '_iso'] = new Date(payload[k] * 1000).toISOString();
+                    }
+                });
+                return { header, payload };
+            } catch (_) {
+                return null;
+            }
+        }
+
+        function renderJWTInspector(idToken) {
+            const box = document.getElementById('tokenJwtInspector');
+            if (!box) return;
+            const decoded = decodeJWTClaims(idToken);
+            if (!decoded) {
+                box.classList.add('hidden');
+                box.innerHTML = '';
+                return;
+            }
+            box.classList.remove('hidden');
+            box.innerHTML = `
+                <div class="jwt-inspector-head">
+                    <span>${docsEscapeHtml(DOCS_I18N.decodedIdToken || 'Decoded id_token (JWT)')}</span>
+                    ${decoded.header && decoded.header.alg ? `<span class="http-status-pill http-status-ok">${docsEscapeHtml(decoded.header.alg)}</span>` : ''}
+                </div>
+                <div class="jwt-inspector-grid">
+                    <div>
+                        <div class="jwt-part-title">${docsEscapeHtml(DOCS_I18N.jwtHeader || 'Header')}</div>
+                        <pre class="jwt-part-pre"><code>${docsEscapeHtml(JSON.stringify(decoded.header, null, 2))}</code></pre>
+                    </div>
+                    <div>
+                        <div class="jwt-part-title">${docsEscapeHtml(DOCS_I18N.jwtClaims || 'Claims (Payload)')}</div>
+                        <pre class="jwt-part-pre"><code>${docsEscapeHtml(JSON.stringify(decoded.payload, null, 2))}</code></pre>
+                    </div>
+                </div>
+            `;
+        }
+
+        function setDocsResponseStatus(elId, resp) {
+            const el = document.getElementById(elId);
+            if (!el) return;
+            if (!resp) {
+                el.classList.add('hidden');
+                el.textContent = '';
+                return;
+            }
+            const label = [resp.status, resp.statusText].filter(Boolean).join(' ');
+            el.textContent = label || 'ERR';
+            el.className = 'http-status-pill ' + (resp.ok ? 'http-status-ok' : 'http-status-err');
+        }
+
+        async function parseDocsResponse(resp) {
+            const raw = await resp.text();
+            if (!raw) return {};
+            try { return JSON.parse(raw); } catch (_) { return { raw }; }
+        }
+
         // Test token endpoint
         async function testTokenEndpoint() {
             if (!currentClient || !extractedCode) return;
@@ -1249,7 +1360,7 @@ func CallbackHandler(onSuccess AuthCallback) http.HandlerFunc {
             const responseCode = document.getElementById('tokenResponseCode');
 
             btn.disabled = true;
-            btn.textContent = 'Testing...';
+            btn.textContent = DOCS_I18N.testingEndpoint || 'Testing...';
 
             try {
                 const formData = new URLSearchParams();
@@ -1271,10 +1382,12 @@ func CallbackHandler(onSuccess AuthCallback) http.HandlerFunc {
                     body: formData
                 });
 
-                const data = await resp.json();
+                const data = await parseDocsResponse(resp);
 
                 responseBox.classList.remove('hidden');
+                setDocsResponseStatus('tokenResponseStatus', resp);
                 responseCode.textContent = JSON.stringify(data, null, 2);
+                renderJWTInspector(data.id_token);
 
                 if (data.access_token) {
                     accessToken = data.access_token;
@@ -1296,26 +1409,28 @@ func CallbackHandler(onSuccess AuthCallback) http.HandlerFunc {
                     const userInfoStatus = document.getElementById('userInfoTestStatus');
                     if (userInfoBtn) {
                         userInfoBtn.disabled = false;
-                        if (userInfoStatus) userInfoStatus.textContent = 'Token ready! Click to test.';
+                        if (userInfoStatus) userInfoStatus.textContent = DOCS_I18N.tokenReadyHint || 'Token ready! Click to test.';
                     }
 
                     const refreshBtn = document.getElementById('testRefreshBtn');
                     const refreshStatus = document.getElementById('refreshTestStatus');
                     if (refreshBtn && refreshToken) {
                         refreshBtn.disabled = false;
-                        if (refreshStatus) refreshStatus.textContent = 'Refresh token ready! Click to test.';
+                        if (refreshStatus) refreshStatus.textContent = DOCS_I18N.refreshReadyHint || 'Refresh token ready! Click to test.';
                     }
 
-                    btn.textContent = '✓ Success!';
+                    btn.textContent = '✓ ' + (DOCS_I18N.testSuccess || 'Success');
                     btn.style.background = 'var(--success-color)';
                 } else {
-                    btn.textContent = 'Error - Try Again';
+                    btn.textContent = DOCS_I18N.testError || 'Error - Try Again';
                     btn.style.background = '#EF4444';
                 }
             } catch (e) {
                 responseBox.classList.remove('hidden');
+                setDocsResponseStatus('tokenResponseStatus', { status: 'NET', statusText: 'ERR', ok: false });
                 responseCode.textContent = 'Error: ' + e.message;
-                btn.textContent = 'Error - Try Again';
+                renderJWTInspector('');
+                btn.textContent = DOCS_I18N.testError || 'Error - Try Again';
                 btn.style.background = '#EF4444';
             }
 
@@ -1335,24 +1450,31 @@ func CallbackHandler(onSuccess AuthCallback) http.HandlerFunc {
             const responseCode = document.getElementById('userInfoResponseCode');
 
             btn.disabled = true;
-            btn.textContent = 'Testing...';
+            btn.textContent = DOCS_I18N.testingEndpoint || 'Testing...';
 
             try {
                 const resp = await fetch('/api/userinfo', {
                     headers: { 'Authorization': 'Bearer ' + accessToken }
                 });
 
-                const data = await resp.json();
+                const data = await parseDocsResponse(resp);
 
                 responseBox.classList.remove('hidden');
+                setDocsResponseStatus('userInfoResponseStatus', resp);
                 responseCode.textContent = JSON.stringify(data, null, 2);
 
-                btn.textContent = '✓ Success!';
-                btn.style.background = 'var(--success-color)';
+                if (resp.ok) {
+                    btn.textContent = '✓ ' + (DOCS_I18N.testSuccess || 'Success');
+                    btn.style.background = 'var(--success-color)';
+                } else {
+                    btn.textContent = DOCS_I18N.testError || 'Error - Try Again';
+                    btn.style.background = '#EF4444';
+                }
             } catch (e) {
                 responseBox.classList.remove('hidden');
+                setDocsResponseStatus('userInfoResponseStatus', { status: 'NET', statusText: 'ERR', ok: false });
                 responseCode.textContent = 'Error: ' + e.message;
-                btn.textContent = 'Error';
+                btn.textContent = DOCS_I18N.testError || 'Error - Try Again';
                 btn.style.background = '#EF4444';
             }
 
@@ -1372,7 +1494,7 @@ func CallbackHandler(onSuccess AuthCallback) http.HandlerFunc {
             const responseCode = document.getElementById('refreshResponseCode');
 
             btn.disabled = true;
-            btn.textContent = 'Testing...';
+            btn.textContent = DOCS_I18N.testingEndpoint || 'Testing...';
 
             try {
                 const formData = new URLSearchParams();
@@ -1390,9 +1512,10 @@ func CallbackHandler(onSuccess AuthCallback) http.HandlerFunc {
                     body: formData
                 });
 
-                const data = await resp.json();
+                const data = await parseDocsResponse(resp);
 
                 responseBox.classList.remove('hidden');
+                setDocsResponseStatus('refreshResponseStatus', resp);
                 responseCode.textContent = JSON.stringify(data, null, 2);
 
                 if (data.access_token) {
@@ -1407,16 +1530,17 @@ func CallbackHandler(onSuccess AuthCallback) http.HandlerFunc {
                         });
                     }
 
-                    btn.textContent = '✓ Token Refreshed!';
+                    btn.textContent = '✓ ' + (DOCS_I18N.testSuccess || 'Success');
                     btn.style.background = 'var(--success-color)';
                 } else {
-                    btn.textContent = 'Error';
+                    btn.textContent = DOCS_I18N.testError || 'Error - Try Again';
                     btn.style.background = '#EF4444';
                 }
             } catch (e) {
                 responseBox.classList.remove('hidden');
+                setDocsResponseStatus('refreshResponseStatus', { status: 'NET', statusText: 'ERR', ok: false });
                 responseCode.textContent = 'Error: ' + e.message;
-                btn.textContent = 'Error';
+                btn.textContent = DOCS_I18N.testError || 'Error - Try Again';
                 btn.style.background = '#EF4444';
             }
 
@@ -1467,7 +1591,7 @@ func CallbackHandler(onSuccess AuthCallback) http.HandlerFunc {
 
         async function openAuthUrl() {
             if (!currentClient) {
-                showDocsToast('Please select a client first', true);
+                showDocsToast(DOCS_I18N.selectClientFirst || 'Please select a client first', true);
                 return;
             }
 
@@ -1505,15 +1629,24 @@ func CallbackHandler(onSuccess AuthCallback) http.HandlerFunc {
         function copyEndpointPath(path, btn) {
             const base = (document.getElementById('baseUrl')?.textContent || window.location.origin).replace(/\/+$/, '');
             const url = base + path;
+            if (window.GilosUI) {
+                window.GilosUI.copyText(url, {
+                    triggerEl: btn,
+                    copiedHtml: DOCS_I18N.copied || 'Copied!',
+                    successMsg: `${url} — ${DOCS_I18N.copied || 'Copied!'}`,
+                    errorMsg: DOCS_I18N.copyFailed || 'Failed to copy'
+                });
+                return;
+            }
             navigator.clipboard.writeText(url).then(() => {
                 if (btn) {
                     const original = btn.textContent;
                     btn.textContent = DOCS_I18N.copied || 'Copied';
                     setTimeout(() => { btn.textContent = original; }, 1800);
                 }
-                showDocsToast(`${url} copied`);
+                showDocsToast(`${url} — ${DOCS_I18N.copied || 'Copied'}`);
             }).catch(() => {
-                showDocsToast('Failed to copy to clipboard', true);
+                showDocsToast(DOCS_I18N.copyFailed || 'Failed to copy', true);
             });
         }
 
@@ -1531,17 +1664,17 @@ func CallbackHandler(onSuccess AuthCallback) http.HandlerFunc {
                     btn.style.color = '';
                 }, 2000);
             }).catch(() => {
-                showDocsToast('Failed to copy to clipboard', true);
+                showDocsToast(DOCS_I18N.copyFailed || 'Failed to copy', true);
             });
         }
 
         document.querySelectorAll('.docs-content section pre').forEach(pre => {
-            if (pre.closest('.response-preview')) return;
+            if (pre.closest('.response-preview') || pre.closest('.jwt-inspector')) return;
             if (!pre.querySelector('.copy-btn') && pre.querySelector('code')) {
                 const btn = document.createElement('button');
                 btn.type = 'button';
                 btn.className = 'copy-btn';
-                btn.textContent = 'Copy';
+                btn.textContent = DOCS_I18N.copy || 'Copy';
                 btn.onclick = () => copyCode(btn);
                 pre.appendChild(btn);
             }
