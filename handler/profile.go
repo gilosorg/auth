@@ -10,8 +10,6 @@ import (
 	"gilosauth/middleware"
 	"gilosauth/utils"
 	"image/png"
-	"io"
-	"math"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -396,6 +394,9 @@ func PasswordUpdateHandler(w http.ResponseWriter, r *http.Request) {
 
 	if password != "" {
 		database.LogAuditEventWithUserID(database.AuditPasswordChanged, userID, r, "password changed via profile")
+		if sess, sErr := middleware.GetSession(r); sErr == nil && sess != nil {
+			_ = database.DB.Where("user_id = ? AND type = ? AND id != ?", userID, "native", sess.ID).Delete(&database.Session{}).Error
+		}
 	}
 
 	utils.WriteJSONResponse(w, http.StatusOK, map[string]bool{"success": true})
@@ -467,7 +468,7 @@ func ProfileContactUpdateHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	email := strings.TrimSpace(r.Form.Get("email"))
+	email := strings.ToLower(strings.TrimSpace(r.Form.Get("email")))
 	phoneStr := strings.TrimSpace(r.Form.Get("phone"))
 	mfaEmail := r.Form.Get("mfa_email_enabled") == "on"
 	mfaPhone := r.Form.Get("mfa_phone_enabled") == "on"
@@ -484,7 +485,11 @@ func ProfileContactUpdateHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if phoneStr != "" {
-		cleanedPhone, _, err := utils.ValidateContact(phoneStr)
+		cleanedPhone, contactType, err := utils.ValidateContact(phoneStr)
+		if err != nil || contactType != "phone" {
+			utils.WriteJSONResponse(w, http.StatusBadRequest, map[string]string{"error": "invalid phone number"})
+			return
+		}
 		if err == nil {
 			if blocked, until := database.SM.IsBlocked(cleanedPhone); blocked {
 				utils.WriteJSONResponse(w, http.StatusTooManyRequests, map[string]interface{}{
@@ -642,56 +647,80 @@ func ProfileContactPendingHandler(w http.ResponseWriter, r *http.Request) {
 	masked := make(map[string]string)
 	attempts := make(map[string]int)
 	resends := make(map[string]int)
+	timeRemainingMap := make(map[string]int)
+	resendAvailableMap := make(map[string]int)
 
 	// Check email pending
 	if pendingEmail, exists := database.SM.GetData(sess, "profile_pending_email"); exists {
-		pending = append(pending, "email")
-		email := fmt.Sprint(pendingEmail)
-		if email != "" {
-			parts := strings.Split(email, "@")
-			if len(parts) == 2 {
-				masked["email"] = parts[0][:int(math.Min(2, float64(len(parts[0]))))] + "...@" + parts[1]
-			}
+		sentAtRaw, sentExists := database.SM.GetData(sess, "profile_otp_sent_at_email")
+		sentTime := parseSessionTime(sentAtRaw)
+		if !sentExists || sentTime.IsZero() || time.Since(sentTime) > 5*time.Minute {
+			clearProfileData(sess, "email")
 		} else {
-			masked["email"] = ""
-		}
-		if att, exists := database.SM.GetData(sess, "profile_attempts_email"); exists {
-			if count, ok := att.(float64); ok {
-				attempts["email"] = int(count)
+			pending = append(pending, "email")
+			email := fmt.Sprint(pendingEmail)
+			if email != "" {
+				masked["email"] = utils.MaskEmail(email)
+			} else {
+				masked["email"] = ""
 			}
-		}
-		if res, exists := database.SM.GetData(sess, "profile_resends_email"); exists {
-			if count, ok := res.(float64); ok {
-				resends["email"] = int(count)
+			tr := 300 - int(time.Since(sentTime).Seconds())
+			if tr < 0 {
+				tr = 0
+			}
+			timeRemainingMap["email"] = tr
+			ra := 60 - int(time.Since(sentTime).Seconds())
+			if ra < 0 {
+				ra = 0
+			}
+			resendAvailableMap["email"] = ra
+
+			if att, exists := database.SM.GetData(sess, "profile_attempts_email"); exists {
+				if count, ok := att.(float64); ok {
+					attempts["email"] = int(count)
+				}
+			}
+			if res, exists := database.SM.GetData(sess, "profile_resends_email"); exists {
+				if count, ok := res.(float64); ok {
+					resends["email"] = int(count)
+				}
 			}
 		}
 	}
 
 	// Check phone pending
 	if pendingPhone, exists := database.SM.GetData(sess, "profile_pending_phone"); exists {
-		pending = append(pending, "phone")
-		var val uint64
-		switch v := pendingPhone.(type) {
-		case float64:
-			val = uint64(math.Round(v))
-		case uint64:
-			val = v
-		case string:
-			val, _ = utils.ParsePhone(v)
-		}
-		if val != 0 {
-			masked["phone"] = utils.MaskPhone(val)
+		sentAtRaw, sentExists := database.SM.GetData(sess, "profile_otp_sent_at_phone")
+		sentTime := parseSessionTime(sentAtRaw)
+		if !sentExists || sentTime.IsZero() || time.Since(sentTime) > 5*time.Minute {
+			clearProfileData(sess, "phone")
 		} else {
-			masked["phone"] = ""
-		}
-		if att, exists := database.SM.GetData(sess, "profile_attempts_phone"); exists {
-			if count, ok := att.(float64); ok {
-				attempts["phone"] = int(count)
+			pending = append(pending, "phone")
+			if val := utils.ParsePhoneInterface(pendingPhone); val != 0 {
+				masked["phone"] = utils.MaskPhone(val)
+			} else {
+				masked["phone"] = ""
 			}
-		}
-		if res, exists := database.SM.GetData(sess, "profile_resends_phone"); exists {
-			if count, ok := res.(float64); ok {
-				resends["phone"] = int(count)
+			tr := 300 - int(time.Since(sentTime).Seconds())
+			if tr < 0 {
+				tr = 0
+			}
+			timeRemainingMap["phone"] = tr
+			ra := 60 - int(time.Since(sentTime).Seconds())
+			if ra < 0 {
+				ra = 0
+			}
+			resendAvailableMap["phone"] = ra
+
+			if att, exists := database.SM.GetData(sess, "profile_attempts_phone"); exists {
+				if count, ok := att.(float64); ok {
+					attempts["phone"] = int(count)
+				}
+			}
+			if res, exists := database.SM.GetData(sess, "profile_resends_phone"); exists {
+				if count, ok := res.(float64); ok {
+					resends["phone"] = int(count)
+				}
 			}
 		}
 	}
@@ -709,9 +738,8 @@ func ProfileContactPendingHandler(w http.ResponseWriter, r *http.Request) {
 	// Check identifier specific blocks for pending contacts
 	for _, typ := range pending {
 		if typ == "email" {
-			// Actually we should check the REAL pending identifier from session
 			if realEmail, exists := database.SM.GetData(sess, "profile_pending_email"); exists {
-				if blocked, until := database.SM.IsBlocked(fmt.Sprint(realEmail)); blocked {
+				if blocked, until := database.SM.IsBlocked(utils.NormalizePendingBlockKey("email", realEmail)); blocked {
 					blocks["email"] = map[string]interface{}{
 						"is_blocked":    true,
 						"blocked_until": until.Format(time.RFC3339),
@@ -720,7 +748,7 @@ func ProfileContactPendingHandler(w http.ResponseWriter, r *http.Request) {
 			}
 		} else if typ == "phone" {
 			if realPhone, exists := database.SM.GetData(sess, "profile_pending_phone"); exists {
-				if blocked, until := database.SM.IsBlocked(fmt.Sprint(realPhone)); blocked {
+				if blocked, until := database.SM.IsBlocked(utils.NormalizePendingBlockKey("phone", realPhone)); blocked {
 					blocks["phone"] = map[string]interface{}{
 						"is_blocked":    true,
 						"blocked_until": until.Format(time.RFC3339),
@@ -731,11 +759,13 @@ func ProfileContactPendingHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response := map[string]interface{}{
-		"pending":  pending,
-		"masked":   masked,
-		"attempts": attempts,
-		"resends":  resends,
-		"blocks":   blocks,
+		"pending":             pending,
+		"masked":              masked,
+		"attempts":            attempts,
+		"resends":             resends,
+		"time_remaining":      timeRemainingMap,
+		"resend_available_in": resendAvailableMap,
+		"blocks":              blocks,
 	}
 	utils.WriteJSONResponse(w, http.StatusOK, response)
 }
@@ -817,7 +847,7 @@ func ProfileContactResendHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	resendCount++
 	if resendCount > 3 {
-		database.SM.ApplyBlock(fmt.Sprint(pending), sess, 24*time.Hour, "security")
+		database.SM.ApplyBlock(utils.NormalizePendingBlockKey(typ, pending), sess, 24*time.Hour, "security")
 		utils.WriteJSONResponse(w, http.StatusTooManyRequests, map[string]interface{}{
 			"error":         "maximum resend attempts reached, blocked for 24 hours",
 			"is_blocked":    true,
@@ -841,16 +871,7 @@ func ProfileContactResendHandler(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	} else {
-		var val uint64
-		switch v := pending.(type) {
-		case float64:
-			val = uint64(math.Round(v))
-		case uint64:
-			val = v
-		case string:
-			val, _ = utils.ParsePhone(v)
-		}
-		if val != 0 {
+		if val := utils.ParsePhoneInterface(pending); val != 0 {
 			if err := utils.SendPhoneOTP(utils.FormatPhone(val), otp); err != nil {
 				utils.WriteJSONResponse(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
 				return
@@ -990,7 +1011,7 @@ func ProfileContactVerifyHandler(w http.ResponseWriter, r *http.Request) {
 				attemptCount++
 				database.SM.SetData(sess, "profile_attempts_phone", attemptCount)
 				if attemptCount > 3 {
-					database.SM.ApplyBlock(fmt.Sprint(pendingPhone), sess, 24*time.Hour, "security")
+					database.SM.ApplyBlock(utils.NormalizePendingBlockKey("phone", pendingPhone), sess, 24*time.Hour, "security")
 					results["phone"] = map[string]interface{}{
 						"success":       false,
 						"error":         "maximum attempts reached, blocked for 24 hours",
@@ -998,15 +1019,7 @@ func ProfileContactVerifyHandler(w http.ResponseWriter, r *http.Request) {
 						"blocked_until": time.Now().Add(24 * time.Hour).Format(time.RFC3339),
 					}
 				} else if utils.ConstantTimeOTPCompare(fmt.Sprint(storedOTP), utils.HashToken(input.PhoneOTP)) {
-					var phone uint64
-					switch v := pendingPhone.(type) {
-					case float64:
-						phone = uint64(math.Round(v))
-					case uint64:
-						phone = v
-					case string:
-						phone, _ = utils.ParsePhone(v)
-					}
+					phone := utils.ParsePhoneInterface(pendingPhone)
 					mfa, _ := database.SM.GetData(sess, "profile_pending_mfa_phone_enabled")
 					mfaPhone := false
 					if val, ok := mfa.(bool); ok {
@@ -1269,60 +1282,26 @@ func IconUpdateHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer file.Close()
 
-	// Validate JPG
-	buff := make([]byte, 512)
-	if _, err := file.Read(buff); err != nil {
-		utils.WriteJSONResponse(w, http.StatusInternalServerError, map[string]string{"error": "failed to read file"})
-		return
-	}
-	if http.DetectContentType(buff) != "image/jpeg" {
-		utils.WriteJSONResponse(w, http.StatusBadRequest, map[string]string{"error": "only JPG images are allowed"})
-		return
-	}
-
-	// Seek back to start
-	if _, err := file.Seek(0, 0); err != nil {
-		utils.WriteJSONResponse(w, http.StatusInternalServerError, map[string]string{"error": "failed to seek file"})
-		return
-	}
-
-	// Create directory if not exists
 	iconDir := "./media/user/icon/"
-	if err := os.MkdirAll(iconDir, 0755); err != nil {
-		utils.WriteJSONResponse(w, http.StatusInternalServerError, map[string]string{"error": "failed to create storage directory"})
-		return
-	}
-
-	// Clean up old icons for this user
-	pattern := filepath.Join(iconDir, fmt.Sprintf("%d_*.jpg", userID))
-	oldFiles, _ := filepath.Glob(pattern)
-	for _, oldFile := range oldFiles {
-		os.Remove(oldFile)
-	}
-	// Also check for the legacy {userID}.jpg if it exists
-	os.Remove(filepath.Join(iconDir, fmt.Sprintf("%d.jpg", userID)))
-
-	filename := fmt.Sprintf("%d_%d.jpg", userID, time.Now().Unix())
-	filepath := filepath.Join(iconDir, filename)
-
-	out, err := os.Create(filepath)
+	filename, err := utils.SaveValidatedAvatarJPEG(file, iconDir, userID)
 	if err != nil {
-		utils.WriteJSONResponse(w, http.StatusInternalServerError, map[string]string{"error": "failed to create file on disk"})
-		return
-	}
-	defer out.Close()
-
-	if _, err := io.Copy(out, file); err != nil {
-		utils.WriteJSONResponse(w, http.StatusInternalServerError, map[string]string{"error": "failed to save file"})
+		status := http.StatusBadRequest
+		if strings.Contains(err.Error(), "directory") || strings.Contains(err.Error(), "disk") || strings.Contains(err.Error(), "save") || strings.Contains(err.Error(), "encode") || strings.Contains(err.Error(), "finalize") || strings.Contains(err.Error(), "read") {
+			status = http.StatusInternalServerError
+		}
+		utils.WriteJSONResponse(w, status, map[string]string{"error": err.Error()})
 		return
 	}
 
-	// Update user record
+	// Update user record before removing older avatars so failed DB writes don't leave broken images
 	iconURL := "/media/user/icon/" + filename
 	if err := database.DB.Model(&database.User{}).Where("id = ?", userID).Update("icon", iconURL).Error; err != nil {
+		_ = os.Remove(filepath.Join(iconDir, filename))
 		utils.WriteJSONResponse(w, http.StatusInternalServerError, map[string]string{"error": "failed to update user icon path"})
 		return
 	}
+
+	utils.CleanupOldAvatars(iconDir, userID, filename)
 
 	utils.WriteJSONResponse(w, http.StatusOK, map[string]interface{}{"success": true, "icon_url": iconURL})
 }

@@ -73,7 +73,11 @@ func OAuthAuthorizeHandler(tmpls *template.Template) http.HandlerFunc {
 		}
 
 		// Step 7: Validate scopes
-		requestedScopes := strings.Fields(scope)
+		requestedScopes := strings.Fields(strings.ReplaceAll(scope, ",", " "))
+		if len(requestedScopes) == 0 {
+			http.Error(w, "Invalid scope", http.StatusBadRequest)
+			return
+		}
 		clientScopes := strings.Split(client.Scopes, ",")
 		for _, s := range requestedScopes {
 			if !middleware.IsValidScope(s) || !slices.Contains(clientScopes, s) {
@@ -113,16 +117,18 @@ func OAuthAuthorizeHandler(tmpls *template.Template) http.HandlerFunc {
 			csrfToken, _ = middleware.EnsureCSRFToken(sess)
 		}
 
-		// Step 8: Fetch user and verify active status
+		// Step 8: Fetch user and verify status
 		var user database.User
 		if err := database.DB.First(&user, userID).Error; err != nil {
 			http.Error(w, "User not found", http.StatusInternalServerError)
 			return
 		}
-		if user.Status != "active" {
+		if user.Status == "suspended" {
 			http.Error(w, "Account is suspended", http.StatusForbidden)
 			return
 		}
+
+		translations := i18n.GetTranslations(lang)
 
 		// Build scope details with masked values and required/missing info
 		requiredScopes := strings.Split(client.RequiredScopes, ",")
@@ -138,15 +144,28 @@ func OAuthAuthorizeHandler(tmpls *template.Template) http.HandlerFunc {
 			if r.Form.Get("approve") == "true" {
 				// Server-side enforcement: reject if required data is missing
 				if hasMissingRequired {
-					renderConsentPage(w, tmpls, client, scopeDetails, redirectURI, state, tr, lang, "Required account data is missing. Please update your profile.", &user, hasMissingRequired, missingFields, csrfToken)
+					errMsg := translations["oauth_missing_required_err"]
+					if errMsg == "" {
+						errMsg = "Required account data is missing. Please update your profile."
+					}
+					renderConsentPage(w, tmpls, client, scopeDetails, redirectURI, state, tr, lang, errMsg, &user, hasMissingRequired, missingFields, csrfToken)
 					return
 				}
 
 				// Extra verification (TOTP)
 				if user.MFATOTPEnabled {
+					if blocked, until := database.SM.IsBlocked(fmt.Sprintf("user:%d:security", user.ID)); blocked {
+						http.Error(w, fmt.Sprintf("Account is temporarily blocked for security until %s.", until.Format(time.RFC3339)), http.StatusTooManyRequests)
+						return
+					}
+
 					totpCode := r.Form.Get("totp_code")
 					if totpCode == "" {
-						renderConsentPage(w, tmpls, client, scopeDetails, redirectURI, state, tr, lang, "TOTP verification code required", &user, hasMissingRequired, missingFields, csrfToken)
+						errMsg := translations["oauth_totp_required"]
+						if errMsg == "" {
+							errMsg = "TOTP verification code required"
+						}
+						renderConsentPage(w, tmpls, client, scopeDetails, redirectURI, state, tr, lang, errMsg, &user, hasMissingRequired, missingFields, csrfToken)
 						return
 					}
 
@@ -168,18 +187,31 @@ func OAuthAuthorizeHandler(tmpls *template.Template) http.HandlerFunc {
 
 					// Verify TOTP (supporting encrypted secret at rest)
 					if !decryptAndValidateUserTOTP(&user, totpCode) {
-						if attemptCount >= 3 {
-							database.SM.ApplyBlock(fmt.Sprintf("user:%d:security", user.ID), sess, 24*time.Hour, "security")
-							database.SM.ClearAllData(sess)
+						blocked, _, totpLeft := database.SM.RecordTOTPFailure(user.ID, sess)
+						if attemptCount >= 3 || blocked {
+							_ = database.SM.ApplyBlock(fmt.Sprintf("user:%d:security", user.ID), sess, 24*time.Hour, "security")
+							_ = database.SM.DeleteData(sess, "oauth_totp_attempts")
+							database.LogAuditEventWithUserID(database.AuditBruteForceBlocked, user.ID, r, "24h block after max OAuth TOTP attempts")
 							http.Error(w, "Maximum TOTP attempts reached. Account blocked for 24 hours.", http.StatusForbidden)
 							return
 						}
-						database.SM.SetData(sess, "oauth_totp_attempts", attemptCount)
-						renderConsentPage(w, tmpls, client, scopeDetails, redirectURI, state, tr, lang, fmt.Sprintf("Invalid verification code. %d attempts remaining.", 3-attemptCount), &user, hasMissingRequired, missingFields, csrfToken)
+						_ = database.SM.SetData(sess, "oauth_totp_attempts", attemptCount)
+						remaining := 3 - attemptCount
+						if int(totpLeft) < remaining {
+							remaining = int(totpLeft)
+						}
+						errMsg := translations["oauth_invalid_totp"]
+						if errMsg != "" {
+							errMsg = strings.ReplaceAll(errMsg, "{attempts}", fmt.Sprint(remaining))
+						} else {
+							errMsg = fmt.Sprintf("Invalid verification code. %d attempt%s remaining.", remaining, utils.Pluralize(remaining))
+						}
+						renderConsentPage(w, tmpls, client, scopeDetails, redirectURI, state, tr, lang, errMsg, &user, hasMissingRequired, missingFields, csrfToken)
 						return
 					}
 					// Clear attempts on success
-					database.SM.DeleteData(sess, "oauth_totp_attempts")
+					database.SM.ClearTOTPFailures(user.ID)
+					_ = database.SM.DeleteData(sess, "oauth_totp_attempts")
 				}
 
 				// Generate authorization code
@@ -285,7 +317,7 @@ func buildScopeDetails(requestedScopes, requiredScopes []string, user *database.
 		}
 
 		// Get translated description
-		descKey := "access_" + strings.TrimPrefix(s, "user_")
+		descKey := i18n.ScopeDescriptionKey(s)
 		description := translations[descKey]
 		if description == "" {
 			description = s
@@ -445,13 +477,13 @@ func OAuthTokenHandler(w http.ResponseWriter, r *http.Request) {
 			scopeStr = s
 		}
 
-		// Get user for OIDC claims and verify account is active
+		// Get user for OIDC claims and verify account is not suspended
 		var user database.User
 		if err := database.DB.First(&user, *session.UserID).Error; err != nil {
 			utils.WriteJSONResponse(w, http.StatusBadRequest, map[string]string{"error": "invalid_grant", "error_description": "User not found"})
 			return
 		}
-		if user.Status != "active" {
+		if user.Status == "suspended" {
 			utils.WriteJSONResponse(w, http.StatusForbidden, map[string]string{"error": "access_denied", "error_description": "Account is suspended"})
 			return
 		}
@@ -497,7 +529,10 @@ func OAuthTokenHandler(w http.ResponseWriter, r *http.Request) {
 		// Store nonce in token session for OIDC id_token generation
 		if nonceFromAuthCode != "" {
 			tokenSession.RawData["nonce"] = nonceFromAuthCode
-			database.DB.Save(&tokenSession)
+			if err := database.DB.Save(&tokenSession).Error; err != nil {
+				utils.WriteJSONResponse(w, http.StatusInternalServerError, map[string]string{"error": "server_error", "error_description": "Failed to store token metadata"})
+				return
+			}
 		}
 
 		// Generate JWT access token and opaque refresh token
@@ -518,7 +553,10 @@ func OAuthTokenHandler(w http.ResponseWriter, r *http.Request) {
 		hashedRefreshToken := utils.HashToken(newRefreshToken)
 		tokenSession.AccessToken = &hashedAccessToken
 		tokenSession.RefreshToken = &hashedRefreshToken
-		database.DB.Save(&tokenSession)
+		if err := database.DB.Save(&tokenSession).Error; err != nil {
+			utils.WriteJSONResponse(w, http.StatusInternalServerError, map[string]string{"error": "server_error", "error_description": "Failed to persist issued tokens"})
+			return
+		}
 
 		response := map[string]interface{}{
 			"access_token":  accessToken,
@@ -549,17 +587,25 @@ func OAuthTokenHandler(w http.ResponseWriter, r *http.Request) {
 
 		// Find session with hashed refresh token
 		if err := database.DB.Where("refresh_token = ? AND client_id = ? AND type = ? AND expires_at > ?", hashedRefreshToken, clientID, "client", time.Now()).First(&session).Error; err != nil {
+			// OAuth 2.1 §4.3.1: Detect refresh token replay and revoke compromised session family
+			var reusedSession database.Session
+			if rErr := database.DB.Where("previous_refresh_token = ? AND client_id = ? AND type = ? AND expires_at > ?", hashedRefreshToken, clientID, "client", time.Now()).First(&reusedSession).Error; rErr == nil {
+				_ = database.DB.Delete(&reusedSession).Error
+				if reusedSession.UserID != nil {
+					database.LogAuditEventWithUserID(database.AuditSecurityBlocked, *reusedSession.UserID, r, "refresh token reuse detected; OAuth session revoked")
+				}
+			}
 			utils.WriteJSONResponse(w, http.StatusBadRequest, map[string]string{"error": "invalid_grant", "error_description": "Invalid or expired refresh token"})
 			return
 		}
 
-		// Verify user still exists and is active before refreshing
+		// Verify user still exists and is not suspended before refreshing
 		if session.UserID == nil {
 			utils.WriteJSONResponse(w, http.StatusBadRequest, map[string]string{"error": "invalid_grant", "error_description": "Session has no associated user"})
 			return
 		}
 		var user database.User
-		if err := database.DB.First(&user, *session.UserID).Error; err != nil || user.Status != "active" {
+		if err := database.DB.First(&user, *session.UserID).Error; err != nil || user.Status == "suspended" {
 			utils.WriteJSONResponse(w, http.StatusForbidden, map[string]string{"error": "access_denied", "error_description": "Account is unavailable or suspended"})
 			return
 		}
@@ -598,6 +644,7 @@ func OAuthTokenHandler(w http.ResponseWriter, r *http.Request) {
 			Updates(map[string]interface{}{
 				"access_token":            hashedAccessToken,
 				"refresh_token":           hashedNewRefreshToken,
+				"previous_refresh_token":  hashedRefreshToken,
 				"access_token_expires_at": accessTokenExpiresAt,
 				"expires_at":              newExpiresAt,
 				"last_seen_at":            session.LastSeenAt,
@@ -663,6 +710,8 @@ func generateToken() (string, error) {
 	return hex.EncodeToString(bytes), nil
 }
 
+var dummyClientSecretHash = []byte("$2a$10$7EqJtq98hPqEX7fNZaFWoOe7M7Q9w2M4r7W3xS0Q2m6sP5c6Q1B3G")
+
 // authenticateClient extracts and validates client credentials.
 // Supports both form parameters and HTTP Basic Authentication (RFC 6749 §2.3.1).
 // Used by token, introspect, and revoke endpoints.
@@ -675,11 +724,19 @@ func authenticateClient(r *http.Request) (*database.Client, error) {
 	clientID := r.FormValue("client_id")
 	clientSecret := r.FormValue("client_secret")
 
-	// Support HTTP Basic Authentication (RFC 6749 §2.3.1)
+	// Support HTTP Basic Authentication (RFC 6749 §2.3.1 — values are form-urlencoded)
 	if clientID == "" && clientSecret == "" {
 		if basicUser, basicPass, ok := r.BasicAuth(); ok {
-			clientID = basicUser
-			clientSecret = basicPass
+			if unescaped, err := url.QueryUnescape(basicUser); err == nil {
+				clientID = unescaped
+			} else {
+				clientID = basicUser
+			}
+			if unescaped, err := url.QueryUnescape(basicPass); err == nil {
+				clientSecret = unescaped
+			} else {
+				clientSecret = basicPass
+			}
 		}
 	}
 
@@ -689,6 +746,9 @@ func authenticateClient(r *http.Request) (*database.Client, error) {
 
 	var client database.Client
 	if err := database.DB.Where("id = ?", clientID).First(&client).Error; err != nil {
+		if clientSecret != "" {
+			_ = bcrypt.CompareHashAndPassword(dummyClientSecretHash, []byte(clientSecret))
+		}
 		return nil, fmt.Errorf("invalid client credentials")
 	}
 
@@ -745,10 +805,10 @@ func OAuthIntrospectHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Verify owning user still exists and is active
+	// Verify owning user still exists and is not suspended
 	if session.UserID != nil {
 		var user database.User
-		if err := database.DB.First(&user, *session.UserID).Error; err != nil || user.Status != "active" {
+		if err := database.DB.First(&user, *session.UserID).Error; err != nil || user.Status == "suspended" {
 			utils.WriteJSONResponse(w, http.StatusOK, map[string]bool{"active": false})
 			return
 		}
@@ -773,11 +833,15 @@ func OAuthIntrospectHandler(w http.ResponseWriter, r *http.Request) {
 
 	// RFC 7662 §2.2 — Introspection Response
 	response := map[string]interface{}{
-		"active":     true,
-		"client_id":  fmt.Sprint(*session.ClientID),
-		"token_type": "Bearer",
-		"exp":        expTime.Unix(),
-		"iat":        session.CreatedAt.Unix(),
+		"active":    true,
+		"client_id": fmt.Sprint(*session.ClientID),
+		"exp":       expTime.Unix(),
+		"iat":       session.CreatedAt.Unix(),
+	}
+	if isAccess {
+		response["token_type"] = "Bearer"
+	} else {
+		response["token_type"] = "refresh_token"
 	}
 	if session.UserID != nil {
 		response["sub"] = fmt.Sprint(*session.UserID)
@@ -819,15 +883,15 @@ func OAuthRevokeHandler(w http.ResponseWriter, r *http.Request) {
 	case "access_token":
 		result := database.DB.Where("access_token = ? AND type = ? AND client_id = ?", hashedToken, "client", client.ID).Delete(&database.Session{})
 		if result.RowsAffected == 0 {
-			database.DB.Where("refresh_token = ? AND type = ? AND client_id = ?", hashedToken, "client", client.ID).Delete(&database.Session{})
+			database.DB.Where("(refresh_token = ? OR previous_refresh_token = ?) AND type = ? AND client_id = ?", hashedToken, hashedToken, "client", client.ID).Delete(&database.Session{})
 		}
 	case "refresh_token":
-		result := database.DB.Where("refresh_token = ? AND type = ? AND client_id = ?", hashedToken, "client", client.ID).Delete(&database.Session{})
+		result := database.DB.Where("(refresh_token = ? OR previous_refresh_token = ?) AND type = ? AND client_id = ?", hashedToken, hashedToken, "client", client.ID).Delete(&database.Session{})
 		if result.RowsAffected == 0 {
 			database.DB.Where("access_token = ? AND type = ? AND client_id = ?", hashedToken, "client", client.ID).Delete(&database.Session{})
 		}
 	default:
-		database.DB.Where("(access_token = ? OR refresh_token = ?) AND type = ? AND client_id = ?", hashedToken, hashedToken, "client", client.ID).Delete(&database.Session{})
+		database.DB.Where("(access_token = ? OR refresh_token = ? OR previous_refresh_token = ?) AND type = ? AND client_id = ?", hashedToken, hashedToken, hashedToken, "client", client.ID).Delete(&database.Session{})
 	}
 
 	// RFC 7009 §2.2: Always return 200 OK

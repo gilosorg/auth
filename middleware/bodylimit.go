@@ -12,7 +12,7 @@ const MaxRequestBodySize = 1 << 20 // 1 MB
 func BodyLimitMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Only limit body-carrying methods
-		if r.Method == http.MethodPost || r.Method == http.MethodPut || r.Method == http.MethodPatch {
+		if r.Method == http.MethodPost || r.Method == http.MethodPut || r.Method == http.MethodPatch || r.Method == http.MethodDelete {
 			r.Body = http.MaxBytesReader(w, r.Body, MaxRequestBodySize)
 		}
 		next.ServeHTTP(w, r)

@@ -75,55 +75,60 @@ func GetActiveDeletionRequest(userID uint64) (*AccountDeletionRequest, error) {
 // CreateDeletionRequest creates a new pending deletion request for the user.
 // Returns an error if a pending request already exists.
 func CreateDeletionRequest(userID uint64, reason, customReason string) (*AccountDeletionRequest, error) {
-	// Check for existing pending request
-	existing, err := GetActiveDeletionRequest(userID)
+	var created AccountDeletionRequest
+	err := DB.Transaction(func(tx *gorm.DB) error {
+		var count int64
+		if err := tx.Model(&AccountDeletionRequest{}).
+			Where("user_id = ? AND status = ?", userID, DeletionStatusPending).
+			Count(&count).Error; err != nil {
+			return fmt.Errorf("failed to check existing requests: %w", err)
+		}
+		if count > 0 {
+			return fmt.Errorf("deletion_already_pending")
+		}
+
+		created = AccountDeletionRequest{
+			UserID:       userID,
+			Status:       DeletionStatusPending,
+			Reason:       reason,
+			CustomReason: customReason,
+			ScheduledAt:  time.Now().Add(DeletionGracePeriod),
+		}
+		if err := tx.Create(&created).Error; err != nil {
+			return fmt.Errorf("failed to create deletion request: %w", err)
+		}
+
+		if err := tx.Model(&User{}).Where("id = ?", userID).Update("status", "pending_deletion").Error; err != nil {
+			return fmt.Errorf("failed to update user status: %w", err)
+		}
+		return nil
+	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to check existing requests: %w", err)
+		return nil, err
 	}
-	if existing != nil {
-		return nil, fmt.Errorf("deletion_already_pending")
-	}
-
-	req := AccountDeletionRequest{
-		UserID:       userID,
-		Status:       DeletionStatusPending,
-		Reason:       reason,
-		CustomReason: customReason,
-		ScheduledAt:  time.Now().Add(DeletionGracePeriod),
-	}
-
-	if err := DB.Create(&req).Error; err != nil {
-		return nil, fmt.Errorf("failed to create deletion request: %w", err)
-	}
-
-	// Set user status to pending_deletion
-	if err := DB.Model(&User{}).Where("id = ?", userID).Update("status", "pending_deletion").Error; err != nil {
-		return nil, fmt.Errorf("failed to update user status: %w", err)
-	}
-
-	return &req, nil
+	return &created, nil
 }
 
 // CancelDeletionRequest cancels the active pending deletion request for the user.
 func CancelDeletionRequest(userID uint64) error {
-	req, err := GetActiveDeletionRequest(userID)
-	if err != nil {
-		return fmt.Errorf("failed to retrieve deletion request: %w", err)
-	}
-	if req == nil {
-		return fmt.Errorf("no_pending_deletion")
-	}
+	return DB.Transaction(func(tx *gorm.DB) error {
+		var req AccountDeletionRequest
+		if err := tx.Where("user_id = ? AND status = ?", userID, DeletionStatusPending).First(&req).Error; err != nil {
+			if err == gorm.ErrRecordNotFound {
+				return fmt.Errorf("no_pending_deletion")
+			}
+			return fmt.Errorf("failed to retrieve deletion request: %w", err)
+		}
 
-	if err := DB.Model(req).Update("status", DeletionStatusCancelled).Error; err != nil {
-		return fmt.Errorf("failed to cancel deletion request: %w", err)
-	}
+		if err := tx.Model(&req).Update("status", DeletionStatusCancelled).Error; err != nil {
+			return fmt.Errorf("failed to cancel deletion request: %w", err)
+		}
 
-	// Restore user status to active
-	if err := DB.Model(&User{}).Where("id = ?", userID).Update("status", "active").Error; err != nil {
-		return fmt.Errorf("failed to restore user status: %w", err)
-	}
-
-	return nil
+		if err := tx.Model(&User{}).Where("id = ?", userID).Update("status", "active").Error; err != nil {
+			return fmt.Errorf("failed to restore user status: %w", err)
+		}
+		return nil
+	})
 }
 
 // DaysRemaining calculates the number of full days remaining until the scheduled deletion.

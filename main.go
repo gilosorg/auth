@@ -62,7 +62,7 @@ func main() {
 	// Register OIDC discovery and JWKS before static well-known handler
 	mux.HandleFunc("GET /.well-known/openid-configuration", handler.OIDCDiscoveryHandler)
 	mux.HandleFunc("GET /.well-known/jwks.json", handler.JWKSHandler)
-	mux.Handle("GET /.well-known/", http.StripPrefix("/.well-known/", http.FileServer(http.Dir("./.well-known"))))
+	mux.Handle("GET /.well-known/", http.StripPrefix("/.well-known/", noDirectoryListing(http.FileServer(http.Dir("./.well-known")))))
 
 	// Health check endpoint — pings database to verify connectivity
 	mux.HandleFunc("GET /health", func(w http.ResponseWriter, r *http.Request) {
@@ -186,12 +186,13 @@ func main() {
 	// Create server with graceful shutdown support
 	addr := fmt.Sprintf(":%s", config.Port)
 	srv := &http.Server{
-		Addr:           addr,
-		Handler:        handler,
-		ReadTimeout:    15 * time.Second,
-		WriteTimeout:   15 * time.Second,
-		IdleTimeout:    60 * time.Second,
-		MaxHeaderBytes: 1 << 20, // 1 MB max header size
+		Addr:              addr,
+		Handler:           handler,
+		ReadHeaderTimeout: 5 * time.Second,
+		ReadTimeout:       15 * time.Second,
+		WriteTimeout:      45 * time.Second,
+		IdleTimeout:       60 * time.Second,
+		MaxHeaderBytes:    1 << 20, // 1 MB max header size
 	}
 
 	// Start server in a goroutine
@@ -214,6 +215,11 @@ func main() {
 
 	if err := srv.Shutdown(ctx); err != nil {
 		log.Fatalf("Server forced to shutdown: %v", err)
+	}
+
+	database.StopCleanupTicker()
+	if sqlDB, err := database.DB.DB(); err == nil {
+		_ = sqlDB.Close()
 	}
 
 	log.Println("Server exited gracefully")

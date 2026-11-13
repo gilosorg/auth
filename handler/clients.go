@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"golang.org/x/crypto/bcrypt"
+	"gorm.io/gorm"
 )
 
 func validateClientMetadata(name, clientType string, redirectURIs []string) error {
@@ -259,7 +260,11 @@ func EditClientHandler(w http.ResponseWriter, r *http.Request) {
 			response["warning"] = "Client changed to confidential. Save this secret now. It will not be shown again."
 		}
 
-		// Update client fields
+		// Update client fields and invalidate active OAuth grants when security posture changes
+		typeChanged := oldType != clientType
+		scopesNarrowed := client.Scopes != scopesStr
+		urisModified := client.RedirectURIs != strings.Join(redirectURIs, ",")
+
 		client.Name = name
 		client.Type = clientType
 		client.RedirectURIs = strings.Join(redirectURIs, ",")
@@ -269,6 +274,13 @@ func EditClientHandler(w http.ResponseWriter, r *http.Request) {
 		if err := database.DB.Save(&client).Error; err != nil {
 			utils.WriteJSONResponse(w, http.StatusInternalServerError, map[string]string{"error": "failed to update client"})
 			return
+		}
+
+		if typeChanged || scopesNarrowed || urisModified {
+			_ = database.DB.Where("client_id = ? AND type = ?", client.ID, "client").Delete(&database.Session{}).Error
+			database.LogAuditEventWithUserID(database.AuditClientUpdated, userID, r, fmt.Sprintf("updated OAuth client %d and revoked active tokens", client.ID))
+		} else {
+			database.LogAuditEventWithUserID(database.AuditClientUpdated, userID, r, fmt.Sprintf("updated OAuth client %d", client.ID))
 		}
 
 		utils.WriteJSONResponse(w, http.StatusOK, response)
@@ -317,17 +329,19 @@ func DeleteClientHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Delete associated sessions first (GORM AutoMigrate does not add CASCADE to SQLite FKs)
-	if err := database.DB.Where("client_id = ?", client.ID).Delete(&database.Session{}).Error; err != nil {
-		utils.WriteJSONResponse(w, http.StatusInternalServerError, map[string]string{"error": "failed to delete client sessions"})
-		return
-	}
-
-	// Delete the client
-	if err := database.DB.Delete(&client).Error; err != nil {
+	// Atomically delete associated sessions and the client
+	err = database.DB.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Where("client_id = ?", client.ID).Delete(&database.Session{}).Error; err != nil {
+			return err
+		}
+		return tx.Delete(&client).Error
+	})
+	if err != nil {
 		utils.WriteJSONResponse(w, http.StatusInternalServerError, map[string]string{"error": "failed to delete client"})
 		return
 	}
+
+	database.LogAuditEventWithUserID(database.AuditClientDeleted, userID, r, fmt.Sprintf("deleted OAuth client %d (%s)", client.ID, client.Name))
 
 	utils.WriteJSONResponse(w, http.StatusOK, map[string]bool{"success": true})
 }
@@ -385,7 +399,7 @@ func RegenerateSecretHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	hashedSecret, err := bcrypt.GenerateFromPassword([]byte(plaintextSecret), bcrypt.DefaultCost)
+	hashedSecret, err := bcrypt.GenerateFromPassword([]byte(plaintextSecret), config.BcryptCost)
 	if err != nil {
 		utils.WriteJSONResponse(w, http.StatusInternalServerError, map[string]string{"error": "failed to hash client secret"})
 		return
@@ -404,6 +418,10 @@ func RegenerateSecretHandler(w http.ResponseWriter, r *http.Request) {
 		utils.WriteJSONResponse(w, http.StatusInternalServerError, map[string]string{"error": "failed to update client secret"})
 		return
 	}
+
+	// Revoke existing OAuth client grants after secret rotation
+	_ = database.DB.Where("client_id = ? AND type = ?", client.ID, "client").Delete(&database.Session{}).Error
+	database.LogAuditEventWithUserID(database.AuditClientSecretRotated, userID, r, fmt.Sprintf("rotated secret for OAuth client %d", client.ID))
 
 	// Return the new plaintext secret only once
 	utils.WriteJSONResponse(w, http.StatusOK, map[string]interface{}{

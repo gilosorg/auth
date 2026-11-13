@@ -49,6 +49,15 @@ func (rl *RateLimiter) Allow(key string) bool {
 	entry, exists := rl.entries[key]
 
 	if !exists || now.After(entry.resetAt) {
+		if len(rl.entries) >= 50000 {
+			rl.cleanupLocked(now)
+		}
+		if len(rl.entries) >= 50000 {
+			for k := range rl.entries {
+				delete(rl.entries, k)
+				break
+			}
+		}
 		rl.entries[key] = &rateLimitEntry{
 			count:   1,
 			resetAt: now.Add(rl.window),
@@ -64,8 +73,10 @@ func (rl *RateLimiter) Allow(key string) bool {
 func (rl *RateLimiter) cleanup() {
 	rl.mu.Lock()
 	defer rl.mu.Unlock()
+	rl.cleanupLocked(time.Now())
+}
 
-	now := time.Now()
+func (rl *RateLimiter) cleanupLocked(now time.Time) {
 	for key, entry := range rl.entries {
 		if now.After(entry.resetAt) {
 			delete(rl.entries, key)
@@ -98,8 +109,8 @@ func RateLimitMiddleware(next http.Handler) http.Handler {
 
 		ip := getClientIPForRateLimit(r)
 
-		// Login-specific rate limiting (strictest)
-		if isLoginPath(path) {
+		// Login/MFA verification rate limiting (strictest)
+		if isLoginRequest(r) {
 			key := "login:" + ip
 			if !LoginLimiter.Allow(key) {
 				w.Header().Set("Retry-After", "900") // 15 minutes
@@ -129,15 +140,17 @@ func RateLimitMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-// isLoginPath checks if the path is a login-specific endpoint.
-func isLoginPath(path string) bool {
-	loginPaths := []string{"/auth/login", "/auth/state"}
-	for _, p := range loginPaths {
-		if path == p {
-			return true
-		}
+// isLoginRequest checks if the request hits a credential/OTP/MFA verification POST endpoint.
+func isLoginRequest(r *http.Request) bool {
+	if r.Method != http.MethodPost {
+		return false
 	}
-	return false
+	switch r.URL.Path {
+	case "/auth/login", "/auth/otp/verify", "/auth/reset-password", "/profile/totp/verify":
+		return true
+	default:
+		return false
+	}
 }
 
 // isAuthPath checks if the path is an auth endpoint.

@@ -43,6 +43,10 @@ const (
 	AuditAccountDeletionRequested = "account_deletion_requested"
 	AuditAccountDeletionCancelled = "account_deletion_cancelled"
 	AuditAccountDeletionCompleted = "account_deletion_completed"
+	AuditClientCreated            = "client_created"
+	AuditClientUpdated            = "client_updated"
+	AuditClientDeleted            = "client_deleted"
+	AuditClientSecretRotated      = "client_secret_rotated"
 )
 
 // LogAuditEvent records a security event in the audit log.

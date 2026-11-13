@@ -37,12 +37,19 @@ func InitDatabase() {
 	if err != nil {
 		log.Fatalf("Failed to get underlying sql.DB: %v", err)
 	}
-	sqlDB.Exec("PRAGMA journal_mode=WAL")
-	sqlDB.Exec("PRAGMA foreign_keys=ON")
-	sqlDB.Exec("PRAGMA busy_timeout=5000")
-	sqlDB.Exec("PRAGMA secure_delete=ON")       // Zero-fill deleted data for security
-	sqlDB.Exec("PRAGMA auto_vacuum=INCREMENTAL") // Reclaim space after deletions
-	sqlDB.Exec("PRAGMA synchronous=NORMAL")      // Safe for WAL mode, better performance than FULL
+	pragmas := []string{
+		"PRAGMA journal_mode=WAL",
+		"PRAGMA foreign_keys=ON",
+		"PRAGMA busy_timeout=5000",
+		"PRAGMA secure_delete=ON",
+		"PRAGMA auto_vacuum=INCREMENTAL",
+		"PRAGMA synchronous=NORMAL",
+	}
+	for _, pragma := range pragmas {
+		if _, pErr := sqlDB.Exec(pragma); pErr != nil {
+			log.Printf("WARNING: Failed to execute %s: %v", pragma, pErr)
+		}
+	}
 
 	// Connection pool settings — SQLite supports only one concurrent writer.
 	// A single open connection with WAL mode provides the best concurrency:

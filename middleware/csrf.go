@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"bytes"
+	"context"
 	"crypto/rand"
 	"encoding/hex"
 	"encoding/json"
@@ -16,6 +17,17 @@ import (
 const csrfTokenKey = "csrf_token"
 const csrfHeaderName = "X-CSRF-Token"
 const csrfFormFieldName = "csrf_token"
+const csrfBypassedLogoutKey contextKey = "csrfBypassedLogout"
+
+// CSRFBypassedForTokenLogout reports whether CSRFMiddleware skipped validation
+// for /auth/logout because an explicit token parameter/header was supplied.
+func CSRFBypassedForTokenLogout(r *http.Request) bool {
+	if r == nil {
+		return false
+	}
+	v, _ := r.Context().Value(csrfBypassedLogoutKey).(bool)
+	return v
+}
 
 // CSRFMiddleware validates CSRF tokens on state-changing requests.
 // It skips:
@@ -42,7 +54,8 @@ func CSRFMiddleware(next http.Handler) http.Handler {
 		// EXCEPT web-cookie logout requests without an explicit Bearer/refresh token.
 		if path == "/auth/logout" {
 			if logoutHasExplicitToken(r) {
-				next.ServeHTTP(w, r)
+				ctx := context.WithValue(r.Context(), csrfBypassedLogoutKey, true)
+				next.ServeHTTP(w, r.WithContext(ctx))
 				return
 			}
 		} else if strings.HasPrefix(path, "/auth/") {

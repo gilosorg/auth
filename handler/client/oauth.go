@@ -67,7 +67,11 @@ func GetOAuthInquiryHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Prepare scope descriptions with required/missing info
-	requestedScopes := strings.Fields(scope)
+	requestedScopes := strings.Fields(strings.ReplaceAll(scope, ",", " "))
+	if len(requestedScopes) == 0 {
+		utils.WriteJSONResponse(w, http.StatusBadRequest, map[string]string{"error": "invalid_scope"})
+		return
+	}
 	clientScopes := strings.Split(client.Scopes, ",")
 	requiredScopes := strings.Split(client.RequiredScopes, ",")
 	translations := i18n.GetTranslations(lang)
@@ -95,7 +99,7 @@ func GetOAuthInquiryHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// Get description from translations
-		descKey := "access_" + strings.TrimPrefix(s, "user_")
+		descKey := i18n.ScopeDescriptionKey(s)
 		description := translations[descKey]
 		if description == "" {
 			description = s
@@ -223,7 +227,11 @@ func ApproveOAuthInquiryHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Validate scopes
-	requestedScopes := strings.Fields(req.Scope)
+	requestedScopes := strings.Fields(strings.ReplaceAll(req.Scope, ",", " "))
+	if len(requestedScopes) == 0 {
+		utils.WriteJSONResponse(w, http.StatusBadRequest, map[string]string{"error": "invalid_scope"})
+		return
+	}
 	clientScopes := strings.Split(client.Scopes, ",")
 	for _, s := range requestedScopes {
 		if s == "" {
@@ -249,7 +257,7 @@ func ApproveOAuthInquiryHandler(w http.ResponseWriter, r *http.Request) {
 		utils.WriteJSONResponse(w, http.StatusInternalServerError, map[string]string{"error": "user not found"})
 		return
 	}
-	if user.Status != "active" {
+	if user.Status == "suspended" {
 		utils.WriteJSONResponse(w, http.StatusForbidden, map[string]string{"error": "account_suspended"})
 		return
 	}
@@ -275,6 +283,14 @@ func ApproveOAuthInquiryHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if user.MFATOTPEnabled {
+		if blocked, until := database.SM.IsBlocked(fmt.Sprintf("user:%d:security", user.ID)); blocked {
+			utils.WriteJSONResponse(w, http.StatusTooManyRequests, map[string]interface{}{
+				"error":         "account_blocked",
+				"blocked_until": until.Format(time.RFC3339),
+			})
+			return
+		}
+
 		if req.TOTPCode == "" {
 			utils.WriteJSONResponse(w, http.StatusBadRequest, map[string]string{"error": "totp_code_required"})
 			return
@@ -303,16 +319,22 @@ func ApproveOAuthInquiryHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if !totp.Validate(req.TOTPCode, plainSecret) {
-			if attemptCount >= 3 {
-				database.SM.ApplyBlock(fmt.Sprintf("user:%d:security", user.ID), sess, 24*time.Hour, "security")
-				database.SM.ClearAllData(sess)
+			blocked, _, totpLeft := database.SM.RecordTOTPFailure(user.ID, sess)
+			if attemptCount >= 3 || blocked {
+				_ = database.SM.ApplyBlock(fmt.Sprintf("user:%d:security", user.ID), sess, 24*time.Hour, "security")
+				_ = database.SM.DeleteData(sess, "oauth_totp_attempts")
+				database.LogAuditEventWithUserID(database.AuditBruteForceBlocked, user.ID, r, "24h block after max browserless OAuth TOTP attempts")
 				utils.WriteJSONResponse(w, http.StatusForbidden, map[string]string{"error": "max_attempts_reached"})
 				return
 			}
-			database.SM.SetData(sess, "oauth_totp_attempts", attemptCount)
+			_ = database.SM.SetData(sess, "oauth_totp_attempts", attemptCount)
+			remaining := 3 - attemptCount
+			if int(totpLeft) < remaining {
+				remaining = int(totpLeft)
+			}
 			utils.WriteJSONResponse(w, http.StatusBadRequest, map[string]interface{}{
 				"error":              "invalid_totp",
-				"attempts_remaining": 3 - attemptCount,
+				"attempts_remaining": remaining,
 			})
 			return
 		}
@@ -322,7 +344,8 @@ func ApproveOAuthInquiryHandler(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 		// Clear attempts on success
-		database.SM.DeleteData(sess, "oauth_totp_attempts")
+		database.SM.ClearTOTPFailures(user.ID)
+		_ = database.SM.DeleteData(sess, "oauth_totp_attempts")
 	}
 
 	// Generate authorization code

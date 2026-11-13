@@ -1,8 +1,10 @@
 package handler
 
 import (
+	"crypto/rand"
 	"crypto/sha256"
 	"encoding/base64"
+	"encoding/hex"
 	"fmt"
 	"net/http"
 	"strings"
@@ -127,14 +129,14 @@ func UserInfoHandler(w http.ResponseWriter, r *http.Request) {
 	if session.Scopes != nil {
 		scopesStr = *session.Scopes
 	}
-	scopes := strings.Fields(scopesStr)
+	scopes := strings.Fields(strings.ReplaceAll(scopesStr, ",", " "))
 
 	var user database.User
 	if err := database.DB.First(&user, userID).Error; err != nil {
 		utils.WriteJSONResponse(w, http.StatusNotFound, map[string]string{"error": "user_not_found"})
 		return
 	}
-	if user.Status != "active" {
+	if user.Status == "suspended" {
 		utils.WriteJSONResponse(w, http.StatusForbidden, map[string]string{"error": "account is suspended"})
 		return
 	}
@@ -145,16 +147,25 @@ func UserInfoHandler(w http.ResponseWriter, r *http.Request) {
 	utils.WriteJSONResponse(w, http.StatusOK, claims)
 }
 
+func randomJTI(fallback string) string {
+	b := make([]byte, 16)
+	if _, err := rand.Read(b); err != nil {
+		return fallback
+	}
+	return hex.EncodeToString(b)
+}
+
 // GenerateAccessToken creates a JWT access token for the given session.
 func GenerateAccessToken(session *database.Session, clientID uint64, scopes string) (string, error) {
 	now := time.Now()
+	jti := randomJTI(fmt.Sprintf("sess_%d_%d", session.ID, now.UnixNano()))
 	claims := map[string]interface{}{
 		"iss":   config.IssuerURL,
 		"sub":   fmt.Sprint(*session.UserID),
 		"aud":   fmt.Sprint(clientID),
 		"exp":   session.AccessTokenExpiresAt.Unix(),
 		"iat":   now.Unix(),
-		"jti":   fmt.Sprintf("sess_%d_%d", session.ID, session.AccessTokenExpiresAt.Unix()),
+		"jti":   jti,
 		"scope": scopes,
 	}
 	return utils.SignJWT(claims)
@@ -163,12 +174,14 @@ func GenerateAccessToken(session *database.Session, clientID uint64, scopes stri
 // GenerateIDToken creates an OIDC id_token for the given user.
 // accessToken is used to compute the at_hash claim (OIDC Core §3.1.3.6).
 func GenerateIDToken(user *database.User, clientID uint64, scopes string, exp int64, nonce string, accessToken string) (string, error) {
+	now := time.Now()
 	claims := map[string]interface{}{
 		"iss": config.IssuerURL,
 		"sub": fmt.Sprint(user.ID),
 		"aud": fmt.Sprint(clientID),
 		"exp": exp,
-		"iat": time.Now().Unix(),
+		"iat": now.Unix(),
+		"jti": randomJTI(fmt.Sprintf("id_%d_%d", user.ID, now.UnixNano())),
 	}
 
 	// Include nonce if provided (OIDC Core §2 — mandatory echo-back)
@@ -182,7 +195,7 @@ func GenerateIDToken(user *database.User, clientID uint64, scopes string, exp in
 		claims["at_hash"] = base64.RawURLEncoding.EncodeToString(atHash[:16])
 	}
 
-	for k, v := range buildOIDCUserClaims(user, strings.Fields(scopes)) {
+	for k, v := range buildOIDCUserClaims(user, strings.Fields(strings.ReplaceAll(scopes, ",", " "))) {
 		claims[k] = v
 	}
 

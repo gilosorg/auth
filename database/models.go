@@ -13,10 +13,10 @@ import (
 type User struct {
 	ID              uint64    `gorm:"primaryKey" json:"id"`
 	Username        string    `gorm:"size:30;uniqueIndex;not null" json:"username"`
-	Email           string    `gorm:"size:100;uniqueIndex" json:"email"`
-	Phone           uint64    `gorm:"uniqueIndex" json:"phone"`
+	Email           string    `gorm:"size:100;index" json:"email"`
+	Phone           uint64    `gorm:"index" json:"phone"`
 	Password        string    `gorm:"size:255;not null" json:"-"`       // Hashed password (bcrypt)
-	Status          string    `gorm:"size:20;not null;default:active" json:"status"` // active, suspended
+	Status          string    `gorm:"size:20;not null;default:active" json:"status"` // active, suspended, pending_deletion
 	MFAEmailEnabled bool      `gorm:"not null;default:false" json:"mfa_email_enabled"`
 	MFAPhoneEnabled bool      `gorm:"not null;default:false" json:"mfa_phone_enabled"`
 	MFATOTPEnabled  bool      `gorm:"not null;default:false" json:"mfa_totp_enabled"`
@@ -91,7 +91,7 @@ func (c *Client) HasRedirectURI(uri string) bool {
 func matchesLoopbackRedirect(registeredURI, requestedURI string) bool {
 	uReg, err1 := url.Parse(registeredURI)
 	uReq, err2 := url.Parse(requestedURI)
-	if err1 != nil || err2 != nil {
+	if err1 != nil || err2 != nil || uReg.User != nil || uReq.User != nil {
 		return false
 	}
 
@@ -113,7 +113,7 @@ func matchesLoopbackRedirect(registeredURI, requestedURI string) bool {
 		return false
 	}
 
-	// Path must match exactly (normalize empty path to "/")
+	// Path and query string must match exactly (normalize empty path to "/")
 	regPath := uReg.Path
 	if regPath == "" {
 		regPath = "/"
@@ -123,7 +123,7 @@ func matchesLoopbackRedirect(registeredURI, requestedURI string) bool {
 		reqPath = "/"
 	}
 
-	return regPath == reqPath
+	return regPath == reqPath && uReg.RawQuery == uReq.RawQuery
 }
 
 func isLoopbackHost(host string) bool {
@@ -160,6 +160,7 @@ type Session struct {
 	CookieToken          *string    `gorm:"size:64;uniqueIndex" json:"-"`    // Nullable cookie token for web sessions
 	AccessToken          *string    `gorm:"size:64;index" json:"-"`          // SHA-256 hex (always 64 chars)
 	RefreshToken         *string    `gorm:"size:64;index" json:"-"`          // SHA-256 hex (always 64 chars)
+	PreviousRefreshToken *string    `gorm:"size:64;index" json:"-"`          // Previous rotated refresh token hash for reuse detection
 	DeviceInfo           *string    `gorm:"size:255"`                        // e.g., "Chrome on Windows"
 	IPAddress            *string    `gorm:"size:45"`                         // Supports IPv4 and IPv6
 	LastSeenAt           time.Time  `gorm:"not null"`                        // Last session access time
@@ -255,8 +256,8 @@ func (j *JSONData) Scan(value interface{}) error {
 // TOTPSecret represents a TOTP secret stored for a user.
 type TOTPSecret struct {
 	ID        uint64    `gorm:"primaryKey"`
-	UUID      string    `gorm:"size:36;uniqueIndex;not null"`
-	UserID    uint64    `gorm:"index;not null"`
+	UUID      string    `gorm:"size:36;uniqueIndex:idx_totp_user_uuid;not null"`
+	UserID    uint64    `gorm:"uniqueIndex:idx_totp_user_uuid;index;not null"`
 	User      User      `gorm:"foreignKey:UserID"`
 	Secret    string    `gorm:"not null"`
 	Label     string    `gorm:"not null"`

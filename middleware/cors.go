@@ -14,7 +14,7 @@ func CorsMiddleware(next http.Handler) http.Handler {
 	strictCors := cors.New(cors.Options{
 		AllowedOrigins:   config.CORSOrigins,
 		AllowedMethods:   []string{"GET", "POST", "PATCH", "DELETE", "OPTIONS"},
-		AllowedHeaders:   []string{"Authorization", "Content-Type", "X-CSRF-Token", "Accept", "X-Requested-With"},
+		AllowedHeaders:   []string{"Authorization", "Content-Type", "X-CSRF-Token", "X-Current-Password", "Accept", "X-Requested-With"},
 		AllowCredentials: true,
 		MaxAge:           3600,
 	})

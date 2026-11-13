@@ -42,7 +42,7 @@ func ValidateContact(contact string) (string, string, error) {
 	}
 
 	if emailRegex.MatchString(contact) {
-		return contact, "email", nil
+		return strings.ToLower(contact), "email", nil
 	}
 	if phoneRegex.MatchString(contact) {
 		return contact, "phone", nil
@@ -102,6 +102,9 @@ func ValidateRedirectURI(raw string) error {
 	parsed, err := url.Parse(raw)
 	if err != nil || !parsed.IsAbs() {
 		return fmt.Errorf("redirect URI must be a valid absolute URI")
+	}
+	if parsed.User != nil {
+		return fmt.Errorf("redirect URI must not contain userinfo")
 	}
 
 	scheme := strings.ToLower(parsed.Scheme)

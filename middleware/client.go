@@ -89,7 +89,7 @@ func RequireAccessToken(next http.HandlerFunc) http.HandlerFunc {
 			writeBearerError(w, http.StatusUnauthorized, "invalid_token", "user not found")
 			return
 		}
-		if user.Status != "active" {
+		if user.Status == "suspended" {
 			writeBearerError(w, http.StatusForbidden, "access_denied", "account is suspended")
 			return
 		}

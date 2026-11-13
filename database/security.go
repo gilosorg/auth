@@ -61,10 +61,37 @@ func (sm *SessionManager) ApplyBlock(identifier string, sess *Session, duration 
 			sess.ExpiresAt = blockedUntil.Add(1 * time.Hour)
 		}
 		
-		if err := sm.db.Save(sess).Error; err != nil {
+		if err := sm.db.Model(sess).Updates(map[string]interface{}{
+			"raw_data":   sess.RawData,
+			"expires_at": sess.ExpiresAt,
+		}).Error; err != nil {
 			return err
 		}
 	}
 
 	return nil
+}
+
+// RecordTOTPFailure records a failed TOTP verification for userID across sessions and blocks at 5 failures.
+func (sm *SessionManager) RecordTOTPFailure(userID uint64, sess *Session) (bool, time.Time, int64) {
+	failKey := fmt.Sprintf("totp_fail:%d", userID)
+	now := time.Now()
+	var failCount int64
+	sm.db.Model(&SecurityBlock{}).Where("identifier = ? AND blocked_until > ?", failKey, now).Count(&failCount)
+	_ = sm.db.Create(&SecurityBlock{
+		Identifier:   failKey,
+		BlockedUntil: now.Add(1 * time.Hour),
+	}).Error
+	failCount++
+	if failCount >= 5 {
+		until := now.Add(24 * time.Hour)
+		_ = sm.ApplyBlock(fmt.Sprintf("user:%d:security", userID), sess, 24*time.Hour, "security")
+		return true, until, failCount
+	}
+	return false, time.Time{}, failCount
+}
+
+// ClearTOTPFailures clears accumulated per-user TOTP failure markers after successful verification.
+func (sm *SessionManager) ClearTOTPFailures(userID uint64) {
+	sm.db.Where("identifier = ?", fmt.Sprintf("totp_fail:%d", userID)).Delete(&SecurityBlock{})
 }

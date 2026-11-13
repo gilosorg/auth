@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"sync"
 	"time"
 
 	"gilosauth/config"
@@ -36,17 +37,43 @@ func InitSessionManager() {
 	}
 }
 
+var cleanupStopMu sync.Mutex
+var cleanupStopCh chan struct{}
+
 // StartCleanupTicker starts a background goroutine that cleans expired sessions periodically.
 func StartCleanupTicker(interval time.Duration) {
+	cleanupStopMu.Lock()
+	if cleanupStopCh != nil {
+		close(cleanupStopCh)
+	}
+	stopCh := make(chan struct{})
+	cleanupStopCh = stopCh
+	cleanupStopMu.Unlock()
+
 	go func() {
 		ticker := time.NewTicker(interval)
 		defer ticker.Stop()
-		for range ticker.C {
-			if err := CleanExpiredSessions(DB); err != nil {
-				log.Printf("Periodic session cleanup error: %v", err)
+		for {
+			select {
+			case <-stopCh:
+				return
+			case <-ticker.C:
+				if err := CleanExpiredSessions(DB); err != nil {
+					log.Printf("Periodic session cleanup error: %v", err)
+				}
 			}
 		}
 	}()
+}
+
+// StopCleanupTicker stops the background cleanup goroutine if running.
+func StopCleanupTicker() {
+	cleanupStopMu.Lock()
+	defer cleanupStopMu.Unlock()
+	if cleanupStopCh != nil {
+		close(cleanupStopCh)
+		cleanupStopCh = nil
+	}
 }
 
 // generateCookieToken creates a secure random cookie token
@@ -229,7 +256,7 @@ func (sm *SessionManager) SetData(session *Session, key string, value interface{
 		session.RawData = make(JSONData)
 	}
 	session.RawData[key] = value
-	if err := sm.db.Save(session).Error; err != nil {
+	if err := sm.db.Model(&Session{}).Where("id = ?", session.ID).Update("raw_data", session.RawData).Error; err != nil {
 		return fmt.Errorf("failed to save session data: %w", err)
 	}
 	return nil
@@ -250,7 +277,7 @@ func (sm *SessionManager) DeleteData(session *Session, key string) error {
 		return nil
 	}
 	delete(session.RawData, key)
-	if err := sm.db.Save(session).Error; err != nil {
+	if err := sm.db.Model(&Session{}).Where("id = ?", session.ID).Update("raw_data", session.RawData).Error; err != nil {
 		return fmt.Errorf("failed to delete session data: %w", err)
 	}
 	return nil
@@ -259,7 +286,7 @@ func (sm *SessionManager) DeleteData(session *Session, key string) error {
 // ClearAllData removes all data from the session
 func (sm *SessionManager) ClearAllData(session *Session) error {
 	session.RawData = make(JSONData)
-	if err := sm.db.Save(session).Error; err != nil {
+	if err := sm.db.Model(&Session{}).Where("id = ?", session.ID).Update("raw_data", session.RawData).Error; err != nil {
 		return fmt.Errorf("failed to clear session data: %w", err)
 	}
 	return nil
@@ -290,7 +317,7 @@ func (sm *SessionManager) SetUser(session *Session, userID uint64) error {
 
 // RotateSession prevents session fixation by creating a new session with a fresh
 // cookie token after authentication, copying the user binding from the old session.
-// The old session is destroyed to prevent reuse.
+// The old session is destroyed atomically inside a transaction to prevent reuse.
 func (sm *SessionManager) RotateSession(w http.ResponseWriter, r *http.Request, oldSession *Session) (*Session, error) {
 	if oldSession.Type != "native" {
 		return oldSession, nil // Only rotate web sessions
@@ -314,15 +341,20 @@ func (sm *SessionManager) RotateSession(w http.ResponseWriter, r *http.Request, 
 	}
 	sm.UpdateMetadata(&newSession, r)
 
-	if err := sm.db.Create(&newSession).Error; err != nil {
-		return nil, fmt.Errorf("failed to create rotated session: %w", err)
+	if err := sm.db.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Create(&newSession).Error; err != nil {
+			return fmt.Errorf("failed to create rotated session: %w", err)
+		}
+		if err := tx.Where("id = ?", oldSession.ID).Delete(&Session{}).Error; err != nil {
+			return fmt.Errorf("failed to remove old session: %w", err)
+		}
+		return nil
+	}); err != nil {
+		return nil, err
 	}
 
-	// Set new cookie
+	// Set new cookie only after the transaction commits
 	setSessionCookie(w, newToken, newSession.ExpiresAt)
-
-	// Destroy old session
-	sm.db.Delete(oldSession)
 
 	return &newSession, nil
 }

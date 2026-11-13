@@ -3,6 +3,7 @@ package handler
 import (
 	"bytes"
 	"gilosauth/config"
+	"gilosauth/database"
 	"gilosauth/i18n"
 	"html/template"
 	"net/http"
@@ -14,6 +15,13 @@ func renderLegalPage(tmpls *template.Template, pageType string) http.HandlerFunc
 		lang := "en"
 		if langCookie, err := r.Cookie("lang"); err == nil {
 			lang = i18n.NormalizeCode(langCookie.Value)
+		}
+
+		isLoggedIn := false
+		if cookie, err := r.Cookie("session_token"); err == nil && cookie.Value != "" {
+			if sess, sErr := database.SM.Get(cookie.Value, "native"); sErr == nil && sess.UserID != nil {
+				isLoggedIn = true
+			}
 		}
 
 		tr := i18n.New(lang)
@@ -28,6 +36,7 @@ func renderLegalPage(tmpls *template.Template, pageType string) http.HandlerFunc
 			"AppIDLabel":      config.AppIDLabel,
 			"IssuerURL":       config.IssuerURL,
 			"PageType":        pageType,
+			"IsLoggedIn":      isLoggedIn,
 		}
 
 		var buf bytes.Buffer

@@ -208,8 +208,11 @@ func MaskPhone(phone uint64) string {
 		return ""
 	}
 	phoneStr := fmt.Sprintf("%d", phone)
-	if len(phoneStr) <= 3 {
-		return "+***" + phoneStr
+	if len(phoneStr) <= 6 {
+		if len(phoneStr) <= 2 {
+			return "+***" + phoneStr
+		}
+		return "+" + strings.Repeat("*", len(phoneStr)-2) + phoneStr[len(phoneStr)-2:]
 	}
 	// Show country code prefix and last 3 digits, mask the rest
 	prefix := phoneStr[:3] // typically country code like 998

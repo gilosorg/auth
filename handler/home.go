@@ -70,6 +70,7 @@ func HomeHandler(tmpls *template.Template) http.HandlerFunc {
 			"CSRFToken":        csrfToken,
 			"AppVersion":       config.Version,
 			"AppName":          config.AppName,
+			"AppIDLabel":       config.AppIDLabel,
 		}
 
 		// Buffer template execution to prevent partial writes on error

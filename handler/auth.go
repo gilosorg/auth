@@ -9,6 +9,7 @@ import (
 	"gilosauth/config"
 	"gilosauth/database"
 	"gilosauth/i18n"
+	"gilosauth/middleware"
 	"gilosauth/utils"
 	"html/template"
 	"net/http"
@@ -211,7 +212,7 @@ func AuthHandler(tmpls *template.Template) http.HandlerFunc {
 		if err == nil && cookie.Value != "" {
 			if sess, err := database.SM.Get(cookie.Value, "native"); err == nil && sess.UserID != nil {
 				var user database.User
-				if err := database.DB.First(&user, *sess.UserID).Error; err == nil && user.Status == "active" {
+				if err := database.DB.First(&user, *sess.UserID).Error; err == nil && user.Status != "suspended" {
 					target := utils.SanitizeRelativeTarget(r.URL.Query().Get("target"), "/home")
 					http.Redirect(w, r, target, http.StatusFound)
 					return
@@ -320,8 +321,29 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 	if mfaEnabled && input.TwoStepCode != "" {
 		// Check if it's a TOTP code first
-		if decryptAndValidateUserTOTP(&user, input.TwoStepCode) {
-			mfaValid = true
+		if user.MFATOTPEnabled {
+			if decryptAndValidateUserTOTP(&user, input.TwoStepCode) {
+				database.SM.ClearTOTPFailures(user.ID)
+				mfaValid = true
+			} else if _, hasSessionOTP := database.SM.GetData(sess, "otp"); !hasSessionOTP {
+				blocked, until, attemptsLeft := database.SM.RecordTOTPFailure(user.ID, sess)
+				if blocked {
+					database.LogAuditEventWithUserID(database.AuditBruteForceBlocked, user.ID, r, "24h block after max TOTP attempts")
+					utils.WriteJSONResponse(w, http.StatusTooManyRequests, map[string]interface{}{
+						"error":         "maximum TOTP attempts reached, blocked for 24 hours",
+						"is_blocked":    true,
+						"blocked_until": until.Format(time.RFC3339),
+					})
+					return
+				}
+				if !(user.MFAEmailEnabled && user.Email != "") && !(user.MFAPhoneEnabled && user.Phone != 0) {
+					left := int(attemptsLeft)
+					utils.WriteJSONResponse(w, http.StatusBadRequest, map[string]string{
+						"error": fmt.Sprintf("invalid verification code, %d attempt%s left", left, utils.Pluralize(left)),
+					})
+					return
+				}
+			}
 		}
 
 		// Fallback to session-based OTP (email/phone)
@@ -455,7 +477,13 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Verify the user actually completed OTP verification (step must be register-password)
+	// Verify session-username binding and OTP verification (step must be register-password)
+	sessUsername, uExists := database.SM.GetData(sess, "username")
+	if !uExists || fmt.Sprint(sessUsername) != cleanedUsername {
+		utils.WriteJSONResponse(w, http.StatusBadRequest, map[string]string{"error": "username does not match session"})
+		return
+	}
+
 	currentStep, stepExists := database.SM.GetData(sess, "step")
 	if !stepExists || fmt.Sprint(currentStep) != "register-password" {
 		utils.WriteJSONResponse(w, http.StatusBadRequest, map[string]string{"error": "OTP verification required"})
@@ -598,9 +626,18 @@ func ResetPasswordHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Verify session-username binding and completed OTP reset verification
+	sessUsername, uExists := database.SM.GetData(sess, "username")
+	if !uExists || fmt.Sprint(sessUsername) != cleanedUsername {
+		utils.WriteJSONResponse(w, http.StatusBadRequest, map[string]string{"error": "username does not match session"})
+		return
+	}
+
 	// Verify the user actually completed OTP verification (step must be reset-password)
 	currentStep, stepExists := database.SM.GetData(sess, "step")
-	if !stepExists || fmt.Sprint(currentStep) != "reset-password" {
+	resetVerified, rvExists := database.SM.GetData(sess, "password_reset_verified")
+	resetUsername, ruExists := database.SM.GetData(sess, "password_reset_username")
+	if !stepExists || fmt.Sprint(currentStep) != "reset-password" || !rvExists || resetVerified != true || !ruExists || fmt.Sprint(resetUsername) != cleanedUsername {
 		utils.WriteJSONResponse(w, http.StatusBadRequest, map[string]string{"error": "OTP verification required"})
 		return
 	}
@@ -650,6 +687,9 @@ func ResetPasswordHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	updateSessionCookie(w, newSess)
+
+	// Revoke all other web sessions for this user on password reset
+	_ = database.DB.Where("user_id = ? AND type = ? AND id != ?", user.ID, "native", newSess.ID).Delete(&database.Session{})
 
 	// Clear all session data after successful password reset
 	if err := database.SM.ClearAllData(newSess); err != nil {
@@ -811,6 +851,16 @@ func ContactVerifyHandler(w http.ResponseWriter, r *http.Request) {
 		utils.WriteJSONResponse(w, http.StatusBadRequest, map[string]string{"error": "invalid session state"})
 		return
 	}
+	if input.Step != "forgot-password" && input.Step != "register-contact" {
+		utils.WriteJSONResponse(w, http.StatusBadRequest, map[string]string{"error": "invalid step for contact verification"})
+		return
+	}
+
+	sessUsername, uExists := database.SM.GetData(sess, "username")
+	if !uExists || fmt.Sprint(sessUsername) != cleanedUsername {
+		utils.WriteJSONResponse(w, http.StatusBadRequest, map[string]string{"error": "username does not match session"})
+		return
+	}
 
 	var user database.User
 	if input.Step == "forgot-password" {
@@ -927,7 +977,11 @@ func ContactVerifyHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response := getAuthStateResponse(sess, &user, "OTP sent for contact verification", nextStep)
+	var stateUser *database.User
+	if user.ID != 0 {
+		stateUser = &user
+	}
+	response := getAuthStateResponse(sess, stateUser, "OTP sent for contact verification", nextStep)
 	utils.WriteJSONResponse(w, http.StatusOK, response)
 }
 
@@ -967,6 +1021,12 @@ func SendOTPHandler(w http.ResponseWriter, r *http.Request) {
 	sess, err := database.SM.Start(r.Context(), w, r, nil)
 	if err != nil {
 		utils.WriteJSONResponse(w, http.StatusInternalServerError, map[string]string{"error": "failed to start session"})
+		return
+	}
+
+	sessUsername, uExists := database.SM.GetData(sess, "username")
+	if !uExists || fmt.Sprint(sessUsername) != cleanedUsername {
+		utils.WriteJSONResponse(w, http.StatusBadRequest, map[string]string{"error": "username does not match session"})
 		return
 	}
 
@@ -1019,12 +1079,21 @@ func SendOTPHandler(w http.ResponseWriter, r *http.Request) {
 			cleanedContact = "totp"
 		}
 	} else {
+		if _, pwVerified := database.SM.GetData(sess, "password_verified"); pwVerified || fmt.Sprint(currentStep) == "two-step-select" {
+			utils.WriteJSONResponse(w, http.StatusBadRequest, map[string]string{"error": "invalid MFA method selection"})
+			return
+		}
 		cleanedContact, contactType, err = utils.ValidateContact(input.Contact)
 		if err != nil {
 			utils.WriteJSONResponse(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
 			return
 		}
 		if fmt.Sprint(currentStep) == "otp" {
+			storedContact, cExists := database.SM.GetData(sess, "contact")
+			if !cExists || fmt.Sprint(storedContact) != cleanedContact {
+				utils.WriteJSONResponse(w, http.StatusBadRequest, map[string]string{"error": "contact does not match session"})
+				return
+			}
 			if err := database.DB.Where("username = ?", cleanedUsername).First(&user).Error; err == nil && user.Status != "free" {
 				if user.Status == "suspended" {
 					utils.WriteJSONResponse(w, http.StatusForbidden, map[string]string{"error": "account is suspended"})
@@ -1193,6 +1262,12 @@ func VerifyOTPHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	sessUsername, uExists := database.SM.GetData(sess, "username")
+	if !uExists || fmt.Sprint(sessUsername) != cleanedUsername {
+		utils.WriteJSONResponse(w, http.StatusBadRequest, map[string]string{"error": "username does not match session"})
+		return
+	}
+
 	contactType, _ := database.SM.GetData(sess, "contact_type")
 
 	var user database.User
@@ -1251,6 +1326,28 @@ func VerifyOTPHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		valid = decryptAndValidateUserTOTP(&user, input.OTP)
+		if !valid {
+			blocked, until, totpLeft := database.SM.RecordTOTPFailure(user.ID, sess)
+			if blocked {
+				database.LogAuditEventWithUserID(database.AuditBruteForceBlocked, user.ID, r, "24h block after max TOTP attempts")
+				utils.WriteJSONResponse(w, http.StatusTooManyRequests, map[string]interface{}{
+					"error":         "maximum TOTP attempts reached, blocked for 24 hours",
+					"is_blocked":    true,
+					"blocked_until": until.Format(time.RFC3339),
+				})
+				return
+			}
+			attemptsLeft := 3 - attemptCount
+			if int(totpLeft) < attemptsLeft {
+				attemptsLeft = int(totpLeft)
+			}
+			if attemptsLeft < 0 {
+				attemptsLeft = 0
+			}
+			utils.WriteJSONResponse(w, http.StatusBadRequest, map[string]string{"error": fmt.Sprintf("invalid OTP, %d attempt%s left", attemptsLeft, utils.Pluralize(attemptsLeft))})
+			return
+		}
+		database.SM.ClearTOTPFailures(user.ID)
 	} else {
 		storedOTPHash, exists := database.SM.GetData(sess, "otp")
 		otpSentAt, sentExists := database.SM.GetData(sess, "otp_sent_at")
@@ -1316,6 +1413,14 @@ func VerifyOTPHandler(w http.ResponseWriter, r *http.Request) {
 		// Password reset flow
 		if err := database.DB.Where("username = ?", cleanedUsername).First(&user).Error; err != nil {
 			utils.WriteJSONResponse(w, http.StatusBadRequest, map[string]string{"error": fmt.Sprintf("invalid %s", config.AppIDLabel)})
+			return
+		}
+		if err := database.SM.SetData(sess, "password_reset_verified", true); err != nil {
+			utils.WriteJSONResponse(w, http.StatusInternalServerError, map[string]string{"error": "failed to update session data"})
+			return
+		}
+		if err := database.SM.SetData(sess, "password_reset_username", cleanedUsername); err != nil {
+			utils.WriteJSONResponse(w, http.StatusInternalServerError, map[string]string{"error": "failed to update session data"})
 			return
 		}
 		nextStep = "reset-password"
@@ -1596,18 +1701,21 @@ func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 4. Delete matching native cookie session (cookie_token is stored as generated hex token)
-	if cookie, err := r.Cookie("session_token"); err == nil && cookie.Value != "" {
-		var webSess database.Session
-		if database.DB.Where("cookie_token = ?", cookie.Value).First(&webSess).Error == nil {
-			if webSess.UserID != nil {
-				database.LogAuditEventWithUserID(database.AuditLogout, *webSess.UserID, r, "web session logout")
+	// Skip cookie session logout if CSRF validation was bypassed for an unauthenticated token logout.
+	if !middleware.CSRFBypassedForTokenLogout(r) {
+		if cookie, err := r.Cookie("session_token"); err == nil && cookie.Value != "" {
+			var webSess database.Session
+			if database.DB.Where("cookie_token = ?", cookie.Value).First(&webSess).Error == nil {
+				if webSess.UserID != nil {
+					database.LogAuditEventWithUserID(database.AuditLogout, *webSess.UserID, r, "web session logout")
+				}
+				database.DB.Delete(&webSess)
 			}
-			database.DB.Delete(&webSess)
 		}
-	}
 
-	// Clear session cookie
-	database.SetSessionCookieHelper(w, "", time.Now().Add(-24*time.Hour))
+		// Clear session cookie
+		database.SetSessionCookieHelper(w, "", time.Now().Add(-24*time.Hour))
+	}
 
 	utils.WriteJSONResponse(w, http.StatusOK, map[string]interface{}{
 		"success": true,

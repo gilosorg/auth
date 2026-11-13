@@ -73,7 +73,7 @@ func RequireCookieToken(next http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 
-		if user.Status != "active" {
+		if user.Status == "suspended" {
 			_ = database.SM.Destroy(sess)
 			database.SetSessionCookieHelper(w, "", time.Now().Add(-1*time.Hour))
 			if isAPIOrAjaxRequest(r) {

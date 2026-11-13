@@ -17,6 +17,7 @@ var (
 	eskizToken string
 	loggedIn   bool
 	mutex      sync.RWMutex
+	loginMu    sync.Mutex
 )
 
 // SMSPayload represents the payload for sending an SMS.
@@ -34,14 +35,18 @@ type LoginResponse struct {
 	} `json:"data"`
 }
 
-// login authenticates with the Eskiz API and updates the token.
+// login authenticates with the Eskiz API and updates the token without holding mutex across network I/O.
 func login() error {
 	if config.EskizEmail == "" || config.EskizPassword == "" {
 		return errors.New("SMS provider credentials are not configured")
 	}
 
-	mutex.Lock()
-	defer mutex.Unlock()
+	loginMu.Lock()
+	defer loginMu.Unlock()
+
+	if isEskizLoggedIn() {
+		return nil
+	}
 
 	payload := map[string]string{
 		"email":    config.EskizEmail,
@@ -66,8 +71,10 @@ func login() error {
 		return fmt.Errorf("failed to parse login response: %v", err)
 	}
 
+	mutex.Lock()
 	eskizToken = loginResp.Data.Token
 	loggedIn = true
+	mutex.Unlock()
 	return nil
 }
 

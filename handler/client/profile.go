@@ -10,8 +10,6 @@ import (
 	"gilosauth/middleware"
 	"gilosauth/utils"
 	"image/png"
-	"io"
-	"math"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -556,10 +554,7 @@ func ProfileContactPendingHandler(w http.ResponseWriter, r *http.Request) {
 			pending = append(pending, "email")
 			email := fmt.Sprint(pendingEmail)
 			if email != "" {
-				parts := strings.Split(email, "@")
-				if len(parts) == 2 {
-					masked["email"] = parts[0][:int(math.Min(2, float64(len(parts[0]))))] + "...@" + parts[1]
-				}
+				masked["email"] = utils.MaskEmail(email)
 			} else {
 				masked["email"] = ""
 			}
@@ -599,16 +594,7 @@ func ProfileContactPendingHandler(w http.ResponseWriter, r *http.Request) {
 			clearProfileData(sess, "phone")
 		} else {
 			pending = append(pending, "phone")
-			var val uint64
-			switch v := pendingPhone.(type) {
-			case float64:
-				val = uint64(math.Round(v))
-			case uint64:
-				val = v
-			case string:
-				val, _ = utils.ParsePhone(v)
-			}
-			if val != 0 {
+			if val := utils.ParsePhoneInterface(pendingPhone); val != 0 {
 				masked["phone"] = utils.MaskPhone(val)
 			} else {
 				masked["phone"] = ""
@@ -735,7 +721,7 @@ func ProfileContactResendHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	resendCount++
 	if resendCount > 3 {
-		database.SM.ApplyBlock(fmt.Sprint(pending), sess, 24*time.Hour, "security")
+		database.SM.ApplyBlock(utils.NormalizePendingBlockKey(typ, pending), sess, 24*time.Hour, "security")
 		utils.WriteJSONResponse(w, http.StatusTooManyRequests, map[string]interface{}{
 			"error":         "maximum resend attempts reached, blocked for 24 hours",
 			"is_blocked":    true,
@@ -759,16 +745,7 @@ func ProfileContactResendHandler(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	} else {
-		var val uint64
-		switch v := pending.(type) {
-		case float64:
-			val = uint64(math.Round(v))
-		case uint64:
-			val = v
-		case string:
-			val, _ = utils.ParsePhone(v)
-		}
-		if val != 0 {
+		if val := utils.ParsePhoneInterface(pending); val != 0 {
 			if err := utils.SendPhoneOTP(utils.FormatPhone(val), otp); err != nil {
 				utils.WriteJSONResponse(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
 				return
@@ -776,7 +753,12 @@ func ProfileContactResendHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	utils.WriteJSONResponse(w, http.StatusOK, map[string]interface{}{"success": true, "resends": resendCount})
+	utils.WriteJSONResponse(w, http.StatusOK, map[string]interface{}{
+		"success":             true,
+		"resends":             resendCount,
+		"time_remaining":      300,
+		"resend_available_in": 60,
+	})
 }
 
 func ProfileContactVerifyHandler(w http.ResponseWriter, r *http.Request) {
@@ -901,7 +883,7 @@ func ProfileContactVerifyHandler(w http.ResponseWriter, r *http.Request) {
 			attemptCount++
 			database.SM.SetData(sess, "profile_attempts_phone", attemptCount)
 			if attemptCount > 3 {
-				database.SM.ApplyBlock(fmt.Sprint(pendingPhone), sess, 24*time.Hour, "security")
+				database.SM.ApplyBlock(utils.NormalizePendingBlockKey("phone", pendingPhone), sess, 24*time.Hour, "security")
 				results["phone"] = map[string]interface{}{
 					"success":       false,
 					"error":         "maximum attempts reached, blocked for 24 hours",
@@ -922,15 +904,7 @@ func ProfileContactVerifyHandler(w http.ResponseWriter, r *http.Request) {
 					clearProfileData(sess, "phone")
 					results["phone"] = map[string]interface{}{"success": false, "error": "verification code expired"}
 				} else if utils.ConstantTimeOTPCompare(fmt.Sprint(storedOTP), utils.HashToken(input.PhoneOTP)) {
-					var phone uint64
-					switch v := pendingPhone.(type) {
-					case float64:
-						phone = uint64(math.Round(v))
-					case uint64:
-						phone = v
-					case string:
-						phone, _ = utils.ParsePhone(v)
-					}
+					phone := utils.ParsePhoneInterface(pendingPhone)
 					mfa, _ := database.SM.GetData(sess, "profile_pending_mfa_phone_enabled")
 					mfaPhone := false
 					if val, ok := mfa.(bool); ok {
@@ -1164,54 +1138,25 @@ func IconUpdateHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer file.Close()
 
-	buff := make([]byte, 512)
-	if _, err := file.Read(buff); err != nil {
-		utils.WriteJSONResponse(w, http.StatusInternalServerError, map[string]string{"error": "failed to read file"})
-		return
-	}
-	if http.DetectContentType(buff) != "image/jpeg" {
-		utils.WriteJSONResponse(w, http.StatusBadRequest, map[string]string{"error": "only JPG images are allowed"})
-		return
-	}
-
-	if _, err := file.Seek(0, 0); err != nil {
-		utils.WriteJSONResponse(w, http.StatusInternalServerError, map[string]string{"error": "failed to seek file"})
-		return
-	}
-
 	iconDir := "./media/user/icon/"
-	if err := os.MkdirAll(iconDir, 0755); err != nil {
-		utils.WriteJSONResponse(w, http.StatusInternalServerError, map[string]string{"error": "failed to create storage directory"})
-		return
-	}
-
-	pattern := filepath.Join(iconDir, fmt.Sprintf("%d_*.jpg", userID))
-	oldFiles, _ := filepath.Glob(pattern)
-	for _, oldFile := range oldFiles {
-		os.Remove(oldFile)
-	}
-	os.Remove(filepath.Join(iconDir, fmt.Sprintf("%d.jpg", userID)))
-
-	filename := fmt.Sprintf("%d_%d.jpg", userID, time.Now().Unix())
-	filepath := filepath.Join(iconDir, filename)
-
-	out, err := os.Create(filepath)
+	filename, err := utils.SaveValidatedAvatarJPEG(file, iconDir, userID)
 	if err != nil {
-		utils.WriteJSONResponse(w, http.StatusInternalServerError, map[string]string{"error": "failed to create file on disk"})
-		return
-	}
-	defer out.Close()
-
-	if _, err := io.Copy(out, file); err != nil {
-		utils.WriteJSONResponse(w, http.StatusInternalServerError, map[string]string{"error": "failed to save file"})
+		status := http.StatusBadRequest
+		if strings.Contains(err.Error(), "directory") || strings.Contains(err.Error(), "disk") || strings.Contains(err.Error(), "save") || strings.Contains(err.Error(), "encode") || strings.Contains(err.Error(), "finalize") || strings.Contains(err.Error(), "read") {
+			status = http.StatusInternalServerError
+		}
+		utils.WriteJSONResponse(w, status, map[string]string{"error": err.Error()})
 		return
 	}
 
 	iconURL := "/media/user/icon/" + filename
 	if err := database.DB.Model(&database.User{}).Where("id = ?", userID).Update("icon", iconURL).Error; err != nil {
+		_ = os.Remove(filepath.Join(iconDir, filename))
 		utils.WriteJSONResponse(w, http.StatusInternalServerError, map[string]string{"error": "failed to update user icon path"})
 		return
 	}
+
+	utils.CleanupOldAvatars(iconDir, userID, filename)
 
 	utils.WriteJSONResponse(w, http.StatusOK, map[string]interface{}{"success": true, "icon_url": iconURL})
 }
