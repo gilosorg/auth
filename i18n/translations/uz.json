@@ -544,5 +544,9 @@
   "state_mismatch_warn": "State parametri joriy seansnikiga mos kelmadi",
   "ready_to_test_pkce": "Sinashga tayyor (PKCE verifier biriktirildi)!",
   "ready_to_test_short": "Sinashga tayyor!",
-  "no_code_in_url": "Havolada avtorizatsiya kodi topilmadi"
+  "no_code_in_url": "Havolada avtorizatsiya kodi topilmadi",
+  "secret_not_copied_title": "Maxfiy kalitni nusxalamasdan yopilsinmi?",
+  "secret_not_copied_text": "Bu oynani yopganingizdan so‘ng mijozning maxfiy kalitini qayta ko‘ra olmaysiz.",
+  "close_anyway": "Baribir yopish",
+  "go_back_copy": "Qaytish va nusxalash"
 }

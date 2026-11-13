@@ -4206,12 +4206,16 @@
                     secretPrefix: data.secret_prefix || ''
                 });
             } catch (err) {
-                if (btn && window.GilosUI) window.GilosUI.setButtonLoading(btn, false);
                 window.GilosUI.toast(err.message, 'error');
+            } finally {
+                if (btn && window.GilosUI) window.GilosUI.setButtonLoading(btn, false);
             }
         }
 
+        let secretCopiedBeforeClose = false;
+
         function showSecretRevealModal({ secret, clientName, clientId, secretPrefix }) {
+            secretCopiedBeforeClose = false;
             document.getElementById('secret-reveal-client-name').textContent = `${clientName} (#${clientId})`;
             document.getElementById('revealed-secret-value').textContent = secret;
             document.getElementById('secret-reveal-meta').textContent = secretPrefix ? `${tr('secret_prefix', 'Prefix')}: ${secretPrefix}` : '';
@@ -4222,22 +4226,39 @@
             showModal('secret-reveal-modal');
         }
 
-        function closeSecretRevealModal() {
-            document.getElementById('revealed-secret-value').textContent = '';
+        async function closeSecretRevealModal(force = false) {
+            const secretEl = document.getElementById('revealed-secret-value');
+            const hasUnwipedSecret = Boolean(secretEl && secretEl.textContent);
+            if (force !== true && !secretCopiedBeforeClose && hasUnwipedSecret && typeof Swal !== 'undefined') {
+                const conf = await Swal.fire({
+                    title: tr('secret_not_copied_title', 'Close without copying secret?'),
+                    text: tr('secret_not_copied_text', 'You will not be able to view this client secret again once you close this dialog.'),
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: tr('close_anyway', 'Close anyway'),
+                    cancelButtonText: tr('go_back_copy', 'Go back & copy')
+                });
+                if (!conf.isConfirmed) return;
+            }
+            if (secretEl) secretEl.textContent = '';
             const envEl = document.getElementById('revealed-env-snippet');
             if (envEl) envEl.textContent = '';
+            secretCopiedBeforeClose = false;
             hideModal('secret-reveal-modal');
         }
 
-        function copyRevealedSecret() {
+        async function copyRevealedSecret() {
             const sec = document.getElementById('revealed-secret-value').textContent;
-            if (sec) copyToClipboard(sec, document.getElementById('copy-secret-btn'), tr('secret_copied_msg', 'Client secret copied to clipboard!'));
+            if (!sec) return;
+            const ok = await copyToClipboard(sec, document.getElementById('copy-secret-btn'), tr('secret_copied_msg', 'Client secret copied to clipboard!'));
+            if (ok) secretCopiedBeforeClose = true;
         }
 
-        function copyRevealedEnv() {
+        async function copyRevealedEnv() {
             const envEl = document.getElementById('revealed-env-snippet');
             if (envEl && envEl.textContent) {
-                copyToClipboard(envEl.textContent, document.getElementById('copy-env-btn'));
+                const ok = await copyToClipboard(envEl.textContent, document.getElementById('copy-env-btn'));
+                if (ok) secretCopiedBeforeClose = true;
             }
         }
 
@@ -4520,7 +4541,7 @@
                 window.GilosUI.bindModalA11y(document.getElementById('client-modal'), closeModal);
                 window.GilosUI.bindModalA11y(document.getElementById('totp-modal'), closeTOTPModal);
                 window.GilosUI.bindModalA11y(document.getElementById('password-modal'), () => closePasswordModal(false));
-                window.GilosUI.bindModalA11y(document.getElementById('secret-reveal-modal'), closeSecretRevealModal, { closeOnBackdrop: false });
+                window.GilosUI.bindModalA11y(document.getElementById('secret-reveal-modal'), () => closeSecretRevealModal(false), { closeOnBackdrop: false, closeOnEscape: false });
                 window.GilosUI.bindModalA11y(document.getElementById('contact-verify-modal'), cancelContactVerify);
                 window.GilosUI.bindModalA11y(document.getElementById('crop-modal'), closeCropModal);
                 window.GilosUI.bindModalA11y(document.getElementById('delete-modal'), closeDeleteModal);
@@ -4557,7 +4578,7 @@
 
             window.addEventListener('beforeunload', (e) => {
                 if (allowProgrammaticUnload) return;
-                const secretOpen = document.getElementById('secret-reveal-modal')?.classList.contains('is-open');
+                const secretOpen = Boolean(document.getElementById('secret-reveal-modal')?.classList.contains('is-open') && !secretCopiedBeforeClose);
                 const namesDirty = document.getElementById('names-dirty-badge') && !document.getElementById('names-dirty-badge').classList.contains('hidden');
                 const contactDirty = document.getElementById('contact-dirty-badge') && !document.getElementById('contact-dirty-badge').classList.contains('hidden');
                 if (secretOpen || namesDirty || contactDirty) {

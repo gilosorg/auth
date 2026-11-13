@@ -544,5 +544,9 @@
   "state_mismatch_warn": "State mismatch (differs from this session)",
   "ready_to_test_pkce": "Ready to test (PKCE verifier attached)!",
   "ready_to_test_short": "Ready to test!",
-  "no_code_in_url": "No authorization code found in URL"
+  "no_code_in_url": "No authorization code found in URL",
+  "secret_not_copied_title": "Close without copying secret?",
+  "secret_not_copied_text": "You will not be able to view this client secret again once you close this dialog.",
+  "close_anyway": "Close anyway",
+  "go_back_copy": "Go back & copy"
 }

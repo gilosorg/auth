@@ -402,8 +402,9 @@
 
 <body>
     {{template "ribbon" .}}
+    <a href="#main-content" class="skip-link">{{ index .T "skip_to_content" }}</a>
 
-    <main class="oauth-stage">
+    <main class="oauth-stage" id="main-content" tabindex="-1">
         <section class="oauth-card" aria-labelledby="auth-header">
             <div class="oauth-top">
                 <img src="/static/img/logo.svg" alt="Gilos Logo" class="oauth-logo theme-logo-light">
@@ -415,7 +416,7 @@
                         {{upper (printf "%.1s" .User.Username)}}
                     </span>
                     <span class="identity-chip-handle">{{ printf (index .T "signed_in_as") .User.Username }}</span>
-                    <button type="button" class="identity-chip-action" onclick="switchAccount()">{{ index .T "switch_account" }}</button>
+                    <button type="button" class="identity-chip-action" onclick="switchAccount(this)">{{ index .T "switch_account" }}</button>
                 </div>
                 {{end}}
             </div>
@@ -601,21 +602,36 @@
             box.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:1px;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><span>' + escapeHtml(msg) + '</span>';
         }
 
-        async function switchAccount() {
+        let switchingAccount = false;
+
+        async function switchAccount(triggerBtn = null) {
+            if (switchingAccount) return;
+            switchingAccount = true;
+            const btn = triggerBtn || (typeof event !== 'undefined' && event && event.currentTarget && event.currentTarget.tagName === 'BUTTON' ? event.currentTarget : null);
             const username = "{{if .User}}{{.User.Username}}{{end}}";
             const confirmMsg = tr('switch_account_confirm', 'Sign out of @%s and sign in with another account?').replace('%s', username);
 
-            const result = await Swal.fire({
-                title: tr('switch_account', 'Switch account'),
-                text: confirmMsg,
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonText: tr('switch_account', 'Switch account'),
-                cancelButtonText: tr('cancel', 'Cancel')
-            });
+            let result;
+            try {
+                result = await Swal.fire({
+                    title: tr('switch_account', 'Switch account'),
+                    text: confirmMsg,
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonText: tr('switch_account', 'Switch account'),
+                    cancelButtonText: tr('cancel', 'Cancel')
+                });
+            } catch (e) {
+                switchingAccount = false;
+                return;
+            }
 
-            if (!result.isConfirmed) return;
+            if (!result || !result.isConfirmed) {
+                switchingAccount = false;
+                return;
+            }
 
+            if (btn && window.GilosUI) window.GilosUI.setButtonLoading(btn, true, tr('loading', 'Loading...'));
             try {
                 await fetch('/auth/logout', {
                     method: 'POST',
@@ -640,14 +656,25 @@
                 totpForm.classList.remove('hidden');
                 header.textContent = tr('two_step_verification', 'Two-Step Verification');
                 const firstInput = totpForm.querySelector('.otp-input');
-                if (firstInput) firstInput.focus();
+                if (firstInput) firstInput.focus({ preventScroll: true });
             } else {
                 totpForm.classList.add('hidden');
                 consentForm.classList.remove('hidden');
                 totpForm.querySelectorAll('.otp-input').forEach(i => i.classList.remove('error'));
                 header.textContent = tr('authorize', 'Authorize');
+                const approveBtn = document.getElementById('approve-btn');
+                if (approveBtn && !approveBtn.disabled) approveBtn.focus({ preventScroll: true });
             }
         }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key !== 'Escape') return;
+            const totpForm = document.getElementById('totp-form');
+            if (!totpForm || totpForm.classList.contains('hidden')) return;
+            if (document.querySelector('.swal2-container')) return;
+            e.preventDefault();
+            moveToState('consent');
+        });
 
         let isConsentSubmitting = false;
         function setConsentSubmitting(isSubmitting) {

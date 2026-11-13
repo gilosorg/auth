@@ -778,7 +778,8 @@
 </head>
 <body>
     {{template "ribbon" .}}
-    <main class="auth-stage">
+    <a href="#main-content" class="skip-link">{{ index .T "skip_to_content" }}</a>
+    <main class="auth-stage" id="main-content" tabindex="-1">
         <div class="auth-container">
             <div class="auth-progress-track" aria-hidden="true">
                 <div class="auth-progress-fill" id="auth-progress-fill"></div>
@@ -1662,11 +1663,16 @@
             const visibleInputs = Array.from(document.querySelectorAll(`#${activeForm.id} input:not([type="hidden"]):not(.otp-input)`))
                 .filter(function (el) { return el.offsetParent !== null && !el.disabled; });
             if (visibleInputs.length > 0) {
-                visibleInputs[0].focus();
+                visibleInputs[0].focus({ preventScroll: true });
             } else {
                 const otpInputs = Array.from(document.querySelectorAll(`#${activeForm.id} .otp-input`))
                     .filter(function (el) { return el.offsetParent !== null && !el.disabled; });
-                if (otpInputs.length > 0) otpInputs[0].focus();
+                if (otpInputs.length > 0) {
+                    otpInputs[0].focus({ preventScroll: true });
+                } else {
+                    const fallbackTarget = document.querySelector(`#${activeForm.id} button:not(:disabled)`) || document.querySelector('#action-button:not(:disabled)');
+                    if (fallbackTarget) fallbackTarget.focus({ preventScroll: true });
+                }
             }
         }
 

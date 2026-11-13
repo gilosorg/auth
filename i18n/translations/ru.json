@@ -544,5 +544,9 @@
   "state_mismatch_warn": "Параметр state не совпадает с текущей сессией",
   "ready_to_test_pkce": "Готово к проверке (PKCE verifier прикреплён)",
   "ready_to_test_short": "Готово к проверке!",
-  "no_code_in_url": "Код авторизации не найден в URL"
+  "no_code_in_url": "Код авторизации не найден в URL",
+  "secret_not_copied_title": "Закрыть без копирования секрета?",
+  "secret_not_copied_text": "После закрытия этого окна вы больше не сможете просмотреть секрет клиента.",
+  "close_anyway": "Всё равно закрыть",
+  "go_back_copy": "Вернуться и скопировать"
 }
