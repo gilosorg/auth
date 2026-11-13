@@ -2,8 +2,40 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gilos Auth - Developer Documentation</title>
-    <meta name="description" content="Integrate Gilos Auth OAuth2 into your application.">
+    <title>{{ if .AppName }}{{ .AppName }}{{ else }}Gilos Auth{{ end }} - Developer Documentation</title>
+    <meta name="description" content="Integrate Gilos Auth OAuth 2.1 and OpenID Connect into your application.">
+    <script>
+        (function() {
+            function applyTheme(pref) {
+                var effective = pref;
+                if (pref !== 'light' && pref !== 'dark') {
+                    effective = (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+                    pref = 'system';
+                }
+                document.documentElement.setAttribute('data-theme', effective);
+                document.documentElement.setAttribute('data-theme-pref', pref);
+                document.documentElement.style.colorScheme = effective;
+            }
+            var saved = 'system';
+            try { saved = localStorage.getItem('gilos_theme') || 'system'; } catch (e) {}
+            applyTheme(saved);
+            window.__setTheme = function(pref) {
+                try { localStorage.setItem('gilos_theme', pref); } catch (e) {}
+                applyTheme(pref);
+                window.dispatchEvent(new CustomEvent('gilos-theme-change', { detail: { pref: pref, theme: document.documentElement.getAttribute('data-theme') } }));
+            };
+            if (window.matchMedia) {
+                var mq = window.matchMedia('(prefers-color-scheme: dark)');
+                var onChange = function() {
+                    if ((document.documentElement.getAttribute('data-theme-pref') || 'system') === 'system') {
+                        applyTheme('system');
+                    }
+                };
+                if (mq.addEventListener) mq.addEventListener('change', onChange);
+                else if (mq.addListener) mq.addListener(onChange);
+            }
+        })();
+    </script>
     <link rel="icon" href="/static/img/icon.svg" type="image/svg+xml">
     <link rel="icon" href="/static/img/icon-dark.svg" type="image/svg+xml" media="(prefers-color-scheme: dark)">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -34,30 +66,32 @@
             --warning-color: #FF9F0A;
             --warning-bg: #FEF3C7;
         }
-        @media (prefers-color-scheme: dark) {
-            :root {
-                --doc-primary: #F5F5F7;
-                --doc-primary-dark: #E8E8ED;
-                --doc-primary-light: #A1A1A6;
-                --doc-gradient: #F5F5F7;
-                --doc-gradient-contrast: #1D1D1F;
-                --doc-bg: #000000;
-                --doc-sidebar-bg: #1C1C1E;
-                --doc-content-bg: #1C1C1E;
-                --doc-card-bg: #2C2C2E;
-                --doc-border: #2C2C2E;
-                --doc-text: #F5F5F7;
-                --doc-text-secondary: #A1A1A6;
-                --doc-text-muted: #6E6E73;
-                --doc-code-bg: #1C1C1E;
-                --doc-code-text: #F5F5F7;
-                --doc-inline-code-bg: #2C2C2E;
-                --doc-inline-code-text: #F5F5F7;
-                --method-get-bg: #1D3A2A;
-                --method-post-bg: #1D2C3E;
-                --warning-bg: #332200;
-            }
+        :root[data-theme="dark"] {
+            --doc-primary: #F5F5F7;
+            --doc-primary-dark: #E8E8ED;
+            --doc-primary-light: #A1A1A6;
+            --doc-gradient: #F5F5F7;
+            --doc-gradient-contrast: #1D1D1F;
+            --doc-bg: #000000;
+            --doc-sidebar-bg: #1C1C1E;
+            --doc-content-bg: #1C1C1E;
+            --doc-card-bg: #2C2C2E;
+            --doc-border: #2C2C2E;
+            --doc-text: #F5F5F7;
+            --doc-text-secondary: #A1A1A6;
+            --doc-text-muted: #8E8E93;
+            --doc-code-bg: #1C1C1E;
+            --doc-code-text: #F5F5F7;
+            --doc-inline-code-bg: #2C2C2E;
+            --doc-inline-code-text: #F5F5F7;
+            --method-get-bg: #1D3A2A;
+            --method-post-bg: #1D2C3E;
+            --warning-bg: #332200;
         }
+        .theme-logo-light { display: inline-block; }
+        .theme-logo-dark { display: none; }
+        :root[data-theme="dark"] .theme-logo-light { display: none; }
+        :root[data-theme="dark"] .theme-logo-dark { display: inline-block; }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         html { scroll-behavior: smooth; }
         body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background: var(--doc-bg); color: var(--doc-text); line-height: 1.6; }
@@ -111,7 +145,20 @@
         .step-title { display: flex; align-items: center; font-size: 1.1rem; font-weight: 600; margin: 28px 0 12px; color: var(--doc-text); }
         .label { display: inline-block; font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--doc-text-muted); margin-bottom: 6px; }
         .label-success { color: var(--method-get); }
-        @media (max-width: 900px) { .docs-sidebar { transform: translateX(-100%); } .docs-main { margin-left: 0; max-width: 100%; padding: 24px; } }
+        .docs-mobile-bar { display: none; position: sticky; top: 0; z-index: 90; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px; background: var(--doc-sidebar-bg); border-bottom: 1px solid var(--doc-border); }
+        .mobile-menu-btn { display: inline-flex; align-items: center; justify-content: center; width: 38px; height: 38px; border-radius: 8px; border: 1px solid var(--doc-border); background: var(--doc-content-bg); color: var(--doc-text); cursor: pointer; }
+        .sidebar-backdrop { display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.45); z-index: 95; }
+        .sidebar-backdrop.open { display: block; }
+        .sidebar-footer { padding: 16px 24px 0; margin-top: 20px; border-top: 1px solid var(--doc-border); }
+        .theme-toggle-btn { display: inline-flex; align-items: center; gap: 8px; padding: 7px 12px; border-radius: 8px; border: 1px solid var(--doc-border); background: var(--doc-content-bg); color: var(--doc-text-secondary); font-size: 0.8rem; font-weight: 500; cursor: pointer; width: 100%; justify-content: center; transition: all 0.15s ease; }
+        .theme-toggle-btn:hover { border-color: var(--doc-primary); color: var(--doc-text); }
+        @media (max-width: 900px) {
+            .docs-wrapper { flex-direction: column; }
+            .docs-mobile-bar { display: flex; }
+            .docs-sidebar { transform: translateX(-100%); transition: transform 0.2s ease; z-index: 100; }
+            .docs-sidebar.open { transform: translateX(0); }
+            .docs-main { margin-left: 0; max-width: 100%; padding: 24px; }
+        }
         .docs-footer { margin-top: 48px; padding-top: 20px; border-top: 1px solid var(--doc-border); text-align: center; color: var(--doc-text-muted); font-size: 0.85rem; }
         /* Interactive components */
         .client-panel { background: linear-gradient(135deg, var(--doc-card-bg) 0%, var(--doc-content-bg) 100%); border: 1px solid var(--doc-border); border-radius: 12px; padding: 20px; margin: 20px 0; }
@@ -148,18 +195,31 @@
 {{ end }}
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ if .Lang }}{{ .Lang }}{{ else }}en{{ end }}">
 {{ template "docs-head" . }}
 <body>
+    <div class="docs-mobile-bar">
+        <button type="button" class="mobile-menu-btn" id="mobileMenuBtn" onclick="toggleMobileSidebar()" aria-label="{{ index .T "toggle_menu" }}" aria-expanded="false">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
+        <a href="/" class="sidebar-logo" style="font-size: 0.95rem;">
+            <img src="/static/img/icon.svg" alt="{{ if .AppName }}{{ .AppName }}{{ else }}Gilos{{ end }}" class="theme-logo-light" style="width:24px;height:24px;">
+            <img src="/static/img/icon-dark.svg" alt="{{ if .AppName }}{{ .AppName }}{{ else }}Gilos{{ end }}" class="theme-logo-dark" style="width:24px;height:24px;">
+            <span>{{ if .AppName }}{{ .AppName }}{{ else }}Gilos Auth{{ end }}</span>
+        </a>
+        <a href="/home" class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.8rem;">{{ if .IsLoggedIn }}Console{{ else }}{{ index .T "sign_in" }}{{ end }}</a>
+    </div>
+    <div class="sidebar-backdrop" id="sidebarBackdrop" onclick="closeMobileSidebar()"></div>
     <div class="docs-wrapper">
         <!-- Sidebar -->
-        <aside class="docs-sidebar">
-            <div class="sidebar-header">
+        <aside class="docs-sidebar" id="docsSidebar">
+            <div class="sidebar-header" style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
                 <a href="/" class="sidebar-logo">
-                    <img src="/static/img/icon.svg" alt="Gilos">
-                    <span>Gilos Auth</span>
-                    <a href="https://github.com/gilosorg/auth/releases/tag/{{.AppVersion}}" target="_blank" class="sidebar-version" rel="noopener noreferrer">{{.AppVersion}}</a>
+                    <img src="/static/img/icon.svg" alt="{{ if .AppName }}{{ .AppName }}{{ else }}Gilos{{ end }}" class="theme-logo-light">
+                    <img src="/static/img/icon-dark.svg" alt="{{ if .AppName }}{{ .AppName }}{{ else }}Gilos{{ end }}" class="theme-logo-dark">
+                    <span>{{ if .AppName }}{{ .AppName }}{{ else }}Gilos Auth{{ end }}</span>
                 </a>
+                <a href="https://github.com/gilosorg/auth/releases/tag/{{.AppVersion}}" target="_blank" class="sidebar-version" rel="noopener noreferrer">{{.AppVersion}}</a>
             </div>
 
             <div class="sidebar-section">
@@ -172,18 +232,19 @@
             </div>
 
             <div class="sidebar-section">
-                <div class="sidebar-section-title">OAuth2 Flow</div>
+                <div class="sidebar-section-title">OAuth 2.1 / OIDC Flow</div>
                 <ul class="sidebar-nav">
                     <li><a href="#authorization">1. Authorization</a></li>
                     <li><a href="#token">2. Get Token</a></li>
-                    <li><a href="#user-info">3. Get User Info</a></li>
-                    <li><a href="#refresh">Refresh Token</a></li>
+                    <li><a href="#user-info">3. UserInfo &amp; Profile</a></li>
+                    <li><a href="#refresh">Refresh, Introspect &amp; Revoke</a></li>
                 </ul>
             </div>
 
             <div class="sidebar-section">
                 <div class="sidebar-section-title">Reference</div>
                 <ul class="sidebar-nav">
+                    <li><a href="#discovery">OIDC Discovery &amp; JWKS</a></li>
                     <li><a href="#scopes">Scopes</a></li>
                     <li><a href="#errors">Error Handling</a></li>
                 </ul>
@@ -195,6 +256,13 @@
                     <li><a href="#example-go">Go (Golang)</a></li>
                 </ul>
             </div>
+
+            <div class="sidebar-footer">
+                <button type="button" class="theme-toggle-btn" id="docsThemeToggleBtn" onclick="cycleDocsTheme()" aria-label="{{ index .T "switch_theme" }}" title="{{ index .T "switch_theme" }}">
+                    <span id="docsThemeToggleIcon" aria-hidden="true"></span>
+                    <span id="docsThemeToggleLabel">{{ index .T "theme_system" }}</span>
+                </button>
+            </div>
         </aside>
 
         <!-- Main Content -->
@@ -203,10 +271,10 @@
                 
                 <!-- Introduction -->
                 <section id="introduction">
-                    <h1>Gilos Auth for Developers</h1>
+                    <h1>{{ if .AppName }}{{ .AppName }}{{ else }}Gilos Auth{{ end }} for Developers</h1>
                     <p class="lead">
-                        Allow users to sign in to your application using their Gilos ID. 
-                        Gilos Auth implements the OAuth 2.0 Authorization Code flow.
+                        Allow users to sign in to your application using their Gilos ID.
+                        {{ if .AppName }}{{ .AppName }}{{ else }}Gilos Auth{{ end }} implements the OAuth 2.1 Authorization Code flow with PKCE (<code>S256</code>) and OpenID Connect (OIDC).
                     </p>
 
                     {{ if .IsLoggedIn }}
@@ -223,7 +291,7 @@
 
                     <div class="callout callout-info">
                         <div class="callout-title">Base URL</div>
-                        <p><code id="baseUrl">https://auth.gilos.org</code></p>
+                        <p><code id="baseUrl">{{ if .IssuerURL }}{{ .IssuerURL }}{{ else }}https://auth.gilos.org{{ end }}</code></p>
                     </div>
                 </section>
 
@@ -256,17 +324,23 @@
                                 <div class="client-info-label">Client ID</div>
                                 <div class="client-info-value" id="infoClientId">-</div>
                             </div>
-                            <div class="client-info-item">
+                            <div class="client-info-item" id="infoSecretPrefixRow">
                                 <div class="client-info-label">Client Secret</div>
                                 <div class="client-info-value">
-                                    <span id="infoSecretPrefix" style="font-family:monospace;"></span><span style="color:var(--doc-muted);">••••••••••••</span>
-                                    <span style="font-size:0.75rem;color:var(--doc-muted);margin-left:8px;">(prefix only — use your saved secret)</span>
+                                    <span id="infoSecretPrefix" style="font-family:monospace;"></span><span style="color:var(--doc-text-muted);">••••••••••••</span>
+                                    <span style="font-size:0.75rem;color:var(--doc-text-muted);margin-left:8px;">(prefix only — use your saved secret)</span>
                                 </div>
                             </div>
-                            <div class="client-info-item">
+                            <div class="client-info-item" id="infoSecretInputRow">
                                 <div class="client-info-label">Client Secret (for API testing)</div>
                                 <div class="client-info-value">
                                     <input type="password" id="infoSecretInput" placeholder="Paste your client secret here" style="font-family:monospace;font-size:0.85rem;padding:6px 10px;border:1px solid var(--doc-border);border-radius:6px;background:var(--doc-bg);color:var(--doc-text);width:100%;max-width:420px;">
+                                </div>
+                            </div>
+                            <div class="client-info-item hidden" id="infoPublicNoteRow">
+                                <div class="client-info-label">Client Authentication</div>
+                                <div class="client-info-value" style="font-family:inherit;color:var(--doc-text-secondary);">
+                                    {{ index .T "pkce_public_client" }}
                                 </div>
                             </div>
                             <div class="client-info-item">
@@ -325,32 +399,39 @@
                             <thead><tr><th>Parameter</th><th>Required</th><th>Description</th></tr></thead>
                             <tbody>
                                 <tr><td><code>client_id</code></td><td>Yes</td><td>Your application's Client ID</td></tr>
-                                <tr><td><code>redirect_uri</code></td><td>Yes</td><td>Must exactly match your registered callback URL</td></tr>
+                                <tr><td><code>redirect_uri</code></td><td>Yes</td><td>Must exactly match one of your registered callback URLs</td></tr>
                                 <tr><td><code>response_type</code></td><td>Yes</td><td>Must be <code>code</code></td></tr>
-                                <tr><td><code>scope</code></td><td>Yes</td><td>Space-separated list of scopes</td></tr>
+                                <tr><td><code>scope</code></td><td>Yes</td><td>Space-separated list of scopes (include <code>openid</code> for an ID token)</td></tr>
+                                <tr><td><code>state</code></td><td>Yes</td><td>Opaque CSRF protection value echoed back on redirect (RFC 6749 &sect;10.12)</td></tr>
+                                <tr><td><code>code_challenge</code></td><td>Yes</td><td>Base64URL-encoded SHA-256 hash of <code>code_verifier</code> (RFC 7636)</td></tr>
+                                <tr><td><code>code_challenge_method</code></td><td>Yes</td><td>Must be <code>S256</code> (OAuth 2.1)</td></tr>
+                                <tr><td><code>nonce</code></td><td>No</td><td>OIDC replay-protection value echoed in the signed <code>id_token</code></td></tr>
                             </tbody>
                         </table>
                     </div>
 
                     <h4>Example Authorization URL</h4>
-                    <pre><code id="authUrlExample">https://auth.gilos.org/o/authorize?
+                    <pre><code id="authUrlExample"><span class="var-base-url">{{ if .IssuerURL }}{{ .IssuerURL }}{{ else }}https://auth.gilos.org{{ end }}</span>/o/authorize?
   client_id=<span class="var-client-id">YOUR_CLIENT_ID</span>
-  &redirect_uri=<span class="var-redirect-uri">https://yourapp.com/callback</span>
-  &response_type=code
-  &scope=<span class="var-scopes">profile email</span></code><button class="copy-btn" onclick="copyCode(this)">Copy</button></pre>
+  &amp;redirect_uri=<span class="var-redirect-uri">https://yourapp.com/callback</span>
+  &amp;response_type=code
+  &amp;scope=<span class="var-scopes">openid profile email</span>
+  &amp;state=<span class="var-state">RANDOM_STATE_TOKEN</span>
+  &amp;code_challenge=<span class="var-code-challenge">BASE64URL_SHA256_CHALLENGE</span>
+  &amp;code_challenge_method=S256</code><button class="copy-btn" onclick="copyCode(this)">{{ index .T "copy" }}</button></pre>
 
                     {{ if .IsLoggedIn }}{{ if .Clients }}
                     <div class="interactive-box" id="authInteractive">
                         <h4>🚀 Try It Live</h4>
-                        <p style="margin-bottom: 16px; color: var(--doc-text-secondary);">Select a client above, then click the button to start a real authorization flow:</p>
+                        <p style="margin-bottom: 16px; color: var(--doc-text-secondary);">Select a client above, then click the button to start an OAuth 2.1 authorization flow (a fresh <code>state</code> and PKCE <code>S256</code> challenge are generated automatically):</p>
                         <button id="openAuthBtn" class="btn btn-primary" onclick="openAuthUrl()" disabled>
                             Select a client first
                         </button>
                     </div>
                     {{ end }}{{ end }}
 
-                    <p>After the user approves, they'll be redirected to your callback URL with an authorization code:</p>
-<pre><code><span class="var-redirect-uri">https://yourapp.com/callback</span>?code=abc123def456...</code></pre>
+                    <p>After the user approves, they'll be redirected to your callback URL with an authorization code and matching <code>state</code>:</p>
+<pre><code><span class="var-redirect-uri">https://yourapp.com/callback</span>?code=abc123def456...&amp;state=<span class="var-state">RANDOM_STATE_TOKEN</span></code></pre>
 
                     {{ if .IsLoggedIn }}{{ if .Clients }}
                     <div class="interactive-box" id="redirectUrlBox">
@@ -358,7 +439,7 @@
                         <p style="margin-bottom: 16px; color: var(--doc-text-secondary);">After authorization, paste the full URL you were redirected to:</p>
                         <div class="input-group">
                             <label for="redirectUrlInput">Redirect URL</label>
-                            <input type="text" id="redirectUrlInput" placeholder="https://yourapp.com/callback?code=abc123..." oninput="parseRedirectUrl()">
+                            <input type="text" id="redirectUrlInput" placeholder="https://yourapp.com/callback?code=abc123...&state=..." oninput="parseRedirectUrl()">
                         </div>
                         <div id="extractedCodeInfo" class="hidden" style="margin-top: 12px; padding: 12px; background: var(--method-get-bg); border-radius: 8px;">
                             <span style="color: var(--method-get); font-weight: 600;">✓ Code extracted:</span>
@@ -371,7 +452,7 @@
                 <!-- Step 2: Token -->
                 <section id="token">
                     <div class="step-title"><span class="step">2</span> Exchange Code for Token</div>
-                    <p>Exchange the authorization code for an access token (server-side only):</p>
+                    <p>Exchange the single-use authorization code for tokens (confidential clients send <code>client_secret</code> via form body or HTTP Basic auth; public PKCE clients omit <code>client_secret</code>):</p>
 
                     <div class="endpoint">
                         <div class="endpoint-header">
@@ -381,23 +462,25 @@
                     </div>
 
                     <h4>Request</h4>
-<pre><code>POST https://auth.gilos.org/o/token
+<pre><code>POST <span class="var-base-url">{{ if .IssuerURL }}{{ .IssuerURL }}{{ else }}https://auth.gilos.org{{ end }}</span>/o/token
 Content-Type: application/x-www-form-urlencoded
 
 grant_type=authorization_code
-&client_id=<span class="var-client-id">YOUR_CLIENT_ID</span>
-&client_secret=<span class="var-client-secret">YOUR_CLIENT_SECRET</span>
-&code=<span class="var-auth-code">AUTHORIZATION_CODE</span>
-&redirect_uri=<span class="var-redirect-uri">https://yourapp.com/callback</span></code><button class="copy-btn" onclick="copyCode(this)">Copy</button></pre>
+&amp;client_id=<span class="var-client-id">YOUR_CLIENT_ID</span>
+<span class="var-secret-form-line">&amp;client_secret=<span class="var-client-secret">YOUR_CLIENT_SECRET</span>
+</span>&amp;code=<span class="var-auth-code">AUTHORIZATION_CODE</span>
+&amp;redirect_uri=<span class="var-redirect-uri">https://yourapp.com/callback</span>
+&amp;code_verifier=<span class="var-code-verifier">PKCE_CODE_VERIFIER</span></code><button class="copy-btn" onclick="copyCode(this)">{{ index .T "copy" }}</button></pre>
 
                     <h4>cURL Command</h4>
-<pre><code id="curlTokenExample">curl -X POST https://auth.gilos.org/o/token \
+<pre><code id="curlTokenExample">curl -X POST <span class="var-base-url">{{ if .IssuerURL }}{{ .IssuerURL }}{{ else }}https://auth.gilos.org{{ end }}</span>/o/token \
   -H "Content-Type: application/x-www-form-urlencoded" \
   -d "grant_type=authorization_code" \
   -d "client_id=<span class="var-client-id">YOUR_CLIENT_ID</span>" \
-  -d "client_secret=<span class="var-client-secret">YOUR_CLIENT_SECRET</span>" \
-  -d "code=<span class="var-auth-code">AUTHORIZATION_CODE</span>" \
-  -d "redirect_uri=<span class="var-redirect-uri">https://yourapp.com/callback</span>"</code><button class="copy-btn" onclick="copyCode(this)">Copy</button></pre>
+<span class="var-secret-curl-line">  -d "client_secret=<span class="var-client-secret">YOUR_CLIENT_SECRET</span>" \
+</span>  -d "code=<span class="var-auth-code">AUTHORIZATION_CODE</span>" \
+  -d "redirect_uri=<span class="var-redirect-uri">https://yourapp.com/callback</span>" \
+  -d "code_verifier=<span class="var-code-verifier">PKCE_CODE_VERIFIER</span>"</code><button class="copy-btn" onclick="copyCode(this)">{{ index .T "copy" }}</button></pre>
 
                     {{ if .IsLoggedIn }}{{ if .Clients }}
                     <div class="interactive-box" id="tokenTestBox">
@@ -421,39 +504,41 @@ grant_type=authorization_code
 
                     <span class="label label-success">Response</span>
 <pre><code>{
-  "access_token": "eyJhbGciOiJIUzI1NiIs...",
+  "access_token": "eyJhbGciOiJSUzI1NiIs...",
   "token_type": "Bearer",
   "expires_in": 3600,
   "refresh_token": "xyz789...",
-  "scope": "<span class="var-scopes">profile email</span>"
+  "id_token": "eyJhbGciOiJSUzI1NiIs...",
+  "scope": "<span class="var-scopes">openid profile email</span>"
 }</code></pre>
                 </section>
 
                 <!-- Step 3: User Info -->
                 <section id="user-info">
-                    <div class="step-title"><span class="step">3</span> Get User Info</div>
-                    <p>Fetch the authenticated user's information:</p>
+                    <div class="step-title"><span class="step">3</span> UserInfo &amp; Profile</div>
+                    <p>Fetch the authenticated user's OIDC claims from <code>/api/userinfo</code> (<code>GET</code> or <code>POST</code>):</p>
 
                     <div class="endpoint">
                         <div class="endpoint-header">
                             <span class="method-badge method-get">GET</span>
-                            <span class="endpoint-path">/o/me</span>
+                            <span class="method-badge method-post">POST</span>
+                            <span class="endpoint-path">/api/userinfo</span>
                         </div>
                     </div>
 
                     <h4>Request</h4>
-<pre><code>GET https://auth.gilos.org/o/me
+<pre><code>GET <span class="var-base-url">{{ if .IssuerURL }}{{ .IssuerURL }}{{ else }}https://auth.gilos.org{{ end }}</span>/api/userinfo
 Authorization: Bearer <span class="var-access-token">YOUR_ACCESS_TOKEN</span></code></pre>
 
                     {{ if .IsLoggedIn }}{{ if .Clients }}
                     <div class="interactive-box" id="userInfoTestBox">
                         <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
                             <div>
-                                <h4 style="margin: 0;">👤 Test User Info Endpoint</h4>
+                                <h4 style="margin: 0;">👤 Test UserInfo Endpoint</h4>
                                 <p id="userInfoTestStatus" style="margin: 4px 0 0; font-size: 0.85rem; color: var(--doc-text-muted);">Get a token from Step 2 first</p>
                             </div>
                             <button id="testUserInfoBtn" class="btn btn-primary" onclick="testUserInfoEndpoint()" disabled>
-                                Test /o/me
+                                Test /api/userinfo
                             </button>
                         </div>
                         <div id="userInfoResponse" class="hidden" style="margin-top: 16px;">
@@ -466,28 +551,30 @@ Authorization: Bearer <span class="var-access-token">YOUR_ACCESS_TOKEN</span></c
                     {{ end }}{{ end }}
 
                     <h4>cURL Command</h4>
-<pre><code id="curlMeExample">curl https://auth.gilos.org/o/me \
-  -H "Authorization: Bearer <span class="var-access-token">YOUR_ACCESS_TOKEN</span>"</code><button class="copy-btn" onclick="copyCode(this)">Copy</button></pre>
+<pre><code id="curlMeExample">curl <span class="var-base-url">{{ if .IssuerURL }}{{ .IssuerURL }}{{ else }}https://auth.gilos.org{{ end }}</span>/api/userinfo \
+  -H "Authorization: Bearer <span class="var-access-token">YOUR_ACCESS_TOKEN</span>"</code><button class="copy-btn" onclick="copyCode(this)">{{ index .T "copy" }}</button></pre>
 
                     <span class="label label-success">Response</span>
 <pre><code>{
-  "id": 12345,
-  "username": "johndoe",
-  "first_name": "John",
-  "last_name": "Doe",
-  "email": "john@example.com"
+  "sub": "12345",
+  "preferred_username": "johndoe",
+  "given_name": "John",
+  "family_name": "Doe",
+  "picture": "https://auth.gilos.org/uploads/icons/avatar.png",
+  "email": "john@example.com",
+  "email_verified": true
 }</code></pre>
 
                     <div class="callout callout-info">
-                        <div class="callout-title">Scope-based response</div>
-                        <p>Only fields matching your requested scopes will be returned.</p>
+                        <div class="callout-title">Scope-based response &amp; <code>/api/me</code></div>
+                        <p>Only claims matching your granted scopes are returned. A companion JSON endpoint <code>GET /api/me</code> (requires the <code>profile</code> scope) is also available and returns snake_case fields (<code>id</code>, <code>username</code>, <code>first_name</code>, <code>last_name</code>, <code>email</code>, <code>email_verified</code>, <code>phone</code>, <code>phone_verified</code>).</p>
                     </div>
                 </section>
 
-                <!-- Refresh Token -->
+                <!-- Refresh, Introspect & Revoke -->
                 <section id="refresh">
                     <h3>Refresh Token</h3>
-                    <p>Access tokens expire after 1 hour. Use the refresh token to get a new one:</p>
+                    <p>Access tokens expire after 1 hour. Refresh tokens use single-use rotation and return a new token pair:</p>
 
                     <div class="endpoint">
                         <div class="endpoint-header">
@@ -496,12 +583,12 @@ Authorization: Bearer <span class="var-access-token">YOUR_ACCESS_TOKEN</span></c
                         </div>
                     </div>
 
-<pre><code>curl -X POST https://auth.gilos.org/o/token \
+<pre><code>curl -X POST <span class="var-base-url">{{ if .IssuerURL }}{{ .IssuerURL }}{{ else }}https://auth.gilos.org{{ end }}</span>/o/token \
   -H "Content-Type: application/x-www-form-urlencoded" \
   -d "grant_type=refresh_token" \
   -d "client_id=<span class="var-client-id">YOUR_CLIENT_ID</span>" \
-  -d "client_secret=<span class="var-client-secret">YOUR_CLIENT_SECRET</span>" \
-  -d "refresh_token=<span class="var-refresh-token">YOUR_REFRESH_TOKEN</span>"</code><button class="copy-btn" onclick="copyCode(this)">Copy</button></pre>
+<span class="var-secret-curl-line">  -d "client_secret=<span class="var-client-secret">YOUR_CLIENT_SECRET</span>" \
+</span>  -d "refresh_token=<span class="var-refresh-token">YOUR_REFRESH_TOKEN</span>"</code><button class="copy-btn" onclick="copyCode(this)">{{ index .T "copy" }}</button></pre>
 
                     {{ if .IsLoggedIn }}{{ if .Clients }}
                     <div class="interactive-box" id="refreshTestBox">
@@ -522,6 +609,39 @@ Authorization: Bearer <span class="var-access-token">YOUR_ACCESS_TOKEN</span></c
                         </div>
                     </div>
                     {{ end }}{{ end }}
+
+                    <h3>Token Introspection &amp; Revocation</h3>
+                    <p>Validate token status server-side via RFC 7662 or revoke grants via RFC 7009:</p>
+                    <div class="endpoint">
+                        <div class="endpoint-header">
+                            <span class="method-badge method-post">POST</span>
+                            <span class="endpoint-path">/o/introspect</span>
+                        </div>
+                    </div>
+                    <div class="endpoint">
+                        <div class="endpoint-header">
+                            <span class="method-badge method-post">POST</span>
+                            <span class="endpoint-path">/o/revoke</span>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- OIDC Discovery & JWKS -->
+                <section id="discovery">
+                    <h2>OIDC Discovery &amp; JWKS</h2>
+                    <p>Configure standard OIDC client libraries automatically using the discovery metadata and public key set:</p>
+                    <div class="endpoint">
+                        <div class="endpoint-header">
+                            <span class="method-badge method-get">GET</span>
+                            <span class="endpoint-path">/.well-known/openid-configuration</span>
+                        </div>
+                    </div>
+                    <div class="endpoint">
+                        <div class="endpoint-header">
+                            <span class="method-badge method-get">GET</span>
+                            <span class="endpoint-path">/.well-known/jwks.json</span>
+                        </div>
+                    </div>
                 </section>
 
                 <!-- Scopes -->
@@ -533,9 +653,10 @@ Authorization: Bearer <span class="var-access-token">YOUR_ACCESS_TOKEN</span></c
                         <table>
                             <thead><tr><th>Scope</th><th>Description</th><th>Returns</th></tr></thead>
                             <tbody>
-                                <tr><td><code>profile</code></td><td>User's profile info (name, username, etc.)</td><td><code>first_name, last_name, username</code></td></tr>
-                                <tr><td><code>email</code></td><td>User's email address</td><td><code>email</code></td></tr>
-                                <tr><td><code>phone</code></td><td>User's phone number</td><td><code>phone</code></td></tr>
+                                <tr><td><code>openid</code></td><td>Enable OpenID Connect (issues signed <code>id_token</code>)</td><td><code>sub</code>, <code>id_token</code></td></tr>
+                                <tr><td><code>profile</code></td><td>User's profile info (name, username, picture)</td><td><code>preferred_username, given_name, family_name, picture</code></td></tr>
+                                <tr><td><code>email</code></td><td>User's email address and verification status</td><td><code>email, email_verified</code></td></tr>
+                                <tr><td><code>phone</code></td><td>User's phone number and verification status</td><td><code>phone_number, phone_number_verified</code></td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -602,10 +723,10 @@ var DefaultConfig = Config{
 	ClientID:     os.Getenv("GILOS_CLIENT_ID"),
 	ClientSecret: os.Getenv("GILOS_CLIENT_SECRET"),
 	RedirectURI:  "https://yourapp.com/callback",
-	Scopes:       "profile email",
-	AuthURL:      "https://auth.gilos.org/o/authorize",
-	TokenURL:     "https://auth.gilos.org/o/token",
-	UserInfoURL:  "https://auth.gilos.org/o/me",
+	Scopes:       "openid profile email",
+	AuthURL:      "{{ if .IssuerURL }}{{ .IssuerURL }}{{ else }}https://auth.gilos.org{{ end }}/o/authorize",
+	TokenURL:     "{{ if .IssuerURL }}{{ .IssuerURL }}{{ else }}https://auth.gilos.org{{ end }}/o/token",
+	UserInfoURL:  "{{ if .IssuerURL }}{{ .IssuerURL }}{{ else }}https://auth.gilos.org{{ end }}/api/userinfo",
 }
 
 // cfg holds the active configuration
@@ -630,15 +751,18 @@ type TokenResponse struct {
 	TokenType    string `json:"token_type"`
 	ExpiresIn    int    `json:"expires_in"`
 	RefreshToken string `json:"refresh_token"`
+	IDToken      string `json:"id_token,omitempty"`
 	Scope        string `json:"scope"`
 }
 
 type UserInfoResponse struct {
-	ID        int64  `json:"id"`
-	Username  string `json:"username"`
-	FirstName string `json:"first_name,omitempty"`
-	LastName  string `json:"last_name,omitempty"`
-	Email     string `json:"email,omitempty"`
+	Sub               string `json:"sub"`
+	PreferredUsername string `json:"preferred_username,omitempty"`
+	GivenName         string `json:"given_name,omitempty"`
+	FamilyName        string `json:"family_name,omitempty"`
+	Picture           string `json:"picture,omitempty"`
+	Email             string `json:"email,omitempty"`
+	EmailVerified     bool   `json:"email_verified,omitempty"`
 }
 
 // generateState creates a secure random state string
@@ -855,18 +979,107 @@ func CallbackHandler(onSuccess AuthCallback) http.HandlerFunc {
                 </section>
 
                 <footer class="docs-footer">
-                    <p>&copy; {{ .Year }} {{ index .T "company_name_llc" }}. Need help? Contact us at info@gilos.email</p>
+                    <p>&copy; {{ if .Year }}{{ .Year }}{{ else }}2026{{ end }} {{ index .T "company_name_llc" }}.
+                        <a href="/terms" style="color: var(--doc-text-secondary); margin: 0 8px;">{{ index .T "terms" }}</a>
+                        <a href="/privacy" style="color: var(--doc-text-secondary); margin: 0 8px;">{{ index .T "privacy" }}</a>
+                        <a href="https://gilos.org/contact" target="_blank" rel="noopener noreferrer" style="color: var(--doc-text-secondary); margin: 0 8px;">{{ index .T "help" }}</a>
+                    </p>
                 </footer>
             </div>
         </main>
     </div>
 
     <script>
-        // Current client context and tokens
+        const DOCS_I18N = {
+            themeSystem: {{ index .T "theme_system" }},
+            themeLight: {{ index .T "theme_light" }},
+            themeDark: {{ index .T "theme_dark" }},
+            copied: {{ index .T "copied" }}
+        };
+
+        const DOCS_THEME_ICONS = {
+            system: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>',
+            light: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>',
+            dark: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>'
+        };
+
+        function updateDocsThemeUI() {
+            const pref = document.documentElement.getAttribute('data-theme-pref') || 'system';
+            const iconEl = document.getElementById('docsThemeToggleIcon');
+            const labelEl = document.getElementById('docsThemeToggleLabel');
+            if (iconEl) iconEl.innerHTML = DOCS_THEME_ICONS[pref] || DOCS_THEME_ICONS.system;
+            if (labelEl) {
+                labelEl.textContent = pref === 'light' ? DOCS_I18N.themeLight : (pref === 'dark' ? DOCS_I18N.themeDark : DOCS_I18N.themeSystem);
+            }
+        }
+
+        function cycleDocsTheme() {
+            const order = ['system', 'light', 'dark'];
+            const current = document.documentElement.getAttribute('data-theme-pref') || 'system';
+            const next = order[(order.indexOf(current) + 1) % order.length];
+            if (typeof window.__setTheme === 'function') window.__setTheme(next);
+            updateDocsThemeUI();
+        }
+        window.addEventListener('gilos-theme-change', updateDocsThemeUI);
+        updateDocsThemeUI();
+
+        function toggleMobileSidebar() {
+            const sidebar = document.getElementById('docsSidebar');
+            const backdrop = document.getElementById('sidebarBackdrop');
+            const btn = document.getElementById('mobileMenuBtn');
+            const isOpen = sidebar && sidebar.classList.toggle('open');
+            if (backdrop) backdrop.classList.toggle('open', !!isOpen);
+            if (btn) btn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+        }
+
+        function closeMobileSidebar() {
+            const sidebar = document.getElementById('docsSidebar');
+            const backdrop = document.getElementById('sidebarBackdrop');
+            const btn = document.getElementById('mobileMenuBtn');
+            if (sidebar) sidebar.classList.remove('open');
+            if (backdrop) backdrop.classList.remove('open');
+            if (btn) btn.setAttribute('aria-expanded', 'false');
+        }
+
+        document.querySelectorAll('.sidebar-nav a').forEach(link => {
+            link.addEventListener('click', () => {
+                if (window.innerWidth <= 900) closeMobileSidebar();
+            });
+        });
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeMobileSidebar();
+        });
+
+        // Current client context, PKCE state, and tokens
         let currentClient = null;
         let extractedCode = null;
         let accessToken = null;
         let refreshToken = null;
+        let pkceVerifier = null;
+        let oauthState = null;
+
+        function randomBase64Url(byteLen) {
+            const arr = new Uint8Array(byteLen);
+            crypto.getRandomValues(arr);
+            return btoa(String.fromCharCode(...arr)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+        }
+
+        async function createS256Challenge(verifier) {
+            const data = new TextEncoder().encode(verifier);
+            const digest = await crypto.subtle.digest('SHA-256', data);
+            const bytes = new Uint8Array(digest);
+            return btoa(String.fromCharCode(...bytes)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+        }
+
+        // Restore PKCE verifier & state for same-tab callback inspection if saved
+        try {
+            const savedPkce = sessionStorage.getItem('gilos_docs_pkce');
+            if (savedPkce) {
+                const parsed = JSON.parse(savedPkce);
+                if (parsed && parsed.verifier) pkceVerifier = parsed.verifier;
+                if (parsed && parsed.state) oauthState = parsed.state;
+            }
+        } catch (e) {}
 
         // Update all dynamic examples when client is selected
         function updateClientContext() {
@@ -874,7 +1087,10 @@ func CallbackHandler(onSuccess AuthCallback) http.HandlerFunc {
             const option = select.options[select.selectedIndex];
             const clientInfo = document.getElementById('clientInfo');
             const authBtn = document.getElementById('openAuthBtn');
-            
+            const secretPrefixRow = document.getElementById('infoSecretPrefixRow');
+            const secretInputRow = document.getElementById('infoSecretInputRow');
+            const publicNoteRow = document.getElementById('infoPublicNoteRow');
+
             if (!option.value) {
                 currentClient = null;
                 if (clientInfo) clientInfo.classList.add('hidden');
@@ -891,10 +1107,12 @@ func CallbackHandler(onSuccess AuthCallback) http.HandlerFunc {
                 secretPrefix: option.dataset.secretPrefix || '',
                 redirectUris: option.dataset.redirectUris || '',
                 return: (option.dataset.redirectUris || '').split(',')[0] || '',
-                scopes: (option.dataset.scopes || '').replace(/,/g, ' '),
+                scopes: (option.dataset.scopes || '').replace(/,/g, ' ').trim(),
                 name: option.dataset.name,
-                type: option.dataset.type
+                type: option.dataset.type || 'confidential'
             };
+
+            const isPublic = currentClient.type === 'public';
 
             // Update info panel
             if (clientInfo) {
@@ -903,9 +1121,15 @@ func CallbackHandler(onSuccess AuthCallback) http.HandlerFunc {
                 document.getElementById('infoSecretPrefix').textContent = currentClient.secretPrefix || '????????';
                 document.getElementById('infoReturn').textContent = currentClient.return;
                 document.getElementById('infoScopes').textContent = currentClient.scopes;
-                // Clear the secret input
                 document.getElementById('infoSecretInput').value = '';
+                if (secretPrefixRow) secretPrefixRow.classList.toggle('hidden', isPublic);
+                if (secretInputRow) secretInputRow.classList.toggle('hidden', isPublic);
+                if (publicNoteRow) publicNoteRow.classList.toggle('hidden', !isPublic);
             }
+
+            document.querySelectorAll('.var-secret-form-line, .var-secret-curl-line').forEach(el => {
+                el.classList.toggle('hidden', isPublic);
+            });
 
             // Update auth button
             if (authBtn) {
@@ -913,7 +1137,6 @@ func CallbackHandler(onSuccess AuthCallback) http.HandlerFunc {
                 authBtn.textContent = 'Open Authorization URL →';
             }
 
-            // Update code examples when user enters their secret
             updateAllExamples();
         }
 
@@ -927,7 +1150,7 @@ func CallbackHandler(onSuccess AuthCallback) http.HandlerFunc {
 
         function updateAllExamples() {
             if (!currentClient) return;
-            
+
             document.querySelectorAll('.var-client-id').forEach(el => {
                 el.textContent = currentClient.id;
                 el.classList.add('highlight');
@@ -942,12 +1165,27 @@ func CallbackHandler(onSuccess AuthCallback) http.HandlerFunc {
                 el.classList.add('highlight');
             });
             document.querySelectorAll('.var-scopes').forEach(el => {
-                el.textContent = currentClient.scopes;
+                el.textContent = currentClient.scopes || 'openid profile email';
                 el.classList.add('highlight');
             });
+            if (pkceVerifier) {
+                document.querySelectorAll('.var-code-verifier').forEach(el => {
+                    el.textContent = pkceVerifier;
+                    el.classList.add('highlight');
+                });
+            }
+            if (oauthState) {
+                document.querySelectorAll('.var-state').forEach(el => {
+                    el.textContent = oauthState;
+                    el.classList.add('highlight');
+                });
+            }
         }
 
         function resetToPlaceholders() {
+            document.querySelectorAll('.var-secret-form-line, .var-secret-curl-line').forEach(el => {
+                el.classList.remove('hidden');
+            });
             document.querySelectorAll('.var-client-id').forEach(el => {
                 el.textContent = 'YOUR_CLIENT_ID';
                 el.classList.remove('highlight');
@@ -961,7 +1199,15 @@ func CallbackHandler(onSuccess AuthCallback) http.HandlerFunc {
                 el.classList.remove('highlight');
             });
             document.querySelectorAll('.var-scopes').forEach(el => {
-                el.textContent = 'profile email';
+                el.textContent = 'openid profile email';
+                el.classList.remove('highlight');
+            });
+            document.querySelectorAll('.var-code-verifier').forEach(el => {
+                el.textContent = 'PKCE_CODE_VERIFIER';
+                el.classList.remove('highlight');
+            });
+            document.querySelectorAll('.var-state').forEach(el => {
+                el.textContent = 'RANDOM_STATE_TOKEN';
                 el.classList.remove('highlight');
             });
         }
@@ -973,28 +1219,26 @@ func CallbackHandler(onSuccess AuthCallback) http.HandlerFunc {
             const codeEl = document.getElementById('extractedCode');
             const testBtn = document.getElementById('testTokenBtn');
             const statusEl = document.getElementById('tokenTestStatus');
-            
+
             if (!input) return;
-            
+
             try {
-                const url = new URL(input.value);
+                const url = new URL(input.value.trim());
                 const code = url.searchParams.get('code');
-                
+
                 if (code) {
                     extractedCode = code;
                     if (infoBox) infoBox.classList.remove('hidden');
                     if (codeEl) codeEl.textContent = code;
-                    
-                    // Update code in examples
+
                     document.querySelectorAll('.var-auth-code').forEach(el => {
                         el.textContent = code;
                         el.classList.add('highlight');
                     });
-                    
-                    // Enable test button if client selected
+
                     if (testBtn && currentClient) {
                         testBtn.disabled = false;
-                        if (statusEl) statusEl.textContent = 'Ready to test!';
+                        if (statusEl) statusEl.textContent = pkceVerifier ? 'Ready to test (PKCE verifier attached)!' : 'Ready to test!';
                     }
                 } else {
                     extractedCode = null;
@@ -1005,6 +1249,7 @@ func CallbackHandler(onSuccess AuthCallback) http.HandlerFunc {
             } catch (e) {
                 extractedCode = null;
                 if (infoBox) infoBox.classList.add('hidden');
+                if (testBtn) testBtn.disabled = true;
                 document.querySelectorAll('.var-auth-code').forEach(el => {
                     el.textContent = 'AUTHORIZATION_CODE';
                     el.classList.remove('highlight');
@@ -1015,65 +1260,69 @@ func CallbackHandler(onSuccess AuthCallback) http.HandlerFunc {
         // Test token endpoint
         async function testTokenEndpoint() {
             if (!currentClient || !extractedCode) return;
-            
+
             const btn = document.getElementById('testTokenBtn');
             const responseBox = document.getElementById('tokenResponse');
             const responseCode = document.getElementById('tokenResponseCode');
-            
+
             btn.disabled = true;
             btn.textContent = 'Testing...';
-            
+
             try {
                 const formData = new URLSearchParams();
                 formData.append('grant_type', 'authorization_code');
                 formData.append('client_id', currentClient.id);
-                formData.append('client_secret', document.getElementById('infoSecretInput')?.value || '');
+                const secretVal = document.getElementById('infoSecretInput')?.value.trim();
+                if (secretVal && currentClient.type !== 'public') {
+                    formData.append('client_secret', secretVal);
+                }
                 formData.append('code', extractedCode);
                 formData.append('redirect_uri', currentClient.return);
-                
+                if (pkceVerifier) {
+                    formData.append('code_verifier', pkceVerifier);
+                }
+
                 const resp = await fetch('/o/token', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                     body: formData
                 });
-                
+
                 const data = await resp.json();
-                
+
                 responseBox.classList.remove('hidden');
                 responseCode.textContent = JSON.stringify(data, null, 2);
-                
+
                 if (data.access_token) {
                     accessToken = data.access_token;
                     refreshToken = data.refresh_token;
-                    
-                    // Update access token in examples
+
                     document.querySelectorAll('.var-access-token').forEach(el => {
                         el.textContent = accessToken;
                         el.classList.add('highlight');
                     });
-                    
-                    // Update refresh token in examples
-                    document.querySelectorAll('.var-refresh-token').forEach(el => {
-                        el.textContent = refreshToken;
-                        el.classList.add('highlight');
-                    });
-                    
-                    // Enable user info test
+
+                    if (refreshToken) {
+                        document.querySelectorAll('.var-refresh-token').forEach(el => {
+                            el.textContent = refreshToken;
+                            el.classList.add('highlight');
+                        });
+                    }
+
                     const userInfoBtn = document.getElementById('testUserInfoBtn');
                     const userInfoStatus = document.getElementById('userInfoTestStatus');
                     if (userInfoBtn) {
                         userInfoBtn.disabled = false;
                         if (userInfoStatus) userInfoStatus.textContent = 'Token ready! Click to test.';
                     }
-                    
-                    // Enable refresh test
+
                     const refreshBtn = document.getElementById('testRefreshBtn');
                     const refreshStatus = document.getElementById('refreshTestStatus');
-                    if (refreshBtn) {
+                    if (refreshBtn && refreshToken) {
                         refreshBtn.disabled = false;
                         if (refreshStatus) refreshStatus.textContent = 'Refresh token ready! Click to test.';
                     }
-                    
+
                     btn.textContent = '✓ Success!';
                     btn.style.background = 'var(--success-color)';
                 } else {
@@ -1086,7 +1335,7 @@ func CallbackHandler(onSuccess AuthCallback) http.HandlerFunc {
                 btn.textContent = 'Error - Try Again';
                 btn.style.background = '#EF4444';
             }
-            
+
             setTimeout(() => {
                 btn.disabled = false;
                 btn.textContent = 'Test /o/token';
@@ -1094,27 +1343,27 @@ func CallbackHandler(onSuccess AuthCallback) http.HandlerFunc {
             }, 3000);
         }
 
-        // Test user info endpoint
+        // Test UserInfo endpoint
         async function testUserInfoEndpoint() {
             if (!accessToken) return;
-            
+
             const btn = document.getElementById('testUserInfoBtn');
             const responseBox = document.getElementById('userInfoResponse');
             const responseCode = document.getElementById('userInfoResponseCode');
-            
+
             btn.disabled = true;
             btn.textContent = 'Testing...';
-            
+
             try {
-                const resp = await fetch('/o/me', {
+                const resp = await fetch('/api/userinfo', {
                     headers: { 'Authorization': 'Bearer ' + accessToken }
                 });
-                
+
                 const data = await resp.json();
-                
+
                 responseBox.classList.remove('hidden');
                 responseCode.textContent = JSON.stringify(data, null, 2);
-                
+
                 btn.textContent = '✓ Success!';
                 btn.style.background = 'var(--success-color)';
             } catch (e) {
@@ -1123,10 +1372,10 @@ func CallbackHandler(onSuccess AuthCallback) http.HandlerFunc {
                 btn.textContent = 'Error';
                 btn.style.background = '#EF4444';
             }
-            
+
             setTimeout(() => {
                 btn.disabled = false;
-                btn.textContent = 'Test /o/me';
+                btn.textContent = 'Test /api/userinfo';
                 btn.style.background = '';
             }, 3000);
         }
@@ -1134,39 +1383,47 @@ func CallbackHandler(onSuccess AuthCallback) http.HandlerFunc {
         // Test refresh token endpoint
         async function testRefreshEndpoint() {
             if (!currentClient || !refreshToken) return;
-            
+
             const btn = document.getElementById('testRefreshBtn');
             const responseBox = document.getElementById('refreshResponse');
             const responseCode = document.getElementById('refreshResponseCode');
-            
+
             btn.disabled = true;
             btn.textContent = 'Testing...';
-            
+
             try {
                 const formData = new URLSearchParams();
                 formData.append('grant_type', 'refresh_token');
                 formData.append('client_id', currentClient.id);
-                formData.append('client_secret', document.getElementById('infoSecretInput')?.value || '');
+                const secretVal = document.getElementById('infoSecretInput')?.value.trim();
+                if (secretVal && currentClient.type !== 'public') {
+                    formData.append('client_secret', secretVal);
+                }
                 formData.append('refresh_token', refreshToken);
-                
+
                 const resp = await fetch('/o/token', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                     body: formData
                 });
-                
+
                 const data = await resp.json();
-                
+
                 responseBox.classList.remove('hidden');
                 responseCode.textContent = JSON.stringify(data, null, 2);
-                
+
                 if (data.access_token) {
-                    // Update tokens
                     accessToken = data.access_token;
                     document.querySelectorAll('.var-access-token').forEach(el => {
                         el.textContent = accessToken;
                     });
-                    
+                    if (data.refresh_token) {
+                        refreshToken = data.refresh_token;
+                        document.querySelectorAll('.var-refresh-token').forEach(el => {
+                            el.textContent = refreshToken;
+                        });
+                    }
+
                     btn.textContent = '✓ Token Refreshed!';
                     btn.style.background = 'var(--success-color)';
                 } else {
@@ -1179,7 +1436,7 @@ func CallbackHandler(onSuccess AuthCallback) http.HandlerFunc {
                 btn.textContent = 'Error';
                 btn.style.background = '#EF4444';
             }
-            
+
             setTimeout(() => {
                 btn.disabled = false;
                 btn.textContent = 'Test Refresh';
@@ -1187,18 +1444,38 @@ func CallbackHandler(onSuccess AuthCallback) http.HandlerFunc {
             }, 3000);
         }
 
-        function toggleSecret() {
-            // No-op — secret is no longer available in the docs page
-            // Users should paste their secret in the input field
-        }
-
-        function openAuthUrl() {
+        async function openAuthUrl() {
             if (!currentClient) return alert('Please select a client first');
-            
+
+            oauthState = randomBase64Url(16);
+            pkceVerifier = randomBase64Url(32);
+            const codeChallenge = await createS256Challenge(pkceVerifier);
+
+            try {
+                sessionStorage.setItem('gilos_docs_pkce', JSON.stringify({
+                    verifier: pkceVerifier,
+                    state: oauthState
+                }));
+            } catch (e) {}
+
+            document.querySelectorAll('.var-code-challenge').forEach(el => {
+                el.textContent = codeChallenge;
+                el.classList.add('highlight');
+            });
+            updateAllExamples();
+
             const baseUrl = window.location.origin;
-            const authUrl = `${baseUrl}/o/authorize?client_id=${currentClient.id}&redirect_uri=${encodeURIComponent(currentClient.return)}&response_type=code&scope=${encodeURIComponent(currentClient.scopes)}`;
-            
-            window.open(authUrl, '_blank');
+            const params = new URLSearchParams({
+                client_id: currentClient.id,
+                redirect_uri: currentClient.return,
+                response_type: 'code',
+                scope: currentClient.scopes || 'openid profile email',
+                state: oauthState,
+                code_challenge: codeChallenge,
+                code_challenge_method: 'S256'
+            });
+
+            window.open(`${baseUrl}/o/authorize?${params.toString()}`, '_blank', 'noopener');
         }
 
         function copyCode(btn) {
@@ -1206,7 +1483,7 @@ func CallbackHandler(onSuccess AuthCallback) http.HandlerFunc {
             const code = pre.querySelector('code').textContent;
             navigator.clipboard.writeText(code).then(() => {
                 const original = btn.textContent;
-                btn.textContent = 'Copied!';
+                btn.textContent = DOCS_I18N.copied || 'Copied';
                 btn.style.background = 'var(--success-color)';
                 btn.style.color = 'white';
                 setTimeout(() => {
@@ -1220,7 +1497,7 @@ func CallbackHandler(onSuccess AuthCallback) http.HandlerFunc {
         // Active link highlighting
         const sections = document.querySelectorAll('section[id]');
         const navLinks = document.querySelectorAll('.sidebar-nav a');
-        
+
         function setActiveLink() {
             let current = '';
             sections.forEach(section => {
@@ -1229,7 +1506,7 @@ func CallbackHandler(onSuccess AuthCallback) http.HandlerFunc {
                     current = section.getAttribute('id');
                 }
             });
-            
+
             navLinks.forEach(link => {
                 link.classList.remove('active');
                 if (link.getAttribute('href') === '#' + current) {
@@ -1237,7 +1514,7 @@ func CallbackHandler(onSuccess AuthCallback) http.HandlerFunc {
                 }
             });
         }
-        
+
         window.addEventListener('scroll', setActiveLink);
         setActiveLink();
     </script>

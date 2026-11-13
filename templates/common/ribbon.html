@@ -10,9 +10,9 @@
         </div>
 
         <div class="ribbon-actions">
-            <a href="https://play.google.com/store/apps/details?id=org.gilos.auth" class="ribbon-cta">{{ index .T "get_app" }}</a>
+            <a href="https://play.google.com/store/apps/details?id=org.gilos.auth" class="ribbon-cta" target="_blank" rel="noopener noreferrer">{{ index .T "get_app" }}</a>
             
-            <button type="button" class="ribbon-close" aria-label="Close" onclick="this.closest('#app-ribbon').remove()">
+            <button type="button" class="ribbon-close" aria-label="{{ index .T "cancel" }}" onclick="dismissAppRibbon(this)">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M18 6L6 18M6 6l12 12"/>
                 </svg>
@@ -20,6 +20,21 @@
         </div>
     </div>
 </div>
+<script>
+    (function() {
+        try {
+            if (sessionStorage.getItem('gilos_ribbon_dismissed') === '1') {
+                var el = document.getElementById('app-ribbon');
+                if (el) el.remove();
+            }
+        } catch (e) {}
+    })();
+    function dismissAppRibbon(btn) {
+        try { sessionStorage.setItem('gilos_ribbon_dismissed', '1'); } catch (e) {}
+        var el = btn ? btn.closest('#app-ribbon') : document.getElementById('app-ribbon');
+        if (el) el.remove();
+    }
+</script>
 
 <style>
     /* RIBBON STYLES 

@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="{{ .Lang }}">
+
+{{ template "common/head" . }}
+
+<style>
+    body {
+        margin: 0;
+        padding: 0;
+        background: var(--background);
+        color: var(--text);
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .legal-main {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 40px 20px 24px;
+    }
+
+    .legal-card {
+        width: 100%;
+        max-width: 760px;
+        background: var(--card-bg);
+        border: 1px solid var(--slate-200);
+        border-radius: 20px;
+        padding: 36px 40px;
+        box-shadow: var(--card-shadow);
+    }
+
+    .legal-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        flex-wrap: wrap;
+        padding-bottom: 20px;
+        margin-bottom: 24px;
+        border-bottom: 1px solid var(--slate-200);
+    }
+
+    .legal-brand {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        text-decoration: none;
+        color: var(--text);
+        font-weight: 600;
+        font-size: 15px;
+    }
+
+    .legal-brand img {
+        height: 28px;
+        width: auto;
+    }
+
+    .legal-nav {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    .legal-nav-link {
+        color: var(--text-secondary);
+        text-decoration: none;
+        font-size: 13px;
+        font-weight: 500;
+        padding: 6px 12px;
+        border-radius: 8px;
+        border: 1px solid var(--slate-200);
+        transition: all 0.2s ease;
+    }
+
+    .legal-nav-link:hover,
+    .legal-nav-link.active {
+        color: var(--primary);
+        background: var(--slate-100);
+        border-color: var(--slate-300);
+    }
+
+    .legal-title {
+        font-size: 28px;
+        font-weight: 600;
+        margin: 0 0 8px 0;
+        letter-spacing: -0.02em;
+    }
+
+    .legal-meta {
+        font-size: 13px;
+        color: var(--text-muted);
+        margin: 0 0 20px 0;
+    }
+
+    .legal-intro {
+        font-size: 15px;
+        line-height: 1.65;
+        color: var(--text-secondary);
+        margin: 0 0 28px 0;
+    }
+
+    .legal-section {
+        margin-bottom: 22px;
+    }
+
+    .legal-section:last-child {
+        margin-bottom: 0;
+    }
+
+    .legal-section h2 {
+        font-size: 16px;
+        font-weight: 600;
+        margin: 0 0 8px 0;
+        color: var(--text);
+    }
+
+    .legal-section p {
+        font-size: 14px;
+        line-height: 1.7;
+        color: var(--text-secondary);
+        margin: 0;
+    }
+
+    @media (max-width: 600px) {
+        .legal-card {
+            padding: 24px 20px;
+            border-radius: 16px;
+        }
+        .legal-title {
+            font-size: 22px;
+        }
+    }
+</style>
+
+<body>
+    <main class="legal-main">
+        <article class="legal-card">
+            <div class="legal-header">
+                <a href="/" class="legal-brand">
+                    <img src="/static/img/logo.svg" alt="{{ .AppName }}" class="theme-logo-light">
+                    <img src="/static/img/logo-dark.svg" alt="{{ .AppName }}" class="theme-logo-dark">
+                </a>
+                <nav class="legal-nav" aria-label="Legal navigation">
+                    <a href="/terms" class="legal-nav-link{{ if eq .PageType "terms" }} active{{ end }}">{{ index .T "terms" }}</a>
+                    <a href="/privacy" class="legal-nav-link{{ if eq .PageType "privacy" }} active{{ end }}">{{ index .T "privacy" }}</a>
+                    <a href="/home" class="legal-nav-link">{{ index .T "back_to_home" }}</a>
+                </nav>
+            </div>
+
+            {{ if eq .PageType "terms" }}
+            <h1 class="legal-title">{{ index .T "terms_title" }}</h1>
+            <p class="legal-meta">{{ index .T "legal_last_updated" }}: {{ index .T "legal_updated_date" }} &middot; {{ .AppName }}</p>
+            <p class="legal-intro">{{ index .T "terms_intro" }}</p>
+
+            <section class="legal-section">
+                <h2>{{ index .T "terms_s1_title" }}</h2>
+                <p>{{ index .T "terms_s1_body" }}</p>
+            </section>
+            <section class="legal-section">
+                <h2>{{ index .T "terms_s2_title" }}</h2>
+                <p>{{ index .T "terms_s2_body" }}</p>
+            </section>
+            <section class="legal-section">
+                <h2>{{ index .T "terms_s3_title" }}</h2>
+                <p>{{ index .T "terms_s3_body" }}</p>
+            </section>
+            <section class="legal-section">
+                <h2>{{ index .T "terms_s4_title" }}</h2>
+                <p>{{ index .T "terms_s4_body" }}</p>
+            </section>
+            <section class="legal-section">
+                <h2>{{ index .T "terms_s5_title" }}</h2>
+                <p>{{ index .T "terms_s5_body" }}</p>
+            </section>
+            {{ else }}
+            <h1 class="legal-title">{{ index .T "privacy_title" }}</h1>
+            <p class="legal-meta">{{ index .T "legal_last_updated" }}: {{ index .T "legal_updated_date" }} &middot; {{ .AppName }}</p>
+            <p class="legal-intro">{{ index .T "privacy_intro" }}</p>
+
+            <section class="legal-section">
+                <h2>{{ index .T "privacy_s1_title" }}</h2>
+                <p>{{ index .T "privacy_s1_body" }}</p>
+            </section>
+            <section class="legal-section">
+                <h2>{{ index .T "privacy_s2_title" }}</h2>
+                <p>{{ index .T "privacy_s2_body" }}</p>
+            </section>
+            <section class="legal-section">
+                <h2>{{ index .T "privacy_s3_title" }}</h2>
+                <p>{{ index .T "privacy_s3_body" }}</p>
+            </section>
+            <section class="legal-section">
+                <h2>{{ index .T "privacy_s4_title" }}</h2>
+                <p>{{ index .T "privacy_s4_body" }}</p>
+            </section>
+            <section class="legal-section">
+                <h2>{{ index .T "privacy_s5_title" }}</h2>
+                <p>{{ index .T "privacy_s5_body" }}</p>
+            </section>
+            {{ end }}
+        </article>
+    </main>
+
+    {{ template "common/footer" . }}
+</body>
+</html>
+

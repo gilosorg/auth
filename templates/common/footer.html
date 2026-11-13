@@ -168,6 +168,40 @@
         font-weight: 500;
     }
 
+    .footer-controls {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .theme-toggle-btn {
+        all: unset !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 5px !important;
+        padding: 4px 8px !important;
+        border-radius: 6px !important;
+        cursor: pointer !important;
+        color: var(--slate-500) !important;
+        font-size: 12px !important;
+        font-family: inherit !important;
+        font-weight: 400 !important;
+        transition: all 0.2s ease !important;
+        opacity: 1 !important;
+        transform: none !important;
+    }
+
+    .theme-toggle-btn:hover {
+        color: var(--text) !important;
+        background: var(--slate-100) !important;
+    }
+
+    .theme-toggle-btn svg {
+        width: 14px;
+        height: 14px;
+        flex-shrink: 0;
+    }
+
     /* Mobile Only - stacked layout */
     @media (max-width: 600px) {
         footer .container {
@@ -187,11 +221,16 @@
             order: 2;
         }
 
-        .lang-switcher {
+        .footer-controls {
             order: -1;
             margin-left: 0;
-            display: flex;
             width: 100%;
+            justify-content: center;
+        }
+
+        .lang-switcher {
+            margin-left: 0;
+            display: flex;
             justify-content: center;
         }
 
@@ -210,53 +249,102 @@
 <footer>
     <div class="container">
         <div class="footer-copyright">
-            &copy; <script>document.write(new Date().getFullYear())</script> {{ index .T "company_name_llc" }}
+            &copy; <span id="footer-year">{{ if .Year }}{{ .Year }}{{ else }}2026{{ end }}</span> {{ index .T "company_name_llc" }}
         </div>
         <div class="footer-links">
             <a href="/docs" class="footer-link">{{ index .T "docs" }}</a>
-            <a href="https://github.com/gilosorg/auth" class="footer-link">{{ index .T "source_code" }} {{.AppVersion}}</a>
+            <a href="https://github.com/gilosorg/auth" class="footer-link" target="_blank" rel="noopener noreferrer">{{ index .T "source_code" }} {{.AppVersion}}</a>
             <a href="/terms" class="footer-link">{{ index .T "terms" }}</a>
             <a href="/privacy" class="footer-link">{{ index .T "privacy" }}</a>
-            <a href="https://gilos.org/contact" class="footer-link">{{ index .T "help" }}</a>
+            <a href="https://gilos.org/contact" class="footer-link" target="_blank" rel="noopener noreferrer">{{ index .T "help" }}</a>
         </div>
-        <!-- Language Switcher - outside footer-links for mobile ordering -->
-        <div class="lang-switcher" id="lang-switcher">
-            <button class="lang-toggle" onclick="toggleLangDropdown(event)" type="button">
-                <img class="lang-flag" src="{{ if .CurrentLanguage }}{{ .CurrentLanguage.Flag }}{{ else }}/static/img/i18n/en.png{{ end }}" alt="">
-                <span class="lang-name">{{ if .CurrentLanguage }}{{ .CurrentLanguage.Name }}{{ else }}English{{ end }}</span>
-                <svg class="lang-arrow" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                    <polyline points="6 9 12 15 18 9"></polyline>
-                </svg>
+        <div class="footer-controls">
+            <button type="button" class="theme-toggle-btn" id="theme-toggle-btn" onclick="cycleThemePreference()" aria-label="{{ index .T "switch_theme" }}" title="{{ index .T "switch_theme" }}">
+                <span id="theme-toggle-icon" aria-hidden="true"></span>
+                <span id="theme-toggle-label">{{ index .T "theme_system" }}</span>
             </button>
-            <div class="lang-dropdown" id="lang-dropdown">
-                {{ range .Languages }}
-                <a href="#" class="lang-option{{ if eq .Code $.Lang }} active{{ end }}" onclick="setLanguage('{{ .Code }}'); return false;">
-                    <img src="{{ .Flag }}" alt="">
-                    <span>{{ .Name }}</span>
-                </a>
-                {{ else }}
-                <a href="#" class="lang-option" onclick="setLanguage('en'); return false;">
-                    <img src="/static/img/i18n/en.png" alt="">
-                    <span>English</span>
-                </a>
-                {{ end }}
+            <!-- Language Switcher - outside footer-links for mobile ordering -->
+            <div class="lang-switcher" id="lang-switcher">
+                <button class="lang-toggle" onclick="toggleLangDropdown(event)" type="button" aria-haspopup="true" aria-expanded="false">
+                    <img class="lang-flag" src="{{ if .CurrentLanguage }}{{ .CurrentLanguage.Flag }}{{ else }}/static/img/i18n/gb.svg{{ end }}" alt="">
+                    <span class="lang-name">{{ if .CurrentLanguage }}{{ .CurrentLanguage.Name }}{{ else }}English{{ end }}</span>
+                    <svg class="lang-arrow" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="6 9 12 15 18 9"></polyline>
+                    </svg>
+                </button>
+                <div class="lang-dropdown" id="lang-dropdown">
+                    {{ range .Languages }}
+                    <a href="#" class="lang-option{{ if eq .Code $.Lang }} active{{ end }}" onclick="setLanguage('{{ .Code }}'); return false;">
+                        <img src="{{ .Flag }}" alt="">
+                        <span>{{ .Name }}</span>
+                    </a>
+                    {{ else }}
+                    <a href="#" class="lang-option" onclick="setLanguage('en'); return false;">
+                        <img src="/static/img/i18n/gb.svg" alt="">
+                        <span>English</span>
+                    </a>
+                    {{ end }}
+                </div>
             </div>
         </div>
     </div>
 </footer>
 
 <script>
+    (function() {
+        var yearEl = document.getElementById('footer-year');
+        if (yearEl && !yearEl.textContent.trim()) {
+            yearEl.textContent = new Date().getFullYear();
+        }
+    })();
+
+    var THEME_LABELS = {
+        system: "{{ index .T "theme_system" }}",
+        light: "{{ index .T "theme_light" }}",
+        dark: "{{ index .T "theme_dark" }}"
+    };
+
+    var THEME_ICONS = {
+        system: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>',
+        light: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>',
+        dark: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>'
+    };
+
+    function renderThemeToggle() {
+        var pref = document.documentElement.getAttribute('data-theme-pref') || 'system';
+        if (!THEME_LABELS[pref]) pref = 'system';
+        var iconEl = document.getElementById('theme-toggle-icon');
+        var labelEl = document.getElementById('theme-toggle-label');
+        if (iconEl) iconEl.innerHTML = THEME_ICONS[pref];
+        if (labelEl) labelEl.textContent = THEME_LABELS[pref];
+    }
+
+    function cycleThemePreference() {
+        var order = ['system', 'light', 'dark'];
+        var current = document.documentElement.getAttribute('data-theme-pref') || 'system';
+        var next = order[(order.indexOf(current) + 1) % order.length];
+        if (typeof window.__setTheme === 'function') {
+            window.__setTheme(next);
+        }
+        renderThemeToggle();
+    }
+
+    window.addEventListener('gilos-theme-change', renderThemeToggle);
+    renderThemeToggle();
+
     function toggleLangDropdown(event) {
         event.stopPropagation();
         const switcher = document.getElementById('lang-switcher');
-        switcher.classList.toggle('open');
+        const isOpen = switcher.classList.toggle('open');
+        const btn = switcher.querySelector('.lang-toggle');
+        if (btn) btn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
     }
 
     function setLanguage(code) {
         // Set cookie for 1 year
         const expires = new Date();
         expires.setFullYear(expires.getFullYear() + 1);
-        document.cookie = `lang=${code};path=/;expires=${expires.toUTCString()}`;
+        document.cookie = `lang=${encodeURIComponent(code)};path=/;expires=${expires.toUTCString()};SameSite=Lax`;
         
         // Reload the page to apply the new language safely
         window.location.href = window.location.pathname + window.location.search;
@@ -267,6 +355,8 @@
         const switcher = document.getElementById('lang-switcher');
         if (switcher && !switcher.contains(event.target)) {
             switcher.classList.remove('open');
+            const btn = switcher.querySelector('.lang-toggle');
+            if (btn) btn.setAttribute('aria-expanded', 'false');
         }
     });
 
@@ -276,6 +366,8 @@
             const switcher = document.getElementById('lang-switcher');
             if (switcher) {
                 switcher.classList.remove('open');
+                const btn = switcher.querySelector('.lang-toggle');
+                if (btn) btn.setAttribute('aria-expanded', 'false');
             }
         }
     });

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ .Lang }}">
 
 {{ template "common/head" . }}
 
@@ -1662,14 +1662,93 @@
         height: 14px;
     }
 
+    .home-pw-wrap {
+        position: relative;
+        width: 100%;
+    }
+
+    .home-pw-wrap input {
+        padding-right: 42px;
+    }
+
+    .home-pw-toggle {
+        position: absolute;
+        right: 8px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: transparent !important;
+        border: none !important;
+        color: var(--text-muted) !important;
+        padding: 6px !important;
+        width: auto !important;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        border-radius: 6px;
+        box-shadow: none !important;
+    }
+
+    .home-pw-toggle:hover {
+        color: var(--text) !important;
+        background: var(--slate-200) !important;
+    }
+
+    .contact-status-badges {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-top: 8px;
+    }
+
+    .contact-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 11px;
+        font-weight: 500;
+        padding: 3px 8px;
+        border-radius: 99px;
+        background: var(--slate-100);
+        border: 1px solid var(--slate-200);
+        color: var(--text-secondary);
+    }
+
+    .contact-badge.verified {
+        background: var(--green-50);
+        color: var(--green-700);
+        border-color: rgba(52, 199, 89, 0.25);
+    }
+
+    .client-app-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-weight: 500;
+        color: var(--text);
+    }
+
+    .pkce-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 3px 9px;
+        border-radius: 8px;
+        font-size: 11px;
+        font-weight: 500;
+        background: var(--slate-100);
+        border: 1px solid var(--slate-200);
+        color: var(--text-secondary);
+    }
+
 </style>
 
 <body>
     <header>
         <div class="header-container container">
             <div class="header-left">
-                <picture><source srcset="/static/img/logo-dark.svg" media="(prefers-color-scheme: dark)"><img src="/static/img/logo.svg" alt="Gilos Logo"></picture>
-                <span>Gilos ID</span>
+                <img src="/static/img/logo.svg" alt="Gilos Logo" class="theme-logo-light">
+                <img src="/static/img/logo-dark.svg" alt="Gilos Logo" class="theme-logo-dark">
+                <span>{{ if .AppName }}{{ .AppName }}{{ else }}Gilos ID{{ end }}</span>
             </div>
             <div class="header-center">
                 <div class="tabs">
@@ -1690,7 +1769,7 @@
                     {{ end }}
                 </div>
                 <div class="dropdown" id="dropdown">
-                    <a href="https://my.gilos.app" target="_blank">{{ index .T "manage" }}</a>
+                    <a href="https://my.gilos.app" target="_blank" rel="noopener noreferrer">{{ index .T "manage" }}</a>
                     <a href="#" onclick="logout(); return false;">{{ index .T "logout" }}</a>
                 </div>
             </div>
@@ -1775,12 +1854,12 @@
                 <div class="totp-secret" id="totp-secret"></div>
                 <label style="text-align:center; margin-bottom: 8px;">{{ index .T "six_digit_code" }}</label>
                 <div class="otp-container" id="totp-otp-inputs">
-                    <input type="number" class="otp-digit" maxlength="1" inputmode="numeric" aria-label="Digit 1">
-                    <input type="number" class="otp-digit" maxlength="1" inputmode="numeric" aria-label="Digit 2">
-                    <input type="number" class="otp-digit" maxlength="1" inputmode="numeric" aria-label="Digit 3">
-                    <input type="number" class="otp-digit" maxlength="1" inputmode="numeric" aria-label="Digit 4">
-                    <input type="number" class="otp-digit" maxlength="1" inputmode="numeric" aria-label="Digit 5">
-                    <input type="number" class="otp-digit" maxlength="1" inputmode="numeric" aria-label="Digit 6">
+                    <input type="text" class="otp-digit" maxlength="1" inputmode="numeric" pattern="[0-9]*" autocomplete="one-time-code" aria-label="Digit 1">
+                    <input type="text" class="otp-digit" maxlength="1" inputmode="numeric" pattern="[0-9]*" aria-label="Digit 2">
+                    <input type="text" class="otp-digit" maxlength="1" inputmode="numeric" pattern="[0-9]*" aria-label="Digit 3">
+                    <input type="text" class="otp-digit" maxlength="1" inputmode="numeric" pattern="[0-9]*" aria-label="Digit 4">
+                    <input type="text" class="otp-digit" maxlength="1" inputmode="numeric" pattern="[0-9]*" aria-label="Digit 5">
+                    <input type="text" class="otp-digit" maxlength="1" inputmode="numeric" pattern="[0-9]*" aria-label="Digit 6">
                 </div>
             </div>
             <div class="modal-buttons">
@@ -1863,12 +1942,12 @@
                     <div id="email-otp-group" class="otp-group" style="display: none;">
                         <label>{{ index .T "otp_for" }} <span id="masked-email"></span></label>
                         <div class="otp-container" id="email-otp-inputs">
-                            <input type="number" class="otp-digit" maxlength="1" inputmode="numeric">
-                            <input type="number" class="otp-digit" maxlength="1" inputmode="numeric">
-                            <input type="number" class="otp-digit" maxlength="1" inputmode="numeric">
-                            <input type="number" class="otp-digit" maxlength="1" inputmode="numeric">
-                            <input type="number" class="otp-digit" maxlength="1" inputmode="numeric">
-                            <input type="number" class="otp-digit" maxlength="1" inputmode="numeric">
+                            <input type="text" class="otp-digit" maxlength="1" inputmode="numeric" pattern="[0-9]*" autocomplete="one-time-code" aria-label="Email OTP digit 1">
+                            <input type="text" class="otp-digit" maxlength="1" inputmode="numeric" pattern="[0-9]*" aria-label="Email OTP digit 2">
+                            <input type="text" class="otp-digit" maxlength="1" inputmode="numeric" pattern="[0-9]*" aria-label="Email OTP digit 3">
+                            <input type="text" class="otp-digit" maxlength="1" inputmode="numeric" pattern="[0-9]*" aria-label="Email OTP digit 4">
+                            <input type="text" class="otp-digit" maxlength="1" inputmode="numeric" pattern="[0-9]*" aria-label="Email OTP digit 5">
+                            <input type="text" class="otp-digit" maxlength="1" inputmode="numeric" pattern="[0-9]*" aria-label="Email OTP digit 6">
                         </div>
                         <div class="countdown-container" id="otp-countdown-email">
                             <span>{{ or (index .T "expires_in") "Expires in" }}:</span>
@@ -1880,12 +1959,12 @@
                     <div id="phone-otp-group" class="otp-group" style="display: none;">
                         <label>{{ index .T "otp_for" }} <span id="masked-phone"></span></label>
                         <div class="otp-container" id="phone-otp-inputs">
-                            <input type="number" class="otp-digit" maxlength="1" inputmode="numeric">
-                            <input type="number" class="otp-digit" maxlength="1" inputmode="numeric">
-                            <input type="number" class="otp-digit" maxlength="1" inputmode="numeric">
-                            <input type="number" class="otp-digit" maxlength="1" inputmode="numeric">
-                            <input type="number" class="otp-digit" maxlength="1" inputmode="numeric">
-                            <input type="number" class="otp-digit" maxlength="1" inputmode="numeric">
+                            <input type="text" class="otp-digit" maxlength="1" inputmode="numeric" pattern="[0-9]*" autocomplete="one-time-code" aria-label="Phone OTP digit 1">
+                            <input type="text" class="otp-digit" maxlength="1" inputmode="numeric" pattern="[0-9]*" aria-label="Phone OTP digit 2">
+                            <input type="text" class="otp-digit" maxlength="1" inputmode="numeric" pattern="[0-9]*" aria-label="Phone OTP digit 3">
+                            <input type="text" class="otp-digit" maxlength="1" inputmode="numeric" pattern="[0-9]*" aria-label="Phone OTP digit 4">
+                            <input type="text" class="otp-digit" maxlength="1" inputmode="numeric" pattern="[0-9]*" aria-label="Phone OTP digit 5">
+                            <input type="text" class="otp-digit" maxlength="1" inputmode="numeric" pattern="[0-9]*" aria-label="Phone OTP digit 6">
                         </div>
                         <div class="countdown-container" id="otp-countdown-phone">
                             <span>{{ or (index .T "expires_in") "Expires in" }}:</span>
@@ -2155,12 +2234,17 @@
                     appbarSpan.style.display = 'block';
                 }
 
+                const fullName = [user.first_name, user.middle_name, user.last_name].filter(Boolean).join(' ') || user.username;
+                const emailStatusBadge = user.email ? `<span class="contact-badge ${user.email_verified ? 'verified' : ''}">${escapeHtml(T.email || 'Email')}: ${escapeHtml(user.email_verified ? (T.verified_badge || 'Verified') : (T.unverified_badge || 'Unverified'))}</span>` : '';
+                const phoneStatusBadge = user.phone ? `<span class="contact-badge ${user.phone_verified ? 'verified' : ''}">${escapeHtml(T.phone || 'Phone')}: ${escapeHtml(user.phone_verified ? (T.verified_badge || 'Verified') : (T.unverified_badge || 'Unverified'))}</span>` : '';
+                const avatarInitial = escapeHtml((user.first_name || user.username || '?').charAt(0).toUpperCase());
+
                 accountContent.innerHTML = `
                     <div class="profile-grid">
                     <div class="section" style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 32px 24px;">
                         <div class="icon-upload-container" style="position: relative;">
                             <div class="icon-preview-large" onclick="document.getElementById('icon-input').click()" style="cursor: pointer; position: relative; width: 120px; height: 120px;">
-                                ${user.icon ? `<img src="${user.icon}" alt="Icon">` : `<span>${(user.first_name || user.username).charAt(0).toUpperCase()}</span>`}
+                                ${user.icon ? `<img src="${escapeHtml(user.icon)}" alt="Icon">` : `<span>${avatarInitial}</span>`}
                                 <div class="icon-edit-overlay">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
                                 </div>
@@ -2168,82 +2252,89 @@
                             <input type="file" id="icon-input" accept="image/*" style="display: none;" onchange="handleIconSelect(event)">
                         </div>
                         <div class="profile-card-info">
-                            <div class="profile-card-name">${[user.first_name, user.middle_name, user.last_name].filter(Boolean).join(' ') || user.username}</div>
-                            <div class="profile-card-handle">@${user.username}</div>
+                            <div class="profile-card-name">${escapeHtml(fullName)}</div>
+                            <div class="profile-card-handle">@${escapeHtml(user.username)}</div>
                         </div>
                     </div>
                     <div class="section">
                         <div class="section-header">
-                            <h3>${T.you_are || 'You are'}</h3>
-                            <button type="submit" form="names-form">${T.update || 'Update'}</button>
+                            <h3>${escapeHtml(T.you_are || 'You are')}</h3>
+                            <button type="submit" form="names-form">${escapeHtml(T.update || 'Update')}</button>
                         </div>
                         <form id="names-form">
                             <div class="input-group">
-                                <input type="text" id="first-name" name="first_name" value="${user.first_name || ''}" required placeholder="${T.first_name || 'First Name'}">
-                                <input type="text" id="last-name" name="last_name" value="${user.last_name || ''}" placeholder="${T.last_name || 'Last Name'}">
+                                <input type="text" id="first-name" name="first_name" value="${escapeHtml(user.first_name || '')}" maxlength="100" required placeholder="${escapeHtml(T.first_name || 'First Name')}">
+                                <input type="text" id="last-name" name="last_name" value="${escapeHtml(user.last_name || '')}" maxlength="100" placeholder="${escapeHtml(T.last_name || 'Last Name')}">
                             </div>
                             <div class="input-group">
-                                <input type="text" id="middle-name" name="middle_name" value="${user.middle_name || ''}" placeholder="${T.middle_name || 'Middle Name'}">
-                                <input type="text" id="nickname" name="nickname" value="${user.nickname || ''}" placeholder="${T.nickname || 'Nickname'}">
+                                <input type="text" id="middle-name" name="middle_name" value="${escapeHtml(user.middle_name || '')}" maxlength="100" placeholder="${escapeHtml(T.middle_name || 'Middle Name')}">
+                                <input type="text" id="nickname" name="nickname" value="${escapeHtml(user.nickname || '')}" maxlength="100" placeholder="${escapeHtml(T.nickname || 'Nickname')}">
                             </div>
                         </form>
                     </div>
                     <div class="section">
                         <div class="section-header">
-                            <h3>${T.password || 'Password'}</h3>
-                            <button type="submit" form="password-form">${T.change || 'Change'}</button>
+                            <h3>${escapeHtml(T.password || 'Password')}</h3>
+                            <button type="submit" form="password-form">${escapeHtml(T.change || 'Change')}</button>
                         </div>
                         <form id="password-form">
                             <div class="input-group">
-                                <input type="password" id="new-password" name="password" placeholder="${T.new_password || 'New Password'}">
-                                <input type="password" id="confirm-password" name="confirm_password" placeholder="${T.confirm_password || 'Confirm Password'}">
+                                <div class="home-pw-wrap">
+                                    <input type="password" id="new-password" name="password" autocomplete="new-password" minlength="8" maxlength="72" required placeholder="${escapeHtml(T.new_password || 'New Password')}">
+                                    <button type="button" class="home-pw-toggle" onclick="toggleHomePassword('new-password', this)" aria-label="${escapeHtml(T.show_password || 'Show password')}"></button>
+                                </div>
+                                <div class="home-pw-wrap">
+                                    <input type="password" id="confirm-password" name="confirm_password" autocomplete="new-password" minlength="8" maxlength="72" required placeholder="${escapeHtml(T.confirm_password || 'Confirm Password')}">
+                                    <button type="button" class="home-pw-toggle" onclick="toggleHomePassword('confirm-password', this)" aria-label="${escapeHtml(T.show_password || 'Show password')}"></button>
+                                </div>
                             </div>
-                            <input type="text" id="password-hint" name="password_hint" placeholder="${T.password_hint || 'Password Hint (Optional)'}" value="${user.password_hint || ''}">
+                            <p class="verification-info" style="margin-top: 8px; font-size: 11px; opacity: 0.75;">${escapeHtml(T.password_min_8 || 'Must be at least 8 characters')}</p>
                         </form>
                     </div>
                     <div class="section">
                         <div class="section-header">
-                            <h3>${T.contact_mfa || 'Contact & MFA'}</h3>
-                            <button type="submit" form="contact-form">${T.save || 'Save'}</button>
+                            <h3>${escapeHtml(T.contact_mfa || 'Contact & MFA')}</h3>
+                            <button type="submit" form="contact-form">${escapeHtml(T.save || 'Save')}</button>
                         </div>
                         <form id="contact-form">
                             <div class="input-with-switch">
-                                <input type="email" id="email" name="email" value="${user.email || ''}" placeholder="${T.email || 'Email'}">
+                                <input type="email" id="email" name="email" value="${escapeHtml(user.email || '')}" placeholder="${escapeHtml(T.email || 'Email')}">
                                 <label class="toggle-switch">
                                     <input type="checkbox" name="mfa_email_enabled" ${user.mfa_email_enabled ? 'checked' : ''}>
                                     <span class="slider"></span>
                                 </label>
                             </div>
                             <div class="input-with-switch">
-                                <input type="tel" id="phone" name="phone" value="${user.phone ? '+' + user.phone : ''}" placeholder="${T.phone || 'Phone'}">
+                                <input type="tel" id="phone" name="phone" value="${user.phone ? '+' + escapeHtml(String(user.phone)) : ''}" placeholder="${escapeHtml(T.phone || 'Phone')}">
                                 <label class="toggle-switch">
                                     <input type="checkbox" name="mfa_phone_enabled" ${user.mfa_phone_enabled ? 'checked' : ''}>
                                     <span class="slider"></span>
                                 </label>
                             </div>
                             <div class="input-with-switch">
-                                <input type="text" id="auth-app" disabled placeholder="${T.authenticator_app || 'Authenticator App'}">
+                                <input type="text" id="auth-app" disabled placeholder="${escapeHtml(T.authenticator_app || 'Authenticator App')}">
                                 <label class="toggle-switch">
                                     <input type="checkbox" name="mfa_totp_enabled" ${user.mfa_totp_enabled ? 'checked' : ''}>
                                     <span class="slider"></span>
                                 </label>
                             </div>
+                            ${(emailStatusBadge || phoneStatusBadge) ? `<div class="contact-status-badges">${emailStatusBadge}${phoneStatusBadge}</div>` : ''}
                         </form>
                     </div>
                     <div class="section" id="username-section">
                         <div class="section-header">
-                            <h3>${T.username || 'Username'}</h3>
-                            <button type="submit" form="username-form" id="username-submit" disabled>${T.update || 'Update'}</button>
+                            <h3>${escapeHtml(T.username || 'Username')}</h3>
+                            <button type="submit" form="username-form" id="username-submit" disabled>${escapeHtml(T.update || 'Update')}</button>
                         </div>
                         <form id="username-form" onsubmit="updateUsername(event)">
                             <div class="input-wrapper" style="position: relative; display: flex; align-items: center;">
-                                <input type="text" id="new-username" name="username" value="${user.username}" required placeholder="${T.enter_new_gilos_id || 'Enter new Gilos ID'}" oninput="handleUsernameInput(this)" style="padding-right: 40px;">
+                                <input type="text" id="new-username" name="username" value="${escapeHtml(user.username)}" required placeholder="${escapeHtml(T.enter_new_gilos_id || 'Enter new Gilos ID')}" oninput="handleUsernameInput(this)" style="padding-right: 40px;">
                                 <div id="username-status-icon" style="position: absolute; right: 12px; display: none; align-items: center; justify-content: center;"></div>
                             </div>
                             <p id="username-hint" class="verification-info" style="margin-top: 8px; font-size: 11px; opacity: 1; transition: color 0.2s ease;">
-                                ${T.username_requirements || 'Use 5-30 lowercase letters and numbers only.'} 
+                                ${escapeHtml(T.username_requirements || 'Use 5-30 lowercase letters and numbers only.')} 
                                 <span style="display: block; margin-top: 4px; opacity: 0.8;">
-                                    ${(T.username_changes_left || 'Changes remaining: %d/3 in 30 days').replace('%d', 3 - (user.username_changes_count || 0))}
+                                    ${escapeHtml((T.username_changes_left || 'Changes remaining: %d/3 in 30 days').replace('%d', Math.max(0, 3 - (user.username_changes_count || 0))))}
                                 </span>
                             </p>
                         </form>
@@ -2255,6 +2346,7 @@
                     </div>
                     </div>
                 `;
+                initHomePasswordToggles();
                 setupAccountForms();
                 checkPendingVerifications();
                 loadDeletionStatus();
@@ -2489,29 +2581,70 @@
                 }
             });
 
+            const HOME_EYE_OPEN = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
+            const HOME_EYE_CLOSED = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>';
+
+            window.initHomePasswordToggles = function() {
+                document.querySelectorAll('.home-pw-toggle').forEach(btn => {
+                    if (!btn.innerHTML.trim()) btn.innerHTML = HOME_EYE_OPEN;
+                });
+            };
+
+            window.toggleHomePassword = function(inputId, btn) {
+                const input = document.getElementById(inputId);
+                if (!input) return;
+                const reveal = input.type === 'password';
+                input.type = reveal ? 'text' : 'password';
+                btn.innerHTML = reveal ? HOME_EYE_CLOSED : HOME_EYE_OPEN;
+                btn.setAttribute('aria-label', reveal ? (T.hide_password || 'Hide password') : (T.show_password || 'Show password'));
+            };
+
             const passwordForm = document.getElementById('password-form');
             passwordForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 const password = document.getElementById('new-password').value;
                 const confirmInput = document.getElementById('confirm-password').value;
-                if (password && password !== confirmInput) {
+                if (!password) {
+                    Swal.fire({ icon: 'warning', title: T.error || 'Error', text: T.password_required || 'Please enter your password' });
+                    return;
+                }
+                if (password.length < 8) {
+                    Swal.fire({ icon: 'warning', title: T.error || 'Error', text: T.password_min_8 || 'Must be at least 8 characters' });
+                    return;
+                }
+                if (password.length > 72) {
+                    Swal.fire({ icon: 'warning', title: T.error || 'Error', text: T.password_max_72 || 'Must be at most 72 characters' });
+                    return;
+                }
+                if (password !== confirmInput) {
                     Swal.fire({
                         icon: 'warning',
-                        title: 'Mismatch',
-                        text: 'Passwords do not match'
+                        title: T.error || 'Error',
+                        text: T.passwords_do_not_match || 'Passwords do not match'
                     });
                     return;
                 }
                 const formData = new FormData(passwordForm);
                 const params = new URLSearchParams(formData);
+                requirePassword((currentPassword) => doPasswordUpdate(params, currentPassword));
+            });
+
+            async function doPasswordUpdate(params, currentPassword) {
                 try {
-                    const response = await fetch('/profile/password', { method: 'POST', body: params });
+                    const response = await fetch('/profile/password', {
+                        method: 'POST',
+                        headers: { 'X-Current-Password': currentPassword },
+                        body: params
+                    });
                     const data = await response.json();
-                    if (!data.success) throw new Error(data.error || 'Failed to update password');
+                    if (!data.success) {
+                        if (handlePasswordError(data, (pw) => doPasswordUpdate(params, pw))) return;
+                        throw new Error(data.error || 'Failed to update password');
+                    }
                     Swal.fire({
                         icon: 'success',
-                        title: 'Success',
-                        text: 'Password updated successfully',
+                        title: T.success || 'Success',
+                        text: T.password_updated_success || 'Password updated successfully',
                         timer: 2000,
                         showConfirmButton: false
                     });
@@ -2519,11 +2652,11 @@
                 } catch (error) {
                     Swal.fire({
                         icon: 'error',
-                        title: 'Update Failed',
+                        title: T.error || 'Update Failed',
                         text: error.message
                     });
                 }
-            });
+            }
             
             const phoneInput = document.getElementById('phone');
             if (phoneInput) {
@@ -2602,24 +2735,22 @@
                     }
                     if (data.verification_needed) {
                         pendingVerifications = data.verification_needed;
-                        maskedContacts = data.masked;
-                        attempts = { email: 0, phone: 0 };
-                        resends = { email: 0, phone: 0 };
-                        showContactVerifyModal();
+                        maskedContacts = data.masked || {};
+                        await checkPendingVerifications();
                     } else {
                         Swal.fire({
                             icon: 'success',
-                            title: 'Success',
-                            text: 'Contact updated successfully',
+                            title: T.success || 'Success',
+                            text: T.contact_updated_success || 'Contact updated successfully',
                             timer: 2000,
                             showConfirmButton: false
                         });
+                        loadAccount();
                     }
-                    loadAccount();
                 } catch (error) {
                     Swal.fire({
                         icon: 'error',
-                        title: 'Update Failed',
+                        title: T.error || 'Update Failed',
                         text: error.message
                     });
                 }
@@ -2631,12 +2762,12 @@
                     openTOTPModal();
                 } else if (!e.target.checked && wasMFA_TOTP_Enabled) {
                     Swal.fire({
-                        title: 'Are you sure?',
-                        text: "Do you want to disable Authenticator App MFA?",
+                        title: T.confirm || 'Confirm',
+                        text: T.disable_totp_confirm || 'Are you sure you want to disable Authenticator App MFA?',
                         icon: 'warning',
                         showCancelButton: true,
-                        confirmButtonText: 'Yes, disable it',
-                        cancelButtonText: 'Cancel'
+                        confirmButtonText: T.confirm || 'Confirm',
+                        cancelButtonText: T.cancel || 'Cancel'
                     }).then((result) => {
                         if (result.isConfirmed) {
                             requirePassword((password) => {
@@ -2655,15 +2786,15 @@
                                                 headers: { 'X-Current-Password': pw }
                                             }).then(r => r.json()).then(d => {
                                                 if (d.success) loadAccount();
-                                                else { Swal.fire('Error', d.error || 'Failed to disable', 'error'); e.target.checked = true; }
+                                                else { Swal.fire(T.error || 'Error', d.error || 'Failed to disable', 'error'); e.target.checked = true; }
                                             });
                                         })) return;
-                                        Swal.fire('Error', data.error || 'Failed to disable', 'error');
+                                        Swal.fire(T.error || 'Error', data.error || 'Failed to disable', 'error');
                                         e.target.checked = true;
                                     }
                                 })
                                 .catch(err => {
-                                    Swal.fire('Error', err.message, 'error');
+                                    Swal.fire(T.error || 'Error', err.message, 'error');
                                     e.target.checked = true;
                                 });
                             });
@@ -2721,27 +2852,40 @@
             return labels[scope.trim()] || scope;
         }
 
-        // Token display helper
-        function renderToken(token, label) {
-            if (!token) return `<span class="card-value">${T.na || 'N/A'}</span>`;
-            const short = `${token.slice(0,6)}···${token.slice(-6)}`;
-            return `<span class="card-token">${short}<span class="copy-btn" onclick="copyToClipboard('${token}')">${icons.copy}</span></span>`;
+        function formatDateTime(dateStr) {
+            if (!dateStr) return escapeHtml(T.na || 'N/A');
+            const d = new Date(dateStr);
+            if (isNaN(d.getTime())) return escapeHtml(String(dateStr));
+            return escapeHtml(d.toLocaleString(undefined, {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            }));
         }
 
         function renderSessionCard(session) {
             const isCurrent = session.id === currentSessionID;
-            const currentBadge = isCurrent ? `<span class="badge">${T.session_current || 'Current'}</span>` : '';
-            const typeBadge = session.type ? `<span class="type-badge">${T[session.type] || session.type}</span>` : '';
-            const na = T.na || 'N/A';
-            const unknown = T.unknown || 'Unknown';
+            const currentBadge = isCurrent ? `<span class="badge">${escapeHtml(T.session_current || 'Current')}</span>` : '';
+            const typeBadge = session.type ? `<span class="type-badge">${escapeHtml(T[session.type] || session.type)}</span>` : '';
+            const unknown = escapeHtml(T.unknown || 'Unknown');
+            const appLabel = session.client && session.client.name
+                ? escapeHtml(session.client.name)
+                : escapeHtml(T.web_session || 'Account Session');
             
+            const scopeItems = (session.scopes || '')
+                .split(/[\s,]+/)
+                .map(s => s.trim())
+                .filter(Boolean);
+
             let scopesHtml = '';
-            if (session.scopes && session.scopes.trim() !== '') {
+            if (scopeItems.length > 0) {
                 scopesHtml = `
                     <div class="card-row">
-                        <span class="card-label">${icons.tag} ${T.scopes || 'Scopes'}</span>
+                        <span class="card-label">${icons.tag} ${escapeHtml(T.authorized_scopes || T.scopes || 'Scopes')}</span>
                         <div class="card-scopes">
-                            ${session.scopes.split(',').map(scope => `<span class="scope-badge">${getScopeLabel(scope)}</span>`).join('')}
+                            ${scopeItems.map(scope => `<span class="scope-badge">${escapeHtml(getScopeLabel(scope))}</span>`).join('')}
                         </div>
                     </div>`;
             }
@@ -2749,40 +2893,31 @@
             return `
                 <div class="section">
                     <div class="card-header">
-                        <h3>${T.session || 'Session'} #${session.id} ${currentBadge}</h3>
+                        <h3>${escapeHtml(T.session || 'Session')} #${escapeHtml(String(session.id))} ${currentBadge}</h3>
                         ${typeBadge}
                     </div>
                     <div class="card-body">
                         <div class="card-row">
-                            <span class="card-label">${icons.device} ${T.device || 'Device'}</span>
-                            <span class="card-value">${session.device_info || unknown}</span>
+                            <span class="card-label">${icons.key} ${escapeHtml(T.client_app || 'Application')}</span>
+                            <span class="card-value client-app-pill">${appLabel}</span>
                         </div>
                         <div class="card-row">
-                            <span class="card-label">${icons.globe} ${T.ip || 'IP'}</span>
-                            <span class="card-value">${session.ip_address || unknown}</span>
-                        </div>
-                        <div class="card-divider"></div>
-                        <div class="card-row">
-                            <span class="card-label">${icons.key} ${T.cookie || 'Cookie'}</span>
-                            ${renderToken(session.cookie_token)}
+                            <span class="card-label">${icons.device} ${escapeHtml(T.device || 'Device')}</span>
+                            <span class="card-value">${session.device_info ? escapeHtml(session.device_info) : unknown}</span>
                         </div>
                         <div class="card-row">
-                            <span class="card-label">${icons.key} ${T.access || 'Access'}</span>
-                            ${renderToken(session.access_token)}
-                        </div>
-                        <div class="card-row">
-                            <span class="card-label">${icons.key} ${T.refresh || 'Refresh'}</span>
-                            ${renderToken(session.refresh_token)}
+                            <span class="card-label">${icons.globe} ${escapeHtml(T.ip || 'IP')}</span>
+                            <span class="card-value">${session.ip_address ? escapeHtml(session.ip_address) : unknown}</span>
                         </div>
                         ${scopesHtml}
                         <div class="card-divider"></div>
                         <div class="card-meta">
-                            <span class="card-meta-item">${icons.clock} ${T.last_seen || 'Seen'}: ${session.last_seen_at}</span>
-                            <span class="card-meta-item">${icons.calendar} ${T.expires || 'Expires'}: ${session.expires_at}</span>
+                            <span class="card-meta-item">${icons.clock} ${escapeHtml(T.last_active || T.last_seen || 'Seen')}: ${formatDateTime(session.last_seen_at)}</span>
+                            <span class="card-meta-item">${icons.calendar} ${escapeHtml(T.session_expires || T.expires || 'Expires')}: ${formatDateTime(session.expires_at)}</span>
                         </div>
                     </div>
                     <div class="action-buttons">
-                        <button onclick="terminateSession(${session.id})">${T.terminate || 'Terminate'}</button>
+                        <button onclick="terminateSession(${Number(session.id)})">${escapeHtml(T.terminate || 'Terminate')}</button>
                     </div>
                 </div>
             `;
@@ -2821,12 +2956,13 @@
 
         async function terminateOtherSessions() {
             Swal.fire({
-                title: 'Are you sure?',
-                text: "Do you want to terminate all other sessions?",
+                title: T.confirm || 'Confirm',
+                text: T.terminate_others_confirm || 'Are you sure you want to terminate all other sessions?',
                 icon: 'warning',
                 showCancelButton: true,
-                confirmButtonText: 'Yes, terminate all',
-                cancelButtonColor: '#d33'
+                confirmButtonText: T.terminate_all_others || 'Yes, terminate all',
+                cancelButtonText: T.cancel || 'Cancel',
+                cancelButtonColor: '#6E6E73'
             }).then(async (result) => {
                 if (result.isConfirmed) {
                     try {
@@ -2837,14 +2973,14 @@
                         if (!data.success) throw new Error(data.error || 'Failed to terminate sessions');
                         Swal.fire({
                             icon: 'success',
-                            title: 'Terminated',
-                            text: 'All other sessions terminated.',
+                            title: T.success || 'Success',
+                            text: T.sessions_terminated_success || 'All other sessions terminated.',
                             timer: 2000,
                             showConfirmButton: false
                         });
                         loadSessions();
                     } catch (error) {
-                        Swal.fire('Error', error.message, 'error');
+                        Swal.fire(T.error || 'Error', error.message, 'error');
                     }
                 }
             });
@@ -2852,7 +2988,7 @@
 
         async function loadSessions(page = 1) {
             if (page === 1) {
-                sessionsContent.innerHTML = '<div class="empty-state">Loading...</div>';
+                sessionsContent.innerHTML = `<div class="empty-state">${escapeHtml(T.loading || 'Loading...')}</div>`;
             }
             
             try {
@@ -2885,72 +3021,84 @@
         }
 
         function renderClientCard(client) {
-            const typeBadge = client.Type ? `<span class="type-badge">${T[client.Type] || client.Type}</span>` : '';
+            const typeBadge = client.Type ? `<span class="type-badge">${escapeHtml(T[client.Type] || client.Type)}</span>` : '';
+            const isPublic = client.Type === 'public';
             
             let scopesHtml = '';
             if (client.Scopes && client.Scopes.trim() !== '') {
-                const requiredList = (client.RequiredScopes || '').split(',');
+                const requiredList = (client.RequiredScopes || '').split(',').map(s => s.trim());
                 scopesHtml = `
                     <div class="card-row">
-                        <span class="card-label">${icons.tag} ${T.scopes || 'Scopes'}</span>
+                        <span class="card-label">${icons.tag} ${escapeHtml(T.scopes || 'Scopes')}</span>
                         <div class="card-scopes">
-                            ${client.Scopes.split(',').map(scope => {
+                            ${client.Scopes.split(',').map(s => s.trim()).filter(Boolean).map(scope => {
                                 const isRequired = requiredList.includes(scope);
                                 const badge = isRequired ? ' <span style="font-size:9px;color:var(--red-600);font-weight:600;">★</span>' : '';
-                                return `<span class="scope-badge">${getScopeLabel(scope)}${badge}</span>`;
+                                return `<span class="scope-badge">${escapeHtml(getScopeLabel(scope))}${badge}</span>`;
                             }).join('')}
                         </div>
                     </div>`;
             }
-            // Secret prefix display
-            let secretDisplay;
-            if (client.secret_prefix) {
-                secretDisplay = `<span class="secret-prefix-display"><span class="prefix-chars">${client.secret_prefix}</span><span class="prefix-mask">••••••••••••</span></span>`;
-            } else {
-                secretDisplay = `<span class="secret-no-prefix">${T.no_prefix_regenerate || 'Regenerate to set prefix'}</span>`;
-            }
 
-            // Secret age
-            let secretAge = '';
-            if (client.secret_created_at) {
-                secretAge = `<span class="secret-age">${formatTimeAgo(client.secret_created_at)}</span>`;
+            let secretRowHtml = '';
+            if (isPublic) {
+                secretRowHtml = `
+                    <div class="card-row">
+                        <span class="card-label">${icons.key} ${escapeHtml(T.secret || 'Secret')}</span>
+                        <span class="card-value"><span class="pkce-badge">${escapeHtml(T.pkce_public_client || 'PKCE Protected (Public Client)')}</span></span>
+                    </div>`;
+            } else {
+                let secretDisplay;
+                if (client.secret_prefix) {
+                    secretDisplay = `<span class="secret-prefix-display"><span class="prefix-chars">${escapeHtml(client.secret_prefix)}</span><span class="prefix-mask">••••••••••••</span></span>`;
+                } else {
+                    secretDisplay = `<span class="secret-no-prefix">${escapeHtml(T.no_prefix_regenerate || 'Regenerate to set prefix')}</span>`;
+                }
+
+                let secretAge = '';
+                if (client.secret_created_at) {
+                    secretAge = `<span class="secret-age">${escapeHtml(formatTimeAgo(client.secret_created_at))}</span>`;
+                }
+
+                secretRowHtml = `
+                    <div class="card-row">
+                        <span class="card-label">${icons.key} ${escapeHtml(T.secret || 'Secret')}</span>
+                        <span class="card-value" style="display: inline-flex; align-items: center;">
+                            ${secretDisplay}
+                            <button type="button" class="btn-regenerate-icon" data-client-name="${escapeHtml(client.Name)}" onclick="regenerateSecret(${Number(client.ID)}, this.dataset.clientName)" title="${escapeHtml(T.regenerate_secret || 'Regenerate Secret')}">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 4v6h6"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+                            </button>
+                            ${secretAge}
+                        </span>
+                    </div>`;
             }
 
             return `
                 <div class="section">
                     <div class="card-header">
-                        <h3>${client.Name}</h3>
+                        <h3>${escapeHtml(client.Name)}</h3>
                         ${typeBadge}
                     </div>
                     <div class="card-body">
                         <div class="card-row">
-                            <span class="card-label">${icons.tag} ${T.client_id || 'Client ID'}</span>
-                            <span class="card-value">${client.ID}</span>
+                            <span class="card-label">${icons.tag} ${escapeHtml(T.client_id || 'Client ID')}</span>
+                            <span class="card-value">${escapeHtml(String(client.ID))}</span>
                         </div>
+                        ${secretRowHtml}
                         <div class="card-row">
-                            <span class="card-label">${icons.key} ${T.secret || 'Secret'}</span>
-                            <span class="card-value" style="display: inline-flex; align-items: center;">
-                                ${secretDisplay}
-                                <button type="button" class="btn-regenerate-icon" onclick="regenerateSecret(${client.ID}, '${escapeHtml(client.Name)}')" title="${T.regenerate_secret || 'Regenerate Secret'}">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 4v6h6"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
-                                </button>
-                                ${secretAge}
-                            </span>
-                        </div>
-                        <div class="card-row">
-                            <span class="card-label">${icons.link} ${T.redirect_uris || 'Redirect URIs'}</span>
-                            <span class="card-value">${(client.RedirectURIs || '').split(',').map(u => u.trim()).filter(Boolean).map(u => `<div class="redirect-uri-pill">${u}</div>`).join('')}</span>
+                            <span class="card-label">${icons.link} ${escapeHtml(T.redirect_uris || 'Redirect URIs')}</span>
+                            <span class="card-value">${(client.RedirectURIs || '').split(',').map(u => u.trim()).filter(Boolean).map(u => `<div class="redirect-uri-pill">${escapeHtml(u)}</div>`).join('')}</span>
                         </div>
                         ${scopesHtml}
                         <div class="card-divider"></div>
                         <div class="card-meta">
-                            <span class="card-meta-item">${icons.calendar} ${T.created || 'Created'}: ${client.CreatedAt}</span>
-                            <span class="card-meta-item">${icons.calendar} ${T.updated || 'Updated'}: ${client.UpdatedAt}</span>
+                            <span class="card-meta-item">${icons.calendar} ${escapeHtml(T.created || 'Created')}: ${formatDateTime(client.CreatedAt)}</span>
+                            <span class="card-meta-item">${icons.calendar} ${escapeHtml(T.updated || 'Updated')}: ${formatDateTime(client.UpdatedAt)}</span>
                         </div>
                     </div>
                     <div class="action-buttons">
-                        <button onclick="openModal(${client.ID})">${T.edit || 'Edit'}</button>
-                        <button class="bg-gray" onclick="deleteClient(${client.ID})">${T.delete || 'Delete'}</button>
+                        <button onclick="openModal(${Number(client.ID)})">${escapeHtml(T.edit || 'Edit')}</button>
+                        <button class="bg-gray" onclick="deleteClient(${Number(client.ID)})">${escapeHtml(T.delete || 'Delete')}</button>
                     </div>
                 </div>
             `;
@@ -3021,12 +3169,13 @@
 
         async function deleteClient(id) {
             Swal.fire({
-                title: 'Are you sure?',
-                text: "Do you want to delete this client? This action cannot be undone.",
+                title: T.confirm || 'Confirm',
+                text: T.delete_client_confirm || 'Are you sure you want to delete this client?',
                 icon: 'warning',
                 showCancelButton: true,
-                confirmButtonText: 'Yes, delete it',
-                cancelButtonColor: '#d33'
+                confirmButtonText: T.delete || 'Delete',
+                cancelButtonText: T.cancel || 'Cancel',
+                confirmButtonColor: '#d33'
             }).then(async (result) => {
                 if (result.isConfirmed) {
                     const params = new URLSearchParams();
@@ -3040,7 +3189,7 @@
                         if (!data.success) throw new Error(data.error || 'Failed to delete client');
                         loadClients();
                     } catch (error) {
-                        Swal.fire('Error', error.message, 'error');
+                        Swal.fire(T.error || 'Error', error.message, 'error');
                     }
                 }
             });
@@ -3161,7 +3310,7 @@
             const clientForm = document.getElementById('client-form');
             
             clientIdInput.value = id || '';
-            modalTitle.textContent = id ? 'Edit Client' : 'Create New Client';
+            modalTitle.textContent = id ? (T.edit_client || 'Edit Client') : (T.create_new_client || 'Create New Client');
             if (id) {
                 try {
                     const response = await fetch(`/clients/edit?id=${id}`);
@@ -3549,11 +3698,11 @@
         function renderDeletionIdle(container) {
             container.innerHTML = `
                 <div class="section-header">
-                    <h3>@${currentUser.username} (ID: ${currentUser.id})</h3>
-                    <button type="button" onclick="openDeleteModal()" class="bg-red">${T.delete || 'Delete'}</button>
+                    <h3>@${escapeHtml(currentUser.username)} (ID: ${escapeHtml(String(currentUser.id))})</h3>
+                    <button type="button" onclick="openDeleteModal()" class="bg-red">${escapeHtml(T.delete || 'Delete')}</button>
                 </div>
                 <p class="verification-info" style="margin-top: 8px; font-size: 11px; opacity: 0.7;">
-                    ${T.gilos_id_warning || "Careful, changing your Gilos ID may affect external services tied to it. Deleting your account will permanently erase all of your data and sessions."}
+                    ${escapeHtml(T.gilos_id_warning || "Careful, changing your Gilos ID may affect external services tied to it. Deleting your account will permanently erase all of your data and sessions.")}
                 </p>
             `;
         }
@@ -3561,7 +3710,7 @@
         function renderDeletionPending(container, data) {
             const scheduledDate = new Date(data.scheduled_at);
             const formattedDate = scheduledDate.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
-            const daysRemaining = data.days_remaining;
+            const daysRemaining = Number(data.days_remaining) || 0;
             const progressPercent = Math.max(0, Math.min(100, ((30 - daysRemaining) / 30) * 100));
 
             const reasonLabels = {
@@ -3573,6 +3722,9 @@
                 'other': T.deletion_reason_other || 'Other'
             };
 
+            const reasonDisplay = (reasonLabels[data.reason] || data.reason || '') +
+                (data.reason === 'other' && data.custom_reason ? ': ' + data.custom_reason : '');
+
             container.innerHTML = `
                 <div class="deletion-pending-banner">
                     <div class="deletion-pending-header">
@@ -3582,8 +3734,8 @@
                             </svg>
                         </div>
                         <div>
-                            <h3 class="deletion-pending-title">${T.deletion_scheduled || 'Account Deletion Scheduled'}</h3>
-                            <p class="deletion-pending-subtitle">${(T.deletion_scheduled_for || 'Your account and all associated data will be permanently deleted on %s.').replace('%s', formattedDate)}</p>
+                            <h3 class="deletion-pending-title">${escapeHtml(T.deletion_scheduled || 'Account Deletion Scheduled')}</h3>
+                            <p class="deletion-pending-subtitle">${escapeHtml((T.deletion_scheduled_for || 'Your account and all associated data will be permanently deleted on %s.').replace('%s', formattedDate))}</p>
                         </div>
                     </div>
                     <div class="deletion-progress-container">
@@ -3591,14 +3743,14 @@
                             <div class="deletion-progress-fill" style="width: ${progressPercent}%"></div>
                         </div>
                         <div class="deletion-progress-label">
-                            <span class="deletion-days-count">${(T.deletion_days_remaining || '%d days remaining').replace('%d', daysRemaining)}</span>
+                            <span class="deletion-days-count">${escapeHtml((T.deletion_days_remaining || '%d days remaining').replace('%d', daysRemaining))}</span>
                         </div>
                     </div>
                     <div class="deletion-pending-meta">
-                        <span>${reasonLabels[data.reason] || data.reason}${data.reason === 'other' && data.custom_reason ? ': ' + data.custom_reason : ''}</span>
+                        <span>${escapeHtml(reasonDisplay)}</span>
                     </div>
-                    <p class="deletion-grace-info">${T.deletion_grace_period_info || 'You have a 30-day grace period to cancel this request. After that, all your data will be permanently erased.'}</p>
-                    <button type="button" class="deletion-cancel-btn" onclick="cancelDeletion()">${T.deletion_cancel || 'Cancel Deletion'}</button>
+                    <p class="deletion-grace-info">${escapeHtml(T.deletion_grace_period_info || 'You have a 30-day grace period to cancel this request. After that, all your data will be permanently erased.')}</p>
+                    <button type="button" class="deletion-cancel-btn" onclick="cancelDeletion()">${escapeHtml(T.deletion_cancel || 'Cancel Deletion')}</button>
                 </div>
             `;
         }
@@ -4035,14 +4187,14 @@
     <!-- Crop Modal -->
     <div class="modal" id="crop-modal">
         <div class="modal-content" style="max-width: 600px;">
-            <h2 id="crop-modal-title">Crop Image</h2>
-            <p id="crop-modal-description">Please crop your image to a square.</p>
+            <h2 id="crop-modal-title">{{ index .T "crop_photo" }}</h2>
+            <p id="crop-modal-description">{{ index .T "select_profile_photo" }}</p>
             <div class="crop-container">
-                <img id="crop-image">
+                <img id="crop-image" alt="Crop preview">
             </div>
             <div class="modal-buttons" style="margin-top: 24px;">
-                <button type="button" class="bg-gray" onclick="closeCropModal()">Cancel</button>
-                <button type="button" onclick="performCrop()">Save</button>
+                <button type="button" class="bg-gray" onclick="closeCropModal()">{{ index .T "cancel" }}</button>
+                <button type="button" onclick="performCrop()">{{ index .T "apply" }}</button>
             </div>
         </div>
     </div>

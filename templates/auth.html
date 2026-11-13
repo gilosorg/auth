@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ .Lang }}">
 
 {{ template "common/head" . }}
 
@@ -120,15 +120,8 @@
     }
 
     [data-theme="dark"] .method-selector {
-        background: rgba(26, 26, 26, 0.8);
+        background: rgba(28, 28, 30, 0.8);
         box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
-    }
-
-    @media (prefers-color-scheme: dark) {
-        .method-selector {
-            background: rgba(28, 28, 30, 0.8);
-            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
-        }
     }
 
     .method-option {
@@ -163,14 +156,6 @@
         box-shadow: 0 4px 20px var(--primary-glow);
     }
 
-    @media (prefers-color-scheme: dark) {
-        .method-option.active {
-            background: var(--primary-gradient);
-            color: var(--primary-contrast);
-            box-shadow: 0 4px 20px var(--primary-glow);
-        }
-    }
-
     .method-option:hover:not(.active) {
         color: var(--text);
         background: rgba(255, 255, 255, 0.4);
@@ -178,12 +163,6 @@
 
     [data-theme="dark"] .method-option:hover:not(.active) {
         background: rgba(255, 255, 255, 0.05);
-    }
-
-    @media (prefers-color-scheme: dark) {
-        .method-option:hover:not(.active) {
-            background: rgba(255, 255, 255, 0.05);
-        }
     }
 
     .verification-info {
@@ -336,7 +315,50 @@
         fill: currentColor;
     }
 
-    button:not(.trailing-button) {
+    .password-input-wrap {
+        position: relative;
+        width: 100%;
+    }
+
+    .password-toggle {
+        position: absolute;
+        right: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: transparent !important;
+        border: none !important;
+        color: var(--text-muted) !important;
+        padding: 6px !important;
+        width: auto !important;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        border-radius: 8px;
+        opacity: 1 !important;
+        box-shadow: none !important;
+    }
+
+    .password-toggle:hover {
+        color: var(--text) !important;
+        background: var(--slate-200) !important;
+        transform: translateY(-50%) !important;
+        filter: none !important;
+        box-shadow: none !important;
+    }
+
+    .auth-banner {
+        margin-bottom: 12px;
+        padding: 10px 12px;
+        border-radius: 10px;
+        font-size: 13px;
+        line-height: 1.45;
+        background: var(--red-50);
+        color: var(--red-700);
+        border: 1px solid rgba(255, 59, 48, 0.22);
+    }
+
+    button:not(.trailing-button):not(.password-toggle) {
         background: var(--primary-gradient);
         color: var(--primary-contrast);
         padding: 12px 16px;
@@ -351,12 +373,12 @@
     }
 
     /* Entrance animation scoped to auth forms only */
-    .auth-container button:not(.trailing-button) {
+    .auth-container button:not(.trailing-button):not(.password-toggle) {
         opacity: 0;
         transform: translateY(10px);
     }
 
-    .button-container:not(:empty) button:not(.trailing-button) {
+    .button-container:not(:empty) button:not(.trailing-button):not(.password-toggle) {
         opacity: 1;
         transform: translateY(0);
         transition-delay: 0.45s;
@@ -561,14 +583,18 @@
         <div class="auth-container">
             <div class="content-wrapper">
                 <div class="header">
-                    <picture><source srcset="/static/img/logo-dark.svg" media="(prefers-color-scheme: dark)"><img src="/static/img/logo.svg" alt="Gilos Logo"></picture>
+                    <img src="/static/img/logo.svg" alt="Gilos Logo" class="theme-logo-light">
+                    <img src="/static/img/logo-dark.svg" alt="Gilos Logo" class="theme-logo-dark">
                     <h1 id="auth-header">{{ index .T "welcome" }}</h1>
                 </div>
-                <div id="message" class="message-container"></div>
+                {{ if .AuthError }}
+                <div class="auth-banner" role="alert">{{ .AuthError }}</div>
+                {{ end }}
+                <div id="message" class="message-container" role="alert" aria-live="polite"></div>
                 <div class="form-wrapper">
-                    <form id="gilos-form" autocomplete="off" class="form-container">
+                    <form id="gilos-form" class="form-container">
                         <div class="form-element input-wrapper">
-                            <input type="text" id="gilos-id" name="username" required placeholder="{{ index .T "enter_gilos_id" }}"
+                            <input type="text" id="gilos-id" name="username" required autocomplete="username" placeholder="{{ index .T "enter_gilos_id" }}"
                                 oninput="cleanGilosID(this)" onchange="cleanGilosID(this)" aria-describedby="gilos-id-error">
                             <button id="continue-button" type="button" onclick="checkGilosID()" class="trailing-button"
                                 aria-label="Continue">
@@ -578,12 +604,15 @@
                             </button>
                         </div>
                     </form>
-                    <form id="password-form" autocomplete="off" class="form-container hidden">
-                        <input type="hidden" name="username" id="password-username">
+                    <form id="password-form" class="form-container hidden">
+                        <input type="hidden" name="username" id="password-username" autocomplete="username">
                         <div class="form-element">
                             <p id="password-info" class="verification-info"></p>
-                            <input type="password" id="password" name="password" required placeholder="{{ index .T "enter_password" }}"
-                                oninput="validateForm()" onchange="validateForm()" aria-describedby="password-error">
+                            <div class="password-input-wrap">
+                                <input type="password" id="password" name="password" required autocomplete="current-password" placeholder="{{ index .T "enter_password" }}"
+                                    oninput="validateForm()" onchange="validateForm()" aria-describedby="password-error">
+                                <button type="button" class="password-toggle" onclick="togglePasswordField('password', this)" aria-label="{{ index .T "show_password" }}"></button>
+                            </div>
                             <a href="#" class="forgot-password"
                                 onclick="moveToState('forgot-password'); return false;">{{ index .T "forgot_password" }}</a>
                         </div>
@@ -619,12 +648,12 @@
                         <div class="form-element">
                             <p id="otp-hint" class="otp-info"></p>
                             <div class="otp-container" id="otp">
-                                <input type="number" class="otp-input" maxlength="1" inputmode="numeric" aria-label="OTP digit 1">
-                                <input type="number" class="otp-input" maxlength="1" inputmode="numeric" aria-label="OTP digit 2">
-                                <input type="number" class="otp-input" maxlength="1" inputmode="numeric" aria-label="OTP digit 3">
-                                <input type="number" class="otp-input" maxlength="1" inputmode="numeric" aria-label="OTP digit 4">
-                                <input type="number" class="otp-input" maxlength="1" inputmode="numeric" aria-label="OTP digit 5">
-                                <input type="number" class="otp-input" maxlength="1" inputmode="numeric" aria-label="OTP digit 6">
+                                <input type="text" class="otp-input" maxlength="1" inputmode="numeric" pattern="[0-9]*" autocomplete="one-time-code" aria-label="OTP digit 1">
+                                <input type="text" class="otp-input" maxlength="1" inputmode="numeric" pattern="[0-9]*" aria-label="OTP digit 2">
+                                <input type="text" class="otp-input" maxlength="1" inputmode="numeric" pattern="[0-9]*" aria-label="OTP digit 3">
+                                <input type="text" class="otp-input" maxlength="1" inputmode="numeric" pattern="[0-9]*" aria-label="OTP digit 4">
+                                <input type="text" class="otp-input" maxlength="1" inputmode="numeric" pattern="[0-9]*" aria-label="OTP digit 5">
+                                <input type="text" class="otp-input" maxlength="1" inputmode="numeric" pattern="[0-9]*" aria-label="OTP digit 6">
                             </div>
                             <div class="countdown-container" id="otp-countdown-container">
                                 <span>{{ or (index .T "expires_in") "Expires in" }}:</span>
@@ -679,25 +708,26 @@
                             <input type="hidden" id="register-contact" name="contact_value">
                         </div>
                     </form>
-                    <form id="register-password-form" autocomplete="off" class="form-container hidden">
-                        <input type="hidden" name="username" id="register-password-username">
+                    <form id="register-password-form" class="form-container hidden">
+                        <input type="hidden" name="username" id="register-password-username" autocomplete="username">
                         <input type="hidden" name="first_name" id="register-password-first-name">
                         <input type="hidden" name="last_name" id="register-password-last-name">
                         <input type="hidden" name="contact" id="register-password-contact">
                         <div class="form-element">
-                            <input type="password" id="register-password" name="password" required
-                                placeholder="{{ index .T "password" }}" oninput="validateForm(); validatePasswordMatch()" onchange="validateForm(); validatePasswordMatch()"
-                                aria-describedby="register-password-error">
+                            <div class="password-input-wrap">
+                                <input type="password" id="register-password" name="password" required autocomplete="new-password"
+                                    placeholder="{{ index .T "password" }}" oninput="validateForm(); validatePasswordMatch()" onchange="validateForm(); validatePasswordMatch()"
+                                    aria-describedby="register-password-error">
+                                <button type="button" class="password-toggle" onclick="togglePasswordField('register-password', this)" aria-label="{{ index .T "show_password" }}"></button>
+                            </div>
                         </div>
                         <div class="form-element">
-                            <input type="password" id="confirm-password" required placeholder="{{ index .T "confirm_password" }}"
-                                oninput="validateForm(); validatePasswordMatch()" onchange="validateForm(); validatePasswordMatch()"
-                                aria-describedby="confirm-password-error">
-                        </div>
-                        <div class="form-element">
-                            <input type="text" id="password-hint" name="password_hint"
-                                placeholder="{{ index .T "password_hint" }}" oninput="validateForm()" onchange="validateForm()"
-                                aria-describedby="password-hint-error">
+                            <div class="password-input-wrap">
+                                <input type="password" id="confirm-password" required autocomplete="new-password" placeholder="{{ index .T "confirm_password" }}"
+                                    oninput="validateForm(); validatePasswordMatch()" onchange="validateForm(); validatePasswordMatch()"
+                                    aria-describedby="confirm-password-error">
+                                <button type="button" class="password-toggle" onclick="togglePasswordField('confirm-password', this)" aria-label="{{ index .T "show_password" }}"></button>
+                            </div>
                         </div>
                     </form>
                     <form id="forgot-password-form" autocomplete="off" class="form-container hidden">
@@ -732,24 +762,25 @@
                             <input type="hidden" id="recovery-input" name="recovery_contact_value">
                         </div>
                     </form>
-                    <form id="reset-password-form" autocomplete="off" class="form-container hidden">
-                        <input type="hidden" name="username" id="reset-password-username">
+                    <form id="reset-password-form" class="form-container hidden">
+                        <input type="hidden" name="username" id="reset-password-username" autocomplete="username">
                         <input type="hidden" name="contact" id="reset-password-contact">
                         <div class="form-element">
-                            <input type="password" id="reset-password" name="password" required
-                                placeholder="{{ index .T "new_password" }}" oninput="validateForm(); validateResetPasswordMatch()" onchange="validateForm(); validateResetPasswordMatch()"
-                                aria-describedby="reset-password-error">
+                            <div class="password-input-wrap">
+                                <input type="password" id="reset-password" name="password" required autocomplete="new-password"
+                                    placeholder="{{ index .T "new_password" }}" oninput="validateForm(); validateResetPasswordMatch()" onchange="validateForm(); validateResetPasswordMatch()"
+                                    aria-describedby="reset-password-error">
+                                <button type="button" class="password-toggle" onclick="togglePasswordField('reset-password', this)" aria-label="{{ index .T "show_password" }}"></button>
+                            </div>
                         </div>
                         <div class="form-element">
-                            <input type="password" id="reset-confirm-password" required
-                                placeholder="{{ index .T "confirm_new_password" }}"
-                                oninput="validateForm(); validateResetPasswordMatch()" onchange="validateForm(); validateResetPasswordMatch()"
-                                aria-describedby="reset-confirm-password-error">
-                        </div>
-                        <div class="form-element">
-                            <input type="text" id="reset-password-hint" name="password_hint"
-                                placeholder="{{ index .T "password_hint" }}" oninput="validateForm()" onchange="validateForm()"
-                                aria-describedby="reset-password-hint-error">
+                            <div class="password-input-wrap">
+                                <input type="password" id="reset-confirm-password" required autocomplete="new-password"
+                                    placeholder="{{ index .T "confirm_new_password" }}"
+                                    oninput="validateForm(); validateResetPasswordMatch()" onchange="validateForm(); validateResetPasswordMatch()"
+                                    aria-describedby="reset-confirm-password-error">
+                                <button type="button" class="password-toggle" onclick="togglePasswordField('reset-confirm-password', this)" aria-label="{{ index .T "show_password" }}"></button>
+                            </div>
                         </div>
                     </form>
                 </div>
@@ -816,6 +847,33 @@
         let itiRegister = null;
         let itiRecovery = null;
 
+        const EYE_OPEN_SVG = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
+        const EYE_CLOSED_SVG = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>';
+
+        function escapeHtml(str) {
+            return String(str ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function initPasswordToggles() {
+            document.querySelectorAll('.password-toggle').forEach(btn => {
+                if (!btn.innerHTML.trim()) btn.innerHTML = EYE_OPEN_SVG;
+            });
+        }
+
+        function togglePasswordField(inputId, btn) {
+            const input = document.getElementById(inputId);
+            if (!input) return;
+            const revealing = input.type === 'password';
+            input.type = revealing ? 'text' : 'password';
+            btn.innerHTML = revealing ? EYE_CLOSED_SVG : EYE_OPEN_SVG;
+            btn.setAttribute('aria-label', revealing ? (T.hide_password || 'Hide password') : (T.show_password || 'Show password'));
+        }
+
         // Global target URL (extracted on load)
         let targetUrl = '/home';  // Default
 
@@ -869,14 +927,20 @@
 
         // Initialize
         document.addEventListener('DOMContentLoaded', async () => {
-            // Extract and validate target from URL params
+            initPasswordToggles();
+            window.addEventListener('resize', adjustCardHeight);
+
+            // Extract and validate same-origin relative target from URL params
             const urlParams = new URLSearchParams(window.location.search);
-            let target = urlParams.get('target');
-            if (target) {
+            const rawTarget = urlParams.get('target');
+            if (rawTarget) {
                 try {
-                    target = decodeURIComponent(target);
-                    if (target.startsWith('/')) {
-                        targetUrl = target;
+                    const target = decodeURIComponent(rawTarget).trim();
+                    if (target.startsWith('/') && !target.startsWith('//') && !target.startsWith('/\\')) {
+                        const parsed = new URL(target, window.location.origin);
+                        if (parsed.origin === window.location.origin) {
+                            targetUrl = parsed.pathname + parsed.search + parsed.hash;
+                        }
                     }
                 } catch (error) {
                     console.error('Invalid target URL:', error);
@@ -997,9 +1061,9 @@
                 state.resendAvailableIn = data.resend_available_in || 0;
                 state.userData = {
                     status: data.user_status,
-                    password_hint: data.password_hint,
                     mfa_email_enabled: data.mfa_email_enabled,
                     mfa_phone_enabled: data.mfa_phone_enabled,
+                    mfa_totp_enabled: data.mfa_totp_enabled,
                     has_email: data.has_email,
                     has_phone: data.has_phone,
                     email: data.email,
@@ -1103,7 +1167,7 @@
                 case 'register-password':
                     const password = document.getElementById('register-password').value;
                     const confirmPassword = document.getElementById('confirm-password').value;
-                    isValid = password.length > 0 && password === confirmPassword;
+                    isValid = password.length >= 8 && password.length <= 72 && password === confirmPassword;
                     break;
                 case 'forgot-password':
                     if (state.recoveryMethod === 'email') {
@@ -1116,7 +1180,7 @@
                 case 'reset-password':
                     const resetPassword = document.getElementById('reset-password').value;
                     const resetConfirmPassword = document.getElementById('reset-confirm-password').value;
-                    isValid = resetPassword.length > 0 && resetPassword === resetConfirmPassword;
+                    isValid = resetPassword.length >= 8 && resetPassword.length <= 72 && resetPassword === resetConfirmPassword;
                     break;
             }
 
@@ -1139,26 +1203,30 @@
             validateForm();
         }
 
+        let cardHeightTimer = null;
         function adjustCardHeight() {
             const authContainer = document.querySelector('.auth-container');
             const contentWrapper = document.querySelector('.content-wrapper');
-            if (!contentWrapper) return;
+            if (!authContainer || !contentWrapper) return;
+
+            if (cardHeightTimer) clearTimeout(cardHeightTimer);
 
             const activeForm = document.querySelector('.form-container:not(.hidden)') || document.querySelector('.form-container');
-            const wasHidden = activeForm.classList.contains('hidden');
+            const wasHidden = activeForm && activeForm.classList.contains('hidden');
             if (wasHidden) {
                 activeForm.classList.remove('hidden');
                 activeForm.style.opacity = '0';
             }
 
-            authContainer.style.height = `${contentWrapper.offsetHeight + 20}px`;
+            authContainer.style.minHeight = `${contentWrapper.offsetHeight + 20}px`;
+            authContainer.style.height = 'auto';
 
             if (wasHidden) {
                 activeForm.classList.add('hidden');
                 activeForm.style.opacity = '1';
             }
 
-            setTimeout(() => {
+            cardHeightTimer = setTimeout(() => {
                 const elements = document.querySelectorAll('.form-container:not(.hidden) .form-element, .button-container:not(:empty) button, .message-container:not(:empty)');
                 elements.forEach((el) => {
                     el.style.opacity = '1';
@@ -1202,18 +1270,16 @@
 
         function renderTermsText() {
             const termsDiv = document.getElementById('terms-text');
-            const termsAgreement = T.terms_agreement || 'By continuing, you agree to our %privacy% and %terms%.';
-            const privacyPolicy = T.privacy_policy || 'Privacy Policy';
-            const termsOfService = T.terms_of_service || 'Terms of Service';
+            const termsAgreement = escapeHtml(T.terms_agreement || 'By continuing, you agree to our %privacy% and %terms%.');
+            const privacyPolicy = escapeHtml(T.privacy_policy || 'Privacy Policy');
+            const termsOfService = escapeHtml(T.terms_of_service || 'Terms of Service');
             
-            const privacyLink = `<a href="https://gilos.org/privacy" target="_blank" class="terms-link">${privacyPolicy}</a>`;
-            const termsLink = `<a href="https://gilos.org/terms" target="_blank" class="terms-link">${termsOfService}</a>`;
+            const privacyLink = `<a href="/privacy" target="_blank" rel="noopener noreferrer" class="terms-link">${privacyPolicy}</a>`;
+            const termsLink = `<a href="/terms" target="_blank" rel="noopener noreferrer" class="terms-link">${termsOfService}</a>`;
             
-            let html = termsAgreement
+            termsDiv.innerHTML = termsAgreement
                 .replace('%privacy%', privacyLink)
                 .replace('%terms%', termsLink);
-            
-            termsDiv.innerHTML = html;
         }
 
         function getOTPValue() {
@@ -1227,7 +1293,7 @@
                 input.value = '';
                 input.classList.remove('error');
             });
-            inputs[0].focus();
+            if (inputs[0]) inputs[0].focus();
         }
 
         function setOTPError(hasError) {
@@ -1238,7 +1304,13 @@
         function showMessage(message, isSuccess) {
             const messageDiv = document.getElementById('message');
             messageDiv.classList.toggle('success', isSuccess);
-            messageDiv.innerHTML = message ? `<p>${message}</p>` : '';
+            if (message) {
+                const p = document.createElement('p');
+                p.textContent = message;
+                messageDiv.replaceChildren(p);
+            } else {
+                messageDiv.replaceChildren();
+            }
             adjustCardHeight();
         }
 
@@ -1263,9 +1335,9 @@
                     state.currentStep = data.step;
                     state.userData = {
                         status: data.user_status,
-                        password_hint: data.password_hint,
                         mfa_email_enabled: data.mfa_email_enabled,
                         mfa_phone_enabled: data.mfa_phone_enabled,
+                        mfa_totp_enabled: data.mfa_totp_enabled,
                         has_email: data.has_email,
                         has_phone: data.has_phone,
                         email: data.email,
@@ -1474,18 +1546,9 @@
         }
 
         async function resendOTP() {
-            const messageDiv = document.getElementById('message');
             const link = document.querySelector('.resend-link');
-            const originalText = link.textContent;
             link.innerHTML = '<span class="spinner"></span>';
             link.style.pointerEvents = 'none';
-            state.resends++;
-
-            if (state.resends >= 3) {
-                showMessage('Maximum resend attempts reached. Starting over.', false);
-                await resetAndReload();
-                return;
-            }
 
             try {
                 const contact = document.getElementById('otp-contact').value;
@@ -1499,6 +1562,7 @@
                 });
                 const data = await response.json();
                 if (response.ok) {
+                    state.resends = typeof data.resends === 'number' ? data.resends : (state.resends + 1);
                     state.timeRemaining = data.time_remaining || 300;
                     state.resendAvailableIn = data.resend_available_in || 60;
                     startCountdown();
@@ -1509,13 +1573,16 @@
                         startCountdown();
                     }
                     showMessage(data.error || 'Failed to resend code', false);
+                    if (response.status === 429 && data.is_blocked) {
+                        state.isBlocked = true;
+                        state.blockedUntil = data.blocked_until;
+                    }
                 }
             } catch (error) {
                 console.error('Error resending OTP:', error);
-                showMessage('Unable to resend OTP. Please try again.', false);
+                showMessage(T.network_error || 'Unable to resend OTP. Please try again.', false);
             } finally {
-                link.innerHTML = `Resend OTP (${state.resends}/3)`;
-                link.style.pointerEvents = 'auto';
+                updateCountdownUI();
                 adjustCardHeight();
             }
         }
@@ -1647,8 +1714,7 @@
                 password: document.getElementById('register-password').value,
                 first_name: document.getElementById('register-password-first-name').value,
                 last_name: document.getElementById('register-password-last-name').value,
-                contact: document.getElementById('register-password-contact').value,
-                password_hint: document.getElementById('password-hint').value
+                contact: document.getElementById('register-password-contact').value
             };
 
             try {
@@ -1689,8 +1755,7 @@
             const formData = {
                 username: document.getElementById('reset-password-username').value,
                 password: document.getElementById('reset-password').value,
-                contact: document.getElementById('reset-password-contact').value,
-                password_hint: document.getElementById('reset-password-hint').value
+                contact: document.getElementById('reset-password-contact').value
             };
 
             try {
@@ -1773,8 +1838,7 @@
                     actionLabel = T.login || 'Login';
                     actionFunction = 'submitPassword()';
                     document.getElementById('password-info').textContent = (T.password_found_info || 'We found an ID with @%s, enter its password to continue.').replace('%s', state.gilosID);
-                    const passwordHint = data.password_hint || (T.enter_password || 'Enter Password');
-                    document.getElementById('password').placeholder = passwordHint;
+                    document.getElementById('password').placeholder = T.enter_password || 'Enter Password';
                     buttonContainer.innerHTML = `
                         <div class="button-group">
                             <button type="button" onclick="moveToState('gilos-id')" class="bg-gray">${T.back || 'Back'}</button>
@@ -1907,20 +1971,20 @@
                     let recoveryText = '';
                     if (data.has_email || data.has_phone) {
                         const options = [];
-                        if (data.email) options.push(`${T.email || 'email'}: ${data.email}`);
-                        if (data.phone) options.push(`${T.phone || 'phone'}: ${data.phone}`);
-                        recoveryText = (T.recovery_options_set || 'You have set the following recovery options: %s. Please enter one to proceed.').replace('%s', options.join(` ${T.or || 'or'} `));
+                        if (data.email) options.push(`${escapeHtml(T.email || 'email')}: ${escapeHtml(data.email)}`);
+                        if (data.phone) options.push(`${escapeHtml(T.phone || 'phone')}: ${escapeHtml(data.phone)}`);
+                        recoveryText = escapeHtml(T.recovery_options_set || 'You have set the following recovery options: %s. Please enter one to proceed.').replace('%s', options.join(` ${escapeHtml(T.or || 'or')} `));
                         recoveryInput.classList.remove('hidden');
                     } else {
-                        recoveryText = `${T.recovery_no_options || 'You have no recovery options available, contact'} <a href="https://t.me/gilos247" class="support-link" target="_blank">${T.support || 'support'}</a>.`;
+                        recoveryText = `${escapeHtml(T.recovery_no_options || 'You have no recovery options available, contact')} <a href="https://t.me/gilos247" class="support-link" target="_blank" rel="noopener noreferrer">${escapeHtml(T.support || 'support')}</a>.`;
                         recoveryInput.classList.add('hidden');
                     }
                     recoveryInfo.innerHTML = recoveryText;
                     buttonContainer.innerHTML = `
                         <div class="button-group">
-                            <button type="button" onclick="moveToState('password')" class="bg-gray">${T.back || 'Back'}</button>
+                            <button type="button" onclick="moveToState('password')" class="bg-gray">${escapeHtml(T.back || 'Back')}</button>
                             ${data.has_email || data.has_phone ? `
-                            <button id="action-button" type="button" onclick="${actionFunction}">${actionLabel}</button>
+                            <button id="action-button" type="button" onclick="${actionFunction}">${escapeHtml(actionLabel)}</button>
                             ` : ''}
                         </div>
                     `;
@@ -1930,14 +1994,14 @@
                     actionFunction = 'submitResetPassword()';
                     buttonContainer.innerHTML = `
                         <div class="button-group">
-                            <button type="button" onclick="moveToState('forgot-password')" class="bg-gray">${T.back || 'Back'}</button>
-                            <button id="action-button" type="button" onclick="${actionFunction}">${actionLabel}</button>
+                            <button type="button" onclick="moveToState('forgot-password')" class="bg-gray">${escapeHtml(T.back || 'Back')}</button>
+                            <button id="action-button" type="button" onclick="${actionFunction}">${escapeHtml(actionLabel)}</button>
                         </div>
                     `;
                     break;
             }
 
-            // Global Block Handling
+            // Global Block Handling (scoped to auth form controls only)
             if (data.is_blocked || state.isBlocked) {
                 state.isBlocked = true;
                 state.blockedUntil = data.blocked_until || state.blockedUntil;
@@ -1946,12 +2010,9 @@
                 const blockedMsg = (T.security_block_active || 'Your account is temporarily blocked for security until %s.').replace('%s', blockedDate.toLocaleString());
                 showMessage(blockedMsg, false);
                 
-                // Disable all inputs and buttons
-                document.querySelectorAll('input, button, .resend-link').forEach(el => {
-                    if (el.id !== 'ribbon-theme-toggle') {
-                        el.disabled = true;
-                        if (el.classList.contains('resend-link')) el.style.pointerEvents = 'none';
-                    }
+                document.querySelectorAll('.auth-container input, .auth-container button, .auth-container .resend-link').forEach(el => {
+                    el.disabled = true;
+                    if (el.classList.contains('resend-link')) el.style.pointerEvents = 'none';
                 });
             }
 
@@ -1966,14 +2027,22 @@
             }
         }
 
+        function getPasswordValidationError(password, confirmPassword) {
+            if (password && password.length < 8) return T.password_min_8 || 'Must be at least 8 characters';
+            if (password && password.length > 72) return T.password_max_72 || 'Must be at most 72 characters';
+            if (confirmPassword && password !== confirmPassword) return T.passwords_do_not_match || 'Passwords do not match';
+            return '';
+        }
+
         function validatePasswordMatch() {
             const password = document.getElementById('register-password').value;
             const confirmPassword = document.getElementById('confirm-password').value;
+            const passwordInput = document.getElementById('register-password');
             const confirmInput = document.getElementById('confirm-password');
-            const messageDiv = document.getElementById('message');
 
-            confirmInput.classList.toggle('error', confirmPassword && password !== confirmPassword);
-            state.error = confirmPassword && password !== confirmPassword ? (T.passwords_do_not_match || 'Passwords do not match') : '';
+            passwordInput.classList.toggle('error', Boolean(password && (password.length < 8 || password.length > 72)));
+            confirmInput.classList.toggle('error', Boolean(confirmPassword && password !== confirmPassword));
+            state.error = getPasswordValidationError(password, confirmPassword);
             showMessage(state.error, false);
             validateForm();
         }
@@ -1981,11 +2050,12 @@
         function validateResetPasswordMatch() {
             const password = document.getElementById('reset-password').value;
             const confirmPassword = document.getElementById('reset-confirm-password').value;
+            const passwordInput = document.getElementById('reset-password');
             const confirmInput = document.getElementById('reset-confirm-password');
-            const messageDiv = document.getElementById('message');
 
-            confirmInput.classList.toggle('error', confirmPassword && password !== confirmPassword);
-            state.error = confirmPassword && password !== confirmPassword ? (T.passwords_do_not_match || 'Passwords do not match') : '';
+            passwordInput.classList.toggle('error', Boolean(password && (password.length < 8 || password.length > 72)));
+            confirmInput.classList.toggle('error', Boolean(confirmPassword && password !== confirmPassword));
+            state.error = getPasswordValidationError(password, confirmPassword);
             showMessage(state.error, false);
             validateForm();
         }
@@ -2022,7 +2092,7 @@
             } else {
                 if (otpCountdown) otpCountdown.style.display = 'none';
                 if (state.timeRemaining <= 0 && state.currentStep === 'otp' && !state.error) {
-                    showMessage('Verification code expired. Please request a new one.', false);
+                    showMessage(T.otp_expired || 'Verification code expired. Please request a new one.', false);
                 }
             }
 

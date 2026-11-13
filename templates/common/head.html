@@ -4,7 +4,39 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gilos Auth</title>
+    <title>{{ if .AppName }}{{ .AppName }}{{ else }}Gilos Auth{{ end }}</title>
+    <script>
+        (function() {
+            function applyTheme(pref) {
+                var effective = pref;
+                if (pref !== 'light' && pref !== 'dark') {
+                    pref = 'system';
+                    effective = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+                }
+                document.documentElement.setAttribute('data-theme', effective);
+                document.documentElement.setAttribute('data-theme-pref', pref);
+                document.documentElement.style.colorScheme = effective;
+            }
+            var saved = 'system';
+            try { saved = localStorage.getItem('gilos_theme') || 'system'; } catch (e) {}
+            applyTheme(saved);
+            window.__setTheme = function(pref) {
+                try { localStorage.setItem('gilos_theme', pref); } catch (e) {}
+                applyTheme(pref);
+                window.dispatchEvent(new CustomEvent('gilos-theme-change', { detail: { pref: pref, theme: document.documentElement.getAttribute('data-theme') } }));
+            };
+            if (window.matchMedia) {
+                var mq = window.matchMedia('(prefers-color-scheme: dark)');
+                var onChange = function() {
+                    if ((document.documentElement.getAttribute('data-theme-pref') || 'system') === 'system') {
+                        applyTheme('system');
+                    }
+                };
+                if (mq.addEventListener) mq.addEventListener('change', onChange);
+                else if (mq.addListener) mq.addListener(onChange);
+            }
+        })();
+    </script>
     <link rel="icon" href="/static/img/icon.svg" type="image/svg+xml">
     <link rel="icon" href="/static/img/icon-dark.svg" type="image/svg+xml" media="(prefers-color-scheme: dark)">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
@@ -261,10 +293,41 @@
         }
 
 
-        @media (prefers-color-scheme: dark) {
-            ::selection {
-                background: rgba(255, 255, 255, 0.2);
-            }
+        :root[data-theme="dark"] ::selection {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Theme logo helpers */
+        .theme-logo-light { display: inline-block; }
+        .theme-logo-dark { display: none; }
+        :root[data-theme="dark"] .theme-logo-light { display: none; }
+        :root[data-theme="dark"] .theme-logo-dark { display: inline-block; }
+
+        /* SweetAlert2 light/dark theme integration */
+        .swal2-popup {
+            background: var(--card-bg-solid) !important;
+            color: var(--text) !important;
+            border: 1px solid var(--slate-200) !important;
+            border-radius: 16px !important;
+            box-shadow: var(--card-shadow-hover) !important;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
+        }
+        .swal2-title, .swal2-html-container {
+            color: var(--text) !important;
+        }
+        .swal2-input, .swal2-textarea, .swal2-select {
+            background: var(--slate-100) !important;
+            color: var(--text) !important;
+            border: 1px solid var(--slate-200) !important;
+            border-radius: 10px !important;
+        }
+        .swal2-input:focus, .swal2-textarea:focus, .swal2-select:focus {
+            border-color: var(--primary) !important;
+            box-shadow: 0 0 0 3px var(--primary-glow) !important;
+        }
+        .swal2-validation-message {
+            background: var(--red-50) !important;
+            color: var(--red-700) !important;
         }
 
         /* ===== Scrollbar ===== */
@@ -414,28 +477,24 @@
         }
         
         /* Dark mode specific for intl-tel-input */
-
-
-        @media (prefers-color-scheme: dark) {
-            .iti__country-list {
-                background-color: #1C1C1E !important;
-                border: 1px solid #2C2C2E !important;
-                box-shadow: 0 10px 40px rgba(0,0,0,0.8) !important;
-            }
-            .iti__search-input {
-                background-color: #1C1C1E !important;
-                border-color: #2C2C2E !important;
-                color: #F5F5F7 !important;
-            }
-            .iti__search-input:focus {
-                border-color: var(--primary) !important;
-            }
-            .iti__country.iti__highlight {
-                background-color: #2C2C2E !important;
-            }
-            .iti--allow-dropdown .iti__flag-container:hover .iti__selected-flag {
-                background: #1C1C1E !important;
-            }
+        :root[data-theme="dark"] .iti__country-list {
+            background-color: #1C1C1E !important;
+            border: 1px solid #2C2C2E !important;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.8) !important;
+        }
+        :root[data-theme="dark"] .iti__search-input {
+            background-color: #1C1C1E !important;
+            border-color: #2C2C2E !important;
+            color: #F5F5F7 !important;
+        }
+        :root[data-theme="dark"] .iti__search-input:focus {
+            border-color: var(--primary) !important;
+        }
+        :root[data-theme="dark"] .iti__country.iti__highlight {
+            background-color: #2C2C2E !important;
+        }
+        :root[data-theme="dark"] .iti--allow-dropdown .iti__flag-container:hover .iti__selected-flag {
+            background: #1C1C1E !important;
         }
     </style>
 

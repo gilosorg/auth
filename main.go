@@ -84,6 +84,8 @@ func main() {
 	mux.HandleFunc("GET /{$}", handler.AuthHandler(tmpls))
 	mux.HandleFunc("GET /home", middleware.RequireCookieToken(handler.HomeHandler(tmpls)))
 	mux.HandleFunc("GET /docs", handler.DocsHandler(tmpls))
+	mux.HandleFunc("GET /terms", handler.TermsHandler(tmpls))
+	mux.HandleFunc("GET /privacy", handler.PrivacyHandler(tmpls))
 
 	// Web Auth endpoints (with explicit methods)
 	mux.HandleFunc("GET /auth/check-user", handler.CheckUserHandler)
@@ -138,6 +140,7 @@ func main() {
 
 	// OAuth Client API endpoints (Bearer token auth)
 	mux.HandleFunc("GET /api/userinfo", middleware.RequireAccessToken(handler.UserInfoHandler))
+	mux.HandleFunc("POST /api/userinfo", middleware.RequireAccessToken(handler.UserInfoHandler))
 	mux.HandleFunc("GET /api/me", middleware.RequireAccessToken(middleware.RequireScope("profile", client.MeHandler)))
 	mux.HandleFunc("GET /api/sessions", middleware.RequireAccessToken(middleware.RequireScope("user_sessions", client.SessionsHandler)))
 	mux.HandleFunc("POST /api/sessions/terminate", middleware.RequireAccessToken(middleware.RequireScope("user_sessions", client.TerminateSessionHandler)))

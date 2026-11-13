@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ .Lang }}">
 
 {{ template "common/head" . }}
 
@@ -301,6 +301,46 @@
         line-height: 1.5;
         text-align: center;
     }
+
+    .signed-in-pill {
+        margin-top: 8px;
+        font-size: 12px;
+        color: var(--text-secondary);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        flex-wrap: wrap;
+        background: var(--slate-100);
+        border: 1px solid var(--slate-200);
+        padding: 4px 10px;
+        border-radius: 99px;
+    }
+
+    .switch-account-btn {
+        all: unset !important;
+        cursor: pointer !important;
+        color: var(--primary) !important;
+        font-weight: 600 !important;
+        font-size: 12px !important;
+        text-decoration: underline !important;
+        text-underline-offset: 2px;
+    }
+
+    .switch-account-btn:hover {
+        opacity: 0.8 !important;
+        transform: none !important;
+        box-shadow: none !important;
+        filter: none !important;
+    }
+
+    button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none !important;
+        box-shadow: none !important;
+        filter: none !important;
+    }
 </style>
 
 <body>
@@ -309,11 +349,16 @@
         <div class="auth-container">
             <div class="content-wrapper">
                 <div class="header">
-                    <picture>
-                        <source srcset="/static/img/logo-dark.svg" media="(prefers-color-scheme: dark)">
-                        <img src="/static/img/logo.svg" alt="Gilos Logo">
-                    </picture>
+                    <img src="/static/img/logo.svg" alt="Gilos Logo" class="theme-logo-light">
+                    <img src="/static/img/logo-dark.svg" alt="Gilos Logo" class="theme-logo-dark">
                     <h1 id="auth-header">{{ index .T "authorize" }}</h1>
+                    {{if .User}}
+                        <div class="signed-in-pill">
+                            <span>{{ printf (index .T "signed_in_as") .User.Username }}</span>
+                            <span>&middot;</span>
+                            <button type="button" class="switch-account-btn" onclick="switchAccount()">{{ index .T "switch_account" }}</button>
+                        </div>
+                    {{end}}
                 </div>
 
                 {{if .Error}}
@@ -322,7 +367,7 @@
                     </div>
                 {{end}}
 
-                <div id="message" class="message-container"></div>
+                <div id="message" class="message-container" role="alert" aria-live="polite"></div>
 
                 <div class="form-wrapper">
                     <!-- Step 1: Consent -->
@@ -364,16 +409,16 @@
                     </form>
 
                     <!-- Step 2: TOTP -->
-                    <form id="totp-form" class="form-container hidden">
+                    <form id="totp-form" class="form-container hidden" onsubmit="event.preventDefault(); submitApprove();">
                         <div class="form-element">
                             <p class="verification-info">{{ index .T "otp_enter_authenticator" }}</p>
                             <div class="otp-container" id="otp-inputs">
-                                <input type="number" class="otp-input" maxlength="1" inputmode="numeric">
-                                <input type="number" class="otp-input" maxlength="1" inputmode="numeric">
-                                <input type="number" class="otp-input" maxlength="1" inputmode="numeric">
-                                <input type="number" class="otp-input" maxlength="1" inputmode="numeric">
-                                <input type="number" class="otp-input" maxlength="1" inputmode="numeric">
-                                <input type="number" class="otp-input" maxlength="1" inputmode="numeric">
+                                <input type="text" class="otp-input" maxlength="1" inputmode="numeric" pattern="[0-9]*" autocomplete="one-time-code" aria-label="Digit 1">
+                                <input type="text" class="otp-input" maxlength="1" inputmode="numeric" pattern="[0-9]*" aria-label="Digit 2">
+                                <input type="text" class="otp-input" maxlength="1" inputmode="numeric" pattern="[0-9]*" aria-label="Digit 3">
+                                <input type="text" class="otp-input" maxlength="1" inputmode="numeric" pattern="[0-9]*" aria-label="Digit 4">
+                                <input type="text" class="otp-input" maxlength="1" inputmode="numeric" pattern="[0-9]*" aria-label="Digit 5">
+                                <input type="text" class="otp-input" maxlength="1" inputmode="numeric" pattern="[0-9]*" aria-label="Digit 6">
                             </div>
                         </div>
 
@@ -405,20 +450,45 @@
 
     <script>
         const T = {{ .T | json }};
+        const csrfToken = {{ .CSRFToken | json }};
+        const clientName = {{ .Client.Name | json }};
         const mfaEnabled = {{.User.MFATOTPEnabled}};
         const missingFields = {{ .MissingFields | json }};
         const hasMissingRequired = {{.HasMissingRequired}};
+
+        function escapeHtml(str) {
+            return String(str ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        async function switchAccount() {
+            try {
+                await fetch('/auth/logout', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-Token': csrfToken,
+                        'Accept': 'application/json'
+                    }
+                });
+            } catch (e) {}
+            const target = encodeURIComponent(window.location.pathname + window.location.search);
+            window.location.href = '/?target=' + target;
+        }
         
         function moveToState(state) {
             const consentForm = document.getElementById('consent-form');
             const totpForm = document.getElementById('totp-form');
             const header = document.getElementById('auth-header');
+            document.getElementById('message').innerText = '';
 
             if (state === 'totp') {
                 consentForm.classList.add('hidden');
                 totpForm.classList.remove('hidden');
                 header.innerText = T.verify || 'Verify';
-                // Focus first OTP input
                 setTimeout(() => {
                     const firstInput = totpForm.querySelector('.otp-input');
                     if (firstInput) firstInput.focus();
@@ -445,8 +515,8 @@
             
             if (mfaEnabled) {
                 totpInputs.forEach(input => code += input.value);
-                if (code.length !== 6) {
-                    document.getElementById('message').innerText = T.enter_code || "Enter the 6-digit code";
+                if (!/^\d{6}$/.test(code)) {
+                    document.getElementById('message').innerText = T.enter_code || T.enter_the_code || "Enter the 6-digit code";
                     return;
                 }
                 document.getElementById('final-totp-code').value = code;
@@ -467,10 +537,18 @@
             const inputs = document.querySelectorAll('.otp-input');
             inputs.forEach((input, index) => {
                 input.addEventListener('input', (e) => {
-                    if (e.target.value.length > 1) {
-                        e.target.value = e.target.value.slice(0, 1);
+                    const clean = (e.target.value || '').replace(/[^0-9]/g, '');
+                    if (clean.length > 1) {
+                        const chars = clean.slice(0, inputs.length - index).split('');
+                        chars.forEach((ch, offset) => {
+                            if (inputs[index + offset]) inputs[index + offset].value = ch;
+                        });
+                        const nextIdx = Math.min(index + chars.length, inputs.length - 1);
+                        inputs[nextIdx].focus();
+                        return;
                     }
-                    if (e.target.value && index < inputs.length - 1) {
+                    e.target.value = clean;
+                    if (clean && index < inputs.length - 1) {
                         inputs[index + 1].focus();
                     }
                 });
@@ -480,17 +558,20 @@
                         inputs[index - 1].focus();
                     }
                     if (e.key === 'Enter') {
+                        e.preventDefault();
                         submitApprove();
                     }
                 });
 
                 input.addEventListener('paste', (e) => {
                     e.preventDefault();
-                    const data = e.clipboardData.getData('text').slice(0, 6).split('');
+                    const data = (e.clipboardData.getData('text') || '').replace(/[^0-9]/g, '').slice(0, 6).split('');
                     data.forEach((char, i) => {
                         if (inputs[i]) inputs[i].value = char;
                     });
-                    if (inputs[data.length - 1]) inputs[data.length - 1].focus();
+                    if (data.length > 0 && inputs[data.length - 1]) {
+                        inputs[data.length - 1].focus();
+                    }
                 });
             });
         }
@@ -498,26 +579,24 @@
         function renderTermsText() {
             const termsDiv = document.getElementById('terms-text');
             if (!termsDiv) return;
-            const termsAgreement = T.terms_agreement || 'By continuing, you agree to our %privacy% and %terms%.';
-            const privacyPolicy = T.privacy_policy || 'Privacy Policy';
-            const termsOfService = T.terms_of_service || 'Terms of Service';
+            const termsAgreement = escapeHtml(T.terms_agreement || 'By continuing, you agree to our %privacy% and %terms%.');
+            const privacyPolicy = escapeHtml(T.privacy_policy || 'Privacy Policy');
+            const termsOfService = escapeHtml(T.terms_of_service || 'Terms of Service');
             
-            const privacyLink = `<a href="/privacy" target="_blank" class="terms-link">${privacyPolicy}</a>`;
-            const termsLink = `<a href="/terms" target="_blank" class="terms-link">${termsOfService}</a>`;
+            const privacyLink = `<a href="/privacy" target="_blank" rel="noopener noreferrer" class="terms-link">${privacyPolicy}</a>`;
+            const termsLink = `<a href="/terms" target="_blank" rel="noopener noreferrer" class="terms-link">${termsOfService}</a>`;
             
-            let html = termsAgreement
+            termsDiv.innerHTML = termsAgreement
                 .replace('%privacy%', privacyLink)
                 .replace('%terms%', termsLink);
-            
-            termsDiv.innerHTML = html;
         }
 
         function renderMissingWarning() {
             const warningDiv = document.getElementById('missing-warning');
             if (!warningDiv || !hasMissingRequired) return;
-            const fieldsList = missingFields.join(', ');
-            const profileLink = `<a href="/home">${T.profile_settings || 'profile settings'}</a>`;
-            const template = T.scope_data_missing_warning || 'This service requires your %fields%. Set them in your %link%.';
+            const fieldsList = Array.isArray(missingFields) ? missingFields.map(escapeHtml).join(', ') : '';
+            const profileLink = `<a href="/home">${escapeHtml(T.profile_settings || 'profile settings')}</a>`;
+            const template = escapeHtml(T.scope_data_missing_warning || 'This service requires your %fields%. Set them in your %link%.');
             warningDiv.innerHTML = template.replace('%fields%', '<strong>' + fieldsList + '</strong>').replace('%link%', profileLink);
         }
         
@@ -533,7 +612,7 @@
             }
         });
         
-        document.title = (T.authorize || "Authorize") + " " + "{{.Client.Name}}";
+        document.title = (T.authorize || "Authorize") + " " + clientName;
     </script>
 </body>
 
