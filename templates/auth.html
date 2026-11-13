@@ -2315,8 +2315,12 @@
                     const destEl = document.getElementById('target-notice-dest');
                     if (notice && destEl) {
                         const parsedDisplay = new URL(targetUrl, window.location.origin);
-                        const appNameHint = parsedDisplay.searchParams.get('client_name') || parsedDisplay.pathname;
-                        destEl.textContent = appNameHint;
+                        let appNameHint = parsedDisplay.searchParams.get('client_name') || '';
+                        if (!appNameHint && parsedDisplay.pathname.startsWith('/o/authorize')) {
+                            const redir = parsedDisplay.searchParams.get('redirect_uri') || '';
+                            try { appNameHint = redir ? new URL(redir).host : ''; } catch (e) {}
+                        }
+                        destEl.textContent = appNameHint || parsedDisplay.pathname;
                         notice.classList.remove('hidden');
                     }
                 } catch (error) {

@@ -512,5 +512,11 @@
   "activity_filter_clients": "Ilovalar",
   "activity_no_matches": "Ushbu turkumda hali hodisalar yo'q.",
   "unsaved_changes": "Saqlanmagan o'zgarishlar",
-  "discard_changes": "Bekor qilish"
+  "discard_changes": "Bekor qilish",
+  "client_type_public_hint": "SPA, mobil ilovalar va CLI vositalari uchun PKCE bilan qulay (maxfiy kalitsiz).",
+  "client_type_confidential_hint": "Mijoz sirini xavfsiz saqlay oladigan server ilovalari uchun.",
+  "preset_standard_oidc": "Standart OIDC",
+  "test_in_docs": "Sinab ko'rish",
+  "mfa_active_count": "3 tadan {count} tasi yoqilgan",
+  "toggle_checkup_details": "Tafsilotlar"
 }

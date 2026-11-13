@@ -512,5 +512,11 @@
   "activity_filter_clients": "Приложения",
   "activity_no_matches": "В этой категории пока нет событий.",
   "unsaved_changes": "Есть несохранённые изменения",
-  "discard_changes": "Отменить"
+  "discard_changes": "Отменить",
+  "client_type_public_hint": "Подходит для SPA, мобильных приложений и CLI с PKCE (без секрета клиента).",
+  "client_type_confidential_hint": "Для серверных приложений, способных безопасно хранить секрет клиента.",
+  "preset_standard_oidc": "Стандартный OIDC",
+  "test_in_docs": "Проверить",
+  "mfa_active_count": "{count} из 3 активно",
+  "toggle_checkup_details": "Подробнее"
 }

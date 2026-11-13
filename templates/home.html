@@ -1336,11 +1336,31 @@
 
     .scope-check-main {
         display: flex;
-        align-items: center;
+        align-items: flex-start;
         gap: 9px;
         font-size: 0.875rem;
         font-weight: 500;
         cursor: pointer;
+        min-width: 0;
+    }
+
+    .scope-check-main input[type="checkbox"] {
+        margin-top: 3px;
+        flex-shrink: 0;
+    }
+
+    .scope-check-text {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        min-width: 0;
+    }
+
+    .scope-check-desc {
+        font-size: 0.76rem;
+        font-weight: 400;
+        color: var(--text-muted);
+        line-height: 1.35;
     }
 
     .scope-check-req {
@@ -1350,6 +1370,23 @@
         font-size: 0.78rem;
         color: var(--text-muted);
         cursor: pointer;
+        flex-shrink: 0;
+    }
+
+    .security-checkup.is-collapsed .checkup-header {
+        margin-bottom: 0;
+    }
+
+    .security-checkup.is-collapsed .checkup-progress-track,
+    .security-checkup.is-collapsed .checkup-grid {
+        display: none;
+    }
+
+    .checkup-header-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
     }
 
     .totp-qr-wrap {
@@ -1615,10 +1652,11 @@
                     </div>
                     <div class="field">
                         <label for="type">{{ index .T "client_type" }}</label>
-                        <select id="type" name="type" class="console-select">
+                        <select id="type" name="type" class="console-select" onchange="updateClientTypeHint()">
                             <option value="public">{{ index .T "public" }} (PKCE / SPA / Mobile)</option>
                             <option value="confidential">{{ index .T "confidential" }} (Backend / Server)</option>
                         </select>
+                        <span id="client-type-hint" class="field-status-note"></span>
                     </div>
                     <div class="field">
                         <label>{{ index .T "redirect_uris" }}</label>
@@ -1626,13 +1664,19 @@
                         <button type="button" class="btn btn-secondary btn-sm" style="align-self:flex-start;" onclick="addURIRow('')">+ {{ index .T "add_redirect_uri" }}</button>
                     </div>
                     <div class="field">
-                        <label>{{ index .T "client_scopes" }}</label>
+                        <div class="field-head-row">
+                            <label>{{ index .T "client_scopes" }}</label>
+                            <button type="button" class="btn btn-ghost btn-sm" onclick="applyStandardOIDCPreset()">{{ index .T "preset_standard_oidc" }}</button>
+                        </div>
                         <div style="display:flex;flex-direction:column;gap:8px;">
                             {{ range .ValidScopes }}
                             <div class="scope-check-row">
                                 <label class="scope-check-main">
                                     <input type="checkbox" id="scope-{{ . }}" name="{{ . }}" onchange="toggleRequired(this, '{{ . }}')">
-                                    <span>{{ . }}</span>
+                                    <span class="scope-check-text">
+                                        <span>{{ . }}</span>
+                                        <span class="scope-check-desc" data-scope-desc="{{ . }}"></span>
+                                    </span>
                                 </label>
                                 <label class="scope-check-req">
                                     <input type="checkbox" id="req-{{ . }}" name="required_{{ . }}" disabled>
@@ -2205,7 +2249,9 @@
                             <div class="hero-meta">
                                 <div class="hero-name">${escapeHtml(fullName)}</div>
                                 <div class="hero-subrow">
-                                    <span>@${escapeHtml(user.username)}</span>
+                                    <button type="button" class="hero-id-chip" data-copy-val="${escapeHtml(user.username)}" onclick="copyToClipboard(this.dataset.copyVal, this)" title="${escapeHtml(tr('copy', 'Copy'))}">
+                                        <span>@${escapeHtml(user.username)}</span>
+                                    </button>
                                     <span>&middot;</span>
                                     <button type="button" class="hero-id-chip" onclick="copyToClipboard('${escapeHtml(String(user.id))}', this)" title="${escapeHtml(tr('copy_id', 'Copy ID'))}">
                                         <span>${escapeHtml(tr('account_id_label', 'Account ID'))}: #${escapeHtml(String(user.id))}</span>
@@ -2243,7 +2289,7 @@
                         const checkSvg = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>';
                         const warnSvg = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>';
                         return `
-                        <section class="security-checkup" aria-label="${escapeHtml(tr('security_checkup', 'Security checkup'))}">
+                        <section class="security-checkup ${allDone ? 'is-collapsed' : ''}" id="security-checkup-box" aria-label="${escapeHtml(tr('security_checkup', 'Security checkup'))}">
                             <div class="checkup-header">
                                 <div>
                                     <h3 class="checkup-title">
@@ -2252,7 +2298,10 @@
                                     </h3>
                                     <p class="checkup-desc">${escapeHtml(allDone ? tr('security_checkup_all_good', 'Your account meets all recommended security checks.') : tr('security_checkup_desc', 'Review your account readiness and enable backup recovery and two-step verification.'))}</p>
                                 </div>
-                                <span class="checkup-score-pill ${allDone ? 'is-complete' : ''}">${escapeHtml(scoreLabel)}</span>
+                                <div class="checkup-header-actions">
+                                    <span class="checkup-score-pill ${allDone ? 'is-complete' : ''}">${escapeHtml(scoreLabel)}</span>
+                                    ${allDone ? `<button type="button" class="btn btn-ghost btn-sm" aria-expanded="false" onclick="const box=document.getElementById('security-checkup-box'); if(box){const collapsed=box.classList.toggle('is-collapsed'); this.setAttribute('aria-expanded', String(!collapsed));}">${escapeHtml(tr('toggle_checkup_details', 'Details'))}</button>` : ''}
+                                </div>
                             </div>
                             <div class="checkup-progress-track" aria-hidden="true">
                                 <div class="checkup-progress-fill ${allDone ? 'is-complete' : ''}" style="width: ${pct}%;"></div>
@@ -2342,10 +2391,16 @@
                         <section class="console-card">
                             <div class="card-head">
                                 <div class="card-title-group">
-                                    <h3 class="card-title">${escapeHtml(tr('contact_methods', 'Contact Methods'))}</h3>
+                                    <h3 class="card-title">
+                                        <span>${escapeHtml(tr('contact_methods', 'Contact Methods'))}</span>
+                                        <span class="badge badge-warning hidden" id="contact-dirty-badge">${escapeHtml(tr('unsaved_changes', 'Unsaved changes'))}</span>
+                                    </h3>
                                     <p class="card-desc">${escapeHtml(tr('contact_methods_desc', 'Used for recovery and security verification. Changes require your current password and OTP confirmation.'))}</p>
                                 </div>
-                                <button type="submit" form="contact-form" class="btn btn-primary btn-sm" id="contact-save-btn">${escapeHtml(tr('save', 'Save'))}</button>
+                                <div class="card-head-actions">
+                                    <button type="button" class="btn btn-ghost btn-sm hidden" id="contact-discard-btn">${escapeHtml(tr('discard_changes', 'Discard'))}</button>
+                                    <button type="submit" form="contact-form" class="btn btn-primary btn-sm" id="contact-save-btn">${escapeHtml(tr('save', 'Save'))}</button>
+                                </div>
                             </div>
                             <div id="pending-contact-alert"></div>
                             <form id="contact-form" style="display:flex;flex-direction:column;gap:14px;">
@@ -2370,7 +2425,14 @@
                         <section class="console-card" id="mfa-section-card">
                             <div class="card-head">
                                 <div class="card-title-group">
-                                    <h3 class="card-title">${escapeHtml(tr('two_step_verification', 'Two-Step Verification'))}</h3>
+                                    <h3 class="card-title">
+                                        <span>${escapeHtml(tr('two_step_verification', 'Two-Step Verification'))}</span>
+                                        ${(() => {
+                                            const mfaCnt = (user.mfa_totp_enabled ? 1 : 0) + (user.mfa_email_enabled ? 1 : 0) + (user.mfa_phone_enabled ? 1 : 0);
+                                            const label = tr('mfa_active_count', '{count} of 3 active').replace('{count}', String(mfaCnt));
+                                            return `<span class="badge ${mfaCnt > 0 ? 'badge-success' : 'badge-neutral'}">${escapeHtml(label)}</span>`;
+                                        })()}
+                                    </h3>
                                     <p class="card-desc">${escapeHtml(tr('mfa_section_desc', 'Add a second verification step to protect your account even if someone learns your password.'))}</p>
                                 </div>
                             </div>
@@ -2674,6 +2736,48 @@
 
             const contactForm = document.getElementById('contact-form');
             if (contactForm) {
+                const emailInput = document.getElementById('email');
+                const phoneInput = document.getElementById('phone');
+                const initialEmail = (currentUser.email || '').trim();
+                const initialPhone = currentUser.phone ? ('+' + String(currentUser.phone)) : '';
+                const contactDirtyBadge = document.getElementById('contact-dirty-badge');
+                const contactDiscardBtn = document.getElementById('contact-discard-btn');
+                const getCurrentPhoneComparable = () => {
+                    if (!phoneInput) return '';
+                    const raw = phoneInput.value.trim();
+                    if (!raw) return '';
+                    if (itiProfilePhone && typeof itiProfilePhone.getNumber === 'function') {
+                        const num = itiProfilePhone.getNumber();
+                        if (num) return num.replace(/\s+/g, '');
+                    }
+                    return raw.replace(/\s+/g, '');
+                };
+                const syncContactDirty = () => {
+                    const emailChanged = (emailInput ? emailInput.value.trim() : '') !== initialEmail;
+                    const phoneChanged = getCurrentPhoneComparable() !== initialPhone.replace(/\s+/g, '');
+                    const isDirty = emailChanged || phoneChanged;
+                    if (contactDirtyBadge) contactDirtyBadge.classList.toggle('hidden', !isDirty);
+                    if (contactDiscardBtn) contactDiscardBtn.classList.toggle('hidden', !isDirty);
+                };
+                if (emailInput) emailInput.addEventListener('input', syncContactDirty);
+                if (phoneInput) {
+                    phoneInput.addEventListener('input', syncContactDirty);
+                    phoneInput.addEventListener('countrychange', syncContactDirty);
+                }
+                if (contactDiscardBtn) {
+                    contactDiscardBtn.addEventListener('click', () => {
+                        if (emailInput) emailInput.value = initialEmail;
+                        if (phoneInput) {
+                            if (itiProfilePhone && typeof itiProfilePhone.setNumber === 'function') {
+                                if (initialPhone) itiProfilePhone.setNumber(initialPhone);
+                                else phoneInput.value = '';
+                            } else {
+                                phoneInput.value = initialPhone;
+                            }
+                        }
+                        syncContactDirty();
+                    });
+                }
                 contactForm.addEventListener('submit', async (e) => {
                     e.preventDefault();
                     const emailVal = document.getElementById('email').value.trim();
@@ -3226,6 +3330,7 @@
         function getScopeLabel(scope) {
             const keyMap = {
                 openid: 'scope_openid',
+                profile: 'scope_basic_info',
                 email: 'scope_email',
                 phone: 'scope_phone',
                 user_basic_info: 'scope_basic_info',
@@ -3654,7 +3759,10 @@
                         </div>
 
                         <div class="entity-footer">
-                            ${isConf ? `<button type="button" class="btn btn-secondary btn-sm" onclick="regenerateSecret(${Number(c.id)})">${escapeHtml(tr('regenerate_secret', 'Regenerate'))}</button>` : ''}
+                            <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+                                ${isConf ? `<button type="button" class="btn btn-secondary btn-sm" onclick="regenerateSecret(${Number(c.id)})">${escapeHtml(tr('regenerate_secret', 'Regenerate'))}</button>` : ''}
+                                <a href="/docs?client_id=${Number(c.id)}#your-clients" class="btn btn-ghost btn-sm">${escapeHtml(tr('test_in_docs', 'Test flow'))}</a>
+                            </div>
                             <div class="entity-footer-actions">
                                 <button type="button" class="btn btn-secondary btn-sm" onclick="openModal(${Number(c.id)})">${escapeHtml(tr('edit', 'Edit'))}</button>
                                 <button type="button" class="btn btn-danger-outline btn-sm" onclick="deleteClient(${Number(c.id)})">${escapeHtml(tr('delete', 'Delete'))}</button>
@@ -3665,6 +3773,33 @@
             }).join('');
 
             region.innerHTML = `<div class="cards-grid">${cardsHtml}</div>`;
+        }
+
+        function updateClientTypeHint() {
+            const typeEl = document.getElementById('type');
+            const hintEl = document.getElementById('client-type-hint');
+            if (!typeEl || !hintEl) return;
+            hintEl.textContent = typeEl.value === 'confidential'
+                ? tr('client_type_confidential_hint', 'Best for backend servers that can securely store a client secret.')
+                : tr('client_type_public_hint', 'Best for SPAs, mobile apps, and CLI tools using PKCE (no client secret).');
+        }
+
+        function applyStandardOIDCPreset() {
+            const preset = ['openid', 'profile', 'email'];
+            ValidScopes.forEach(s => {
+                const sc = document.getElementById('scope-' + s);
+                if (!sc) return;
+                sc.checked = preset.includes(s);
+                toggleRequired(sc, s);
+            });
+        }
+
+        function populateClientScopeDescriptions() {
+            document.querySelectorAll('#client-modal [data-scope-desc]').forEach(el => {
+                const scopeKey = el.getAttribute('data-scope-desc');
+                const label = getScopeLabel(scopeKey);
+                el.textContent = label && label !== scopeKey ? label : '';
+            });
         }
 
         function toggleRequired(scopeCheckbox, scopeName) {
@@ -3704,6 +3839,7 @@
             _editingClientType = '';
             document.getElementById('client-id').value = id ? String(id) : '';
             document.getElementById('modal-title').textContent = id ? tr('edit_client', 'Edit Client') : tr('create_new_client', 'Create New Client');
+            populateClientScopeDescriptions();
             ValidScopes.forEach(s => {
                 const sc = document.getElementById('scope-' + s);
                 const rc = document.getElementById('req-' + s);
@@ -3734,7 +3870,13 @@
                 }
             } else {
                 setRedirectURIs(['']);
+                const oidcCheckbox = document.getElementById('scope-openid');
+                if (oidcCheckbox) {
+                    oidcCheckbox.checked = true;
+                    toggleRequired(oidcCheckbox, 'openid');
+                }
             }
+            updateClientTypeHint();
             showModal('client-modal');
         }
 

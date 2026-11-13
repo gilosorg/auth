@@ -512,5 +512,11 @@
   "activity_filter_clients": "Apps & Clients",
   "activity_no_matches": "No activity events in this category yet.",
   "unsaved_changes": "Unsaved changes",
-  "discard_changes": "Discard"
+  "discard_changes": "Discard",
+  "client_type_public_hint": "Best for SPAs, mobile apps, and CLI tools using PKCE (no client secret).",
+  "client_type_confidential_hint": "Best for backend servers that can securely store a client secret.",
+  "preset_standard_oidc": "Standard OIDC preset",
+  "test_in_docs": "Test flow",
+  "mfa_active_count": "{count} of 3 active",
+  "toggle_checkup_details": "Details"
 }

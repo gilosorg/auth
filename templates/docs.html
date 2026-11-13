@@ -248,8 +248,12 @@
                     {{ end }}
 
                     <div class="callout callout-info">
-                        <div class="callout-title">Base URL</div>
+                        <div class="callout-title">Base URL &amp; Discovery</div>
                         <p><code id="baseUrl">{{ if .IssuerURL }}{{ .IssuerURL }}{{ else }}https://auth.gilos.org{{ end }}</code></p>
+                        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;">
+                            <button type="button" class="btn btn-secondary" style="font-size:0.78rem;padding:4px 10px;" onclick="copyEndpointPath('/.well-known/openid-configuration', this)">Copy OIDC Discovery</button>
+                            <button type="button" class="btn btn-secondary" style="font-size:0.78rem;padding:4px 10px;" onclick="copyEndpointPath('/.well-known/jwks.json', this)">Copy JWKS URL</button>
+                        </div>
                     </div>
                 </section>
 
@@ -320,7 +324,7 @@
                     <div class="empty-state">
                         <h3>No OAuth Clients Yet</h3>
                         <p>Create your first OAuth client to see interactive code examples with your real credentials.</p>
-                        <a href="/home" class="btn btn-primary">Create Your First Client</a>
+                        <a href="/home?tab=clients" class="btn btn-primary">Create Your First Client</a>
                     </div>
                     {{ end }}
                 </section>
@@ -331,7 +335,7 @@
                     <h2>Quick Start</h2>
                     <p>Integrating Gilos Auth takes just 3 steps:</p>
                     <ol>
-                        <li><strong>Create a client</strong> - Register your app at <a href="/home" style="color: var(--doc-primary);">Gilos Auth</a></li>
+                        <li><strong>Create a client</strong> - Register your app at <a href="/home?tab=clients" style="color: var(--doc-primary);">Gilos Auth</a></li>
                         <li><strong>Redirect to authorize</strong> - Send users to our authorization page</li>
                         <li><strong>Exchange code for token</strong> - Get an access token and fetch user data</li>
                     </ol>
@@ -1463,6 +1467,21 @@ func CallbackHandler(onSuccess AuthCallback) http.HandlerFunc {
             window.open(`${baseUrl}/o/authorize?${params.toString()}`, '_blank', 'noopener');
         }
 
+        function copyEndpointPath(path, btn) {
+            const base = (document.getElementById('baseUrl')?.textContent || window.location.origin).replace(/\/+$/, '');
+            const url = base + path;
+            navigator.clipboard.writeText(url).then(() => {
+                if (btn) {
+                    const original = btn.textContent;
+                    btn.textContent = DOCS_I18N.copied || 'Copied';
+                    setTimeout(() => { btn.textContent = original; }, 1800);
+                }
+                showDocsToast(`${url} copied`);
+            }).catch(() => {
+                showDocsToast('Failed to copy to clipboard', true);
+            });
+        }
+
         function copyCode(btn) {
             const pre = btn.closest('pre');
             const code = pre.querySelector('code').textContent;
@@ -1560,6 +1579,17 @@ func CallbackHandler(onSuccess AuthCallback) http.HandlerFunc {
             window.addEventListener('scroll', setActiveLink);
             setActiveLink();
         }
+
+        (function initClientFromQuery() {
+            const cid = new URLSearchParams(window.location.search).get('client_id');
+            const select = document.getElementById('clientSelect');
+            if (!cid || !select) return;
+            const opt = Array.from(select.options).find(o => o.value === cid);
+            if (opt) {
+                select.value = cid;
+                updateClientContext();
+            }
+        })();
     </script>
 </body>
 </html>
