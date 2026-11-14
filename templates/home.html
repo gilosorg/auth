@@ -43,6 +43,220 @@
         width: auto;
     }
 
+    /* Windows 11 Settings Header Search ("Find a setting") */
+    .header-search-wrap {
+        position: relative;
+        flex: 1 1 280px;
+        max-width: 420px;
+        min-width: 140px;
+    }
+
+    .header-search-box {
+        display: flex;
+        align-items: stretch;
+        height: 34px;
+        border-radius: var(--radius-sm);
+        border: 1px solid var(--border-default);
+        border-bottom: 1.5px solid var(--input-stroke-bottom);
+        background: var(--surface-elevated);
+        overflow: hidden;
+        transition: border-color 0.14s ease, background-color 0.14s ease, box-shadow 0.14s ease;
+    }
+
+    .header-search-box:hover {
+        border-color: var(--border-strong);
+    }
+
+    .header-search-box:focus-within {
+        border-bottom-color: var(--accent);
+        box-shadow: inset 0 -1px 0 0 var(--accent);
+    }
+
+    .header-search-icon {
+        flex: 0 0 34px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--text-tertiary);
+        pointer-events: none;
+    }
+
+    .header-search-input {
+        flex: 1 1 auto;
+        min-width: 0;
+        height: 100%;
+        padding: 0 6px 0 0;
+        border: none;
+        border-radius: var(--radius-xs);
+        background: transparent;
+        color: var(--text);
+        font-family: inherit;
+        font-size: 0.83rem;
+    }
+
+    .header-search-input:focus {
+        outline: none;
+    }
+
+    .header-search-input::placeholder {
+        color: var(--text-muted);
+    }
+
+    .header-search-clear {
+        flex: 0 0 30px;
+        border: none;
+        border-left: 1px solid var(--border-subtle);
+        background: transparent;
+        color: var(--text-muted);
+        border-radius: var(--radius-xs);
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        transition: background-color 0.14s ease, color 0.14s ease;
+    }
+
+    .header-search-clear:hover {
+        background: var(--surface-hover);
+        color: var(--text);
+    }
+
+    .header-search-kbd {
+        align-self: center;
+        margin-right: 7px;
+        padding: 1px 6px;
+        border-radius: var(--radius-xs);
+        border: 1px solid var(--border-default);
+        background: var(--surface-subtle);
+        color: var(--text-muted);
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        line-height: 1.35;
+        pointer-events: none;
+        flex-shrink: 0;
+    }
+
+    .settings-search-menu {
+        position: absolute;
+        top: calc(100% + 6px);
+        left: 0;
+        right: 0;
+        max-height: 360px;
+        overflow-y: auto;
+        padding: 5px;
+        background: var(--glass-surface-strong);
+        backdrop-filter: var(--glass-backdrop);
+        -webkit-backdrop-filter: var(--glass-backdrop);
+        border: 1px solid var(--card-border);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--popover-shadow);
+        display: none;
+        flex-direction: column;
+        gap: 2px;
+        z-index: 80;
+    }
+
+    .settings-search-menu.show {
+        display: flex;
+        animation: gilosPopoverIn 0.14s var(--ease-out);
+    }
+
+    .settings-search-item {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        width: 100%;
+        padding: 8px 10px 8px 12px;
+        border: none;
+        border-radius: var(--radius-sm);
+        background: transparent;
+        color: var(--text);
+        font-family: inherit;
+        text-align: left;
+        cursor: pointer;
+        transition: background-color 0.12s ease;
+    }
+
+    .settings-search-item:hover,
+    .settings-search-item.is-selected {
+        background: var(--surface-hover);
+    }
+
+    .settings-search-item.is-selected::before {
+        content: '';
+        position: absolute;
+        left: 3px;
+        top: 7px;
+        bottom: 7px;
+        width: 3px;
+        border-radius: var(--radius-pill);
+        background: var(--accent);
+    }
+
+    .settings-search-item-main {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-width: 0;
+        flex: 1;
+    }
+
+    .settings-search-item-icon {
+        width: 28px;
+        height: 28px;
+        border-radius: var(--radius-sm);
+        background: var(--surface-subtle);
+        color: var(--text-secondary);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .settings-search-item-text {
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 1px;
+    }
+
+    .settings-search-item-title {
+        font-size: 0.84rem;
+        font-weight: 600;
+        color: var(--text);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .settings-search-item-desc {
+        font-size: 0.74rem;
+        color: var(--text-muted);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .settings-search-item-group {
+        font-size: 0.7rem;
+        font-weight: 500;
+        padding: 2px 7px;
+        border-radius: var(--radius-pill);
+        background: var(--surface-subtle);
+        border: 1px solid var(--border-subtle);
+        color: var(--text-muted);
+        flex-shrink: 0;
+    }
+
+    .settings-search-empty {
+        padding: 16px 12px;
+        text-align: center;
+        font-size: 0.83rem;
+        color: var(--text-muted);
+    }
+
     .header-right {
         display: flex;
         align-items: center;
@@ -414,8 +628,25 @@
         .header-container {
             padding: 0 16px;
             height: 54px;
+            gap: 10px;
+        }
+        .header-search-wrap {
+            max-width: none;
         }
         .docs-header-btn {
+            display: none;
+        }
+    }
+
+    @media (max-width: 580px) {
+        .header-search-kbd {
+            display: none;
+        }
+        .user-trigger {
+            padding: 0 6px 0 4px;
+            gap: 4px;
+        }
+        .user-trigger-handle {
             display: none;
         }
     }
@@ -423,6 +654,17 @@
     @media (max-width: 640px) {
         .console-main {
             padding: 18px 14px 36px;
+        }
+        .settings-page-title {
+            font-size: 1.42rem;
+        }
+        .settings-row {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        .settings-row-control {
+            width: 100%;
+            justify-content: flex-start;
         }
     }
 
@@ -698,10 +940,194 @@
         gap: 8px;
     }
 
+    .card-title-icon {
+        width: 28px;
+        height: 28px;
+        border-radius: var(--radius-sm);
+        background: var(--surface-subtle);
+        border: 1px solid var(--border-subtle);
+        color: var(--text-secondary);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .card-title-icon--danger {
+        background: var(--red-50);
+        border-color: var(--danger-border);
+        color: var(--red-600);
+    }
+
     .card-desc {
         font-size: 0.83rem;
         color: var(--text-muted);
         line-height: 1.45;
+    }
+
+    /* Windows 11 Settings Page Header */
+    .settings-page-header {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 16px;
+        flex-wrap: wrap;
+        margin-bottom: 18px;
+    }
+
+    .settings-page-title {
+        font-size: 1.65rem;
+        font-weight: 600;
+        letter-spacing: -0.025em;
+        color: var(--text);
+        line-height: 1.2;
+    }
+
+    .settings-page-subtitle {
+        font-size: 0.875rem;
+        color: var(--text-muted);
+        margin-top: 4px;
+        line-height: 1.45;
+    }
+
+    .settings-page-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    /* Windows 11 SettingsRow List (Appearance & Language Card) */
+    .settings-row-list {
+        display: flex;
+        flex-direction: column;
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-md);
+        background: var(--surface-subtle);
+        overflow: hidden;
+    }
+
+    .settings-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 14px 16px;
+        flex-wrap: wrap;
+    }
+
+    .settings-row + .settings-row {
+        border-top: 1px solid var(--border-subtle);
+    }
+
+    .settings-row-info {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        min-width: 0;
+        flex: 1 1 240px;
+    }
+
+    .settings-row-icon {
+        width: 34px;
+        height: 34px;
+        border-radius: var(--radius-sm);
+        background: var(--card-bg);
+        border: 1px solid var(--border-subtle);
+        color: var(--text-secondary);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .settings-row-title {
+        font-size: 0.89rem;
+        font-weight: 600;
+        color: var(--text);
+    }
+
+    .settings-row-desc {
+        font-size: 0.78rem;
+        color: var(--text-muted);
+        margin-top: 2px;
+        line-height: 1.4;
+    }
+
+    .settings-row-control {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 6px;
+        flex-wrap: wrap;
+    }
+
+    .lang-pill-group {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 3px;
+        border-radius: var(--radius-md);
+        border: 1px solid var(--border-subtle);
+        background: var(--card-bg);
+        flex-wrap: wrap;
+    }
+
+    .lang-pill-btn {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        height: 30px;
+        padding: 0 10px;
+        border: none;
+        border-radius: var(--radius-sm);
+        background: transparent;
+        color: var(--text-secondary);
+        font-family: inherit;
+        font-size: 0.8rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: background-color 0.14s ease, color 0.14s ease;
+    }
+
+    .lang-pill-btn:hover {
+        background: var(--surface-hover);
+        color: var(--text);
+    }
+
+    .lang-pill-btn.active {
+        background: var(--accent-subtle);
+        color: var(--accent);
+        font-weight: 600;
+    }
+
+    .lang-pill-btn img {
+        width: 15px;
+        height: 15px;
+        border-radius: var(--radius-xs);
+        object-fit: cover;
+    }
+
+    .is-jump-highlight {
+        animation: winuiJumpHighlight 1.35s var(--ease-out);
+    }
+
+    @keyframes winuiJumpHighlight {
+        0% {
+            box-shadow: 0 0 0 2px var(--accent), var(--card-shadow);
+            border-color: var(--accent);
+        }
+        100% {
+            box-shadow: var(--card-shadow);
+        }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .is-jump-highlight {
+            animation: none;
+            box-shadow: 0 0 0 2px var(--accent);
+        }
     }
 
     .form-grid {
@@ -2117,6 +2543,18 @@
                 <span>{{ if .AppName }}{{ .AppName }}{{ else }}Gilos Auth{{ end }}</span>
             </a>
 
+            <div class="header-search-wrap" id="settings-search-wrap">
+                <div class="header-search-box" id="settings-search-combobox" role="combobox" aria-expanded="false" aria-owns="settings-search-menu" aria-haspopup="listbox">
+                    <span class="header-search-icon" aria-hidden="true">{{ icon "search" "fluent-icon--sm" }}</span>
+                    <input type="search" id="settings-search-input" class="header-search-input" placeholder="{{ index .T "find_setting" }}" aria-label="{{ index .T "find_setting" }}" autocomplete="off" aria-autocomplete="list" aria-controls="settings-search-menu">
+                    <button type="button" id="settings-search-clear" class="header-search-clear hidden" aria-label="{{ index .T "clear_input" }}">
+                        {{ icon "dismiss" "fluent-icon--sm" }}
+                    </button>
+                    <kbd class="header-search-kbd" aria-hidden="true">/</kbd>
+                </div>
+                <div class="settings-search-menu" id="settings-search-menu" role="listbox" aria-label="{{ index .T "find_setting" }}"></div>
+            </div>
+
             <div class="header-right">
                 <a href="/docs" class="btn btn-ghost btn-sm docs-header-btn">
                     {{ icon "book-open" "fluent-icon--sm" }}
@@ -2203,6 +2641,13 @@
                 </a>
             </aside>
             <div class="settings-content">
+                <div class="settings-page-header" id="settings-page-header">
+                    <div>
+                        <h1 class="settings-page-title" id="settings-page-title">{{ index .T "account" }}</h1>
+                        <p class="settings-page-subtitle" id="settings-page-subtitle">{{ index .T "account_subtitle" }}</p>
+                    </div>
+                    <div class="settings-page-actions" id="settings-page-actions"></div>
+                </div>
                 {{template "ribbon" .}}
                 <div id="oauth-target-banner"></div>
                 <div id="global-deletion-banner"></div>
@@ -2475,6 +2920,8 @@
     <script>
         const T = {{ json .T }};
         const ValidScopes = {{ json .ValidScopes }};
+        const AVAILABLE_LANGUAGES = {{ json .Languages }} || [];
+        const CURRENT_LANG = "{{ .Lang }}";
         const currentSessionID = {{ .CurrentSessionID }};
         const csrfToken = "{{ .CSRFToken }}";
 
@@ -2605,11 +3052,18 @@
             const el = document.getElementById(id);
             if (!el) return;
             el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            const highlightHost = el.closest('.console-card, .account-hero') || el;
+            if (highlightHost && highlightHost.classList) {
+                highlightHost.classList.remove('is-jump-highlight');
+                void highlightHost.offsetWidth;
+                highlightHost.classList.add('is-jump-highlight');
+                setTimeout(() => highlightHost.classList.remove('is-jump-highlight'), 1450);
+            }
             setTimeout(() => {
                 if (typeof el.focus === 'function' && (el.tagName === 'INPUT' || el.tagName === 'SELECT' || el.tagName === 'BUTTON')) {
                     el.focus();
                 } else {
-                    const firstFocusable = el.querySelector('button, input');
+                    const firstFocusable = el.querySelector('input, select, button');
                     if (firstFocusable) firstFocusable.focus();
                 }
             }, 220);
@@ -2639,6 +3093,30 @@
             copyToClipboard(url, triggerEl, tr('discovery_copied_msg', 'OIDC Discovery URL copied!'));
         }
 
+        function syncSettingsPageHeader(tabName) {
+            const titleEl = document.getElementById('settings-page-title');
+            const subEl = document.getElementById('settings-page-subtitle');
+            const actionsEl = document.getElementById('settings-page-actions');
+            const map = {
+                account: {
+                    title: tr('account', 'Account'),
+                    subtitle: tr('account_subtitle', 'Manage your identity, security, appearance, and account protection settings.')
+                },
+                sessions: {
+                    title: tr('sessions', 'Sessions'),
+                    subtitle: tr('sessions_subtitle', 'Manage browser sessions and connected applications with active OAuth access.')
+                },
+                clients: {
+                    title: tr('clients', 'Clients'),
+                    subtitle: tr('clients_subtitle', 'Register and manage OAuth 2.1 / OpenID Connect applications using Gilos Auth.')
+                }
+            };
+            const meta = map[tabName] || map.account;
+            if (titleEl) titleEl.textContent = meta.title;
+            if (subEl) subEl.textContent = meta.subtitle;
+            if (actionsEl) actionsEl.innerHTML = '';
+        }
+
         function setActiveTab(tabName, shouldLoad = true) {
             if (!['account', 'sessions', 'clients'].includes(tabName)) tabName = 'account';
             currentTab = tabName;
@@ -2654,6 +3132,8 @@
                 const el = document.getElementById(`${t}-content`);
                 if (el) el.style.display = t === tabName ? 'flex' : 'none';
             });
+
+            syncSettingsPageHeader(tabName);
 
             const url = new URL(window.location.href);
             url.searchParams.set('tab', tabName);
@@ -2905,7 +3385,7 @@
 
                 container.innerHTML = `
                     <!-- Hero Identity Card -->
-                    <section class="account-hero">
+                    <section class="account-hero" id="section-hero">
                         <div class="account-hero-left">
                             <div class="avatar-uploader">
                                 <div class="avatar-circle" id="hero-avatar-display">
@@ -2989,10 +3469,11 @@
 
                     <div class="console-grid">
                         <!-- Personal Info -->
-                        <section class="console-card">
+                        <section class="console-card" id="section-personal-info">
                             <div class="card-head">
                                 <div class="card-title-group">
                                     <h3 class="card-title">
+                                        <span class="card-title-icon" aria-hidden="true">${window.GilosUI.icon('person', { size: 16 })}</span>
                                         <span>${escapeHtml(tr('your_names', 'Personal Info'))}</span>
                                     </h3>
                                     <p class="card-desc">${escapeHtml(tr('personal_info_desc', 'Your display name across Gilos apps and services.'))}</p>
@@ -3023,10 +3504,11 @@
                         </section>
 
                         <!-- Gilos Username -->
-                        <section class="console-card">
+                        <section class="console-card" id="section-username">
                             <div class="card-head">
                                 <div class="card-title-group">
                                     <h3 class="card-title">
+                                        <span class="card-title-icon" aria-hidden="true">${window.GilosUI.icon('person-accounts', { size: 16 })}</span>
                                         <span>{{ if .AppIDLabel }}{{ .AppIDLabel }}{{ else }}Gilos Username{{ end }}</span>
                                     </h3>
                                     <p class="card-desc">${escapeHtml(tr('gilos_id_desc', 'Your unique @username handle across all Gilos services.'))}</p>
@@ -3058,10 +3540,11 @@
                         </section>
 
                         <!-- Contact Methods -->
-                        <section class="console-card">
+                        <section class="console-card" id="section-contacts">
                             <div class="card-head">
                                 <div class="card-title-group">
                                     <h3 class="card-title">
+                                        <span class="card-title-icon" aria-hidden="true">${window.GilosUI.icon('mail', { size: 16 })}</span>
                                         <span>${escapeHtml(tr('contact_methods', 'Contact Methods'))}</span>
                                     </h3>
                                     <p class="card-desc">${escapeHtml(tr('contact_methods_desc', 'Recovery email and phone number for sign-in and account recovery.'))}</p>
@@ -3095,6 +3578,7 @@
                             <div class="card-head">
                                 <div class="card-title-group">
                                     <h3 class="card-title">
+                                        <span class="card-title-icon" aria-hidden="true">${window.GilosUI.icon('shield-checkmark', { size: 16 })}</span>
                                         <span>${escapeHtml(tr('two_step_verification', 'Two-Step Verification'))}</span>
                                         ${mfaActive
                                             ? `<span class="badge badge-success">${escapeHtml(tr('mfa_enabled_badge', 'Enabled'))}</span>`
@@ -3168,10 +3652,13 @@
                         </section>
 
                         <!-- Password -->
-                        <section class="console-card console-card--full">
+                        <section class="console-card console-card--full" id="section-password">
                             <div class="card-head">
                                 <div class="card-title-group">
-                                    <h3 class="card-title">${escapeHtml(tr('password', 'Password'))}</h3>
+                                    <h3 class="card-title">
+                                        <span class="card-title-icon" aria-hidden="true">${window.GilosUI.icon('password', { size: 16 })}</span>
+                                        <span>${escapeHtml(tr('password', 'Password'))}</span>
+                                    </h3>
                                     <p class="card-desc">${escapeHtml(tr('password_section_desc', 'Choose a strong unique password. Updating it will sign out other browser sessions.'))}</p>
                                 </div>
                                 <button type="submit" form="password-form" class="btn btn-primary btn-sm" id="password-save-btn" disabled>${escapeHtml(tr('update', 'Update'))}</button>
@@ -3202,7 +3689,10 @@
                         <section class="console-card console-card--full" id="activity-card">
                             <div class="card-head">
                                 <div class="card-title-group">
-                                    <h3 class="card-title">${escapeHtml(tr('security_activity', 'Recent Security Activity'))}</h3>
+                                    <h3 class="card-title">
+                                        <span class="card-title-icon" aria-hidden="true">${window.GilosUI.icon('history', { size: 16 })}</span>
+                                        <span>${escapeHtml(tr('security_activity', 'Recent Security Activity'))}</span>
+                                    </h3>
                                     <p class="card-desc">${escapeHtml(tr('security_activity_desc', 'Review recent sign-ins, password changes, MFA updates, and app authorizations.'))}</p>
                                 </div>
                                 <button type="button" class="btn btn-secondary btn-sm" onclick="loadActivity(1, this)">${escapeHtml(tr('refresh_list', 'Refresh'))}</button>
@@ -3218,11 +3708,78 @@
                             </div>
                         </section>
 
+                        <!-- Appearance & Language (Windows 11 Personalization SettingsRows) -->
+                        <section class="console-card console-card--full" id="section-appearance">
+                            <div class="card-head">
+                                <div class="card-title-group">
+                                    <h3 class="card-title">
+                                        <span class="card-title-icon" aria-hidden="true">${window.GilosUI.icon('settings', { size: 16 })}</span>
+                                        <span>${escapeHtml(tr('appearance_language', 'Appearance & Language'))}</span>
+                                    </h3>
+                                    <p class="card-desc">${escapeHtml(tr('appearance_language_desc', 'Customize color theme and interface language across Gilos Auth.'))}</p>
+                                </div>
+                            </div>
+                            <div class="settings-row-list">
+                                <div class="settings-row">
+                                    <div class="settings-row-info">
+                                        <span class="settings-row-icon" id="account-theme-row-icon" aria-hidden="true">${window.GilosUI.icon('desktop', { size: 17 })}</span>
+                                        <div>
+                                            <div class="settings-row-title">${escapeHtml(tr('color_mode', 'Color mode'))}</div>
+                                            <div class="settings-row-desc">${escapeHtml(tr('color_mode_desc', 'Choose how Gilos Auth adapts to your device display theme.'))}</div>
+                                        </div>
+                                    </div>
+                                    <div class="settings-row-control">
+                                        <div class="filter-pills" id="account-theme-pills" role="group" aria-label="${escapeHtml(tr('color_mode', 'Color mode'))}">
+                                            <button type="button" class="filter-pill" data-theme-choice="system" aria-pressed="false" onclick="selectAccountTheme('system')">
+                                                ${window.GilosUI.icon('desktop', { size: 14 })}
+                                                <span>${escapeHtml(tr('theme_system', 'System'))}</span>
+                                            </button>
+                                            <button type="button" class="filter-pill" data-theme-choice="light" aria-pressed="false" onclick="selectAccountTheme('light')">
+                                                ${window.GilosUI.icon('sun', { size: 14 })}
+                                                <span>${escapeHtml(tr('theme_light', 'Light'))}</span>
+                                            </button>
+                                            <button type="button" class="filter-pill" data-theme-choice="dark" aria-pressed="false" onclick="selectAccountTheme('dark')">
+                                                ${window.GilosUI.icon('moon', { size: 14 })}
+                                                <span>${escapeHtml(tr('theme_dark', 'Dark'))}</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="settings-row">
+                                    <div class="settings-row-info">
+                                        <span class="settings-row-icon" aria-hidden="true">${window.GilosUI.icon('globe', { size: 17 })}</span>
+                                        <div>
+                                            <div class="settings-row-title">${escapeHtml(tr('interface_language', 'Display language'))}</div>
+                                            <div class="settings-row-desc">${escapeHtml(tr('interface_language_desc', 'Choose the language used for account controls, labels, and emails.'))}</div>
+                                        </div>
+                                    </div>
+                                    <div class="settings-row-control">
+                                        <div class="lang-pill-group" role="group" aria-label="${escapeHtml(tr('interface_language', 'Display language'))}">
+                                            ${(Array.isArray(AVAILABLE_LANGUAGES) && AVAILABLE_LANGUAGES.length ? AVAILABLE_LANGUAGES : [{ code: 'en', name: 'English', flag: '/static/img/i18n/gb.svg' }]).map(lang => {
+                                                const code = lang.code || lang.Code || 'en';
+                                                const name = lang.name || lang.Name || code;
+                                                const flag = lang.flag || lang.Flag || '';
+                                                const isActive = code === CURRENT_LANG;
+                                                return `
+                                                <button type="button" class="lang-pill-btn ${isActive ? 'active' : ''}" aria-pressed="${isActive ? 'true' : 'false'}" onclick="setLanguage('${escapeHtml(code)}')">
+                                                    ${flag ? `<img src="${escapeHtml(flag)}" alt="">` : ''}
+                                                    <span>${escapeHtml(name)}</span>
+                                                </button>`;
+                                            }).join('')}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
                         <!-- Danger Zone -->
-                        <section class="console-card console-card--full console-card--danger">
+                        <section class="console-card console-card--full console-card--danger" id="section-danger">
                             <div class="card-head" style="align-items:center;">
                                 <div class="card-title-group">
-                                    <h3 class="card-title" style="color:var(--red-600);">${escapeHtml(tr('danger_zone', 'Danger Zone'))}</h3>
+                                    <h3 class="card-title" style="color:var(--red-600);">
+                                        <span class="card-title-icon card-title-icon--danger" aria-hidden="true">${window.GilosUI.icon('warning', { size: 16 })}</span>
+                                        <span>${escapeHtml(tr('danger_zone', 'Danger Zone'))}</span>
+                                    </h3>
                                     <p class="card-desc">${escapeHtml(tr('delete_account_warning', 'Schedule permanent account deletion with a 30-day grace period to cancel.'))}</p>
                                 </div>
                                 <div id="danger-zone-head-action" class="card-head-actions"></div>
@@ -3274,6 +3831,7 @@
                 }
 
                 setupAccountForms();
+                syncAccountThemeControls();
                 checkPendingVerifications(false);
                 loadDeletionStatus();
                 loadActivity(1);
@@ -4209,17 +4767,15 @@
             const appsCount = allSessions.filter(s => s.type !== 'native').length;
             const hasOthers = allSessions.some(s => s.id !== currentSessionID);
 
+            const actionsEl = document.getElementById('settings-page-actions');
+            if (actionsEl && currentTab === 'sessions') {
+                actionsEl.innerHTML = `
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="loadSessions(1, this)">${escapeHtml(tr('refresh_list', 'Refresh'))}</button>
+                    ${hasOthers ? `<button type="button" class="btn btn-danger-outline btn-sm" onclick="terminateOtherSessions()">${escapeHtml(tr('terminate_all_others', 'Terminate all others'))}</button>` : ''}
+                `;
+            }
+
             container.innerHTML = `
-                <div class="section-toolbar">
-                    <div class="section-toolbar-titles">
-                        <h2>${escapeHtml(tr('sessions', 'Sessions'))}</h2>
-                        <p>${escapeHtml(tr('sessions_subtitle', 'Manage browser sessions and connected applications with active OAuth access.'))}</p>
-                    </div>
-                    <div class="section-toolbar-actions">
-                        <button type="button" class="btn btn-secondary btn-sm" onclick="loadSessions(1, this)">${escapeHtml(tr('refresh_list', 'Refresh'))}</button>
-                        ${hasOthers ? `<button type="button" class="btn btn-danger-outline btn-sm" onclick="terminateOtherSessions()">${escapeHtml(tr('terminate_all_others', 'Terminate all others'))}</button>` : ''}
-                    </div>
-                </div>
                 ${allSessions.length > 0 ? `
                 <div class="filter-toolbar">
                     <div class="filter-pills" id="sessions-filter-bar">
@@ -4491,18 +5047,16 @@
             const confCount = allClients.filter(c => c.type === 'confidential').length;
             const pubCount = allClients.filter(c => c.type !== 'confidential').length;
 
+            const actionsEl = document.getElementById('settings-page-actions');
+            if (actionsEl && currentTab === 'clients') {
+                actionsEl.innerHTML = `
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="copyDiscoveryURL(this)" title="/.well-known/openid-configuration">${escapeHtml(tr('discovery_endpoint', 'OIDC Discovery'))}</button>
+                    <a href="/docs" class="btn btn-secondary btn-sm">${escapeHtml(tr('docs', 'Docs'))}</a>
+                    <button type="button" class="btn btn-primary btn-sm" onclick="openModal()">+ ${escapeHtml(tr('new_client', 'New Client'))}</button>
+                `;
+            }
+
             container.innerHTML = `
-                <div class="section-toolbar">
-                    <div class="section-toolbar-titles">
-                        <h2>${escapeHtml(tr('clients', 'Clients'))}</h2>
-                        <p>${escapeHtml(tr('clients_subtitle', 'Register and manage OAuth 2.1 / OpenID Connect applications using Gilos Auth.'))}</p>
-                    </div>
-                    <div class="section-toolbar-actions">
-                        <button type="button" class="btn btn-secondary btn-sm" onclick="copyDiscoveryURL(this)" title="/.well-known/openid-configuration">${escapeHtml(tr('discovery_endpoint', 'OIDC Discovery'))}</button>
-                        <a href="/docs" class="btn btn-secondary btn-sm">${escapeHtml(tr('docs', 'Docs'))}</a>
-                        <button type="button" class="btn btn-primary btn-sm" onclick="openModal()">+ ${escapeHtml(tr('new_client', 'New Client'))}</button>
-                    </div>
-                </div>
                 ${allClients.length > 0 ? `
                 <div class="filter-toolbar">
                     <div class="filter-pills" id="clients-filter-bar">
@@ -5281,6 +5835,16 @@
                 if (e.key === 'Escape') {
                     const dd = document.getElementById('account-dropdown');
                     if (dd && dd.classList.contains('show')) closeDropdown(true);
+                    closeSettingsSearch();
+                    return;
+                }
+                if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+                    const searchInp = document.getElementById('settings-search-input');
+                    if (searchInp && !document.querySelector('.modal.is-open')) {
+                        e.preventDefault();
+                        searchInp.focus();
+                        searchInp.select();
+                    }
                     return;
                 }
                 if (e.key === '/' && !e.ctrlKey && !e.metaKey && !e.altKey) {
@@ -5288,7 +5852,9 @@
                     if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || document.querySelector('.modal.is-open')) return;
                     const searchEl = currentTab === 'clients'
                         ? document.getElementById('clients-search-input')
-                        : (currentTab === 'sessions' ? document.getElementById('sessions-search-input') : null);
+                        : (currentTab === 'sessions'
+                            ? document.getElementById('sessions-search-input')
+                            : document.getElementById('settings-search-input'));
                     if (searchEl) {
                         e.preventDefault();
                         searchEl.focus();
@@ -5296,12 +5862,325 @@
                 }
             });
 
+            window.addEventListener('gilos-theme-change', syncAccountThemeControls);
+            initSettingsSearch();
+
             let initialTab = new URLSearchParams(window.location.search).get('tab');
             if (!initialTab) {
                 try { initialTab = sessionStorage.getItem('gilos_home_active_tab'); sessionStorage.removeItem('gilos_home_active_tab'); } catch (e) {}
             }
             setActiveTab(['account', 'sessions', 'clients'].includes(initialTab) ? initialTab : 'account', true);
         });
+
+        function selectAccountTheme(mode) {
+            if (typeof window.__setTheme === 'function') {
+                window.__setTheme(mode);
+            }
+            syncAccountThemeControls();
+        }
+
+        function syncAccountThemeControls() {
+            const pref = document.documentElement.getAttribute('data-theme-pref') || 'system';
+            const activePref = (pref === 'light' || pref === 'dark') ? pref : 'system';
+            const group = document.getElementById('account-theme-pills');
+            if (group) {
+                group.querySelectorAll('[data-theme-choice]').forEach(btn => {
+                    const selected = btn.dataset.themeChoice === activePref;
+                    btn.classList.toggle('active', selected);
+                    btn.setAttribute('aria-pressed', selected ? 'true' : 'false');
+                });
+            }
+            const iconBox = document.getElementById('account-theme-row-icon');
+            if (iconBox && window.GilosUI) {
+                const iconName = activePref === 'light' ? 'sun' : (activePref === 'dark' ? 'moon' : 'desktop');
+                iconBox.innerHTML = window.GilosUI.icon(iconName, { size: 17 });
+            }
+        }
+
+        function closeSettingsSearch() {
+            const menu = document.getElementById('settings-search-menu');
+            const box = document.getElementById('settings-search-combobox');
+            if (menu) menu.classList.remove('show');
+            if (box) box.setAttribute('aria-expanded', 'false');
+        }
+
+        function initSettingsSearch() {
+            const wrap = document.getElementById('settings-search-wrap');
+            const combobox = document.getElementById('settings-search-combobox');
+            const input = document.getElementById('settings-search-input');
+            const clearBtn = document.getElementById('settings-search-clear');
+            const menu = document.getElementById('settings-search-menu');
+            if (!wrap || !input || !menu) return;
+
+            let selectedIdx = -1;
+            let currentMatches = [];
+
+            function getSearchItems() {
+                return [
+                    {
+                        title: tr('your_names', 'Personal Info'),
+                        desc: tr('personal_info_desc', 'Your display name across Gilos apps and services.'),
+                        group: tr('setting_group_account', 'Account'),
+                        icon: 'person',
+                        keywords: 'name first last middle nickname profile identity display',
+                        run: () => navigateToTabTarget('account', 'first-name')
+                    },
+                    {
+                        title: tr('jump_upload_photo', 'Profile photo'),
+                        desc: tr('change_photo', 'Change photo'),
+                        group: tr('setting_group_account', 'Account'),
+                        icon: 'camera',
+                        keywords: 'avatar picture icon image photo crop upload',
+                        run: () => navigateToTabTarget('account', 'section-hero')
+                    },
+                    {
+                        title: "{{ if .AppIDLabel }}{{ .AppIDLabel }}{{ else }}Gilos Username{{ end }}",
+                        desc: tr('gilos_id_desc', 'Your unique username handle across all Gilos services.'),
+                        group: tr('setting_group_account', 'Account'),
+                        icon: 'person-accounts',
+                        keywords: 'username handle @ gilos',
+                        run: () => navigateToTabTarget('account', 'new-username')
+                    },
+                    {
+                        title: tr('contact_methods', 'Contact Methods'),
+                        desc: tr('contact_methods_desc', 'Recovery email and phone number for sign-in and account recovery.'),
+                        group: tr('setting_group_account', 'Account'),
+                        icon: 'mail',
+                        keywords: 'email phone number sms verify contact recovery',
+                        run: () => navigateToTabTarget('account', 'email')
+                    },
+                    {
+                        title: tr('two_step_verification', 'Two-Step Verification'),
+                        desc: tr('mfa_section_desc', 'Add a second check at sign-in to keep your account protected.'),
+                        group: tr('setting_group_security', 'Security'),
+                        icon: 'shield-checkmark',
+                        keywords: '2fa mfa totp authenticator otp email phone security',
+                        run: () => navigateToTabTarget('account', 'mfa-section-card')
+                    },
+                    {
+                        title: tr('jump_authenticator_2fa', 'Authenticator app (2FA)'),
+                        desc: tr('authenticator_app', 'Authenticator App'),
+                        group: tr('setting_group_security', 'Security'),
+                        icon: 'qr-code',
+                        keywords: 'totp qr secret authenticator gilos app 2fa',
+                        run: () => navigateToTabTarget('account', 'mfa-section-card')
+                    },
+                    {
+                        title: tr('jump_change_password', 'Change password'),
+                        desc: tr('password_section_desc', 'Choose a strong unique password. Updating it will sign out other browser sessions.'),
+                        group: tr('setting_group_security', 'Security'),
+                        icon: 'password',
+                        keywords: 'password reset security change update',
+                        run: () => navigateToTabTarget('account', 'new-password')
+                    },
+                    {
+                        title: tr('security_activity', 'Recent Security Activity'),
+                        desc: tr('security_activity_desc', 'Review recent sign-ins, password changes, MFA updates, and app authorizations.'),
+                        group: tr('setting_group_security', 'Security'),
+                        icon: 'history',
+                        keywords: 'activity log audit history ip sign-in events',
+                        run: () => navigateToTabTarget('account', 'activity-card')
+                    },
+                    {
+                        title: tr('color_mode', 'Color mode'),
+                        desc: tr('color_mode_desc', 'Choose how Gilos Auth adapts to your device display theme.'),
+                        group: tr('setting_group_personalization', 'Personalization'),
+                        icon: 'desktop',
+                        keywords: 'theme dark light system mica appearance color mode',
+                        run: () => navigateToTabTarget('account', 'section-appearance')
+                    },
+                    {
+                        title: tr('interface_language', 'Display language'),
+                        desc: tr('interface_language_desc', 'Choose the language used for account controls, labels, and emails.'),
+                        group: tr('setting_group_personalization', 'Personalization'),
+                        icon: 'globe',
+                        keywords: 'language locale english russian uzbek translation',
+                        run: () => navigateToTabTarget('account', 'section-appearance')
+                    },
+                    {
+                        title: tr('sessions', 'Sessions'),
+                        desc: tr('sessions_subtitle', 'Manage browser sessions and connected applications with active OAuth access.'),
+                        group: tr('setting_group_security', 'Security'),
+                        icon: 'phone-laptop',
+                        keywords: 'sessions devices browsers sign out revoke active connected apps',
+                        run: () => setActiveTab('sessions', true)
+                    },
+                    {
+                        title: tr('clients', 'Clients'),
+                        desc: tr('clients_subtitle', 'Register and manage OAuth 2.1 / OpenID Connect applications using Gilos Auth.'),
+                        group: tr('setting_group_developer', 'Developer'),
+                        icon: 'code',
+                        keywords: 'oauth client id secret redirect uri scopes openid pkce',
+                        run: () => setActiveTab('clients', true)
+                    },
+                    {
+                        title: tr('jump_create_client', 'Register new OAuth client'),
+                        desc: tr('create_new_client', 'Create New Client'),
+                        group: tr('setting_group_developer', 'Developer'),
+                        icon: 'add',
+                        keywords: 'create new client oauth application',
+                        run: () => {
+                            if (currentTab !== 'clients') setActiveTab('clients', true);
+                            setTimeout(() => openModal(), 160);
+                        }
+                    },
+                    {
+                        title: tr('jump_oidc_discovery', 'Copy OIDC discovery URL'),
+                        desc: '/.well-known/openid-configuration',
+                        group: tr('setting_group_developer', 'Developer'),
+                        icon: 'link',
+                        keywords: 'oidc discovery well-known openid configuration endpoints',
+                        run: () => copyDiscoveryURL()
+                    },
+                    {
+                        title: tr('docs', 'Developer Docs'),
+                        desc: '/docs',
+                        group: tr('setting_group_developer', 'Developer'),
+                        icon: 'book-open',
+                        keywords: 'documentation api oauth jwt pkce guide',
+                        run: () => { window.location.href = '/docs'; }
+                    },
+                    {
+                        title: tr('jump_delete_account', 'Delete account'),
+                        desc: tr('danger_zone', 'Danger Zone'),
+                        group: tr('setting_group_account', 'Account'),
+                        icon: 'warning',
+                        keywords: 'delete remove close account danger grace period',
+                        run: () => navigateToTabTarget('account', 'section-danger')
+                    }
+                ];
+            }
+
+            function navigateToTabTarget(tabName, targetId) {
+                const isSameTab = currentTab === tabName;
+                if (!isSameTab) {
+                    setActiveTab(tabName, true);
+                }
+                const deadline = Date.now() + 2400;
+                function tryFocus() {
+                    const el = document.getElementById(targetId);
+                    if (el) {
+                        focusHomeField(targetId);
+                        return;
+                    }
+                    if (Date.now() < deadline) {
+                        setTimeout(tryFocus, 80);
+                    }
+                }
+                setTimeout(tryFocus, isSameTab ? 30 : 140);
+            }
+
+            function renderMenu() {
+                const q = (input.value || '').trim().toLowerCase();
+                if (clearBtn) clearBtn.classList.toggle('hidden', q.length === 0);
+
+                const allItems = getSearchItems();
+                currentMatches = q
+                    ? allItems.filter(it => `${it.title} ${it.desc} ${it.group} ${it.keywords}`.toLowerCase().includes(q))
+                    : allItems.slice(0, 8);
+
+                selectedIdx = currentMatches.length ? 0 : -1;
+
+                if (!currentMatches.length) {
+                    menu.innerHTML = `<div class="settings-search-empty">${escapeHtml(tr('settings_search_empty', 'No matching settings found.'))}</div>`;
+                } else {
+                    menu.innerHTML = currentMatches.map((it, idx) => `
+                        <button type="button" class="settings-search-item ${idx === selectedIdx ? 'is-selected' : ''}" role="option" aria-selected="${idx === selectedIdx ? 'true' : 'false'}" data-search-idx="${idx}">
+                            <span class="settings-search-item-main">
+                                <span class="settings-search-item-icon" aria-hidden="true">${window.GilosUI ? window.GilosUI.icon(it.icon, { size: 15 }) : ''}</span>
+                                <span class="settings-search-item-text">
+                                    <span class="settings-search-item-title">${escapeHtml(it.title)}</span>
+                                    <span class="settings-search-item-desc">${escapeHtml(it.desc)}</span>
+                                </span>
+                            </span>
+                            <span class="settings-search-item-group">${escapeHtml(it.group)}</span>
+                        </button>
+                    `).join('');
+
+                    menu.querySelectorAll('.settings-search-item').forEach((btn, idx) => {
+                        btn.addEventListener('mousedown', (ev) => {
+                            ev.preventDefault();
+                            activateIndex(idx);
+                        });
+                        btn.addEventListener('mouseenter', () => {
+                            selectedIdx = idx;
+                            syncSelectionUI();
+                        });
+                    });
+                }
+
+                menu.classList.add('show');
+                if (combobox) combobox.setAttribute('aria-expanded', 'true');
+            }
+
+            function syncSelectionUI() {
+                const btns = menu.querySelectorAll('.settings-search-item');
+                btns.forEach((btn, idx) => {
+                    const active = idx === selectedIdx;
+                    btn.classList.toggle('is-selected', active);
+                    btn.setAttribute('aria-selected', active ? 'true' : 'false');
+                    if (active && typeof btn.scrollIntoView === 'function') {
+                        btn.scrollIntoView({ block: 'nearest' });
+                    }
+                });
+            }
+
+            function activateIndex(idx) {
+                const item = currentMatches[idx];
+                if (!item) return;
+                closeSettingsSearch();
+                input.blur();
+                item.run();
+            }
+
+            input.addEventListener('focus', renderMenu);
+            input.addEventListener('input', renderMenu);
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    closeSettingsSearch();
+                    input.blur();
+                    return;
+                }
+                if (!menu.classList.contains('show')) {
+                    if (e.key === 'ArrowDown' || e.key === 'Enter') {
+                        renderMenu();
+                    }
+                    return;
+                }
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    if (currentMatches.length) {
+                        selectedIdx = (selectedIdx + 1) % currentMatches.length;
+                        syncSelectionUI();
+                    }
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    if (currentMatches.length) {
+                        selectedIdx = (selectedIdx - 1 + currentMatches.length) % currentMatches.length;
+                        syncSelectionUI();
+                    }
+                } else if (e.key === 'Enter') {
+                    e.preventDefault();
+                    if (selectedIdx >= 0 && currentMatches[selectedIdx]) {
+                        activateIndex(selectedIdx);
+                    }
+                }
+            });
+
+            if (clearBtn) {
+                clearBtn.addEventListener('click', () => {
+                    input.value = '';
+                    input.focus();
+                    renderMenu();
+                });
+            }
+
+            document.addEventListener('click', (e) => {
+                if (!wrap.contains(e.target)) {
+                    closeSettingsSearch();
+                }
+            });
+        }
     </script>
 </body>
 </html>
