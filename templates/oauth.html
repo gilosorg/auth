@@ -4,6 +4,11 @@
     {{ template "common/head" . }}
     <title>{{ index .T "authorize" }} - {{ if .AppName }}{{ .AppName }}{{ else }}Gilos Auth{{ end }}</title>
 <style>
+    body {
+        min-height: 100vh;
+        min-height: 100dvh;
+    }
+
     .oauth-stage {
         flex: 1;
         width: 100%;
@@ -400,13 +405,23 @@
         text-decoration: underline;
     }
 
-    @media (max-width: 480px) {
+    @media (max-width: 560px) {
+        body {
+            background: var(--surface-elevated);
+        }
         .oauth-stage {
-            padding: 18px 14px 32px;
+            padding: 0;
+            align-items: stretch;
+            justify-content: flex-start;
         }
         .oauth-card {
-            padding: 26px 20px 22px;
-            border-radius: 0px;
+            max-width: 480px;
+            margin: auto;
+            background: transparent;
+            border: none;
+            box-shadow: none;
+            padding: 24px max(20px, env(safe-area-inset-right)) 30px max(20px, env(safe-area-inset-left));
+            gap: 16px;
         }
         .oauth-actions-row {
             grid-template-columns: 1fr;
@@ -414,8 +429,28 @@
         .oauth-actions-row .btn-primary {
             order: -1;
         }
+        .oauth-actions-row .btn,
+        .oauth-actions-stack .btn {
+            min-height: 46px;
+        }
         .otp-input {
             height: 48px;
+        }
+        .site-footer {
+            background: var(--surface-subtle);
+        }
+    }
+
+    @media (max-width: 380px) {
+        .oauth-card {
+            padding: 20px 16px 24px;
+        }
+        .otp-container {
+            gap: 6px;
+        }
+        .otp-input {
+            height: 46px;
+            font-size: 1.12rem;
         }
     }
 </style>

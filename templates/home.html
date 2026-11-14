@@ -282,6 +282,9 @@
         .console-card {
             padding: 18px 16px;
         }
+        .account-hero {
+            padding: 18px 16px;
+        }
     }
 
     .global-banner {
@@ -1162,7 +1165,7 @@
     /* Sessions & Clients Grids */
     .cards-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr));
         gap: 16px;
     }
 
@@ -1558,6 +1561,32 @@
         padding: 16px 24px 20px;
         border-top: 1px solid var(--border-subtle);
         flex-wrap: wrap;
+    }
+
+    @media (max-width: 560px) {
+        .modal {
+            padding: 10px;
+        }
+        .modal-dialog {
+            max-height: calc(100dvh - 20px);
+        }
+        .modal-header {
+            padding: 16px 18px 14px;
+        }
+        .modal-body {
+            padding: 16px 18px;
+        }
+        .modal-footer {
+            padding: 14px 18px max(16px, env(safe-area-inset-bottom));
+        }
+        .console-input,
+        .console-textarea,
+        .console-select {
+            font-size: 1rem;
+        }
+        .otp-container {
+            gap: 6px;
+        }
     }
 
     .modal-error {

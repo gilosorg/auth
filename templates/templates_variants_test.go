@@ -234,6 +234,12 @@ func TestRenderedHTMLHeadStructureAndOAuthAvatar(t *testing.T) {
 		if name == "oauth.html" && strings.Contains(out, "oauth-logo-frame") {
 			t.Errorf("oauth.html unexpectedly rendered oauth-logo-frame")
 		}
+		if name == "auth.html" && !strings.Contains(out, "@media (max-width: 560px)") {
+			t.Errorf("auth.html missing mobile cardless breakpoint")
+		}
+		if name == "oauth.html" && !strings.Contains(out, "@media (max-width: 560px)") {
+			t.Errorf("oauth.html missing mobile cardless breakpoint")
+		}
 		if name == "oauth.html" && !strings.Contains(out, `data-icon="/media/user/icon/42_sample.jpg"`) {
 			t.Errorf("oauth.html did not preserve User.Icon on #oauth-user-avatar")
 		}

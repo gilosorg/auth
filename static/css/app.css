@@ -1074,6 +1074,7 @@ input[type="radio"]:disabled {
     box-shadow: var(--popover-shadow);
     z-index: 10000 !important;
     max-width: min(360px, calc(100vw - 32px));
+    max-height: min(260px, 45dvh);
     overflow-x: hidden;
 }
 
@@ -1558,6 +1559,18 @@ input[type="search"].gilos-input-control::-webkit-search-cancel-button {
 
 .gilos-input-group--compact .gilos-input-action {
     flex: 0 0 38px;
+}
+
+@media (max-width: 560px) {
+    .gilos-input-control {
+        font-size: 1rem;
+    }
+    .gilos-input-group:not(.gilos-input-group--compact) {
+        min-height: 46px;
+    }
+    .gilos-input-group:not(.gilos-input-group--compact) .gilos-input-action {
+        flex: 0 0 46px;
+    }
 }
 
 
