@@ -97,7 +97,7 @@ func TestSendVerificationEmailSuccessAndEscaping(t *testing.T) {
 	err := sendVerificationEmailWithRetry(
 		context.Background(),
 		client,
-		"Gilos Auth <noreply@mail.gilos.org>",
+		"Gilos Auth <noreply@auth.gilos.org>",
 		`Gilos & "Test"`,
 		"user@example.com",
 		"<482910>",
@@ -121,7 +121,7 @@ func TestSendVerificationEmailSuccessAndEscaping(t *testing.T) {
 	if captured.IdempotencyKey != "otp-verify/abc123" {
 		t.Fatalf("unexpected Idempotency-Key header: %q", captured.IdempotencyKey)
 	}
-	if captured.Body.From != "Gilos Auth <noreply@mail.gilos.org>" {
+	if captured.Body.From != "Gilos Auth <noreply@auth.gilos.org>" {
 		t.Fatalf("unexpected From: %q", captured.Body.From)
 	}
 	if len(captured.Body.To) != 1 || captured.Body.To[0] != "user@example.com" {
@@ -172,7 +172,7 @@ func TestSendVerificationEmailRetriesOn500And429WithSameIdempotencyKey(t *testin
 	err := sendVerificationEmailWithRetry(
 		context.Background(),
 		client,
-		"Gilos Auth <noreply@mail.gilos.org>",
+		"Gilos Auth <noreply@auth.gilos.org>",
 		"Gilos Auth",
 		"user@example.com",
 		"654321",
@@ -239,7 +239,7 @@ func TestSendVerificationEmailDoesNotRetryOn4xxClientError(t *testing.T) {
 			err := sendVerificationEmailWithRetry(
 				context.Background(),
 				client,
-				"Gilos Auth <noreply@mail.gilos.org>",
+				"Gilos Auth <noreply@auth.gilos.org>",
 				"Gilos Auth",
 				"bad-email",
 				"111222",
