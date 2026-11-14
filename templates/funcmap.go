@@ -49,4 +49,5 @@ var FuncMap = template.FuncMap{
 		return template.JS(b)
 	},
 	"printf": fmt.Sprintf,
+	"icon":   fluentIcon,
 }

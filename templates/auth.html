@@ -9,7 +9,6 @@
             min-height: 100dvh;
             display: flex;
             flex-direction: column;
-            background: var(--surface-page);
             color: var(--text);
         }
 
@@ -19,19 +18,8 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            padding: 36px 16px 24px;
+            padding: 36px 16px 28px;
             position: relative;
-        }
-
-        .auth-stage::before {
-            content: '';
-            position: fixed;
-            inset: 0;
-            pointer-events: none;
-            background:
-                radial-gradient(680px circle at 20% 8%, color-mix(in srgb, var(--accent) 4%, transparent), transparent 68%),
-                radial-gradient(560px circle at 85% 92%, color-mix(in srgb, var(--primary) 3%, transparent), transparent 68%);
-            z-index: 0;
         }
 
         .auth-container {
@@ -39,7 +27,9 @@
             z-index: 1;
             width: 100%;
             max-width: 432px;
-            background: var(--card-bg);
+            background: var(--glass-surface-strong);
+            backdrop-filter: var(--glass-backdrop);
+            -webkit-backdrop-filter: var(--glass-backdrop);
             border: 1px solid var(--card-border);
             border-radius: var(--radius-xl);
             box-shadow: var(--card-shadow);
@@ -49,7 +39,7 @@
 
         .auth-progress-track {
             width: 100%;
-            height: 2px;
+            height: 3px;
             background: var(--border-subtle);
             overflow: hidden;
         }
@@ -57,7 +47,7 @@
         .auth-progress-fill {
             height: 100%;
             width: 20%;
-            background: linear-gradient(90deg, var(--accent), color-mix(in srgb, var(--accent) 75%, #60a5fa));
+            background: linear-gradient(90deg, var(--accent), color-mix(in srgb, var(--accent) 72%, #60a5fa));
             border-radius: 0px;
             transition: width 0.35s cubic-bezier(0.16, 1, 0.3, 1);
         }
@@ -327,83 +317,16 @@
             cursor: not-allowed;
         }
 
-        .gilos-input-wrap {
-            position: relative;
-            display: flex;
-            align-items: stretch;
-            width: 100%;
-            height: 42px;
-            border: 1px solid var(--border-default);
-            border-radius: 0px;
-            background: var(--surface-elevated);
-            transition: border-color 0.16s ease, background-color 0.16s ease, box-shadow 0.16s ease;
-        }
-
-        .gilos-input-wrap:hover {
-            border-color: var(--border-strong);
-        }
-
-        .gilos-input-wrap:focus-within {
-            background: var(--surface-elevated);
-            border-color: var(--accent);
-            box-shadow: 0 0 0 2px var(--focus-ring);
-        }
-
-        .gilos-input-wrap:has(.auth-input.error) {
-            border-color: var(--red-500);
-            box-shadow: 0 0 0 2px color-mix(in srgb, var(--red-500) 16%, transparent);
-        }
-
-        .gilos-at-prefix {
-            flex: 0 0 40px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            border-right: 1px solid var(--border-subtle);
-            background: var(--surface-subtle);
-            font-family: var(--font-mono);
-            font-size: 0.9rem;
-            font-weight: 600;
-            line-height: 1;
-            color: var(--text-tertiary);
-            pointer-events: none;
-            user-select: none;
-            transition: color 0.16s ease, border-color 0.16s ease, background-color 0.16s ease;
-        }
-
-        .gilos-input-wrap:focus-within .gilos-at-prefix {
-            color: var(--accent);
-            border-right-color: color-mix(in srgb, var(--accent) 32%, var(--border-subtle));
-            background: color-mix(in srgb, var(--accent) 6%, var(--surface-elevated));
-        }
-
         .auth-input--gilos {
-            flex: 1;
-            min-width: 0;
-            height: 100%;
-            padding: 0 14px;
-            border: none;
-            background: transparent;
-            box-shadow: none;
             font-family: var(--font-mono);
             font-weight: 500;
+            letter-spacing: 0.01em;
         }
 
-        .auth-input--gilos:focus {
-            outline: none;
-            border: none;
-            background: transparent;
-            box-shadow: none;
-        }
-
-        .auth-input--gilos.error {
-            border: none;
-            box-shadow: none;
-        }
-
-        .gilos-input-group:has(.error) {
-            border-color: var(--red-500);
-            box-shadow: 0 0 0 2px color-mix(in srgb, var(--red-500) 16%, transparent);
+        .gilos-input-group:focus-within .gilos-input-addon {
+            color: var(--accent);
+            border-right-color: color-mix(in srgb, var(--accent) 32%, var(--border-default));
+            background: color-mix(in srgb, var(--accent) 7%, var(--surface-elevated));
         }
 
         .field-hint {
@@ -426,54 +349,6 @@
 
         .field-hint.hidden {
             display: none;
-        }
-
-        .trailing-button {
-            position: static;
-            flex: 0 0 42px;
-            width: 42px;
-            height: 100%;
-            margin: 0;
-            border-radius: 0px;
-            border: none;
-            border-left: 1px solid var(--border-subtle);
-            background: var(--primary);
-            color: var(--primary-contrast);
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: background-color 0.16s ease, color 0.16s ease, border-color 0.16s ease;
-        }
-
-        .trailing-button:hover:not(:disabled) {
-            background: var(--primary-gradient-hover);
-        }
-
-        .trailing-button:hover:not(:disabled) svg {
-            transform: translateX(1.5px);
-        }
-
-        .trailing-button:active:not(:disabled) {
-            transform: translateY(1px);
-        }
-
-        .trailing-button:focus-visible {
-            outline: 2px solid var(--accent);
-            outline-offset: -2px;
-        }
-
-        .trailing-button:disabled {
-            background: var(--surface-subtle);
-            color: var(--text-tertiary);
-            opacity: 1;
-            cursor: not-allowed;
-        }
-
-        .trailing-button svg {
-            width: 17px;
-            height: 17px;
-            transition: transform 0.16s ease;
         }
 
         .verification-info,
@@ -842,15 +717,14 @@
                 align-items: stretch;
                 justify-content: flex-start;
             }
-            .auth-stage::before {
-                display: none;
-            }
             .auth-container {
                 max-width: 100%;
                 flex: 1;
                 display: flex;
                 flex-direction: column;
                 background: transparent;
+                backdrop-filter: none;
+                -webkit-backdrop-filter: none;
                 border: none;
                 box-shadow: none;
                 overflow: visible;
@@ -864,16 +738,6 @@
             .auth-input {
                 height: 46px;
                 font-size: 1rem;
-            }
-            .gilos-input-wrap {
-                height: 46px;
-            }
-            .gilos-at-prefix {
-                flex: 0 0 42px;
-            }
-            .trailing-button {
-                flex: 0 0 46px;
-                width: 46px;
             }
             .auth-btn,
             .auth-btn-secondary,
@@ -966,9 +830,7 @@
                     <h1 id="auth-header">{{ index .T "sign_in" }}</h1>
                     <p id="auth-subtitle" class="auth-subtitle">{{ index .T "sign_in_subtitle" }}</p>
                     <div id="target-notice" class="target-notice hidden">
-                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-                        </svg>
+                        {{ icon "lock-closed" "fluent-icon--sm" }}
                         <span>{{ index .T "oauth_target_redirect_notice" }}</span>
                         <strong id="target-notice-dest"></strong>
                     </div>
@@ -984,9 +846,7 @@
 
                 {{ if .AuthError }}
                 <div class="auth-banner" role="alert">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink:0;margin-top:2px;">
-                        <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
-                    </svg>
+                    {{ icon "error-circle" "fluent-icon--md" }}
                     <span>{{ .AuthError }}</span>
                 </div>
                 {{ end }}
@@ -997,14 +857,12 @@
                     <form id="gilos-form" class="form-container" onsubmit="return false;">
                         <div class="form-element">
                             <label for="gilos-id" class="field-label">{{ if .AppIDLabel }}{{ .AppIDLabel }}{{ else }}Gilos Username{{ end }}</label>
-                            <div class="gilos-input-wrap">
-                                <span class="gilos-at-prefix" aria-hidden="true">@</span>
-                                <input type="text" id="gilos-id" name="username" class="auth-input auth-input--gilos" required autocomplete="username" autocapitalize="none" spellcheck="false"
+                            <div class="gilos-input-group">
+                                <span class="gilos-input-addon" aria-hidden="true">@</span>
+                                <input type="text" id="gilos-id" name="username" class="gilos-input-control auth-input--gilos" required autocomplete="username" autocapitalize="none" spellcheck="false"
                                     placeholder="{{ index .T "enter_gilos_id" }}" oninput="cleanGilosID(this)" onchange="cleanGilosID(this)" aria-describedby="message gilos-id-hint">
-                                <button id="continue-button" type="button" onclick="checkGilosID()" class="trailing-button" aria-label="{{ index .T "continue" }}">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                        <polyline points="9 18 15 12 9 6"/>
-                                    </svg>
+                                <button id="continue-button" type="button" onclick="checkGilosID()" class="gilos-input-action gilos-input-action--primary" aria-label="{{ index .T "continue" }}">
+                                    {{ icon "arrow-right" "fluent-icon--md" }}
                                 </button>
                             </div>
                             <div id="gilos-id-hint" class="field-hint hidden" aria-live="polite"></div>
@@ -1036,9 +894,7 @@
                                 <label class="radio-option" id="two-step-email-option" for="two-step-email">
                                     <input type="radio" id="two-step-email" name="contact_type" value="email" aria-label="{{ index .T "email" }}">
                                     <span class="radio-option-icon" aria-hidden="true">
-                                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                            <rect x="2" y="4" width="20" height="16" rx="2"/><polyline points="22,6 12,13 2,6"/>
-                                        </svg>
+                                        {{ icon "mail" "fluent-icon--md" }}
                                     </span>
                                     <span class="radio-option-content">
                                         <span id="two-step-email-label" class="radio-option-label"></span>
@@ -1048,9 +904,7 @@
                                 <label class="radio-option" id="two-step-phone-option" for="two-step-phone">
                                     <input type="radio" id="two-step-phone" name="contact_type" value="phone" aria-label="{{ index .T "phone" }}">
                                     <span class="radio-option-icon" aria-hidden="true">
-                                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                            <rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/>
-                                        </svg>
+                                        {{ icon "phone" "fluent-icon--md" }}
                                     </span>
                                     <span class="radio-option-content">
                                         <span id="two-step-phone-label" class="radio-option-label"></span>
@@ -1060,9 +914,7 @@
                                 <label class="radio-option" id="two-step-totp-option" for="two-step-totp">
                                     <input type="radio" id="two-step-totp" name="contact_type" value="totp" aria-label="{{ index .T "authenticator_app" }}">
                                     <span class="radio-option-icon" aria-hidden="true">
-                                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-                                        </svg>
+                                        {{ icon "shield-keyhole" "fluent-icon--md" }}
                                     </span>
                                     <span class="radio-option-content">
                                         <span id="two-step-totp-label" class="radio-option-label">{{ index .T "authenticator_app" }}</span>
@@ -1123,15 +975,11 @@
                             <p class="verification-info">{{ index .T "verify_human" }}</p>
                             <div class="method-selector" id="register-method-selector" role="tablist">
                                 <button type="button" role="tab" aria-selected="true" class="method-option active" data-method="email" onclick="switchMethod('register', 'email')">
-                                    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                        <rect x="2" y="4" width="20" height="16" rx="2"/><polyline points="22,6 12,13 2,6"/>
-                                    </svg>
+                                    {{ icon "mail" "fluent-icon--sm" }}
                                     {{ index .T "email" }}
                                 </button>
                                 <button type="button" role="tab" aria-selected="false" class="method-option" data-method="phone" onclick="switchMethod('register', 'phone')">
-                                    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                        <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l2.27-2.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
-                                    </svg>
+                                    {{ icon "phone" "fluent-icon--sm" }}
                                     {{ index .T "phone" }}
                                 </button>
                             </div>
@@ -1178,15 +1026,11 @@
                             <div id="recovery-methods-wrap">
                                 <div class="method-selector" id="recovery-method-selector" role="tablist">
                                     <button type="button" role="tab" aria-selected="true" id="recovery-email-option" class="method-option active" data-method="email" onclick="switchMethod('recovery', 'email')">
-                                        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                            <rect x="2" y="4" width="20" height="16" rx="2"/><polyline points="22,6 12,13 2,6"/>
-                                        </svg>
+                                        {{ icon "mail" "fluent-icon--sm" }}
                                         {{ index .T "email" }}
                                     </button>
                                     <button type="button" role="tab" aria-selected="false" id="recovery-phone-option" class="method-option" data-method="phone" onclick="switchMethod('recovery', 'phone')">
-                                        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                            <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l2.27-2.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
-                                        </svg>
+                                        {{ icon "phone" "fluent-icon--sm" }}
                                         {{ index .T "phone" }}
                                     </button>
                                 </div>
@@ -1260,11 +1104,11 @@
         let itiRecovery = null;
         let targetUrl = '/home';
 
-        const EYE_OPEN_SVG = '<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
-        const EYE_CLOSED_SVG = '<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>';
-        const MSG_ERR_SVG = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>';
-        const MSG_OK_SVG = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>';
-        const CHEVRON_RIGHT_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"/></svg>';
+        const EYE_OPEN_SVG = (window.GilosUI && GilosUI.icon) ? GilosUI.icon('eye', { size: 17 }) : '';
+        const EYE_CLOSED_SVG = (window.GilosUI && GilosUI.icon) ? GilosUI.icon('eye-off', { size: 17 }) : '';
+        const MSG_ERR_SVG = (window.GilosUI && GilosUI.icon) ? GilosUI.icon('error-circle', { size: 15 }) : '';
+        const MSG_OK_SVG = (window.GilosUI && GilosUI.icon) ? GilosUI.icon('checkmark-circle', { size: 15 }) : '';
+        const CHEVRON_RIGHT_SVG = (window.GilosUI && GilosUI.icon) ? GilosUI.icon('arrow-right', { size: 18 }) : '';
 
         function escapeHtml(str) {
             return window.GilosUI ? window.GilosUI.escapeHtml(str) : String(str ?? '')
@@ -2543,7 +2387,7 @@
                 if (!itiInstance || !window.intlTelInputUtils || !input.value.trim() || input.value.includes('@')) return;
                 const originalValue = input.value;
                 const originalCursor = input.selectionStart || 0;
-                const formatted = itiInstance.getNumber(window.intlTelInputUtils.numberFormat.INTERNATIONAL);
+                const formatted = itiInstance.getNumber(window.intlTelInputUtils.numberFormat.NATIONAL);
                 if (formatted && formatted !== originalValue) {
                     input.value = formatted;
                     const diff = formatted.length - originalValue.length;
@@ -2558,9 +2402,9 @@
                 const iti = window.intlTelInput(el, {
                     utilsScript: 'https://cdn.jsdelivr.net/npm/intl-tel-input@19.2.16/build/js/utils.js',
                     initialCountry: 'uz',
-                    autoInsertDialCode: true,
-                    separateDialCode: false,
-                    preferredCountries: ['uz', 'us', 'gb', 'ca'],
+                    autoInsertDialCode: false,
+                    separateDialCode: true,
+                    preferredCountries: ['uz', 'ru', 'kz', 'us'],
                     autoPlaceholder: 'aggressive',
                     formatOnDisplay: true,
                     nationalMode: false,

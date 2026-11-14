@@ -35,7 +35,7 @@
                             aria-expanded="false">
                         <img class="lang-flag" src="{{ if .CurrentLanguage }}{{ .CurrentLanguage.Flag }}{{ else }}/static/img/i18n/gb.svg{{ end }}" alt="">
                         <span>{{ if .CurrentLanguage }}{{ .CurrentLanguage.Name }}{{ else }}English{{ end }}</span>
-                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+                        {{ icon "chevron-down" "fluent-icon--sm" }}
                     </button>
                     <div class="lang-dropdown" id="lang-dropdown" role="menu">
                         {{ if .Languages }}
@@ -44,7 +44,7 @@
                             <img src="{{ .Flag }}" alt="">
                             <span>{{ .Name }}</span>
                             {{ if eq .Code $.Lang }}
-                            <svg class="lang-check" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+                            {{ icon "checkmark" "lang-check fluent-icon--sm" }}
                             {{ end }}
                         </button>
                         {{ end }}
@@ -52,6 +52,7 @@
                         <button type="button" class="lang-option active" role="menuitemradio" aria-checked="true" onclick="setLanguage('en')">
                             <img src="/static/img/i18n/gb.svg" alt="">
                             <span>English</span>
+                            {{ icon "checkmark" "lang-check fluent-icon--sm" }}
                         </button>
                         {{ end }}
                     </div>
@@ -60,219 +61,6 @@
         </div>
     </div>
 </footer>
-
-<style>
-    .site-footer {
-        width: 100%;
-        margin-top: auto;
-        padding: 20px 24px 28px;
-        border-top: 1px solid var(--border-subtle);
-        background: transparent;
-    }
-
-    .footer-container {
-        max-width: 1200px;
-        margin: 0 auto;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 16px 24px;
-        flex-wrap: wrap;
-        font-size: 0.8125rem;
-        color: var(--text-muted);
-    }
-
-    .footer-brand {
-        font-weight: 500;
-        color: var(--text-muted);
-    }
-
-    .footer-right {
-        display: flex;
-        align-items: center;
-        gap: 16px 24px;
-        flex-wrap: wrap;
-    }
-
-    .footer-links {
-        display: flex;
-        align-items: center;
-        gap: 16px;
-        flex-wrap: wrap;
-    }
-
-    .footer-link {
-        color: var(--text-secondary);
-        text-decoration: none;
-        font-weight: 500;
-        transition: color 0.15s ease;
-    }
-
-    .footer-link:hover {
-        color: var(--text);
-        text-decoration: underline;
-        text-underline-offset: 3px;
-    }
-
-    .footer-controls {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
-
-    .footer-pill-btn {
-        display: inline-flex;
-        align-items: center;
-        gap: 7px;
-        height: 32px;
-        padding: 0 11px;
-        border-radius: 0px;
-        border: 1px solid var(--border-default);
-        background: var(--surface-elevated);
-        color: var(--text-secondary);
-        font-family: inherit;
-        font-size: 0.78rem;
-        font-weight: 500;
-        line-height: 1;
-        cursor: pointer;
-        transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
-    }
-
-    .footer-pill-btn:hover {
-        background: var(--surface-subtle);
-        border-color: var(--border-strong);
-        color: var(--text);
-    }
-
-    .footer-pill-btn:active {
-        transform: translateY(1px);
-    }
-
-    #theme-toggle-icon {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-    .lang-switcher {
-        position: relative;
-        display: inline-flex;
-    }
-
-    .lang-flag {
-        width: 15px;
-        height: 11px;
-        border-radius: 0px;
-        border: 1px solid var(--border-subtle);
-        object-fit: cover;
-        flex-shrink: 0;
-    }
-
-    .lang-dropdown {
-        position: absolute;
-        bottom: calc(100% + 6px);
-        right: 0;
-        min-width: 172px;
-        padding: 0;
-        background: var(--surface-elevated);
-        border: 1px solid var(--border-strong);
-        border-radius: 0px;
-        box-shadow: var(--popover-shadow);
-        display: none;
-        flex-direction: column;
-        gap: 0;
-        z-index: 200;
-    }
-
-    .lang-dropdown.show {
-        display: flex;
-        animation: gilosPopoverIn 0.15s var(--ease-out);
-    }
-
-    @keyframes gilosPopoverIn {
-        from { opacity: 0; transform: translateY(4px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-
-    .lang-option {
-        display: flex;
-        align-items: center;
-        gap: 9px;
-        width: 100%;
-        padding: 9px 12px;
-        border: none;
-        border-bottom: 1px solid var(--border-subtle);
-        border-radius: 0px;
-        background: transparent;
-        color: var(--text);
-        font-size: 0.825rem;
-        font-weight: 500;
-        text-align: left;
-        cursor: pointer;
-        transition: background-color 0.14s ease;
-    }
-
-    .lang-option:last-child {
-        border-bottom: none;
-    }
-
-    .lang-option:hover {
-        background: var(--surface-subtle);
-    }
-
-    .lang-option:focus-visible {
-        outline: 2px solid var(--accent);
-        outline-offset: -2px;
-    }
-
-    .lang-option.active {
-        background: var(--surface-subtle);
-        box-shadow: inset 3px 0 0 var(--accent);
-        font-weight: 600;
-    }
-
-    .lang-option img {
-        width: 16px;
-        height: 12px;
-        border-radius: 0px;
-        object-fit: cover;
-        flex-shrink: 0;
-    }
-
-    .lang-option .lang-check {
-        margin-left: auto;
-        color: var(--accent);
-    }
-
-    @media (max-width: 680px) {
-        .site-footer {
-            padding: 16px 16px max(20px, env(safe-area-inset-bottom));
-        }
-        .footer-container {
-            flex-direction: column;
-            align-items: center;
-            text-align: center;
-            gap: 12px;
-        }
-        .footer-right {
-            flex-direction: column;
-            align-items: center;
-            gap: 10px;
-        }
-        .footer-links {
-            justify-content: center;
-            gap: 8px 14px;
-        }
-        .lang-dropdown {
-            left: 50%;
-            right: auto;
-            width: min(172px, calc(100vw - 32px));
-            min-width: 0;
-            margin-left: calc(min(172px, calc(100vw - 32px)) / -2);
-            transform: none;
-        }
-    }
-</style>
 
 <script>
     (function () {
@@ -283,9 +71,9 @@
     })();
 
     var __themeIcons = {
-        system: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>',
-        light: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>',
-        dark: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>'
+        system: (window.GilosUI && GilosUI.icon) ? GilosUI.icon('desktop', { size: 14 }) : '',
+        light: (window.GilosUI && GilosUI.icon) ? GilosUI.icon('sun', { size: 14 }) : '',
+        dark: (window.GilosUI && GilosUI.icon) ? GilosUI.icon('moon', { size: 14 }) : ''
     };
 
     function renderThemeToggle() {

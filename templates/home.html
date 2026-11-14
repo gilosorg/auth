@@ -9,10 +9,11 @@
         top: 0;
         z-index: 35;
         width: 100%;
-        background: color-mix(in srgb, var(--surface-elevated) 88%, transparent);
-        backdrop-filter: blur(18px);
-        -webkit-backdrop-filter: blur(18px);
+        background: var(--glass-header);
+        backdrop-filter: var(--glass-backdrop);
+        -webkit-backdrop-filter: var(--glass-backdrop);
         border-bottom: 1px solid var(--border-subtle);
+        box-shadow: inset 0 -1px 0 var(--glass-highlight);
     }
 
     .header-container {
@@ -157,10 +158,12 @@
         right: 0;
         min-width: 224px;
         padding: 0;
-        background: var(--surface-elevated);
+        background: var(--glass-surface-strong);
+        backdrop-filter: var(--glass-backdrop);
+        -webkit-backdrop-filter: var(--glass-backdrop);
         border: 1px solid var(--border-default);
         border-radius: 0px;
-        box-shadow: var(--popover-shadow);
+        box-shadow: var(--glass-highlight), var(--popover-shadow);
         display: none;
         flex-direction: column;
         gap: 0;
@@ -294,13 +297,13 @@
 
     .global-banner--info {
         background: var(--accent-subtle);
-        border: 1px solid rgba(36, 149, 242, 0.25);
+        border: 1px solid color-mix(in srgb, var(--accent) 32%, var(--border-default));
         color: var(--text);
     }
 
     .global-banner--warning {
         background: var(--amber-50);
-        border: 1px solid rgba(245, 158, 11, 0.35);
+        border: 1px solid color-mix(in srgb, var(--amber-500) 38%, var(--border-default));
         color: var(--amber-700);
     }
 
@@ -343,10 +346,13 @@
         gap: 18px;
         flex-wrap: wrap;
         padding: 22px 24px;
-        background: var(--card-bg);
+        background: var(--glass-surface-strong);
+        backdrop-filter: var(--glass-backdrop);
+        -webkit-backdrop-filter: var(--glass-backdrop);
         border: 1px solid var(--card-border);
+        border-top: 2px solid var(--accent);
         border-radius: 0px;
-        box-shadow: var(--card-shadow);
+        box-shadow: var(--glass-highlight), var(--card-shadow);
     }
 
     .account-hero-left {
@@ -503,10 +509,12 @@
     }
 
     .console-card {
-        background: var(--card-bg);
+        background: var(--glass-surface-strong);
+        backdrop-filter: var(--glass-backdrop);
+        -webkit-backdrop-filter: var(--glass-backdrop);
         border: 1px solid var(--card-border);
         border-radius: 0px;
-        box-shadow: var(--card-shadow);
+        box-shadow: var(--glass-highlight), var(--card-shadow);
         padding: 22px 24px;
         display: flex;
         flex-direction: column;
@@ -588,40 +596,27 @@
         color: var(--text-secondary);
     }
 
-    .input-wrap {
-        position: relative;
-        display: flex;
-        align-items: stretch;
-        width: 100%;
-        height: 42px;
-        border: 1px solid var(--border-default);
-        border-radius: 0px;
-        background: var(--surface-elevated);
-        transition: border-color 0.16s ease, background-color 0.16s ease, box-shadow 0.16s ease;
-    }
-
-    .input-wrap:hover {
-        border-color: var(--border-strong);
-    }
-
-    .input-wrap:has(input:disabled) {
+    .gilos-input-group.is-disabled,
+    .gilos-input-group:has(input:disabled) {
         opacity: 0.72;
         cursor: not-allowed;
         background: var(--surface-subtle);
     }
 
-    .input-wrap:has(input:disabled):hover {
+    .gilos-input-group.is-disabled:hover,
+    .gilos-input-group:has(input:disabled):hover {
         border-color: var(--border-default);
     }
 
-    .input-wrap:has(input:disabled) .console-input {
+    .gilos-input-group.is-disabled .gilos-input-control,
+    .gilos-input-group:has(input:disabled) .gilos-input-control {
         cursor: not-allowed;
     }
 
-    .input-wrap:focus-within {
-        background: var(--surface-elevated);
-        border-color: var(--accent);
-        box-shadow: 0 0 0 2px var(--focus-ring);
+    .gilos-input-group:focus-within:not(.is-disabled) .gilos-input-addon {
+        color: var(--accent);
+        border-right-color: color-mix(in srgb, var(--accent) 32%, var(--border-subtle));
+        background: color-mix(in srgb, var(--accent) 6%, var(--surface-elevated));
     }
 
     .console-input,
@@ -631,22 +626,22 @@
         padding: 9px 12px;
         font-size: 0.91rem;
         color: var(--text);
-        background: var(--surface-elevated);
-        border: 1px solid var(--border-default);
+        background: var(--surface-subtle);
+        border: 1.5px solid var(--border-default);
         border-radius: 0px;
-        transition: border-color 0.15s ease, box-shadow 0.15s ease;
+        transition: border-color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
     }
 
     .console-input {
-        height: 42px;
+        height: 44px;
     }
 
     .console-select {
-        height: 42px;
+        height: 44px;
         padding: 0 34px 0 12px;
         appearance: none;
         -webkit-appearance: none;
-        background: var(--surface-elevated) var(--select-arrow) no-repeat right 12px center;
+        background: var(--surface-subtle) var(--select-arrow) no-repeat right 12px center;
         cursor: pointer;
     }
 
@@ -660,62 +655,12 @@
     .console-select:focus,
     .console-textarea:focus {
         outline: none;
+        background: var(--surface-elevated);
         border-color: var(--accent);
         box-shadow: 0 0 0 2px var(--focus-ring);
     }
 
-    .console-input--with-icon {
-        padding-right: 42px;
-    }
-
-    .input-wrap .console-input {
-        flex: 1;
-        min-width: 0;
-        height: 100%;
-        border: none !important;
-        background: transparent !important;
-        box-shadow: none !important;
-        padding: 0 12px;
-    }
-
-    .input-wrap .console-input:focus {
-        outline: none !important;
-        border: none !important;
-        background: transparent !important;
-        box-shadow: none !important;
-    }
-
-    .console-input--prefixed,
-    .console-input--with-icon {
-        padding: 0 12px;
-    }
-
-    .input-prefix {
-        position: static;
-        flex: 0 0 40px;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        border-right: 1px solid var(--border-subtle);
-        background: var(--surface-subtle);
-        font-family: var(--font-mono);
-        font-size: 0.88rem;
-        font-weight: 600;
-        line-height: 1;
-        color: var(--text-tertiary, var(--text-muted));
-        pointer-events: none;
-        user-select: none;
-        transition: color 0.16s ease, border-color 0.16s ease, background-color 0.16s ease;
-    }
-
-    .input-wrap:focus-within .input-prefix {
-        color: var(--accent);
-        border-right-color: color-mix(in srgb, var(--accent) 32%, var(--border-subtle));
-        background: color-mix(in srgb, var(--accent) 6%, var(--surface-elevated));
-    }
-
     .input-adornment-right {
-        position: static;
         flex: 0 0 auto;
         display: inline-flex;
         align-items: stretch;
@@ -731,35 +676,6 @@
         padding: 0 11px;
         border-left: 1px solid var(--border-subtle);
         background: var(--surface-subtle);
-    }
-
-    .pw-eye-btn {
-        background: transparent;
-        border: none;
-        border-left: 1px solid var(--border-subtle);
-        width: 40px;
-        height: 100%;
-        border-radius: 0px;
-        color: var(--text-muted);
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        transition: background-color 0.15s ease, color 0.15s ease;
-    }
-
-    .pw-eye-btn:hover {
-        background: var(--surface-hover);
-        color: var(--text);
-    }
-
-    .pw-eye-btn:active {
-        transform: translateY(1px);
-    }
-
-    .pw-eye-btn:focus-visible {
-        outline: 2px solid var(--accent);
-        outline-offset: -2px;
     }
 
     .field-status-note {
@@ -797,7 +713,7 @@
     .info-callout--warning {
         padding: 11px 13px;
         background: var(--amber-50);
-        border: 1px solid rgba(245, 158, 11, 0.25);
+        border: 1px solid color-mix(in srgb, var(--amber-500) 35%, var(--border-default));
         color: var(--amber-700);
     }
 
@@ -1051,10 +967,10 @@
         min-width: 200px;
         display: flex;
         align-items: stretch;
-        height: 36px;
+        height: 38px;
         border-radius: 0px;
-        border: 1px solid var(--border-default);
-        background: var(--surface-elevated);
+        border: 1.5px solid var(--border-default);
+        background: var(--surface-subtle);
         transition: border-color 0.14s ease, background-color 0.14s ease, box-shadow 0.14s ease;
     }
 
@@ -1160,10 +1076,12 @@
     }
 
     .entity-card {
-        background: var(--card-bg);
+        background: var(--glass-surface-strong);
+        backdrop-filter: var(--glass-backdrop);
+        -webkit-backdrop-filter: var(--glass-backdrop);
         border: 1px solid var(--card-border);
         border-radius: 0px;
-        box-shadow: var(--card-shadow);
+        box-shadow: var(--glass-highlight), var(--card-shadow);
         padding: 18px 20px;
         display: flex;
         flex-direction: column;
@@ -1172,8 +1090,8 @@
     }
 
     .entity-card:hover {
-        border-color: var(--border-default);
-        box-shadow: var(--card-shadow-hover);
+        border-color: var(--border-strong);
+        box-shadow: var(--glass-highlight), var(--card-shadow-hover);
     }
 
     .entity-card.is-current {
@@ -1427,9 +1345,11 @@
     .empty-state {
         padding: 40px 20px;
         text-align: center;
-        background: var(--card-bg);
+        background: var(--glass-surface-strong);
+        backdrop-filter: var(--glass-backdrop);
+        -webkit-backdrop-filter: var(--glass-backdrop);
         border: 1px solid var(--card-border);
-        box-shadow: var(--card-shadow);
+        box-shadow: var(--glass-highlight), var(--card-shadow);
         border-radius: 0px;
         color: var(--text-muted);
         display: flex;
@@ -1449,9 +1369,9 @@
         position: fixed;
         inset: 0;
         z-index: 1000;
-        background: rgba(0, 0, 0, 0.54);
-        backdrop-filter: blur(4px);
-        -webkit-backdrop-filter: blur(4px);
+        background: rgba(10, 15, 24, 0.56);
+        backdrop-filter: blur(6px);
+        -webkit-backdrop-filter: blur(6px);
         display: none;
         align-items: center;
         justify-content: center;
@@ -1472,11 +1392,14 @@
     .modal-dialog {
         width: 100%;
         max-width: 500px;
-        background: var(--surface-elevated);
+        background: var(--glass-surface-strong);
+        backdrop-filter: var(--glass-backdrop);
+        -webkit-backdrop-filter: var(--glass-backdrop);
         color: var(--text);
         border: 1px solid var(--border-default);
+        border-top: 2px solid var(--accent);
         border-radius: 0px;
-        box-shadow: var(--modal-shadow);
+        box-shadow: var(--glass-highlight), var(--modal-shadow);
         overflow: hidden;
         max-height: calc(100vh - 32px);
         display: flex;
@@ -1988,22 +1911,22 @@
 
             <nav class="header-tabs" role="tablist" aria-label="Account sections">
                 <button type="button" role="tab" aria-selected="true" tabindex="0" class="tab-btn active" data-tab="account" onclick="setActiveTab('account')">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 1 0-16 0"/></svg>
+                    {{ icon "person" }}
                     <span>{{ index .T "account" }}</span>
                 </button>
                 <button type="button" role="tab" aria-selected="false" tabindex="-1" class="tab-btn" data-tab="sessions" onclick="setActiveTab('sessions')">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+                    {{ icon "phone-laptop" }}
                     <span>{{ index .T "sessions" }}</span>
                 </button>
                 <button type="button" role="tab" aria-selected="false" tabindex="-1" class="tab-btn" data-tab="clients" onclick="setActiveTab('clients')">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+                    {{ icon "code" }}
                     <span>{{ index .T "clients" }}</span>
                 </button>
             </nav>
 
             <div class="header-right">
                 <a href="/docs" class="btn btn-ghost btn-sm docs-header-btn">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>
+                    {{ icon "book-open" "fluent-icon--sm" }}
                     <span>{{ index .T "docs" }}</span>
                 </a>
                 <button type="button" class="user-trigger" id="appbar-user-btn" onclick="toggleDropdown(event)" aria-haspopup="true" aria-expanded="false">
@@ -2012,7 +1935,7 @@
                         <span id="appbar-avatar-initial">{{ if .User }}{{ upper (printf "%.1s" .User.Username) }}{{ else }}G{{ end }}</span>
                     </span>
                     <span class="user-trigger-handle">@{{ if .User }}{{ .User.Username }}{{ end }}</span>
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
+                    {{ icon "chevron-down" "fluent-icon--sm" }}
                 </button>
                 <div class="user-dropdown" id="account-dropdown" role="menu">
                     <div class="dropdown-meta">
@@ -2020,15 +1943,15 @@
                         <div class="dropdown-meta-handle">@{{ if .User }}{{ .User.Username }}{{ end }}</div>
                     </div>
                     <button type="button" class="dropdown-item" role="menuitem" onclick="setActiveTab('account'); closeDropdown();">
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 1 0-16 0"/></svg>
+                        {{ icon "person" "fluent-icon--sm" }}
                         <span>{{ index .T "account" }}</span>
                     </button>
                     <a href="/docs" class="dropdown-item" role="menuitem">
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>
+                        {{ icon "book-open" "fluent-icon--sm" }}
                         <span>{{ index .T "docs" }}</span>
                     </a>
                     <button type="button" class="dropdown-item dropdown-item--danger" role="menuitem" onclick="logout()">
-                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                        {{ icon "sign-out" "fluent-icon--sm" }}
                         <span>{{ index .T "logout" }}</span>
                     </button>
                 </div>
@@ -2036,15 +1959,15 @@
         </div>
         <div class="mobile-tabs-bar" role="tablist">
             <button type="button" role="tab" aria-selected="true" tabindex="0" class="tab-btn active" data-tab="account" onclick="setActiveTab('account')">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 1 0-16 0"/></svg>
+                {{ icon "person" "fluent-icon--sm" }}
                 <span>{{ index .T "account" }}</span>
             </button>
             <button type="button" role="tab" aria-selected="false" tabindex="-1" class="tab-btn" data-tab="sessions" onclick="setActiveTab('sessions')">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+                {{ icon "phone-laptop" "fluent-icon--sm" }}
                 <span>{{ index .T "sessions" }}</span>
             </button>
             <button type="button" role="tab" aria-selected="false" tabindex="-1" class="tab-btn" data-tab="clients" onclick="setActiveTab('clients')">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+                {{ icon "code" "fluent-icon--sm" }}
                 <span>{{ index .T "clients" }}</span>
             </button>
         </div>
@@ -2065,7 +1988,7 @@
             <div class="modal-header">
                 <h2 id="modal-title">{{ index .T "create_new_client" }}</h2>
                 <button type="button" class="modal-close-btn" onclick="closeModal()" aria-label="{{ index .T "close" }}">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    {{ icon "dismiss" "fluent-icon--md" }}
                 </button>
             </div>
             <form id="client-form">
@@ -2126,7 +2049,7 @@
             <div class="modal-header">
                 <h2 id="totp-modal-title">{{ index .T "setup_authenticator" }}</h2>
                 <button type="button" class="modal-close-btn" onclick="closeTOTPModal()" aria-label="{{ index .T "close" }}">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    {{ icon "dismiss" "fluent-icon--md" }}
                 </button>
             </div>
             <div class="modal-body">
@@ -2168,20 +2091,18 @@
             <div class="modal-header">
                 <h2 id="pw-modal-title">{{ index .T "verify_password" }}</h2>
                 <button type="button" class="modal-close-btn" onclick="closePasswordModal(false)" aria-label="{{ index .T "close" }}">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    {{ icon "dismiss" "fluent-icon--md" }}
                 </button>
             </div>
             <div class="modal-body">
                 <p class="card-desc">{{ index .T "verify_password_subtitle" }}</p>
                 <div class="field">
                     <label for="current-password-input">{{ index .T "current_password" }}</label>
-                    <div class="input-wrap">
-                        <input type="password" id="current-password-input" class="console-input console-input--with-icon" autocomplete="current-password"
+                    <div class="gilos-input-group">
+                        <input type="password" id="current-password-input" class="gilos-input-control" autocomplete="current-password"
                                placeholder="{{ index .T "current_password" }}"
                                onkeydown="if(event.key==='Enter'){event.preventDefault();confirmPasswordModal();}">
-                        <span class="input-adornment-right">
-                            <button type="button" class="pw-eye-btn" onclick="toggleHomePassword('current-password-input', this)" aria-label="{{ index .T "show_password" }}" aria-pressed="false"></button>
-                        </span>
+                        <button type="button" class="gilos-input-action pw-eye-btn" onclick="toggleHomePassword('current-password-input', this)" aria-label="{{ index .T "show_password" }}" aria-pressed="false"></button>
                     </div>
                     <div id="current-pw-caps" class="caps-warning" hidden></div>
                 </div>
@@ -2202,7 +2123,7 @@
             </div>
             <div class="modal-body">
                 <div class="info-callout info-callout--warning">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:1px;"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                    <span style="flex-shrink:0;margin-top:1px;display:inline-flex;">{{ icon "warning" }}</span>
                     <div>
                         <strong>{{ index .T "secret_reveal_warning" }}</strong><br>
                         <span>{{ index .T "secret_reveal_warning_detail" }}</span>
@@ -2234,7 +2155,7 @@
             <div class="modal-header">
                 <h2 id="contact-verify-title">{{ index .T "verify_contact_changes" }}</h2>
                 <button type="button" class="modal-close-btn" onclick="cancelContactVerify()" aria-label="{{ index .T "close" }}">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    {{ icon "dismiss" "fluent-icon--md" }}
                 </button>
             </div>
             <div class="modal-body">
@@ -2254,7 +2175,7 @@
             <div class="modal-header">
                 <h2 id="crop-modal-title">{{ index .T "crop_photo" }}</h2>
                 <button type="button" class="modal-close-btn" onclick="closeCropModal()" aria-label="{{ index .T "close" }}">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    {{ icon "dismiss" "fluent-icon--md" }}
                 </button>
             </div>
             <div class="modal-body">
@@ -2276,12 +2197,12 @@
             <div class="modal-header">
                 <h2 id="delete-modal-title">{{ index .T "delete_account_confirm_title" }}</h2>
                 <button type="button" class="modal-close-btn" onclick="closeDeleteModal()" aria-label="{{ index .T "close" }}">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    {{ icon "dismiss" "fluent-icon--md" }}
                 </button>
             </div>
             <div class="modal-body">
                 <div class="info-callout info-callout--warning">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:1px;"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                    <span style="flex-shrink:0;margin-top:1px;display:inline-flex;">{{ icon "warning" }}</span>
                     <span>{{ index .T "deletion_grace_period_info" }}</span>
                 </div>
                 <div class="field">
@@ -2300,9 +2221,9 @@
                 <div class="form-grid">
                     <div class="field">
                         <label for="delete-username-confirm">{{ index .T "username" }}</label>
-                        <div class="input-wrap">
-                            <span class="input-prefix" aria-hidden="true">@</span>
-                            <input type="text" id="delete-username-confirm" class="console-input console-input--prefixed" placeholder="{{ index .T "username" }}" autocapitalize="none" spellcheck="false" oninput="validateDeleteInputs()">
+                        <div class="gilos-input-group">
+                            <span class="gilos-input-addon" aria-hidden="true">@</span>
+                            <input type="text" id="delete-username-confirm" class="gilos-input-control" placeholder="{{ index .T "username" }}" autocapitalize="none" spellcheck="false" oninput="validateDeleteInputs()">
                         </div>
                     </div>
                     <div class="field">
@@ -2381,8 +2302,8 @@
         let securityBlocks = {};
         let contactTimers = {};
 
-        const EYE_SHOW = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
-        const EYE_HIDE = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>';
+        const EYE_SHOW = window.GilosUI ? window.GilosUI.icon('eye', { size: 16 }) : '';
+        const EYE_HIDE = window.GilosUI ? window.GilosUI.icon('eye-off', { size: 16 }) : '';
 
         function initHomePasswordToggles() {
             document.querySelectorAll('.pw-eye-btn').forEach(btn => {
@@ -2534,7 +2455,7 @@
                 box.innerHTML = `
                     <div class="global-banner global-banner--info">
                         <div class="global-banner-left">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+                            <span style="color:var(--accent);flex-shrink:0;display:inline-flex;">${window.GilosUI.icon('link', { size: 20 })}</span>
                             <div class="global-banner-text">
                                 <div class="global-banner-title">${escapeHtml(tr('oauth_target_redirect_notice', 'Sign in to continue to'))} ${escapeHtml(host || tr('authorize', 'Authorize'))}</div>
                                 <div class="global-banner-desc">${escapeHtml(tr('review_permissions', 'Review the permissions this app is requesting before continuing.'))}</div>
@@ -2737,7 +2658,7 @@
                                     ${user.icon ? `<img src="${escapeHtml(user.icon)}" alt="Avatar">` : `<span>${avatarInitial}</span>`}
                                 </div>
                                 <button type="button" class="avatar-edit-btn" onclick="document.getElementById('icon-input').click()" title="${escapeHtml(tr('change_photo', 'Change photo'))}" aria-label="${escapeHtml(tr('change_photo', 'Change photo'))}">
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                                    ${window.GilosUI.icon('camera', { size: 14 })}
                                 </button>
                                 <input type="file" id="icon-input" accept="image/*" style="display:none;" onchange="handleIconSelect(event)">
                             </div>
@@ -2746,12 +2667,12 @@
                                 <div class="hero-subrow">
                                     <button type="button" class="hero-id-chip" data-copy-val="${escapeHtml(user.username)}" onclick="copyToClipboard(this.dataset.copyVal, this)" title="${escapeHtml(tr('copy', 'Copy'))}">
                                         <span>@${escapeHtml(user.username)}</span>
-                                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+                                        ${window.GilosUI.icon('copy', { size: 11 })}
                                     </button>
                                     <span>&middot;</span>
                                     <button type="button" class="hero-id-chip" onclick="copyToClipboard('${escapeHtml(String(user.id))}', this)" title="${escapeHtml(tr('copy_id', 'Copy ID'))}">
                                         <span>${escapeHtml(tr('account_id_label', 'User ID'))}: #${escapeHtml(String(user.id))}</span>
-                                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+                                        ${window.GilosUI.icon('copy', { size: 11 })}
                                     </button>
                                 </div>
                             </div>
@@ -2780,13 +2701,13 @@
                         if (pendingItems.length === 0) return '';
                         const pct = Math.round((score / total) * 100);
                         const scoreLabel = tr('security_checkup_score', '{score} of {total} checks completed').replace('{score}', String(score)).replace('{total}', String(total));
-                        const warnSvg = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>';
+                        const warnSvg = window.GilosUI.icon('warning', { size: 13 });
                         return `
                         <section class="security-checkup" id="security-checkup-box" aria-label="${escapeHtml(tr('security_checkup', 'Security checkup'))}">
                             <div class="checkup-header">
                                 <div>
                                     <h3 class="checkup-title">
-                                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                                        ${window.GilosUI.icon('shield-checkmark', { size: 17 })}
                                         <span>${escapeHtml(tr('security_checkup', 'Security checkup'))}</span>
                                     </h3>
                                     <p class="checkup-desc">${escapeHtml(tr('security_checkup_desc', 'Add recovery methods and two-step verification to keep your account secure.'))}</p>
@@ -2863,9 +2784,9 @@
                                         <label for="new-username">${escapeHtml(tr('username', 'Username'))}</label>
                                         <span class="badge badge-neutral">${escapeHtml(tr('username_changes_left', 'Changes remaining: %d/3').replace('%d', changesRemaining))}</span>
                                     </div>
-                                    <div class="input-wrap">
-                                        <span class="input-prefix">@</span>
-                                        <input type="text" id="new-username" name="username" class="console-input console-input--prefixed"
+                                    <div class="gilos-input-group ${changesRemaining === 0 ? 'is-disabled' : ''}">
+                                        <span class="gilos-input-addon" aria-hidden="true">@</span>
+                                        <input type="text" id="new-username" name="username" class="gilos-input-control"
                                                value="${escapeHtml(user.username)}" required
                                                placeholder="${escapeHtml(tr('enter_new_gilos_id', 'Enter new username'))}"
                                                ${changesRemaining === 0 ? 'disabled' : ''}
@@ -2875,7 +2796,7 @@
                                     <span id="username-status-msg" class="field-status-note">${escapeHtml(changesRemaining === 0 ? tr('username_changes_left', 'Changes remaining: %d/3').replace('%d', '0') : tr('username_requirements', 'Use 5-30 lowercase letters & numbers.'))}</span>
                                 </div>
                                 <div class="info-callout">
-                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:1px;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                                    <span style="flex-shrink:0;margin-top:1px;display:inline-flex;">${window.GilosUI.icon('info', { size: 15 })}</span>
                                     <span>${escapeHtml(tr('gilos_id_warning', 'Changing your username may affect external services linked to it.'))}</span>
                                 </div>
                             </form>
@@ -2909,7 +2830,7 @@
                                         <label for="phone">${escapeHtml(tr('phone', 'Phone'))}</label>
                                         ${user.phone ? `<span class="badge ${user.phone_verified ? 'badge-verified' : 'badge-unverified'}">${escapeHtml(user.phone_verified ? tr('verified_badge', 'Verified') : tr('unverified_badge', 'Unverified'))}</span>` : `<span class="badge badge-neutral">${escapeHtml(tr('not_set', 'Not set'))}</span>`}
                                     </div>
-                                    <input type="tel" id="phone" name="phone" class="console-input" value="${user.phone ? '+' + escapeHtml(String(user.phone)) : ''}" placeholder="+998 90 123 45 67">
+                                    <input type="tel" id="phone" name="phone" class="console-input" value="${user.phone ? '+' + escapeHtml(String(user.phone)) : ''}" placeholder="90 123 45 67">
                                 </div>
                             </form>
                         </section>
@@ -2932,7 +2853,7 @@
                                 <div class="mfa-row">
                                     <div class="mfa-row-left">
                                         <span class="mfa-row-icon ${user.mfa_totp_enabled ? 'is-active' : ''}">
-                                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                                            ${window.GilosUI.icon('shield-checkmark', { size: 18 })}
                                         </span>
                                         <div class="mfa-row-body">
                                             <div class="mfa-row-title-line">
@@ -2951,7 +2872,7 @@
                                 <div class="mfa-row">
                                     <div class="mfa-row-left">
                                         <span class="mfa-row-icon ${user.mfa_email_enabled ? 'is-active' : ''}">
-                                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+                                            ${window.GilosUI.icon('mail', { size: 18 })}
                                         </span>
                                         <div class="mfa-row-body">
                                             <div class="mfa-row-title-line">
@@ -2972,7 +2893,7 @@
                                 <div class="mfa-row">
                                     <div class="mfa-row-left">
                                         <span class="mfa-row-icon ${user.mfa_phone_enabled ? 'is-active' : ''}">
-                                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/></svg>
+                                            ${window.GilosUI.icon('phone', { size: 18 })}
                                         </span>
                                         <div class="mfa-row-body">
                                             <div class="mfa-row-title-line">
@@ -3003,22 +2924,18 @@
                             <form id="password-form" class="form-grid">
                                 <div class="field">
                                     <label for="new-password">${escapeHtml(tr('new_password', 'New Password'))}</label>
-                                    <div class="input-wrap">
-                                        <input type="password" id="new-password" name="password" class="console-input console-input--with-icon" required minlength="8" maxlength="72" autocomplete="new-password" placeholder="${escapeHtml(tr('new_password', 'New Password'))}">
-                                        <span class="input-adornment-right">
-                                            <button type="button" class="pw-eye-btn" onclick="toggleHomePassword('new-password', this)" aria-label="${escapeHtml(tr('show_password', 'Show password'))}"></button>
-                                        </span>
+                                    <div class="gilos-input-group">
+                                        <input type="password" id="new-password" name="password" class="gilos-input-control" required minlength="8" maxlength="72" autocomplete="new-password" placeholder="${escapeHtml(tr('new_password', 'New Password'))}">
+                                        <button type="button" class="gilos-input-action pw-eye-btn" onclick="toggleHomePassword('new-password', this)" aria-label="${escapeHtml(tr('show_password', 'Show password'))}"></button>
                                     </div>
                                     <div id="home-newpw-caps" class="caps-warning" hidden></div>
                                     <div id="home-pw-strength"></div>
                                 </div>
                                 <div class="field">
                                     <label for="confirm-new-password">${escapeHtml(tr('confirm_new_password', 'Confirm New Password'))}</label>
-                                    <div class="input-wrap">
-                                        <input type="password" id="confirm-new-password" name="confirm_password" class="console-input console-input--with-icon" required minlength="8" maxlength="72" autocomplete="new-password" placeholder="${escapeHtml(tr('confirm_new_password', 'Confirm New Password'))}">
-                                        <span class="input-adornment-right">
-                                            <button type="button" class="pw-eye-btn" onclick="toggleHomePassword('confirm-new-password', this)" aria-label="${escapeHtml(tr('show_password', 'Show password'))}"></button>
-                                        </span>
+                                    <div class="gilos-input-group">
+                                        <input type="password" id="confirm-new-password" name="confirm_password" class="gilos-input-control" required minlength="8" maxlength="72" autocomplete="new-password" placeholder="${escapeHtml(tr('confirm_new_password', 'Confirm New Password'))}">
+                                        <button type="button" class="gilos-input-action pw-eye-btn" onclick="toggleHomePassword('confirm-new-password', this)" aria-label="${escapeHtml(tr('show_password', 'Show password'))}"></button>
                                     </div>
                                     <div id="home-confirmpw-caps" class="caps-warning" hidden></div>
                                     <div id="home-pw-match" class="field-status-note"></div>
@@ -3081,11 +2998,22 @@
                             initialCountry: 'uz',
                             preferredCountries: ['uz', 'ru', 'kz', 'us'],
                             separateDialCode: true,
+                            autoInsertDialCode: false,
+                            nationalMode: true,
                             dropdownContainer: document.body,
                             utilsScript: 'https://cdn.jsdelivr.net/npm/intl-tel-input@19.2.16/build/js/utils.js'
                         });
                         if (user.phone) {
-                            itiProfilePhone.setNumber('+' + String(user.phone));
+                            const fullNum = '+' + String(user.phone);
+                            itiProfilePhone.setNumber(fullNum);
+                            if (itiProfilePhone.promise && typeof itiProfilePhone.promise.then === 'function') {
+                                itiProfilePhone.promise.then(() => {
+                                    if (document.body.contains(phoneInput)) {
+                                        itiProfilePhone.setNumber(fullNum);
+                                        phoneInput.dispatchEvent(new Event('input', { bubbles: true }));
+                                    }
+                                }).catch(() => {});
+                            }
                         }
                     }
                 }
@@ -3419,7 +3347,7 @@
                 return;
             }
             if (val.length < 5) {
-                if (indicator) indicator.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--red-500)" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>';
+                if (indicator) indicator.innerHTML = `<span style="color:var(--red-500);display:inline-flex;">${window.GilosUI.icon('dismiss-circle', { size: 16 })}</span>`;
                 if (msgEl) { msgEl.textContent = tr('username_too_short', 'Username must be at least 5 characters'); msgEl.className = 'field-status-note is-err'; }
                 if (saveBtn) saveBtn.disabled = true;
                 return;
@@ -3432,11 +3360,11 @@
                     const data = await parseJSONSafe(response, tr('update_failed', 'Check failed'));
                     if (input.value !== val) return;
                     if (data.available) {
-                        if (indicator) indicator.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--green-500)" stroke-width="2.4"><polyline points="20 6 9 17 4 12"/></svg>';
+                        if (indicator) indicator.innerHTML = `<span style="color:var(--green-500);display:inline-flex;">${window.GilosUI.icon('checkmark-circle', { size: 16 })}</span>`;
                         if (msgEl) { msgEl.textContent = tr('username_available', 'Username is available'); msgEl.className = 'field-status-note is-ok'; }
                         if (saveBtn) saveBtn.disabled = remaining === 0;
                     } else {
-                        if (indicator) indicator.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--red-500)" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>';
+                        if (indicator) indicator.innerHTML = `<span style="color:var(--red-500);display:inline-flex;">${window.GilosUI.icon('dismiss-circle', { size: 16 })}</span>`;
                         if (msgEl) { msgEl.textContent = data.error || tr('username_taken', 'Username is already taken'); msgEl.className = 'field-status-note is-err'; }
                         if (saveBtn) saveBtn.disabled = true;
                     }
@@ -3827,24 +3755,28 @@
             }
 
             const eventIcons = {
-                login_success: { cls: 'activity-dot--success', svg: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>' },
-                login_failed: { cls: 'activity-dot--danger', svg: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>' },
-                security_blocked: { cls: 'activity-dot--danger', svg: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>' },
-                brute_force_blocked: { cls: 'activity-dot--danger', svg: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>' },
-                password_changed: { cls: 'activity-dot--warning', svg: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>' },
-                password_reset: { cls: 'activity-dot--warning', svg: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>' },
-                mfa_totp_enabled: { cls: 'activity-dot--success', svg: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>' },
-                mfa_totp_disabled: { cls: 'activity-dot--warning', svg: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>' },
-                oauth_authorized: { cls: 'activity-dot--info', svg: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>' },
-                client_created: { cls: 'activity-dot--info', svg: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>' },
-                client_updated: { cls: 'activity-dot--info', svg: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>' },
-                client_deleted: { cls: 'activity-dot--danger', svg: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>' },
-                client_secret_rotated: { cls: 'activity-dot--warning', svg: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>' }
+                login_success: { cls: 'activity-dot--success', svg: window.GilosUI.icon('arrow-right', { size: 16 }) },
+                login_failed: { cls: 'activity-dot--danger', svg: window.GilosUI.icon('error-circle', { size: 16 }) },
+                security_blocked: { cls: 'activity-dot--danger', svg: window.GilosUI.icon('shield-error', { size: 16 }) },
+                brute_force_blocked: { cls: 'activity-dot--danger', svg: window.GilosUI.icon('shield-error', { size: 16 }) },
+                password_changed: { cls: 'activity-dot--warning', svg: window.GilosUI.icon('lock-closed', { size: 16 }) },
+                password_reset: { cls: 'activity-dot--warning', svg: window.GilosUI.icon('lock-closed', { size: 16 }) },
+                mfa_totp_enabled: { cls: 'activity-dot--success', svg: window.GilosUI.icon('shield-checkmark', { size: 16 }) },
+                mfa_totp_disabled: { cls: 'activity-dot--warning', svg: window.GilosUI.icon('shield-lock', { size: 16 }) },
+                mfa_changed: { cls: 'activity-dot--info', svg: window.GilosUI.icon('shield-keyhole', { size: 16 }) },
+                username_changed: { cls: 'activity-dot--info', svg: window.GilosUI.icon('person', { size: 16 }) },
+                contact_changed: { cls: 'activity-dot--info', svg: window.GilosUI.icon('mail', { size: 16 }) },
+                oauth_authorized: { cls: 'activity-dot--info', svg: window.GilosUI.icon('link', { size: 16 }) },
+                oauth_denied: { cls: 'activity-dot--warning', svg: window.GilosUI.icon('dismiss-circle', { size: 16 }) },
+                client_created: { cls: 'activity-dot--info', svg: window.GilosUI.icon('code', { size: 16 }) },
+                client_updated: { cls: 'activity-dot--info', svg: window.GilosUI.icon('code', { size: 16 }) },
+                client_deleted: { cls: 'activity-dot--danger', svg: window.GilosUI.icon('code', { size: 16 }) },
+                client_secret_rotated: { cls: 'activity-dot--warning', svg: window.GilosUI.icon('key-reset', { size: 16 }) }
             };
 
             const rowsHtml = filtered.map(ev => {
                 const title = tr('event_' + ev.event_type, ev.event_type.replace(/_/g, ' '));
-                const metaIcon = eventIcons[ev.event_type] || { cls: '', svg: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>' };
+                const metaIcon = eventIcons[ev.event_type] || { cls: '', svg: window.GilosUI.icon('info', { size: 16 }) };
                 const ua = window.GilosUI.parseUserAgent(ev.user_agent);
                 const deviceLabel = ua.shortLabel || tr('unknown', 'Unknown');
                 const relTime = window.GilosUI.formatRelativeTime(ev.created_at, T);
@@ -3983,7 +3915,6 @@
                 profile: 'scope_basic_info',
                 email: 'scope_email',
                 phone: 'scope_phone',
-                user_basic_info: 'scope_basic_info',
                 user_sessions: 'scope_sessions',
                 user_totps: 'scope_totps',
                 user_manage_account: 'scope_manage_account',
@@ -4028,7 +3959,7 @@
                     </div>
                     <div class="console-search-wrap">
                         <span class="console-search-icon" aria-hidden="true">
-                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                            ${window.GilosUI.icon('search', { size: 15 })}
                         </span>
                         <input type="search" id="sessions-search-input" class="console-search-input" value="${escapeHtml(sessionsQuery)}"
                                placeholder="${escapeHtml(tr('sessions_search_placeholder', 'Search by app, device, or IP address...'))}"
@@ -4036,7 +3967,7 @@
                         <button type="button" id="sessions-search-clear" class="console-search-clear ${sessionsQuery.trim() === '' ? 'hidden' : ''}"
                                 onclick="setSessionsQuery(''); const i=document.getElementById('sessions-search-input'); if(i){i.value=''; i.focus();}"
                                 aria-label="${escapeHtml(tr('clear_filters', 'Clear filters'))}">
-                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                            ${window.GilosUI.icon('dismiss', { size: 13 })}
                         </button>
                     </div>
                 </div>` : ''}
@@ -4069,7 +4000,7 @@
                 region.innerHTML = `
                     <div class="empty-state">
                         <div class="empty-state-icon" aria-hidden="true">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+                            ${window.GilosUI.icon('phone-laptop', { size: 24 })}
                         </div>
                         <p style="font-weight:600;color:var(--text);margin-bottom:4px;">${escapeHtml(tr('no_active_sessions', 'No active sessions found.'))}</p>
                         <p class="card-desc" style="margin:0 auto;">${escapeHtml(tr('empty_sessions_hint', 'Signed-in browsers and connected apps will appear here once authorized.'))}</p>
@@ -4306,7 +4237,7 @@
                     </div>
                     <div class="console-search-wrap">
                         <span class="console-search-icon" aria-hidden="true">
-                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                            ${window.GilosUI.icon('search', { size: 15 })}
                         </span>
                         <input type="search" id="clients-search-input" class="console-search-input" value="${escapeHtml(clientsQuery)}"
                                placeholder="${escapeHtml(tr('clients_search_placeholder', 'Search clients by name, ID, URI, or scope...'))}"
@@ -4314,7 +4245,7 @@
                         <button type="button" id="clients-search-clear" class="console-search-clear ${clientsQuery.trim() === '' ? 'hidden' : ''}"
                                 onclick="setClientsQuery(''); const i=document.getElementById('clients-search-input'); if(i){i.value=''; i.focus();}"
                                 aria-label="${escapeHtml(tr('clear_filters', 'Clear filters'))}">
-                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                            ${window.GilosUI.icon('dismiss', { size: 13 })}
                         </button>
                     </div>
                 </div>` : ''}
@@ -4332,7 +4263,7 @@
                 region.innerHTML = `
                     <div class="empty-state">
                         <div class="empty-state-icon" aria-hidden="true">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+                            ${window.GilosUI.icon('code', { size: 24 })}
                         </div>
                         <p style="font-weight:600;color:var(--text);margin-bottom:4px;">${escapeHtml(tr('no_clients_registered', 'No OAuth clients registered yet.'))}</p>
                         <p class="card-desc" style="margin:0 auto 16px;">${escapeHtml(tr('empty_clients_hint', 'Create your first OAuth 2.1 client to integrate Sign in with Gilos.'))}</p>
@@ -4387,7 +4318,7 @@
                                 <span class="entity-label">${escapeHtml(tr('client_id', 'Client ID'))}</span>
                                 <button type="button" class="mono-chip" onclick="copyToClipboard('${escapeHtml(String(c.id))}', this)" title="${escapeHtml(tr('copy', 'Copy'))}">
                                     <span>${escapeHtml(String(c.id))}</span>
-                                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+                                    ${window.GilosUI.icon('copy', { size: 11 })}
                                 </button>
                             </div>
 
@@ -4409,7 +4340,7 @@
                                     ${uris.map(u => `
                                         <button type="button" class="uri-item" data-uri="${escapeHtml(u)}" onclick="copyToClipboard(this.dataset.uri, this)" title="${escapeHtml(tr('copy_uri', 'Click to copy URI'))}: ${escapeHtml(u)}">
                                             <span class="uri-item-text">${escapeHtml(u)}</span>
-                                            <svg class="uri-item-copy-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+                                            ${window.GilosUI.icon('copy', { size: 12, className: 'uri-item-copy-icon' })}
                                         </button>`).join('')}
                                 </div>
                             </div>
@@ -4492,7 +4423,7 @@
             row.innerHTML = `
                 <input type="url" class="console-input uri-input" value="${escapeHtml(value)}" placeholder="https://example.com/callback" required>
                 <button type="button" class="btn uri-remove-btn" onclick="removeURIRow(this)" aria-label="${escapeHtml(tr('delete', 'Delete'))}">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    ${window.GilosUI.icon('dismiss', { size: 15 })}
                 </button>
             `;
             wrap.appendChild(row);
@@ -4864,7 +4795,7 @@
             box.innerHTML = `
                 <div class="global-banner global-banner--warning">
                     <div class="global-banner-left">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="flex-shrink:0;"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                        <span style="flex-shrink:0;display:inline-flex;">${window.GilosUI.icon('warning', { size: 20 })}</span>
                         <div class="global-banner-text">
                             <div class="global-banner-title">${escapeHtml(tr('deletion_warning_banner', 'This account is scheduled for deletion.'))}</div>
                             <div class="global-banner-desc">${escapeHtml(tr('deletion_days_remaining', 'Days remaining: %d').replace('%d', days))}</div>

@@ -22,11 +22,14 @@
     .oauth-card {
         width: 100%;
         max-width: 472px;
-        background: var(--card-bg);
+        background: var(--glass-surface-strong);
+        backdrop-filter: var(--glass-backdrop);
+        -webkit-backdrop-filter: var(--glass-backdrop);
         border: 1px solid var(--card-border);
+        border-top: 2px solid var(--accent);
         border-radius: 0px;
         box-shadow: var(--card-shadow);
-        padding: 36px 32px 28px;
+        padding: 34px 32px 28px;
         display: flex;
         flex-direction: column;
         gap: 18px;
@@ -62,7 +65,8 @@
         padding: 14px 16px;
         border-radius: 0px;
         background: var(--surface-subtle);
-        border: 1px solid var(--border-subtle);
+        border: 1px solid var(--border-default);
+        box-shadow: inset 0 1px 0 var(--glass-highlight);
     }
 
     .oauth-app-badge {
@@ -244,14 +248,15 @@
     .oauth-trust-note {
         display: flex;
         align-items: flex-start;
-        gap: 9px;
-        padding: 2px 2px;
+        gap: 10px;
+        padding: 11px 13px;
         border-radius: 0px;
-        border: none;
-        background: transparent;
-        font-size: 0.78rem;
-        line-height: 1.45;
-        color: var(--text-muted);
+        border: 1px solid color-mix(in srgb, var(--accent) 22%, var(--border-subtle));
+        border-left: 2px solid var(--accent);
+        background: var(--surface-tinted);
+        font-size: 0.785rem;
+        line-height: 1.48;
+        color: var(--text-secondary);
     }
 
     .oauth-trust-note svg {
@@ -478,7 +483,7 @@
 
             {{if .Error}}
             <div class="alert-box alert-box--error" id="error-alert" role="alert">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:2px;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                {{ icon "error-circle" "fluent-icon--md" }}
                 <span>{{.Error}}</span>
             </div>
             {{end}}
@@ -492,7 +497,7 @@
                     <div class="oauth-app-info">
                         <div class="oauth-app-name">{{.Client.Name}}</div>
                         <div class="oauth-app-redirect">
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                            {{ icon "open" "fluent-icon--sm" }}
                             <span>{{ index .T "redirecting_to" }}</span>
                             <span class="oauth-redirect-host" id="oauth-redirect-host">{{.RedirectURI}}</span>
                         </div>
@@ -528,9 +533,7 @@
                 {{end}}
 
                 <div class="oauth-trust-note">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-                    </svg>
+                    {{ icon "shield-checkmark" "fluent-icon--md" }}
                     <div>
                         <div class="oauth-trust-title">{{ index .T "oauth_security_summary" }}</div>
                         <div>{{ index .T "oauth_security_detail" }}</div>
@@ -625,17 +628,19 @@
         }
 
         function renderScopeIcons() {
+            const uiIcon = (name) => window.GilosUI ? GilosUI.icon(name, { size: 17 }) : '';
             const icons = {
-                openid: '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 1 0-16 0"/></svg>',
-                email: '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>',
-                phone: '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="20" x="5" y="2" rx="2"/><path d="M12 18h.01"/></svg>',
-                user_basic_info: '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="14" x="3" y="5" rx="2"/><line x1="7" y1="10" x2="11" y2="10"/><line x1="7" y1="14" x2="17" y2="14"/></svg>',
-                user_sessions: '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>',
-                user_totps: '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>',
-                user_manage_account: '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>',
-                offline_access: '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>'
+                openid: uiIcon('shield-person'),
+                profile: uiIcon('person'),
+                user_basic_info: uiIcon('person'),
+                email: uiIcon('mail'),
+                phone: uiIcon('phone'),
+                user_sessions: uiIcon('phone-laptop'),
+                user_totps: uiIcon('shield-keyhole'),
+                user_manage_account: uiIcon('settings'),
+                offline_access: uiIcon('arrow-sync')
             };
-            const fallbackIcon = '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+            const fallbackIcon = uiIcon('checkmark');
 
             document.querySelectorAll('.scope-icon[data-scope-id]').forEach(el => {
                 el.innerHTML = icons[el.dataset.scopeId] || fallbackIcon;
@@ -651,7 +656,8 @@
                 return;
             }
             box.className = 'message-container is-visible' + (isError ? ' is-error' : '');
-            box.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:1px;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><span>' + escapeHtml(msg) + '</span>';
+            const errSvg = window.GilosUI ? GilosUI.icon('error-circle', { size: 16 }) : '';
+            box.innerHTML = errSvg + '<span>' + escapeHtml(msg) + '</span>';
         }
 
         let switchingAccount = false;
@@ -812,7 +818,8 @@
             const warningTpl = escapeHtml(tr('scope_data_missing_warning', 'This service requires your %fields%. Set them in your %link%.'));
             const returnTarget = encodeURIComponent(window.location.pathname + window.location.search);
             const profileLink = `<a href="/home?target=${returnTarget}">${escapeHtml(tr('profile_settings', 'profile settings'))}</a>`;
-            container.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:2px;"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg><span>' +
+            const warnSvg = window.GilosUI ? GilosUI.icon('warning', { size: 16 }) : '';
+            container.innerHTML = warnSvg + '<span>' +
                 warningTpl.replace('%fields%', `<strong>${fieldsStr}</strong>`).replace('%link%', profileLink) + '</span>';
         }
 

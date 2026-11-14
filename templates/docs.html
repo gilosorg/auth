@@ -11,15 +11,14 @@
             --doc-primary-light: var(--accent);
             --doc-gradient: var(--primary);
             --doc-gradient-contrast: var(--primary-contrast);
-            --doc-bg: var(--surface-page);
-            --doc-sidebar-bg: var(--surface-elevated);
-            --doc-content-bg: var(--card-bg);
+            --doc-sidebar-bg: var(--glass-header);
+            --doc-content-bg: var(--glass-surface-strong);
             --doc-card-bg: var(--surface-subtle);
             --doc-border: var(--border-default);
             --doc-text: var(--text);
             --doc-text-secondary: var(--text-secondary);
             --doc-text-muted: var(--text-tertiary);
-            --doc-code-bg: #111215;
+            --doc-code-bg: #0D1117;
             --doc-code-text: #F5F5F7;
             --doc-inline-code-bg: var(--surface-subtle);
             --doc-inline-code-text: var(--text);
@@ -32,21 +31,21 @@
             --warning-bg: var(--amber-50);
         }
         :root[data-theme="dark"] {
-            --doc-code-bg: #161619;
+            --doc-code-bg: #111622;
             --doc-code-text: #F5F5F7;
         }
         @media (prefers-color-scheme: dark) {
             :root:not([data-theme="light"]) {
-                --doc-code-bg: #161619;
+                --doc-code-bg: #111622;
                 --doc-code-text: #F5F5F7;
             }
         }
         @media (prefers-reduced-motion: no-preference) {
             html { scroll-behavior: smooth; }
         }
-        body { background: var(--doc-bg); color: var(--doc-text); line-height: 1.6; }
+        body { color: var(--doc-text); line-height: 1.6; }
         .docs-wrapper { display: flex; min-height: 100vh; }
-        .docs-sidebar { width: 268px; background: var(--doc-sidebar-bg); border-right: 1px solid var(--doc-border); position: fixed; top: 0; left: 0; height: 100vh; overflow-y: auto; padding: 20px 0 24px; z-index: 100; display: flex; flex-direction: column; }
+        .docs-sidebar { width: 268px; background: var(--doc-sidebar-bg); backdrop-filter: var(--glass-backdrop); -webkit-backdrop-filter: var(--glass-backdrop); border-right: 1px solid var(--doc-border); box-shadow: inset -1px 0 0 var(--glass-highlight); position: fixed; top: 0; left: 0; height: 100vh; overflow-y: auto; padding: 20px 0 24px; z-index: 100; display: flex; flex-direction: column; }
         .sidebar-header { padding: 0 20px 18px; border-bottom: 1px solid var(--doc-border); margin-bottom: 14px; }
         .sidebar-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--doc-text); }
         .sidebar-logo img { width: 28px; height: 28px; }
@@ -88,13 +87,13 @@
         .copy-btn.is-copied { background: var(--green-600); border-color: var(--green-600); color: #FFFFFF; }
         .copy-btn:active { transform: translateY(1px); }
         .copy-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
-        .endpoint { background: var(--doc-content-bg); border: 1px solid var(--doc-border); border-radius: var(--radius-md); padding: 18px 20px; margin: 20px 0; box-shadow: var(--card-shadow); }
+        .endpoint { background: var(--doc-content-bg); backdrop-filter: var(--glass-backdrop); -webkit-backdrop-filter: var(--glass-backdrop); border: 1px solid var(--doc-border); border-radius: var(--radius-md); padding: 18px 20px; margin: 20px 0; box-shadow: var(--glass-highlight), var(--card-shadow); }
         .endpoint-header { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; flex-wrap: wrap; }
         .method-badge { display: inline-flex; align-items: center; justify-content: center; padding: 4px 10px; border-radius: 0px; font-size: 0.74rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; font-family: var(--font-mono); }
         .method-get { background: var(--method-get-bg); color: var(--method-get); }
         .method-post { background: var(--method-post-bg); color: var(--method-post); }
         .endpoint-path { font-family: var(--font-mono); font-size: 0.9rem; font-weight: 500; color: var(--doc-text); }
-        .table-wrapper { overflow-x: auto; margin: 12px 0; border: 1px solid var(--doc-border); border-radius: var(--radius-md); background: var(--doc-content-bg); }
+        .table-wrapper { overflow-x: auto; margin: 12px 0; border: 1px solid var(--doc-border); border-radius: var(--radius-md); background: var(--doc-content-bg); backdrop-filter: var(--glass-backdrop); -webkit-backdrop-filter: var(--glass-backdrop); box-shadow: var(--glass-highlight), var(--card-shadow); }
         table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
         th, td { text-align: left; padding: 11px 14px; border-bottom: 1px solid var(--doc-border); }
         th { background: var(--doc-card-bg); font-weight: 600; color: var(--doc-text); }
@@ -109,7 +108,7 @@
         .step-title { display: flex; align-items: center; font-size: 1.1rem; font-weight: 600; margin: 28px 0 12px; color: var(--doc-text); }
         .label { display: inline-block; font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--doc-text-muted); margin-bottom: 6px; }
         .label-success { color: var(--method-get); }
-        .docs-mobile-bar { display: none; position: sticky; top: 0; z-index: 90; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px; background: color-mix(in srgb, var(--doc-sidebar-bg) 88%, transparent); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-bottom: 1px solid var(--doc-border); }
+        .docs-mobile-bar { display: none; position: sticky; top: 0; z-index: 90; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px; background: var(--doc-sidebar-bg); backdrop-filter: var(--glass-backdrop); -webkit-backdrop-filter: var(--glass-backdrop); border-bottom: 1px solid var(--doc-border); box-shadow: inset 0 -1px 0 var(--glass-highlight); }
         .mobile-menu-btn { display: inline-flex; align-items: center; justify-content: center; width: 38px; height: 38px; border-radius: 0px; border: 1px solid var(--doc-border); background: var(--doc-card-bg); color: var(--doc-text); cursor: pointer; transition: background-color 0.14s ease, border-color 0.14s ease, transform 0.08s ease; }
         .mobile-menu-btn:hover { background: var(--surface-hover); border-color: var(--border-strong); }
         .mobile-menu-btn:active { transform: translateY(1px); }
@@ -124,10 +123,10 @@
         .docs-footer-links { display: inline-flex; align-items: center; flex-wrap: wrap; justify-content: center; gap: 6px 14px; margin-left: 8px; }
         .docs-footer-link { color: var(--doc-text-secondary); text-decoration: none; transition: color 0.14s ease; }
         .docs-footer-link:hover { color: var(--doc-text); text-decoration: underline; text-underline-offset: 3px; }
-        .client-panel { background: var(--doc-content-bg); border: 1px solid var(--doc-border); border-radius: var(--radius-lg); padding: 20px; margin: 20px 0; box-shadow: var(--card-shadow); }
+        .client-panel { background: var(--doc-content-bg); backdrop-filter: var(--glass-backdrop); -webkit-backdrop-filter: var(--glass-backdrop); border: 1px solid var(--doc-border); border-top: 2px solid var(--accent); border-radius: var(--radius-lg); padding: 20px; margin: 20px 0; box-shadow: var(--glass-highlight), var(--card-shadow); }
         .client-selector { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
         .client-selector label { font-weight: 600; color: var(--doc-text); }
-        .client-selector select { appearance: none; -webkit-appearance: none; padding: 9px 34px 9px 12px; border: 1px solid var(--doc-border); border-radius: var(--radius-sm); background: var(--doc-card-bg) var(--select-arrow) no-repeat right 12px center; color: var(--doc-text); font-family: inherit; font-size: 0.88rem; min-width: 240px; max-width: 100%; cursor: pointer; transition: border-color 0.15s ease, box-shadow 0.15s ease; }
+        .client-selector select { appearance: none; -webkit-appearance: none; padding: 9px 34px 9px 12px; border: 1.5px solid var(--doc-border); border-radius: var(--radius-sm); background: var(--doc-card-bg) var(--select-arrow) no-repeat right 12px center; color: var(--doc-text); font-family: inherit; font-size: 0.88rem; min-width: 240px; max-width: 100%; cursor: pointer; transition: border-color 0.15s ease, box-shadow 0.15s ease; }
         .client-selector select:hover { border-color: var(--border-strong); }
         .client-selector select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 2px var(--focus-ring); }
         .client-info { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--doc-border); display: grid; grid-template-columns: repeat(auto-fit, minmax(min(200px, 100%), 1fr)); gap: 12px; }
@@ -135,7 +134,7 @@
         .client-info-label { font-size: 0.72rem; color: var(--doc-text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
         .client-info-value { font-family: var(--font-mono); font-size: 0.84rem; color: var(--doc-text); word-break: break-all; }
         .secret-toggle { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; color: var(--accent); font-size: 0.8rem; }
-        .empty-state { text-align: center; padding: 42px 24px; background: var(--doc-content-bg); border: 1px solid var(--doc-border); border-radius: var(--radius-lg); margin: 24px 0; }
+        .empty-state { text-align: center; padding: 42px 24px; background: var(--doc-content-bg); backdrop-filter: var(--glass-backdrop); -webkit-backdrop-filter: var(--glass-backdrop); border: 1px solid var(--doc-border); border-radius: var(--radius-lg); box-shadow: var(--glass-highlight), var(--card-shadow); margin: 24px 0; }
         .empty-state h3 { color: var(--doc-text); margin-bottom: 10px; }
         .empty-state p { color: var(--doc-text-secondary); margin-bottom: 18px; }
         .docs-content .btn { display: inline-flex; align-items: center; gap: 8px; padding: 10px 18px; border-radius: var(--radius-sm); font-weight: 600; font-size: 0.88rem; text-decoration: none; cursor: pointer; transition: background-color 0.16s ease, border-color 0.16s ease, transform 0.1s ease; border: 1px solid transparent; }
@@ -146,11 +145,11 @@
         .docs-content .btn-secondary:hover:not(:disabled) { background: var(--surface-subtle); border-color: var(--border-strong); }
         .docs-content .btn:disabled { opacity: 0.45; cursor: not-allowed; }
         .docs-content .btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-        .interactive-box { background: var(--doc-content-bg); border: 1px solid var(--doc-border); border-radius: var(--radius-lg); padding: 22px; margin: 20px 0; box-shadow: var(--card-shadow); }
+        .interactive-box { background: var(--doc-content-bg); backdrop-filter: var(--glass-backdrop); -webkit-backdrop-filter: var(--glass-backdrop); border: 1px solid var(--doc-border); border-top: 2px solid var(--accent); border-radius: var(--radius-lg); padding: 22px; margin: 20px 0; box-shadow: var(--glass-highlight), var(--card-shadow); }
         .interactive-box.active { border-color: var(--accent); border-style: solid; }
         .input-group { margin-bottom: 14px; }
         .input-group label { display: block; font-weight: 500; color: var(--doc-text); margin-bottom: 6px; font-size: 0.88rem; }
-        .input-group > input { width: 100%; padding: 11px 14px; border: 1px solid var(--doc-border); border-radius: var(--radius-sm); background: var(--doc-card-bg); color: var(--doc-text); font-family: var(--font-mono); font-size: 0.88rem; }
+        .input-group > input { width: 100%; padding: 11px 14px; border: 1.5px solid var(--doc-border); border-radius: var(--radius-sm); background: var(--doc-card-bg); color: var(--doc-text); font-family: var(--font-mono); font-size: 0.88rem; }
         .input-group > input:focus { outline: none; background: var(--surface-elevated); border-color: var(--accent); box-shadow: 0 0 0 2px var(--focus-ring); }
         .input-group .gilos-input-control { font-family: var(--font-mono); font-size: 0.86rem; }
         .lang-select-compact { appearance: none; -webkit-appearance: none; margin-top: 8px; width: 100%; padding: 7px 30px 7px 10px; border-radius: var(--radius-sm); border: 1px solid var(--doc-border); background: var(--doc-card-bg) var(--select-arrow) no-repeat right 10px center; color: var(--doc-text-secondary); font-size: 0.8rem; font-family: inherit; cursor: pointer; transition: border-color 0.15s ease, box-shadow 0.15s ease; }
@@ -167,8 +166,8 @@
         .jwt-part-title { font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--doc-text-muted); margin-bottom: 6px; }
         .jwt-part-pre { margin: 0; padding: 10px 12px; border-radius: var(--radius-sm); background: var(--doc-code-bg); border: 1px solid var(--doc-border); font-size: 0.78rem; max-height: 240px; overflow: auto; }
         .highlight { color: var(--accent); }
-        .user-badge { display: inline-flex; align-items: center; gap: 8px; padding: 7px 14px; background: var(--surface-subtle); border: 1px solid var(--doc-border); border-radius: var(--radius-pill); font-size: 0.84rem; color: var(--doc-text); margin-bottom: 18px; }
-        .user-badge svg { width: 15px; height: 15px; color: var(--green-500); }
+        .user-badge { display: inline-flex; align-items: center; gap: 8px; padding: 7px 14px; background: var(--glass-surface-strong); backdrop-filter: var(--glass-backdrop); -webkit-backdrop-filter: var(--glass-backdrop); border: 1px solid var(--doc-border); border-radius: var(--radius-pill); font-size: 0.84rem; color: var(--doc-text); margin-bottom: 18px; }
+        .user-badge .fluent-icon { color: var(--green-500); }
         @media (max-width: 900px) {
             .docs-wrapper { flex-direction: column; }
             .docs-mobile-bar { display: flex; }
@@ -194,7 +193,7 @@
     <a href="#main-content" class="skip-link">{{ index .T "skip_to_content" }}</a>
     <div class="docs-mobile-bar">
         <button type="button" class="mobile-menu-btn" id="mobileMenuBtn" onclick="toggleMobileSidebar()" aria-label="{{ index .T "toggle_menu" }}" aria-expanded="false">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+            {{ icon "navigation" "fluent-icon--md" }}
         </button>
         <a href="/" class="sidebar-logo" style="font-size: 0.95rem;">
             <img src="/static/img/icon.svg" alt="{{ if .AppName }}{{ .AppName }}{{ else }}Gilos{{ end }}" class="theme-logo-light" style="width:24px;height:24px;">
@@ -216,7 +215,7 @@
                 <div style="display: flex; align-items: center; gap: 6px;">
                     <a href="https://github.com/gilosorg/auth/releases/tag/{{.AppVersion}}" target="_blank" class="sidebar-version" rel="noopener noreferrer">{{.AppVersion}}</a>
                     <button type="button" class="sidebar-close-btn" onclick="closeMobileSidebar(true)" aria-label="{{ index .T "close" }}">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                        {{ icon "dismiss" "fluent-icon--sm" }}
                     </button>
                 </div>
             </div>
@@ -225,7 +224,7 @@
                 <div class="gilos-input-group gilos-input-group--compact">
                     <input type="search" id="docsFilterInput" class="gilos-input-control" placeholder="{{ index .T "docs_filter_placeholder" }}" aria-label="{{ index .T "docs_filter_placeholder" }}" autocomplete="off">
                     <button type="button" id="docsFilterClearBtn" class="gilos-input-action" hidden aria-label="{{ index .T "clear_input" }}" title="{{ index .T "clear_input" }}">
-                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                        {{ icon "dismiss" "fluent-icon--sm" }}
                     </button>
                 </div>
             </div>
@@ -298,7 +297,7 @@
 
                     {{ if .IsLoggedIn }}
                     <div class="user-badge">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+                        {{ icon "checkmark-circle-filled" "fluent-icon--sm" }}
                         Signed in as <strong>{{ .User.Username }}</strong>
                     </div>
                     {{ else }}
@@ -360,7 +359,7 @@
                                     <div class="gilos-input-group gilos-input-group--compact" style="max-width:420px;">
                                         <input type="password" id="infoSecretInput" class="gilos-input-control" style="font-family:var(--font-mono);font-size:0.84rem;" placeholder="Paste your client secret here" autocomplete="off">
                                         <button type="button" class="gilos-input-action" id="toggleInfoSecretBtn" onclick="toggleDocsSecret()" aria-label="{{ index .T "show_password" }}" aria-pressed="false">
-                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                                            {{ icon "eye" }}
                                         </button>
                                     </div>
                                 </div>
@@ -384,7 +383,7 @@
                     
                     <div class="callout callout-success">
                         <div class="callout-title doc-heading-row">
-                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                            {{ icon "flash" "fluent-icon--sm" }}
                             <span>Interactive Mode</span>
                         </div>
                         <p>Select a client above and all code examples below will update with your actual credentials!</p>
@@ -454,7 +453,7 @@
                     {{ if .IsLoggedIn }}{{ if .Clients }}
                     <div class="interactive-box" id="authInteractive">
                         <h4 class="doc-heading-row">
-                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                            {{ icon "play" "fluent-icon--sm" }}
                             <span>Try It Live</span>
                         </h4>
                         <p style="margin-bottom: 16px; color: var(--doc-text-secondary);">Select a client above, then click the button to start an OAuth 2.1 authorization flow (a fresh <code>state</code> and PKCE <code>S256</code> challenge are generated automatically):</p>
@@ -470,7 +469,7 @@
                     {{ if .IsLoggedIn }}{{ if .Clients }}
                     <div class="interactive-box" id="redirectUrlBox">
                         <h4 class="doc-heading-row">
-                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+                            {{ icon "link" "fluent-icon--sm" }}
                             <span>Paste Your Redirect URL</span>
                         </h4>
                         <p style="margin-bottom: 16px; color: var(--doc-text-secondary);">After authorization, paste the full URL you were redirected to:</p>
@@ -479,7 +478,7 @@
                             <div class="gilos-input-group">
                                 <input type="text" id="redirectUrlInput" class="gilos-input-control" placeholder="https://yourapp.com/callback?code=abc123...&state=..." oninput="parseRedirectUrl()">
                                 <button type="button" id="clearRedirectUrlBtn" class="gilos-input-action" hidden aria-label="{{ index .T "clear_input" }}" title="{{ index .T "clear_input" }}" onclick="clearRedirectUrlInput()">
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                                    {{ icon "dismiss" "fluent-icon--sm" }}
                                 </button>
                             </div>
                         </div>
@@ -530,7 +529,7 @@ grant_type=authorization_code
                         <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
                             <div>
                                 <h4 class="doc-heading-row" style="margin: 0;">
-                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
+                                    {{ icon "key" "fluent-icon--sm" }}
                                     <span>Test Token Endpoint</span>
                                 </h4>
                                 <p id="tokenTestStatus" style="margin: 4px 0 0; font-size: 0.85rem; color: var(--doc-text-muted);">Extract a code from Step 1 first</p>
@@ -588,7 +587,7 @@ Authorization: Bearer <span class="var-access-token">YOUR_ACCESS_TOKEN</span></c
                         <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
                             <div>
                                 <h4 class="doc-heading-row" style="margin: 0;">
-                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 1 0-16 0"/></svg>
+                                    {{ icon "person" "fluent-icon--sm" }}
                                     <span>Test UserInfo Endpoint</span>
                                 </h4>
                                 <p id="userInfoTestStatus" style="margin: 4px 0 0; font-size: 0.85rem; color: var(--doc-text-muted);">{{ index .T "token_step_wait" }}</p>
@@ -657,7 +656,7 @@ Authorization: Bearer <span class="var-access-token">YOUR_ACCESS_TOKEN</span></c
                         <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
                             <div>
                                 <h4 class="doc-heading-row" style="margin: 0;">
-                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+                                    {{ icon "arrow-sync" "fluent-icon--sm" }}
                                     <span>Test Refresh Token</span>
                                 </h4>
                                 <p id="refreshTestStatus" style="margin: 4px 0 0; font-size: 0.85rem; color: var(--doc-text-muted);">{{ index .T "refresh_step_wait" }}</p>
@@ -1105,9 +1104,9 @@ func CallbackHandler(onSuccess AuthCallback) http.HandlerFunc {
         };
 
         const DOCS_THEME_ICONS = {
-            system: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>',
-            light: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>',
-            dark: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>'
+            system: window.GilosUI ? window.GilosUI.icon('laptop', { size: 14 }) : '',
+            light: window.GilosUI ? window.GilosUI.icon('sun', { size: 14 }) : '',
+            dark: window.GilosUI ? window.GilosUI.icon('moon', { size: 14 }) : ''
         };
 
         function updateDocsThemeUI() {
@@ -1305,9 +1304,7 @@ func CallbackHandler(onSuccess AuthCallback) http.HandlerFunc {
             if (!btn) return;
             btn.setAttribute('aria-pressed', isVisible ? 'true' : 'false');
             btn.setAttribute('aria-label', isVisible ? (DOCS_I18N.hidePassword || 'Hide secret') : (DOCS_I18N.showPassword || 'Show secret'));
-            btn.innerHTML = isVisible
-                ? '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>'
-                : '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
+            btn.innerHTML = window.GilosUI ? window.GilosUI.icon(isVisible ? 'eye-off' : 'eye', { size: 16 }) : '';
         }
 
         function toggleDocsSecret() {
