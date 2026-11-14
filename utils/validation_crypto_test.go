@@ -172,3 +172,10 @@ func TestValidatePasswordAndUsername(t *testing.T) {
 	}
 }
 
+func TestFormatPhoneOTPMessageEskizVerified(t *testing.T) {
+	want := "auth.gilos.org is sending this code to verify your phone for Gilos ID registration or access: 123456"
+	if got := FormatPhoneOTPMessage("123456"); got != want {
+		t.Fatalf("FormatPhoneOTPMessage = %q, want %q", got, want)
+	}
+}
+

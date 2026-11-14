@@ -33,7 +33,13 @@ Email domains in Resend are separated by purpose to protect deliverability and i
 - **`mail.gilos.org` & `info@gilos.email` (Decommissioned)**:
   - Both domains/addresses have been retired and deleted from Resend. Never reference `mail.gilos.org` or `info@gilos.email` in code, configuration, tests, templates, or documentation.
 
-## 4. UI Engineering & Brand Design Philosophy (CRITICAL)
+## 4. SMS Delivery & Verified Template (Eskiz — IMMUTABLE)
+- Eskiz strictly enforces pre-approved verified SMS text only. Never alter, translate, paraphrase, or rebrand a single word of the verified template:
+  `auth.gilos.org is sending this code to verify your phone for Gilos ID registration or access: <6-digit-code>`
+- Use this exact wording identically across **all** verification cases (registration, MFA, contact verification, password recovery) and **all** user languages (`en`, `ru`, `uz`), managed via `FormatPhoneOTPMessage` in `utils/send_phone_otp.go`.
+- Preserve `"Gilos ID"` verbatim inside this carrier-whitelisted SMS template; it is an intentional immutable exception to the UI naming rule in Section 5.
+
+## 5. UI Engineering & Brand Design Philosophy (CRITICAL)
 
 Gilos interfaces blend **corporate Microsoft / Fluent structural discipline** (sharp rectangular containers, crisp hairline borders, clear grid hierarchy) with **Apple-inspired consumer calm** (generous breathing room, understated typography, translucent surfaces, tactile restraint, and natural human iconography). Square UI boxes should feel purposeful and modern—never brutalist, sterile, or robotic.
 
@@ -44,16 +50,16 @@ Gilos interfaces blend **corporate Microsoft / Fluent structural discipline** (s
 - **Icons, Spinners & Semantic Dots Stay Natural**: **Do NOT** force `0px` blocky geometry onto icons or inherently circular micro-indicators. Pictographic SVG icons (devices, locks, envelopes, copy symbols, badges, shields) should preserve natural optical rounding (`rx="2"` on hardware/document rects, round stroke caps/joins). Rotating spinners (`.spinner`, `.btn-spinner`), radio buttons (`input[type="radio"]`), and tiny status dots (`.status-live-dot`, `.pw-rule-dot`) remain smoothly circular (`border-radius: 50%`) so icons read as icons and status cues stay human.
 
 ### Unified Flex Input Groups & Flush Adornments (CRITICAL)
-- **NEVER** position text prefixes (`@`), status indicators, eye toggles, or submit buttons inside `<input>` via `position: absolute` with hardcoded `padding-left`/`padding-right` (font metrics vary across glyphs such as Inter `@` vs `E` and cause baseline sag, tight kerning, and uneven top/right/bottom air gaps).
+- **NEVER** position icon/text prefixes, status indicators, eye toggles, or submit buttons inside `<input>` via `position: absolute` with hardcoded `padding-left`/`padding-right` (font and glyph metrics vary and cause baseline sag, tight kerning, and uneven top/right/bottom air gaps).
 - **ALWAYS** construct bordered flex input groups (`display: flex; align-items: stretch; border: 1.5px solid var(--border-default); background: var(--surface-subtle)`):
-  - Place static sigils (`@` in `var(--font-mono)`) in a stretch-height left addon cell (`flex: 0 0 40px`–`42px`, `border-right: 1px solid var(--border-default)`, subtle tonal fill) centered on the exact cross-axis as a borderless `flex: 1; min-width: 0` `<input>`.
+  - Place Fluent UI icon prefixes (such as `person` inside `.gilos-input-addon.gilos-input-addon--icon` rather than raw `@` characters) in a stretch-height left addon cell (`flex: 0 0 40px`–`42px`, `border-right: 1px solid var(--border-default)`, subtle tonal fill) centered on the exact cross-axis as a borderless `flex: 1; min-width: 0` `<input>`.
   - Dock trailing actions (submit buttons, password visibility toggles, clear actions) **flush** to the top, right, and bottom borders (`height: 100%`, `border-left: 1px solid var(--border-default)`), never floating inside an input with gaps.
   - Style disabled docked buttons as intentional matte structural cells (`opacity: 1` with subtle background and `var(--text-tertiary)` icon color) rather than faded translucent boxes.
   - Apply hover, `:focus-within` (`border-color: var(--accent)`, `box-shadow: 0 0 0 2px var(--focus-ring)`), and error rings on the outer wrapper rather than the inner borderless input.
 
 ### Structural Balance, Typography & Deterministic Kinematics
 - **Structured Calm**: Combine `1px` corporate hairlines, `gap: 0` segmented bars (`.method-selector`, `.filter-pills`), and `inset 3px 0 0` / `inset 0 -2px 0` active accent rails with subtle, restrained surface depth (`--card-shadow`, frosted translucent headers) and open padding so interfaces remain calm and breathable.
-- **Hierarchy & Monospace Discipline**: Always define and verify text contrast tokens (`--text`, `--text-secondary`, `--text-muted`, `--text-tertiary`) in both Light and Dark themes so footer disclaimers, placeholders, and prefixes remain subtle yet legible. Pair `Inter` with `var(--font-mono)` (`'JetBrains Mono'`, system monospace) and `font-variant-numeric: tabular-nums` for `@` handles, numeric `User ID #...`, OTP digit grids, countdowns, client IDs, scopes, and HTTP status tags.
+- **Hierarchy & Monospace Discipline**: Always define and verify text contrast tokens (`--text`, `--text-secondary`, `--text-muted`, `--text-tertiary`) in both Light and Dark themes so footer disclaimers, placeholders, and prefixes remain subtle yet legible. Render usernames and identity handles in crisp proportional `Inter` (never monospace, so accounts read naturally rather than robotic), and pair `Inter` with `var(--font-mono)` (`'JetBrains Mono'`, system monospace) plus `font-variant-numeric: tabular-nums` exclusively for technical values: numeric `User ID #...`, OTP digit grids, countdowns, client IDs/secrets, scopes, IP addresses, and HTTP status tags.
 - **Line Wrapping & Kinematics**: Constrain centered disclaimer/legal text (`max-width: 310px`–`340px`) to avoid single-word orphan wraps. Prefer subtle border/tonal transitions and crisp `translateY(1px)` click detents over bouncy scale animations.
 
 ### Form Controls, Themes & Maintainability
@@ -64,7 +70,7 @@ Gilos interfaces blend **corporate Microsoft / Fluent structural discipline** (s
 - Keep `:focus-visible` outlines clear (`2px solid var(--accent)`), maintain responsive behavior at mobile breakpoints (`375px`+), respect `prefers-reduced-motion`, and update all three translation files (`i18n/translations/en.json`, `ru.json`, `uz.json`) when adding user-facing copy.
 
 ### Identity Naming (Username vs. User ID)
-- Always call the `@username` login handle **"Gilos Username"** (or **"Username"** / placeholder **"Enter username"**; configured via `APP_ID_LABEL="Gilos Username"`).
+- Always call the username login handle **"Gilos Username"** (or **"Username"** / placeholder **"Enter username"**; configured via `APP_ID_LABEL="Gilos Username"`).
 - Call the authentication service/portal **"Gilos Auth"** (`APP_NAME="Gilos Auth"`).
 - Reserve **"User ID"** exclusively for numeric database IDs (e.g., `User ID: #1`).
-- Never reintroduce `"Gilos ID"` or call `@username` an "ID" in UI labels, placeholders, error messages, SMS copy, emails, or documentation.
+- Never reintroduce `"Gilos ID"` or call the username an "ID" in UI labels, placeholders, error messages, emails, or documentation (the sole exception is the immutable Eskiz carrier-approved SMS template in Section 4 above).

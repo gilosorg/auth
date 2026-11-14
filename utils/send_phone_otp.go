@@ -9,6 +9,15 @@ import (
 	"github.com/nyaruka/phonenumbers"
 )
 
+// EskizVerifiedSMSTemplate is the exact operator-whitelisted SMS text enforced by Eskiz.
+// It must stay unchanged across all verification cases and user languages.
+const EskizVerifiedSMSTemplate = "auth.gilos.org is sending this code to verify your phone for Gilos ID registration or access: %s"
+
+// FormatPhoneOTPMessage formats the verification SMS using the carrier-verified Eskiz template.
+func FormatPhoneOTPMessage(otp string) string {
+	return fmt.Sprintf(EskizVerifiedSMSTemplate, otp)
+}
+
 // SendPhoneOTP sends an OTP via SMS to the specified phone number after validating it and checking country support.
 func SendPhoneOTP(phone string, otp string) error {
 	var num *phonenumbers.PhoneNumber
@@ -38,7 +47,7 @@ func SendPhoneOTP(phone string, otp string) error {
 		formatted = "998" + strings.TrimLeft(formatted, "0")
 	}
 
-	message := fmt.Sprintf("auth.gilos.org is sending this code to verify your phone for Gilos account registration or access: %s", otp)
+	message := FormatPhoneOTPMessage(otp)
 
 	// Call country-specific sending method
 	if country == "UZ" {
