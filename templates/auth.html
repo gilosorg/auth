@@ -59,7 +59,7 @@
             height: 100%;
             width: 20%;
             background: linear-gradient(90deg, var(--accent), color-mix(in srgb, var(--accent) 75%, #60a5fa));
-            border-radius: 0 3px 3px 0;
+            border-radius: 0px;
             transition: width 0.35s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
@@ -186,7 +186,7 @@
         .identity-chip-avatar {
             width: 24px;
             height: 24px;
-            border-radius: 50%;
+            border-radius: 0px;
             background: var(--primary);
             color: var(--primary-contrast);
             font-size: 0.72rem;
@@ -411,7 +411,7 @@
             right: 5px;
             width: 36px;
             height: 36px;
-            border-radius: 10px;
+            border-radius: 0px;
             border: none;
             background: var(--primary);
             color: var(--primary-contrast);
@@ -449,7 +449,7 @@
             transform: translateY(-50%);
             width: 34px;
             height: 34px;
-            border-radius: 8px;
+            border-radius: 0px;
             border: none;
             background: transparent;
             color: var(--text-tertiary);
@@ -530,7 +530,6 @@
         }
 
         .radio-option input[type="radio"] {
-            accent-color: var(--accent);
             width: 17px;
             height: 17px;
             flex-shrink: 0;
@@ -540,7 +539,7 @@
         .radio-option-icon {
             width: 36px;
             height: 36px;
-            border-radius: 10px;
+            border-radius: 0px;
             background: var(--surface-subtle);
             color: var(--text);
             display: inline-flex;
@@ -650,7 +649,7 @@
             gap: 7px;
             height: 36px;
             border: none;
-            border-radius: 8px;
+            border-radius: 0px;
             background: transparent;
             color: var(--text-secondary);
             font-family: inherit;
@@ -742,7 +741,7 @@
             height: 16px;
             border: 2px solid color-mix(in srgb, currentColor 28%, transparent);
             border-top-color: currentColor;
-            border-radius: 50%;
+            border-radius: 0px;
             animation: gilosSpin 0.65s linear infinite;
         }
 
@@ -824,7 +823,7 @@
                 <div class="form-wrapper">
                     <form id="gilos-form" class="form-container" onsubmit="return false;">
                         <div class="form-element">
-                            <label for="gilos-id" class="field-label">{{ if .AppIDLabel }}{{ .AppIDLabel }}{{ else }}Gilos ID{{ end }}</label>
+                            <label for="gilos-id" class="field-label">{{ if .AppIDLabel }}{{ .AppIDLabel }}{{ else }}Gilos Username{{ end }}</label>
                             <div class="gilos-input-wrap">
                                 <span class="gilos-at-prefix" aria-hidden="true">@</span>
                                 <input type="text" id="gilos-id" name="username" class="auth-input auth-input--gilos" required autocomplete="username" autocapitalize="none" spellcheck="false"
@@ -1245,7 +1244,7 @@
             const chipHandle = document.getElementById('identity-chip-handle');
 
             const metaMap = {
-                'gilos-id': { pct: 20, step: 0, total: 0, sub: T.sign_in_subtitle || 'Use your Gilos ID to sign in across Gilos apps and connected services.' },
+                'gilos-id': { pct: 20, step: 0, total: 0, sub: T.sign_in_subtitle || 'Use your Gilos Username to sign in across Gilos apps and connected services.' },
                 'password': { pct: 58, step: 2, total: 3, sub: '' },
                 'two-step-select': { pct: 76, step: 2, total: 3, sub: '' },
                 'otp': { pct: 90, step: 3, total: 3, sub: '' },
@@ -1878,7 +1877,7 @@
                     method: 'GET',
                     headers: { 'Accept': 'application/json' }
                 });
-                const data = await parseAuthJSON(response, T.network_error || 'Unable to verify Gilos ID. Please try again.');
+                const data = await parseAuthJSON(response, T.network_error || 'Unable to verify username. Please try again.');
                 if (!response.ok) {
                     if (response.status === 429 && data.is_blocked) {
                         state.isBlocked = true;
@@ -1894,8 +1893,8 @@
                 syncFormData(data);
                 updateUI(data);
             } catch (error) {
-                console.error('Error checking Gilos ID:', error);
-                showMessage(error.message || (T.network_error || 'Unable to verify Gilos ID. Please try again.'), false);
+                console.error('Error checking username:', error);
+                showMessage(error.message || (T.network_error || 'Unable to verify username. Please try again.'), false);
             } finally {
                 continueButton.innerHTML = CHEVRON_RIGHT_SVG;
                 continueButton.disabled = state.gilosID.length < 5;

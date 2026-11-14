@@ -32,3 +32,27 @@ Email domains in Resend are separated by purpose to protect deliverability and i
   - All public contact, legal, and security reporting references across both the `auth` project (e.g., `SECURITY.md`) and `gilos.org` must point to `info@gilos.org`. Do **not** route automated auth emails through `gilos.org`.
 - **`mail.gilos.org` & `info@gilos.email` (Decommissioned)**:
   - Both domains/addresses have been retired and deleted from Resend. Never reference `mail.gilos.org` or `info@gilos.email` in code, configuration, tests, templates, or documentation.
+
+## 4. UI Engineering & Brand Design Rules (CRITICAL)
+
+### Sharp `0px` Geometry (Brand Face — MANDATORY)
+- Every UI element across this service MUST have square edges (`border-radius: 0px`).
+- Never use `border-radius > 0`, `50%`, or pill radii (`9999px`) on cards, containers, inputs, textareas, selects, buttons, checkboxes, radio buttons, toggle switches, badges, pills, avatars, skeletons, scrollbars, toast popups, modals, HTML OTP emails, or inline JS markup.
+- All radius tokens in `static/css/app.css` (`--radius-xs`, `--radius-sm`, `--radius-md`, `--radius-lg`, `--radius-xl`, `--radius-pill`) MUST remain `0px`.
+- When integrating third-party UI libraries (SweetAlert2 `.swal2-*`, `intl-tel-input` `.iti__*`, CropperJS `.cropper-*`), explicitly override their corner radii with `border-radius: 0px !important`.
+
+### Form Controls & Interactive Primitives
+- Enforce `button, input, textarea, select { border-radius: 0px; }` globally.
+- Always style `input[type="checkbox"]` and `input[type="radio"]` using `appearance: none; -webkit-appearance: none; border-radius: 0px;` (crisp square frame with angled checkmark for checkboxes, centered inner square for radios), leaving `.toggle-switch` as a rectangular track with a sliding square thumb.
+- Rely on crisp `1px`/`1.5px` borders (`--border-subtle`, `--border-default`, `--border-strong`), spacing hierarchy, and elevation shadows for visual structure rather than rounded corners or ornamental blurs.
+
+### Themes, Tokens & Maintainability
+- Build strictly with vanilla HTML/CSS/JS; do not add CSS frameworks.
+- Always consume CSS custom properties from `static/css/app.css` and verify every new component works cleanly in both Light mode and Dark mode (`:root[data-theme="dark"]` and `@media (prefers-color-scheme: dark)`).
+- Keep `:focus-visible` outlines clear (`2px solid var(--accent)`), maintain responsive behavior at mobile breakpoints (`375px`+), respect `prefers-reduced-motion`, and update all three translation files (`i18n/translations/en.json`, `ru.json`, `uz.json`) when adding user-facing copy.
+
+### Identity Naming (Username vs. User ID)
+- Always call the `@username` login handle **"Gilos Username"** (or **"Username"** / placeholder **"Enter username"**; configured via `APP_ID_LABEL="Gilos Username"`).
+- Call the authentication service/portal **"Gilos Auth"** (`APP_NAME="Gilos Auth"`).
+- Reserve **"User ID"** exclusively for numeric database IDs (e.g., `User ID: #1`).
+- Never reintroduce `"Gilos ID"` or call `@username` an "ID" in UI labels, placeholders, error messages, SMS copy, emails, or documentation.

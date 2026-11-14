@@ -56,11 +56,12 @@
     --amber-500: #F59E0B;
     --amber-700: #B45309;
 
-    --radius-xs: 6px;
-    --radius-sm: 10px;
-    --radius-md: 14px;
-    --radius-lg: 20px;
-    --radius-pill: 9999px;
+    --radius-xs: 0px;
+    --radius-sm: 0px;
+    --radius-md: 0px;
+    --radius-lg: 0px;
+    --radius-xl: 0px;
+    --radius-pill: 0px;
 
     --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
 }
@@ -238,11 +239,96 @@ body {
 
 ::-webkit-scrollbar-thumb {
     background: var(--slate-300);
-    border-radius: 4px;
+    border-radius: 0px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
     background: var(--slate-500);
+}
+
+/* Brand UI geometry: zero corner radius on interactive & form primitives */
+button,
+input,
+textarea,
+select {
+    border-radius: 0px;
+}
+
+input[type="checkbox"] {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 17px;
+    height: 17px;
+    border: 1.5px solid var(--border-strong);
+    border-radius: 0px;
+    background: var(--surface-elevated);
+    cursor: pointer;
+    position: relative;
+    vertical-align: middle;
+    flex-shrink: 0;
+    transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+input[type="checkbox"]:hover:not(:disabled) {
+    border-color: var(--accent);
+}
+
+input[type="checkbox"]:checked {
+    background: var(--accent);
+    border-color: var(--accent);
+}
+
+input[type="checkbox"]:checked::after {
+    content: "";
+    position: absolute;
+    left: 4.5px;
+    top: 1px;
+    width: 4.5px;
+    height: 8.5px;
+    border: solid var(--accent-contrast);
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+}
+
+input[type="checkbox"]:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+input[type="radio"] {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 17px;
+    height: 17px;
+    border: 1.5px solid var(--border-strong);
+    border-radius: 0px;
+    background: var(--surface-elevated);
+    cursor: pointer;
+    position: relative;
+    vertical-align: middle;
+    flex-shrink: 0;
+    transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+input[type="radio"]:hover:not(:disabled) {
+    border-color: var(--accent);
+}
+
+input[type="radio"]:checked {
+    border-color: var(--accent);
+    background: var(--surface-elevated);
+}
+
+input[type="radio"]:checked::after {
+    content: "";
+    position: absolute;
+    inset: 3.5px;
+    background: var(--accent);
+}
+
+input[type="radio"]:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
 }
 
 .tabular-nums {
@@ -303,14 +389,14 @@ body {
 .btn-sm {
     font-size: 0.8125rem;
     padding: 7px 12px;
-    border-radius: 8px;
+    border-radius: 0px;
 }
 
 .btn-lg {
     font-size: 0.95rem;
     font-weight: 600;
     padding: 12px 20px;
-    border-radius: 12px;
+    border-radius: 0px;
 }
 
 .btn-primary {
@@ -369,7 +455,7 @@ body {
     height: 15px;
     border: 2px solid currentColor;
     border-right-color: transparent;
-    border-radius: 50%;
+    border-radius: 0px;
     animation: gilos-spin 0.65s linear infinite;
     flex-shrink: 0;
 }
@@ -434,20 +520,27 @@ body {
 }
 
 .toggle-switch input[type="checkbox"] {
+    appearance: auto;
+    -webkit-appearance: auto;
     position: absolute;
     opacity: 0;
     width: 100%;
     height: 100%;
     margin: 0;
+    border: 0;
     cursor: pointer;
     z-index: 2;
+}
+
+.toggle-switch input[type="checkbox"]::after {
+    content: none;
 }
 
 .toggle-switch .slider {
     position: absolute;
     inset: 0;
     background-color: var(--slate-300);
-    border-radius: var(--radius-pill);
+    border-radius: 0px;
     transition: background-color 0.22s var(--ease-out), opacity 0.22s ease;
     pointer-events: none;
 }
@@ -460,7 +553,7 @@ body {
     left: 3px;
     top: 3px;
     background-color: #FFFFFF;
-    border-radius: 50%;
+    border-radius: 0px;
     transition: transform 0.22s var(--ease-out);
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.22);
 }
@@ -504,7 +597,7 @@ body {
 .identity-chip-avatar {
     width: 22px;
     height: 22px;
-    border-radius: 50%;
+    border-radius: 0px;
     background: var(--primary);
     color: var(--primary-contrast);
     display: inline-flex;
@@ -579,7 +672,7 @@ body {
 }
 
 .pw-strength-segment {
-    border-radius: 4px;
+    border-radius: 0px;
     background: var(--slate-200);
     transition: background-color 0.2s ease;
 }
@@ -613,7 +706,7 @@ body {
 .pw-rule-dot {
     width: 14px;
     height: 14px;
-    border-radius: 50%;
+    border-radius: 0px;
     background: var(--slate-200);
     color: var(--text-muted);
     display: inline-flex;
@@ -700,7 +793,7 @@ body {
     color: var(--text-muted);
     cursor: pointer;
     padding: 2px;
-    border-radius: 6px;
+    border-radius: 0px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -728,7 +821,7 @@ body {
     background: linear-gradient(90deg, var(--surface-subtle) 25%, var(--surface-hover) 50%, var(--surface-subtle) 75%);
     background-size: 200% 100%;
     animation: gilosSkeleton 1.4s ease-in-out infinite;
-    border-radius: 8px;
+    border-radius: 0px;
 }
 
 @keyframes gilosSkeleton {
@@ -765,7 +858,7 @@ body {
     background: var(--surface-elevated) !important;
     color: var(--text) !important;
     border: 1px solid var(--border-default) !important;
-    border-radius: var(--radius-sm) !important;
+    border-radius: 0px !important;
     font-size: 0.92rem !important;
     box-shadow: none !important;
 }
@@ -780,7 +873,7 @@ body {
 .swal2-validation-message {
     background: var(--red-50) !important;
     color: var(--red-700) !important;
-    border-radius: var(--radius-xs) !important;
+    border-radius: 0px !important;
     font-size: 0.84rem !important;
 }
 
@@ -789,10 +882,18 @@ body {
     margin-top: 20px !important;
 }
 
+.swal2-confirm,
+.swal2-cancel,
+.swal2-deny,
+.swal2-close,
+.swal2-icon {
+    border-radius: 0px !important;
+}
+
 .swal2-confirm {
     background: var(--primary) !important;
     color: var(--primary-contrast) !important;
-    border-radius: var(--radius-sm) !important;
+    border-radius: 0px !important;
     padding: 10px 20px !important;
     font-weight: 500 !important;
     font-size: 0.9rem !important;
@@ -852,7 +953,7 @@ body {
     background: var(--surface-elevated);
     color: var(--text);
     border: 1px solid var(--border-default);
-    border-radius: var(--radius-md);
+    border-radius: 0px !important;
     box-shadow: var(--popover-shadow);
     z-index: 10000 !important;
     max-width: calc(100vw - 40px);
@@ -865,7 +966,7 @@ body {
     padding: 8px 12px !important;
     background: var(--surface-subtle);
     border: 1px solid var(--border-default);
-    border-radius: 8px;
+    border-radius: 0px !important;
     color: var(--text);
     font-size: 0.875rem;
 }
@@ -893,7 +994,7 @@ body {
 .iti__selected-flag:hover,
 .iti--allow-dropdown .iti__flag-container:hover .iti__selected-flag {
     background: var(--surface-subtle) !important;
-    border-radius: 10px 0 0 10px;
+    border-radius: 0px !important;
 }
 
 /* Caps Lock inline warning */
@@ -1024,7 +1125,7 @@ body {
 .checkup-dot {
     width: 24px;
     height: 24px;
-    border-radius: 50%;
+    border-radius: 0px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -1056,7 +1157,7 @@ body {
     gap: 5px;
     padding: 2px 7px;
     margin: -2px -7px;
-    border-radius: 6px;
+    border-radius: 0px;
     border: 1px solid transparent;
     background: transparent;
     color: inherit;
@@ -1089,7 +1190,7 @@ body {
 
     .swal2-popup {
         padding: 18px !important;
-        border-radius: 16px !important;
+        border-radius: 0px !important;
     }
 }
 
@@ -1097,7 +1198,7 @@ body {
 .empty-state-icon {
     width: 52px;
     height: 52px;
-    border-radius: 50%;
+    border-radius: 0px;
     margin: 0 auto 12px;
     display: flex;
     align-items: center;

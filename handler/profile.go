@@ -1337,8 +1337,13 @@ func TOTPGenerateHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	totpIssuer := config.AppName
+	if totpIssuer == "" {
+		totpIssuer = "Gilos Auth"
+	}
+
 	key, err := totp.Generate(totp.GenerateOpts{
-		Issuer:      config.AppIDLabel,
+		Issuer:      totpIssuer,
 		AccountName: user.Username,
 	})
 	if err != nil {

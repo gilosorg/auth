@@ -33,7 +33,7 @@ func TestProfileActivityHandler(t *testing.T) {
 	aliceID := alice.ID
 	bobID := bob.ID
 	logs := []database.AuditLog{
-		{UserID: &aliceID, EventType: database.AuditLoginSuccess, IPAddress: "203.0.113.10", UserAgent: "Mozilla/5.0", Details: "logged in via gilos id", CreatedAt: time.Now().Add(-10 * time.Minute)},
+		{UserID: &aliceID, EventType: database.AuditLoginSuccess, IPAddress: "203.0.113.10", UserAgent: "Mozilla/5.0", Details: "logged in via username", CreatedAt: time.Now().Add(-10 * time.Minute)},
 		{UserID: &bobID, EventType: database.AuditPasswordChanged, IPAddress: "198.51.100.2", UserAgent: "curl/8.0", Details: "bob event", CreatedAt: time.Now().Add(-5 * time.Minute)},
 		{UserID: &aliceID, EventType: database.AuditMFATOTPEnabled, IPAddress: "203.0.113.11", UserAgent: "Chrome/120.0", Details: "totp enabled", CreatedAt: time.Now().Add(-1 * time.Minute)},
 	}

@@ -69,14 +69,14 @@
         .lead { font-size: 1.08rem; color: var(--doc-text-secondary); margin-bottom: 28px; }
         .docs-content ul, .docs-content ol { color: var(--doc-text-secondary); margin: 0 0 16px 24px; }
         .docs-content li { margin-bottom: 8px; }
-        code { font-family: 'JetBrains Mono', monospace; font-size: 0.86em; background: var(--doc-inline-code-bg); color: var(--doc-inline-code-text); padding: 2px 6px; border-radius: 5px; border: 1px solid var(--border-subtle); }
+        code { font-family: 'JetBrains Mono', monospace; font-size: 0.86em; background: var(--doc-inline-code-bg); color: var(--doc-inline-code-text); padding: 2px 6px; border-radius: 0px; border: 1px solid var(--border-subtle); }
         pre { background: var(--doc-code-bg); border-radius: var(--radius-md); padding: 18px 22px; overflow-x: auto; margin: 12px 0 20px; border: 1px solid var(--doc-border); position: relative; }
         pre code { background: none; color: var(--doc-code-text); padding: 0; border: none; font-size: 0.84rem; line-height: 1.65; }
-        .copy-btn { position: absolute; top: 10px; right: 10px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.16); color: #D4D4D8; padding: 5px 11px; border-radius: 7px; font-family: inherit; font-size: 0.74rem; font-weight: 500; cursor: pointer; transition: background-color 0.16s ease, color 0.16s ease; }
+        .copy-btn { position: absolute; top: 10px; right: 10px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.16); color: #D4D4D8; padding: 5px 11px; border-radius: 0px; font-family: inherit; font-size: 0.74rem; font-weight: 500; cursor: pointer; transition: background-color 0.16s ease, color 0.16s ease; }
         .copy-btn:hover { background: rgba(255,255,255,0.18); color: #FFFFFF; }
         .endpoint { background: var(--doc-content-bg); border: 1px solid var(--doc-border); border-radius: var(--radius-md); padding: 18px 20px; margin: 20px 0; box-shadow: var(--card-shadow); }
         .endpoint-header { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; flex-wrap: wrap; }
-        .method-badge { display: inline-flex; align-items: center; justify-content: center; padding: 4px 10px; border-radius: 6px; font-size: 0.74rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; font-family: 'JetBrains Mono', monospace; }
+        .method-badge { display: inline-flex; align-items: center; justify-content: center; padding: 4px 10px; border-radius: 0px; font-size: 0.74rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; font-family: 'JetBrains Mono', monospace; }
         .method-get { background: var(--method-get-bg); color: var(--method-get); }
         .method-post { background: var(--method-post-bg); color: var(--method-post); }
         .endpoint-path { font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; font-weight: 500; color: var(--doc-text); }
@@ -91,12 +91,12 @@
         .callout-warning { background: var(--warning-bg); border-left-color: var(--warning-color); }
         .callout-title { font-weight: 600; margin-bottom: 4px; color: var(--doc-text); }
         .callout p { margin: 0; font-size: 0.9rem; }
-        .step { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; background: var(--doc-gradient); color: var(--doc-gradient-contrast); font-weight: 700; font-size: 0.85rem; border-radius: 50%; margin-right: 12px; }
+        .step { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; background: var(--doc-gradient); color: var(--doc-gradient-contrast); font-weight: 700; font-size: 0.85rem; border-radius: 0px; margin-right: 12px; }
         .step-title { display: flex; align-items: center; font-size: 1.1rem; font-weight: 600; margin: 28px 0 12px; color: var(--doc-text); }
         .label { display: inline-block; font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--doc-text-muted); margin-bottom: 6px; }
         .label-success { color: var(--method-get); }
         .docs-mobile-bar { display: none; position: sticky; top: 0; z-index: 90; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px; background: var(--doc-sidebar-bg); border-bottom: 1px solid var(--doc-border); }
-        .mobile-menu-btn { display: inline-flex; align-items: center; justify-content: center; width: 38px; height: 38px; border-radius: 8px; border: 1px solid var(--doc-border); background: var(--doc-card-bg); color: var(--doc-text); cursor: pointer; }
+        .mobile-menu-btn { display: inline-flex; align-items: center; justify-content: center; width: 38px; height: 38px; border-radius: 0px; border: 1px solid var(--doc-border); background: var(--doc-card-bg); color: var(--doc-text); cursor: pointer; }
         .sidebar-backdrop { display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.45); z-index: 95; backdrop-filter: blur(2px); }
         .sidebar-backdrop.open { display: block; }
         .sidebar-footer { padding: 16px 18px 0; margin-top: auto; border-top: 1px solid var(--doc-border); }
@@ -135,7 +135,7 @@
         .lang-select-compact { margin-top: 8px; width: 100%; padding: 7px 10px; border-radius: var(--radius-sm); border: 1px solid var(--doc-border); background: var(--doc-card-bg); color: var(--doc-text-secondary); font-size: 0.8rem; font-family: inherit; cursor: pointer; }
         .response-preview { background: var(--doc-code-bg); border-radius: var(--radius-md); padding: 18px; margin-top: 16px; border: 1px solid var(--doc-border); }
         .response-preview pre { margin: 0; background: none; border: none; padding: 0; }
-        .http-status-pill { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 999px; font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.02em; }
+        .http-status-pill { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 0px; font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.02em; }
         .http-status-ok { background: var(--method-get-bg); color: var(--method-get); }
         .http-status-err { background: var(--red-100, rgba(239, 68, 68, 0.14)); color: var(--red-600, #dc2626); }
         .jwt-inspector { margin-top: 12px; padding: 14px 16px; border-radius: var(--radius-md); border: 1px solid var(--doc-border); background: var(--doc-card-bg); }
@@ -240,7 +240,7 @@
                 <section id="introduction">
                     <h1>{{ if .AppName }}{{ .AppName }}{{ else }}Gilos Auth{{ end }} for Developers</h1>
                     <p class="lead">
-                        Allow users to sign in to your application using their Gilos ID.
+                        Allow users to sign in to your application using their Gilos Username.
                         {{ if .AppName }}{{ .AppName }}{{ else }}Gilos Auth{{ end }} implements the OAuth 2.1 Authorization Code flow with PKCE (<code>S256</code>) and OpenID Connect (OIDC).
                     </p>
 
@@ -305,7 +305,7 @@
                             <div class="client-info-item" id="infoSecretInputRow">
                                 <div class="client-info-label">Client Secret (for API testing)</div>
                                 <div class="client-info-value">
-                                    <input type="password" id="infoSecretInput" placeholder="Paste your client secret here" style="font-family:monospace;font-size:0.85rem;padding:6px 10px;border:1px solid var(--doc-border);border-radius:6px;background:var(--doc-bg);color:var(--doc-text);width:100%;max-width:420px;">
+                                    <input type="password" id="infoSecretInput" placeholder="Paste your client secret here" style="font-family:monospace;font-size:0.85rem;padding:6px 10px;border:1px solid var(--doc-border);border-radius:0px;background:var(--doc-bg);color:var(--doc-text);width:100%;max-width:420px;">
                                 </div>
                             </div>
                             <div class="client-info-item hidden" id="infoPublicNoteRow">
@@ -412,7 +412,7 @@
                             <label for="redirectUrlInput">Redirect URL</label>
                             <input type="text" id="redirectUrlInput" placeholder="https://yourapp.com/callback?code=abc123...&state=..." oninput="parseRedirectUrl()">
                         </div>
-                        <div id="extractedCodeInfo" class="hidden" style="margin-top: 12px; padding: 12px; background: var(--method-get-bg); border-radius: 8px; display: flex; align-items: center; flex-wrap: wrap; gap: 8px;">
+                        <div id="extractedCodeInfo" class="hidden" style="margin-top: 12px; padding: 12px; background: var(--method-get-bg); border-radius: 0px; display: flex; align-items: center; flex-wrap: wrap; gap: 8px;">
                             <span id="extractedCodeLabel" style="color: var(--method-get); font-weight: 600;">✓ Code extracted:</span>
                             <code id="extractedCode"></code>
                             <span id="extractedStateBadge" class="http-status-pill hidden"></span>

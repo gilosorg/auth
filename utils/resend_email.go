@@ -142,7 +142,7 @@ func buildVerificationEmail(fromEmail, appName, toEmail, code string) *resend.Se
   <table role="presentation" width="100%%" cellspacing="0" cellpadding="0" style="padding:32px 16px;">
     <tr>
       <td align="center">
-        <table role="presentation" width="100%%" cellspacing="0" cellpadding="0" style="max-width:480px;background-color:#ffffff;border:1px solid #e5e7eb;border-radius:12px;padding:32px;">
+        <table role="presentation" width="100%%" cellspacing="0" cellpadding="0" style="max-width:480px;background-color:#ffffff;border:1px solid #e5e7eb;border-radius:0px;padding:32px;">
           <tr>
             <td style="font-size:18px;font-weight:700;color:#111827;padding-bottom:16px;">%s</td>
           </tr>
@@ -152,7 +152,7 @@ func buildVerificationEmail(fromEmail, appName, toEmail, code string) *resend.Se
             </td>
           </tr>
           <tr>
-            <td align="center" style="padding:18px 24px;background-color:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:32px;font-weight:700;letter-spacing:8px;color:#111827;">
+            <td align="center" style="padding:18px 24px;background-color:#f9fafb;border:1px solid #e5e7eb;border-radius:0px;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:32px;font-weight:700;letter-spacing:8px;color:#111827;">
               %s
             </td>
           </tr>

@@ -80,7 +80,7 @@ All configuration is via environment variables (or `.env` file). See [`.env.exam
 | Variable | Description | Default |
 |---|---|---|
 | `APP_NAME` | Display name in UI and emails | `Auth` |
-| `APP_ID_LABEL` | Label for user identifiers | `Account ID` |
+| `APP_ID_LABEL` | Label for user handles | `Username` |
 | `ISSUER_URL` | Public base URL (OIDC issuer) | `https://auth.gilos.org` |
 | `PORT` | Server port | `5001` |
 | `SECURE_COOKIES` | Require HTTPS for cookies | `true` |

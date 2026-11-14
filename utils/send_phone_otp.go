@@ -38,7 +38,7 @@ func SendPhoneOTP(phone string, otp string) error {
 		formatted = "998" + strings.TrimLeft(formatted, "0")
 	}
 
-	message := fmt.Sprintf("auth.gilos.org is sending this code to verify your phone for Gilos ID registration or access: %s", otp)
+	message := fmt.Sprintf("auth.gilos.org is sending this code to verify your phone for Gilos account registration or access: %s", otp)
 
 	// Call country-specific sending method
 	if country == "UZ" {

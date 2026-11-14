@@ -55,8 +55,8 @@ func main() {
 	// Create a new ServeMux (supports method-based routing in Go 1.22+)
 	mux := http.NewServeMux()
 
-	// Serve static files (wrapped to disable directory listing)
-	mux.Handle("GET /static/", http.StripPrefix("/static/", noDirectoryListing(http.FileServer(http.Dir("./static")))))
+	// Serve static files (wrapped to disable directory listing and revalidate on deploy)
+	mux.Handle("GET /static/", http.StripPrefix("/static/", revalidateStatic(noDirectoryListing(http.FileServer(http.Dir("./static"))))))
 	mux.Handle("GET /media/", http.StripPrefix("/media/", noDirectoryListing(http.FileServer(http.Dir("./media")))))
 
 	// Register OIDC discovery and JWKS before static well-known handler
@@ -233,6 +233,14 @@ func noDirectoryListing(next http.Handler) http.Handler {
 			http.NotFound(w, r)
 			return
 		}
+		next.ServeHTTP(w, r)
+	})
+}
+
+// revalidateStatic ensures browsers revalidate static stylesheets and scripts after deployments.
+func revalidateStatic(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Cache-Control", "no-cache")
 		next.ServeHTTP(w, r)
 	})
 }

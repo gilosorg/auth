@@ -61,7 +61,7 @@ func setupHandlerTestEnv(t *testing.T) *testEnv {
 	config.BcryptCost = bcrypt.MinCost
 	config.IssuerURL = "https://auth.example.com"
 	config.AppName = "Gilos Auth"
-	config.AppIDLabel = "Gilos ID"
+	config.AppIDLabel = "Gilos Username"
 	config.SecureCookies = false
 	config.Version = "v1.0.0-test"
 

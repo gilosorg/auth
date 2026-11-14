@@ -14,7 +14,7 @@ var (
 	Version string = "v0.0.0-dev"
 	// AppName is the display name used in UI, emails, and SMS messages (e.g., "Gilos Auth").
 	AppName string
-	// AppIDLabel is the label for user identifiers (e.g., "Gilos ID", "Account ID").
+	// AppIDLabel is the label for user handles (e.g., "Gilos Username", "Username").
 	AppIDLabel string
 	// IssuerURL is the public-facing base URL, used as the OIDC issuer and in JWT claims.
 	IssuerURL string
@@ -64,7 +64,7 @@ func Init() {
 
 	// Application identity
 	AppName = getEnv("APP_NAME", "Auth")
-	AppIDLabel = getEnv("APP_ID_LABEL", "Account ID")
+	AppIDLabel = getEnv("APP_ID_LABEL", "Username")
 	IssuerURL = strings.TrimRight(getEnv("ISSUER_URL", "https://auth.gilos.org"), "/")
 
 	// Database

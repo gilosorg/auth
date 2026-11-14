@@ -32,7 +32,7 @@ func TestTemplateVariantsAndMissingPlaceholders(t *testing.T) {
 	tr := i18n.New("en")
 	trans := i18n.GetTranslations("en")
 
-	// 1. home.html with pending_deletion user and AppIDLabel: "Gilos ID"
+	// 1. home.html with pending_deletion user and AppIDLabel: "Gilos Username"
 	homeUser := database.User{
 		ID:              1,
 		Username:        "pendinguser",
@@ -55,7 +55,7 @@ func TestTemplateVariantsAndMissingPlaceholders(t *testing.T) {
 		"CSRFToken":        "csrf-token-value",
 		"AppVersion":       "v1.0.0",
 		"AppName":          "Gilos Auth",
-		"AppIDLabel":       "Gilos ID",
+		"AppIDLabel":       "Gilos Username",
 	}
 	var homeBuf bytes.Buffer
 	if err := tmpls.ExecuteTemplate(&homeBuf, "home.html", homeData); err != nil {
@@ -65,8 +65,8 @@ func TestTemplateVariantsAndMissingPlaceholders(t *testing.T) {
 	if strings.Contains(homeOut, "<no value>") {
 		t.Errorf("home.html rendered <no value>")
 	}
-	if !strings.Contains(homeOut, "Gilos ID") {
-		t.Errorf("home.html output missing AppIDLabel 'Gilos ID'")
+	if !strings.Contains(homeOut, "Gilos Username") {
+		t.Errorf("home.html output missing AppIDLabel 'Gilos Username'")
 	}
 	if !strings.Contains(homeOut, "global-deletion-banner") {
 		t.Errorf("home.html output missing global-deletion-banner")
@@ -82,7 +82,7 @@ func TestTemplateVariantsAndMissingPlaceholders(t *testing.T) {
 			"T":               trans,
 			"AppVersion":      "v1.0.0",
 			"AppName":         "Gilos Auth",
-			"AppIDLabel":      "Gilos ID",
+			"AppIDLabel":      "Gilos Username",
 			"IssuerURL":       "https://auth.example.com",
 			"PageType":        "terms",
 			"IsLoggedIn":      loggedIn,
@@ -122,7 +122,7 @@ func TestTemplateVariantsAndMissingPlaceholders(t *testing.T) {
 		"IsLoggedIn":      false,
 		"AppVersion":      "v1.0.0",
 		"AppName":         "Gilos Auth",
-		"AppIDLabel":      "Gilos ID",
+		"AppIDLabel":      "Gilos Username",
 		"IssuerURL":       "https://auth.example.com",
 		"User":            nil,
 		"Clients":         []database.Client{},
