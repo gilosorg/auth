@@ -430,6 +430,7 @@
             border: none;
             background: transparent;
             box-shadow: none;
+            font-family: var(--font-mono);
             font-weight: 500;
         }
 
@@ -557,7 +558,9 @@
         .radio-wrapper {
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 0;
+            border: 1.5px solid var(--border-default);
+            background: var(--surface-elevated);
         }
 
         .radio-option {
@@ -566,20 +569,23 @@
             align-items: center;
             gap: 12px;
             padding: 13px 14px;
-            border: 1.5px solid var(--border-default);
-            border-radius: var(--radius-md);
-            background: var(--surface-elevated);
+            border: none;
+            border-bottom: 1px solid var(--border-default);
+            border-radius: 0px;
+            background: transparent;
             cursor: pointer;
             transition: border-color 0.16s ease, background-color 0.16s ease, box-shadow 0.16s ease;
         }
 
+        .radio-option:last-child {
+            border-bottom: none;
+        }
+
         .radio-option:hover {
-            border-color: var(--border-strong);
             background: var(--surface-subtle);
         }
 
         .radio-option.is-selected {
-            border-color: var(--accent);
             background: var(--accent-subtle);
             box-shadow: inset 3px 0 0 var(--accent);
         }
@@ -962,7 +968,7 @@
                         <div class="form-element">
                             <p id="otp-hint" class="otp-info"></p>
                             <div class="otp-container" id="otp">
-                                <input type="text" class="otp-input" maxlength="1" inputmode="numeric" pattern="[0-9]*" autocomplete="one-time-code" aria-label="OTP digit 1">
+                                <input type="text" class="otp-input" maxlength="6" inputmode="numeric" pattern="[0-9]*" autocomplete="one-time-code" aria-label="OTP digit 1">
                                 <input type="text" class="otp-input" maxlength="1" inputmode="numeric" pattern="[0-9]*" aria-label="OTP digit 2">
                                 <input type="text" class="otp-input" maxlength="1" inputmode="numeric" pattern="[0-9]*" aria-label="OTP digit 3">
                                 <input type="text" class="otp-input" maxlength="1" inputmode="numeric" pattern="[0-9]*" aria-label="OTP digit 4">
@@ -979,20 +985,22 @@
                         </div>
                     </form>
 
-                    <form id="register-name-form" autocomplete="off" class="form-container hidden" onsubmit="return false;">
+                    <form id="register-name-form" class="form-container hidden" onsubmit="return false;">
                         <input type="hidden" name="username" id="register-name-username">
                         <p id="register-info" class="verification-info"></p>
                         <div class="form-element">
-                            <input type="text" id="first-name" name="first_name" class="auth-input" required placeholder="{{ index .T "first_name" }}"
+                            <label for="first-name" class="field-label">{{ index .T "first_name" }}</label>
+                            <input type="text" id="first-name" name="first_name" class="auth-input" required autocomplete="given-name" placeholder="{{ index .T "first_name" }}"
                                 oninput="validateForm()" onchange="validateForm()" aria-describedby="message">
                         </div>
                         <div class="form-element">
-                            <input type="text" id="last-name" name="last_name" class="auth-input" placeholder="{{ index .T "last_name" }}"
+                            <label for="last-name" class="field-label">{{ index .T "last_name" }}</label>
+                            <input type="text" id="last-name" name="last_name" class="auth-input" autocomplete="family-name" placeholder="{{ index .T "last_name" }}"
                                 oninput="validateForm()" onchange="validateForm()" aria-describedby="message">
                         </div>
                     </form>
 
-                    <form id="register-contact-form" autocomplete="off" class="form-container hidden" onsubmit="return false;">
+                    <form id="register-contact-form" class="form-container hidden" onsubmit="return false;">
                         <input type="hidden" name="username" id="register-contact-username">
                         <input type="hidden" name="first_name" id="register-contact-first-name">
                         <input type="hidden" name="last_name" id="register-contact-last-name">
@@ -1028,18 +1036,20 @@
                         <input type="hidden" name="last_name" id="register-password-last-name">
                         <input type="hidden" name="contact" id="register-password-contact">
                         <div class="form-element">
+                            <label for="register-password" class="field-label">{{ index .T "password" }}</label>
                             <div class="gilos-input-group">
                                 <input type="password" id="register-password" name="password" class="gilos-input-control" required autocomplete="new-password"
-                                    placeholder="{{ index .T "password" }}" oninput="validateForm(); validatePasswordMatch()" onchange="validateForm(); validatePasswordMatch()" aria-describedby="message register-pw-caps-warning">
+                                    placeholder="{{ index .T "password" }}" oninput="validateForm(); validatePasswordMatch()" onchange="validateForm(); validatePasswordMatch(true)" onblur="validatePasswordMatch(true)" aria-describedby="message register-pw-caps-warning">
                                 <button type="button" class="gilos-input-action password-toggle" onclick="togglePasswordField('register-password', this)" aria-label="{{ index .T "show_password" }}"></button>
                             </div>
                             <div id="register-pw-caps-warning" class="caps-warning" hidden></div>
                             <div id="register-pw-meter" style="margin-top: 8px;"></div>
                         </div>
                         <div class="form-element">
+                            <label for="confirm-password" class="field-label">{{ index .T "confirm_password" }}</label>
                             <div class="gilos-input-group">
                                 <input type="password" id="confirm-password" class="gilos-input-control" required autocomplete="new-password" placeholder="{{ index .T "confirm_password" }}"
-                                    oninput="validateForm(); validatePasswordMatch()" onchange="validateForm(); validatePasswordMatch()" aria-describedby="message register-confirm-caps-warning">
+                                    oninput="validateForm(); validatePasswordMatch()" onchange="validateForm(); validatePasswordMatch(true)" onblur="validatePasswordMatch(true)" aria-describedby="message register-confirm-caps-warning">
                                 <button type="button" class="gilos-input-action password-toggle" onclick="togglePasswordField('confirm-password', this)" aria-label="{{ index .T "show_password" }}"></button>
                             </div>
                             <div id="register-confirm-caps-warning" class="caps-warning" hidden></div>
@@ -1080,18 +1090,20 @@
                         <input type="hidden" name="username" id="reset-password-username" autocomplete="username">
                         <input type="hidden" name="contact" id="reset-password-contact">
                         <div class="form-element">
+                            <label for="reset-password" class="field-label">{{ index .T "new_password" }}</label>
                             <div class="gilos-input-group">
                                 <input type="password" id="reset-password" name="password" class="gilos-input-control" required autocomplete="new-password"
-                                    placeholder="{{ index .T "new_password" }}" oninput="validateForm(); validateResetPasswordMatch()" onchange="validateForm(); validateResetPasswordMatch()" aria-describedby="message reset-pw-caps-warning">
+                                    placeholder="{{ index .T "new_password" }}" oninput="validateForm(); validateResetPasswordMatch()" onchange="validateForm(); validateResetPasswordMatch(true)" onblur="validateResetPasswordMatch(true)" aria-describedby="message reset-pw-caps-warning">
                                 <button type="button" class="gilos-input-action password-toggle" onclick="togglePasswordField('reset-password', this)" aria-label="{{ index .T "show_password" }}"></button>
                             </div>
                             <div id="reset-pw-caps-warning" class="caps-warning" hidden></div>
                             <div id="reset-pw-meter" style="margin-top: 8px;"></div>
                         </div>
                         <div class="form-element">
+                            <label for="reset-confirm-password" class="field-label">{{ index .T "confirm_new_password" }}</label>
                             <div class="gilos-input-group">
                                 <input type="password" id="reset-confirm-password" class="gilos-input-control" required autocomplete="new-password" placeholder="{{ index .T "confirm_new_password" }}"
-                                    oninput="validateForm(); validateResetPasswordMatch()" onchange="validateForm(); validateResetPasswordMatch()" aria-describedby="message reset-confirm-caps-warning">
+                                    oninput="validateForm(); validateResetPasswordMatch()" onchange="validateForm(); validateResetPasswordMatch(true)" onblur="validateResetPasswordMatch(true)" aria-describedby="message reset-confirm-caps-warning">
                                 <button type="button" class="gilos-input-action password-toggle" onclick="togglePasswordField('reset-confirm-password', this)" aria-label="{{ index .T "show_password" }}"></button>
                             </div>
                             <div id="reset-confirm-caps-warning" class="caps-warning" hidden></div>
@@ -1735,37 +1747,39 @@
             }
         }
 
-        function getPasswordValidationError(password, confirmPassword) {
-            if (password && password.length < 8) return T.password_min_8 || 'Must be at least 8 characters';
-            if (password && password.length > 72) return T.password_max_72 || 'Must be at most 72 characters';
-            if (confirmPassword && password !== confirmPassword) return T.passwords_do_not_match || 'Passwords do not match';
-            return '';
-        }
-
-        function validatePasswordMatch() {
-            const passwordInput = document.getElementById('register-password');
-            const confirmInput = document.getElementById('confirm-password');
+        function syncPasswordPairValidation(pwId, confirmId, showImmediate) {
+            const passwordInput = document.getElementById(pwId);
+            const confirmInput = document.getElementById(confirmId);
+            if (!passwordInput || !confirmInput) return;
             const password = passwordInput.value;
             const confirmPassword = confirmInput.value;
 
-            passwordInput.classList.toggle('error', Boolean(password && (password.length < 8 || password.length > 72)));
-            confirmInput.classList.toggle('error', Boolean(confirmPassword && password !== confirmPassword));
-            state.error = getPasswordValidationError(password, confirmPassword);
-            showMessage(state.error, false);
+            const tooLong = password.length > 72;
+            const tooShort = Boolean(password && password.length < 8);
+            const mismatchReady = Boolean(confirmPassword && password !== confirmPassword && (showImmediate || confirmPassword.length >= password.length));
+
+            passwordInput.classList.toggle('error', Boolean(tooLong || (showImmediate && tooShort)));
+            confirmInput.classList.toggle('error', mismatchReady);
+
+            let msg = '';
+            if (tooLong) {
+                msg = T.password_max_72 || 'Must be at most 72 characters';
+            } else if (showImmediate && tooShort) {
+                msg = T.password_min_8 || 'Must be at least 8 characters';
+            } else if (mismatchReady) {
+                msg = T.passwords_do_not_match || 'Passwords do not match';
+            }
+            state.error = msg;
+            showMessage(msg, false);
             validateForm();
         }
 
-        function validateResetPasswordMatch() {
-            const passwordInput = document.getElementById('reset-password');
-            const confirmInput = document.getElementById('reset-confirm-password');
-            const password = passwordInput.value;
-            const confirmPassword = confirmInput.value;
+        function validatePasswordMatch(showImmediate = false) {
+            syncPasswordPairValidation('register-password', 'confirm-password', Boolean(showImmediate));
+        }
 
-            passwordInput.classList.toggle('error', Boolean(password && (password.length < 8 || password.length > 72)));
-            confirmInput.classList.toggle('error', Boolean(confirmPassword && password !== confirmPassword));
-            state.error = getPasswordValidationError(password, confirmPassword);
-            showMessage(state.error, false);
-            validateForm();
+        function validateResetPasswordMatch(showImmediate = false) {
+            syncPasswordPairValidation('reset-password', 'reset-confirm-password', Boolean(showImmediate));
         }
 
         function startCountdown() {

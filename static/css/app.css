@@ -126,9 +126,11 @@
     --red-700: #FF8A80;
     --green-50: rgba(48, 209, 88, 0.13);
     --green-500: #30D158;
+    --green-600: #34D399;
     --green-700: #8CE99A;
     --amber-50: rgba(255, 180, 0, 0.14);
     --amber-500: #FFB340;
+    --amber-600: #FBBF24;
     --amber-700: #FFD584;
 }
 
@@ -180,9 +182,11 @@
         --red-700: #FF8A80;
         --green-50: rgba(48, 209, 88, 0.13);
         --green-500: #30D158;
+        --green-600: #34D399;
         --green-700: #8CE99A;
         --amber-50: rgba(255, 180, 0, 0.14);
         --amber-500: #FFB340;
+        --amber-600: #FBBF24;
         --amber-700: #FFD584;
     }
 }
@@ -1132,7 +1136,7 @@ input[type="radio"]:disabled {
 
 .checkup-grid {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
     gap: 10px;
 }
 

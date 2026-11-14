@@ -100,6 +100,8 @@
 
     .oauth-redirect-host {
         color: var(--text-secondary);
+        font-family: var(--font-mono);
+        font-size: 0.74rem;
         font-weight: 600;
         overflow: hidden;
         text-overflow: ellipsis;
@@ -266,7 +268,7 @@
 
     .oauth-actions-row {
         display: grid;
-        grid-template-columns: 1fr 1fr;
+        grid-template-columns: minmax(110px, 0.8fr) 1.4fr;
         gap: 10px;
     }
 
@@ -436,7 +438,7 @@
             <form id="totp-form" class="form-container hidden" onsubmit="event.preventDefault(); submitApprove();">
                 <p class="otp-info">{{ index .T "otp_enter_authenticator" }}</p>
                 <div class="otp-container" id="otp-inputs">
-                    <input type="text" class="otp-input" maxlength="1" pattern="[0-9]*" inputmode="numeric" autocomplete="one-time-code" aria-label="Digit 1">
+                    <input type="text" class="otp-input" maxlength="6" pattern="[0-9]*" inputmode="numeric" autocomplete="one-time-code" aria-label="Digit 1">
                     <input type="text" class="otp-input" maxlength="1" pattern="[0-9]*" inputmode="numeric" aria-label="Digit 2">
                     <input type="text" class="otp-input" maxlength="1" pattern="[0-9]*" inputmode="numeric" aria-label="Digit 3">
                     <input type="text" class="otp-input" maxlength="1" pattern="[0-9]*" inputmode="numeric" aria-label="Digit 4">
@@ -670,12 +672,21 @@
 
             otpInputs.forEach((input, idx) => {
                 input.addEventListener('input', (e) => {
-                    e.target.value = e.target.value.replace(/\D/g, '').slice(-1);
+                    const clean = e.target.value.replace(/\D/g, '');
+                    if (clean.length > 1) {
+                        const count = Math.min(clean.length, otpInputs.length - idx);
+                        for (let i = 0; i < count; i++) {
+                            otpInputs[idx + i].value = clean[i];
+                        }
+                        otpInputs[Math.min(idx + count, otpInputs.length - 1)].focus();
+                    } else {
+                        e.target.value = clean;
+                        if (clean && idx < otpInputs.length - 1) {
+                            otpInputs[idx + 1].focus();
+                        }
+                    }
                     otpInputs.forEach(i => i.classList.remove('error'));
                     showMessage('', false);
-                    if (e.target.value && idx < otpInputs.length - 1) {
-                        otpInputs[idx + 1].focus();
-                    }
                     updateVerifyBtn();
                     if (getOtpCode().length === 6) {
                         submitApprove();

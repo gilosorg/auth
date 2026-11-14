@@ -138,26 +138,26 @@ func buildVerificationEmail(fromEmail, appName, toEmail, code string) *resend.Se
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>%s Verification Code</title>
 </head>
-<body style="margin:0;padding:0;background-color:#f4f5f7;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#111827;">
-  <table role="presentation" width="100%%" cellspacing="0" cellpadding="0" style="padding:32px 16px;">
+<body style="margin:0;padding:0;background-color:#F5F5F7;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#1D1D1F;">
+  <table role="presentation" width="100%%" cellspacing="0" cellpadding="0" style="padding:36px 16px;">
     <tr>
       <td align="center">
-        <table role="presentation" width="100%%" cellspacing="0" cellpadding="0" style="max-width:480px;background-color:#ffffff;border:1px solid #e5e7eb;border-radius:0px;padding:32px;">
+        <table role="presentation" width="100%%" cellspacing="0" cellpadding="0" style="max-width:460px;background-color:#FFFFFF;border:1px solid #DCDCE2;border-top:3px solid #2495F2;border-radius:0px;padding:32px;">
           <tr>
-            <td style="font-size:18px;font-weight:700;color:#111827;padding-bottom:16px;">%s</td>
+            <td style="font-size:17px;font-weight:700;letter-spacing:-0.02em;color:#1D1D1F;padding-bottom:14px;border-bottom:1px solid #EAEAEF;">%s</td>
           </tr>
           <tr>
-            <td style="font-size:15px;line-height:24px;color:#374151;padding-bottom:20px;">
+            <td style="font-size:15px;line-height:24px;color:#48484E;padding:18px 0 18px;">
               Use the following verification code to continue:
             </td>
           </tr>
           <tr>
-            <td align="center" style="padding:18px 24px;background-color:#f9fafb;border:1px solid #e5e7eb;border-radius:0px;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:32px;font-weight:700;letter-spacing:8px;color:#111827;">
+            <td align="center" style="padding:18px 24px;background-color:#F2F2F5;border:1px solid #DCDCE2;border-radius:0px;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:32px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:8px;color:#1D1D1F;">
               %s
             </td>
           </tr>
           <tr>
-            <td style="font-size:13px;line-height:20px;color:#6b7280;padding-top:20px;">
+            <td style="font-size:13px;line-height:20px;color:#6C6C75;padding-top:18px;">
               This code expires in 5 minutes. If you did not request this code, you can safely ignore this email.
             </td>
           </tr>

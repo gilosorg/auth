@@ -7,14 +7,10 @@
         top: 0;
         z-index: 35;
         width: 100%;
-        background: rgba(255, 255, 255, 0.86);
+        background: color-mix(in srgb, var(--surface-elevated) 88%, transparent);
         backdrop-filter: blur(18px);
         -webkit-backdrop-filter: blur(18px);
         border-bottom: 1px solid var(--border-subtle);
-    }
-
-    :root[data-theme="dark"] .console-header {
-        background: rgba(22, 22, 25, 0.86);
     }
 
     .header-container {
@@ -47,39 +43,50 @@
 
     .header-tabs {
         display: inline-flex;
-        align-items: center;
-        gap: 4px;
-        padding: 4px;
+        align-items: stretch;
+        gap: 0;
+        padding: 0;
         border-radius: 0px;
         background: var(--surface-subtle);
-        border: 1px solid var(--border-subtle);
+        border: 1px solid var(--border-default);
     }
 
     .tab-btn {
         display: inline-flex;
         align-items: center;
+        justify-content: center;
         gap: 7px;
-        padding: 7px 14px;
+        padding: 8px 16px;
         border: none;
+        border-right: 1px solid var(--border-default);
         border-radius: 0px;
         background: transparent;
         color: var(--text-secondary);
-        font-size: 0.875rem;
+        font-size: 0.86rem;
         font-weight: 500;
         cursor: pointer;
-        transition: background-color 0.16s ease, color 0.16s ease, box-shadow 0.16s ease;
+        transition: background-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
         white-space: nowrap;
+    }
+
+    .tab-btn:last-child {
+        border-right: none;
     }
 
     .tab-btn:hover {
         color: var(--text);
+        background: color-mix(in srgb, var(--surface-elevated) 55%, transparent);
+    }
+
+    .tab-btn:active {
+        transform: translateY(1px);
     }
 
     .tab-btn.active {
         background: var(--surface-elevated);
         color: var(--text);
         font-weight: 600;
-        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+        box-shadow: inset 0 -2px 0 var(--accent);
     }
 
     .header-right {
@@ -94,12 +101,13 @@
         display: inline-flex;
         align-items: center;
         gap: 8px;
-        padding: 4px 10px 4px 4px;
-        border-radius: var(--radius-pill);
+        height: 34px;
+        padding: 0 10px 0 0;
+        border-radius: 0px;
         border: 1px solid var(--border-default);
         background: var(--surface-elevated);
         color: var(--text);
-        font-size: 0.85rem;
+        font-size: 0.84rem;
         font-weight: 500;
         cursor: pointer;
         transition: background-color 0.15s ease, border-color 0.15s ease;
@@ -110,10 +118,15 @@
         border-color: var(--border-strong);
     }
 
+    .user-trigger:active {
+        transform: translateY(1px);
+    }
+
     .user-trigger-avatar {
-        width: 28px;
-        height: 28px;
+        width: 32px;
+        height: 32px;
         border-radius: 0px;
+        border-right: 1px solid var(--border-default);
         background: var(--primary);
         color: var(--primary-contrast);
         display: inline-flex;
@@ -136,21 +149,23 @@
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
+        font-family: var(--font-mono);
+        font-size: 0.79rem;
     }
 
     .user-dropdown {
         position: absolute;
-        top: calc(100% + 8px);
+        top: calc(100% + 6px);
         right: 0;
-        min-width: 220px;
-        padding: 6px;
+        min-width: 224px;
+        padding: 0;
         background: var(--surface-elevated);
         border: 1px solid var(--border-default);
         border-radius: 0px;
         box-shadow: var(--popover-shadow);
         display: none;
         flex-direction: column;
-        gap: 2px;
+        gap: 0;
         z-index: 60;
     }
 
@@ -160,20 +175,22 @@
     }
 
     .dropdown-meta {
-        padding: 8px 10px 10px;
-        border-bottom: 1px solid var(--border-subtle);
-        margin-bottom: 4px;
+        padding: 11px 13px;
+        background: var(--surface-subtle);
+        border-bottom: 1px solid var(--border-default);
     }
 
     .dropdown-meta-name {
-        font-size: 0.875rem;
+        font-size: 0.86rem;
         font-weight: 600;
         color: var(--text);
     }
 
     .dropdown-meta-handle {
-        font-size: 0.78rem;
+        font-family: var(--font-mono);
+        font-size: 0.75rem;
         color: var(--text-muted);
+        margin-top: 2px;
     }
 
     .dropdown-item {
@@ -181,8 +198,9 @@
         align-items: center;
         gap: 9px;
         width: 100%;
-        padding: 9px 10px;
+        padding: 10px 13px;
         border: none;
+        border-bottom: 1px solid var(--border-subtle);
         border-radius: 0px;
         background: transparent;
         color: var(--text);
@@ -192,6 +210,10 @@
         cursor: pointer;
         text-align: left;
         transition: background-color 0.14s ease;
+    }
+
+    .dropdown-item:last-child {
+        border-bottom: none;
     }
 
     .dropdown-item:hover {
@@ -208,12 +230,19 @@
 
     .mobile-tabs-bar {
         display: none;
-        border-top: 1px solid var(--border-subtle);
-        padding: 8px 16px;
-        gap: 8px;
+        border-top: 1px solid var(--border-default);
+        background: var(--surface-subtle);
+        padding: 0;
+        gap: 0;
         overflow-x: auto;
         -webkit-overflow-scrolling: touch;
         scrollbar-width: none;
+    }
+
+    .mobile-tabs-bar .tab-btn {
+        flex: 1;
+        padding: 10px 12px;
+        font-size: 0.82rem;
     }
 
     .mobile-tabs-bar::-webkit-scrollbar {
@@ -345,8 +374,7 @@
         font-size: 1.75rem;
         font-weight: 700;
         overflow: hidden;
-        border: 2px solid var(--surface-elevated);
-        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+        border: 1px solid var(--border-strong);
     }
 
     .avatar-circle img {
@@ -1205,13 +1233,16 @@
         padding: 2px 8px;
         border-radius: 0px;
         background: var(--surface-subtle);
+        border: 1px solid var(--border-subtle);
         color: var(--text-secondary);
-        font-size: 0.75rem;
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
         font-weight: 500;
     }
 
     .scope-chip--req {
         background: var(--accent-subtle);
+        border-color: color-mix(in srgb, var(--accent) 28%, transparent);
         color: var(--accent);
         font-weight: 600;
     }
@@ -1440,15 +1471,33 @@
         gap: 8px;
     }
 
+    .scope-check-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+        border: 1px solid var(--border-default);
+        background: var(--surface-elevated);
+    }
+
     .scope-check-row {
         display: flex;
         align-items: center;
         justify-content: space-between;
         gap: 12px;
-        padding: 10px 12px;
-        border: 1px solid var(--border-default);
+        padding: 11px 13px;
+        border: none;
+        border-bottom: 1px solid var(--border-subtle);
         border-radius: 0px;
-        background: var(--surface-elevated);
+        background: transparent;
+        transition: background-color 0.14s ease;
+    }
+
+    .scope-check-row:last-child {
+        border-bottom: none;
+    }
+
+    .scope-check-row:hover {
+        background: var(--surface-subtle);
     }
 
     .scope-check-main {
@@ -1471,6 +1520,13 @@
         flex-direction: column;
         gap: 2px;
         min-width: 0;
+    }
+
+    .scope-check-key {
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        font-weight: 600;
+        color: var(--text);
     }
 
     .scope-check-desc {
@@ -1792,13 +1848,13 @@
                             <label>{{ index .T "client_scopes" }}</label>
                             <button type="button" class="btn btn-ghost btn-sm" onclick="applyStandardOIDCPreset()">{{ index .T "preset_standard_oidc" }}</button>
                         </div>
-                        <div style="display:flex;flex-direction:column;gap:8px;">
+                        <div class="scope-check-list">
                             {{ range .ValidScopes }}
                             <div class="scope-check-row">
                                 <label class="scope-check-main">
                                     <input type="checkbox" id="scope-{{ . }}" name="{{ . }}" onchange="toggleRequired(this, '{{ . }}')">
                                     <span class="scope-check-text">
-                                        <span>{{ . }}</span>
+                                        <span class="scope-check-key">{{ . }}</span>
                                         <span class="scope-check-desc" data-scope-desc="{{ . }}"></span>
                                     </span>
                                 </label>
@@ -1843,7 +1899,7 @@
                 <div class="field">
                     <label>{{ index .T "six_digit_code" }}</label>
                     <div class="otp-container" id="totp-otp">
-                        <input type="text" class="otp-input" maxlength="1" pattern="[0-9]*" inputmode="numeric" aria-label="Digit 1">
+                        <input type="text" class="otp-input" maxlength="6" pattern="[0-9]*" inputmode="numeric" autocomplete="one-time-code" aria-label="Digit 1">
                         <input type="text" class="otp-input" maxlength="1" pattern="[0-9]*" inputmode="numeric" aria-label="Digit 2">
                         <input type="text" class="otp-input" maxlength="1" pattern="[0-9]*" inputmode="numeric" aria-label="Digit 3">
                         <input type="text" class="otp-input" maxlength="1" pattern="[0-9]*" inputmode="numeric" aria-label="Digit 4">
@@ -2702,7 +2758,7 @@
                                     <h3 class="card-title">${escapeHtml(tr('password', 'Password'))}</h3>
                                     <p class="card-desc">${escapeHtml(tr('password_section_desc', 'Choose a strong unique password. Updating it will sign out other browser sessions.'))}</p>
                                 </div>
-                                <button type="submit" form="password-form" class="btn btn-primary btn-sm" id="password-save-btn">${escapeHtml(tr('update', 'Update'))}</button>
+                                <button type="submit" form="password-form" class="btn btn-primary btn-sm" id="password-save-btn" disabled>${escapeHtml(tr('update', 'Update'))}</button>
                             </div>
                             <form id="password-form" class="form-grid">
                                 <div class="field">
@@ -2783,6 +2839,7 @@
                             initialCountry: 'uz',
                             preferredCountries: ['uz', 'ru', 'kz', 'us'],
                             separateDialCode: true,
+                            dropdownContainer: document.body,
                             utilsScript: 'https://cdn.jsdelivr.net/npm/intl-tel-input@19.2.16/build/js/utils.js'
                         });
                         if (user.phone) {
@@ -2891,10 +2948,16 @@
             const newPw = document.getElementById('new-password');
             const confirmPw = document.getElementById('confirm-new-password');
             const matchEl = document.getElementById('home-pw-match');
+            const pwBtn = document.getElementById('password-save-btn');
             function checkHomeMatch() {
                 if (!newPw || !confirmPw || !matchEl) return;
-                if (!confirmPw.value) { matchEl.textContent = ''; matchEl.className = 'field-status-note'; return; }
-                if (newPw.value === confirmPw.value) {
+                const p = newPw.value;
+                const cp = confirmPw.value;
+                if (pwBtn) {
+                    pwBtn.disabled = !(p.length >= 8 && p.length <= 72 && p === cp);
+                }
+                if (!cp) { matchEl.textContent = ''; matchEl.className = 'field-status-note'; return; }
+                if (p === cp) {
                     matchEl.textContent = tr('passwords_match', 'Passwords match');
                     matchEl.className = 'field-status-note is-ok';
                 } else {
@@ -2904,6 +2967,7 @@
             }
             if (newPw) newPw.addEventListener('input', checkHomeMatch);
             if (confirmPw) confirmPw.addEventListener('input', checkHomeMatch);
+            checkHomeMatch();
 
             const pwForm = document.getElementById('password-form');
             if (pwForm) {
@@ -2919,7 +2983,6 @@
                     params.append('password', p);
                     params.append('confirm_password', cp);
 
-                    const pwBtn = document.getElementById('password-save-btn');
                     const attemptPw = async (curPw) => {
                         window.GilosUI.setButtonLoading(pwBtn, true, tr('loading', 'Loading...'));
                         try {
@@ -2942,6 +3005,7 @@
                             Swal.fire(tr('error', 'Error'), err.message, 'error');
                         } finally {
                             window.GilosUI.setButtonLoading(pwBtn, false);
+                            checkHomeMatch();
                         }
                     };
                     requirePassword(attemptPw);
@@ -3281,11 +3345,11 @@
             body.innerHTML = pendingVerifications.map(typ => `
                 <div class="pending-verify-block" id="pending-block-${typ}">
                     <div class="pending-verify-head">
-                        <span>${escapeHtml(tr('otp_for', 'OTP for'))} ${escapeHtml(tr(typ, typ))}: <strong>${escapeHtml(maskedContacts[typ] || '')}</strong></span>
+                        <span>${escapeHtml(tr('otp_for', 'Code for'))} ${escapeHtml(tr(typ, typ))}: <strong>${escapeHtml(maskedContacts[typ] || '')}</strong></span>
                         <span class="badge badge-neutral tabular-nums" id="timer-${typ}">05:00</span>
                     </div>
                     <div class="otp-container" id="otp-${typ}">
-                        <input type="text" class="otp-input" maxlength="1" pattern="[0-9]*" inputmode="numeric">
+                        <input type="text" class="otp-input" maxlength="6" pattern="[0-9]*" inputmode="numeric" autocomplete="one-time-code">
                         <input type="text" class="otp-input" maxlength="1" pattern="[0-9]*" inputmode="numeric">
                         <input type="text" class="otp-input" maxlength="1" pattern="[0-9]*" inputmode="numeric">
                         <input type="text" class="otp-input" maxlength="1" pattern="[0-9]*" inputmode="numeric">
@@ -4398,12 +4462,22 @@
             };
             inputs.forEach((inp, idx) => {
                 inp.addEventListener('input', (e) => {
-                    e.target.value = e.target.value.replace(/\D/g, '').slice(-1);
+                    const clean = e.target.value.replace(/\D/g, '');
+                    if (clean.length > 1) {
+                        const count = Math.min(clean.length, inputs.length - idx);
+                        for (let i = 0; i < count; i++) {
+                            inputs[idx + i].value = clean[i];
+                        }
+                        const targetIdx = Math.min(idx + count, inputs.length - 1);
+                        inputs[targetIdx].focus();
+                    } else {
+                        e.target.value = clean;
+                        if (clean && idx < inputs.length - 1) inputs[idx + 1].focus();
+                    }
                     if (containerId === 'totp-otp') {
                         const errEl = document.getElementById('totp-error');
                         if (errEl) { errEl.textContent = ''; errEl.classList.remove('is-visible'); }
                     }
-                    if (e.target.value && idx < inputs.length - 1) inputs[idx + 1].focus();
                     if (getOTPValue(containerId).length === 6) runComplete();
                 });
                 inp.addEventListener('keydown', (e) => {
