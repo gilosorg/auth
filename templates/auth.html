@@ -66,117 +66,6 @@
             padding: 36px 34px 28px;
         }
 
-        @media (max-width: 560px) {
-            body {
-                background: var(--surface-elevated);
-            }
-            .auth-stage {
-                padding: 0;
-                align-items: stretch;
-                justify-content: flex-start;
-            }
-            .auth-stage::before {
-                display: none;
-            }
-            .auth-container {
-                max-width: 100%;
-                flex: 1;
-                display: flex;
-                flex-direction: column;
-                background: transparent;
-                border: none;
-                box-shadow: none;
-                overflow: visible;
-            }
-            .content-wrapper {
-                width: 100%;
-                max-width: 440px;
-                margin: auto;
-                padding: 28px max(20px, env(safe-area-inset-right)) 36px max(20px, env(safe-area-inset-left));
-            }
-            .auth-input {
-                height: 46px;
-                font-size: 1rem;
-            }
-            .gilos-input-wrap {
-                height: 46px;
-            }
-            .gilos-at-prefix {
-                flex: 0 0 42px;
-            }
-            .trailing-button {
-                flex: 0 0 46px;
-                width: 46px;
-            }
-            .auth-btn,
-            .auth-btn-secondary,
-            .bg-gray {
-                height: 46px;
-            }
-            .method-option {
-                height: 40px;
-                font-size: 0.84rem;
-                padding: 0 8px;
-                min-width: 0;
-            }
-            .radio-option {
-                padding: 13px 14px;
-            }
-            .site-footer {
-                background: var(--surface-subtle);
-            }
-        }
-
-        @media (max-height: 680px) {
-            .auth-stage {
-                padding-top: 20px;
-                padding-bottom: 16px;
-            }
-            .header {
-                margin-bottom: 16px;
-            }
-            .auth-brand-row {
-                margin-bottom: 12px;
-            }
-            .auth-logo {
-                width: 40px;
-                height: 40px;
-            }
-        }
-
-        @media (max-height: 680px) and (max-width: 560px) {
-            .auth-stage {
-                padding-top: 0;
-                padding-bottom: 0;
-            }
-        }
-
-        @media (max-width: 380px) {
-            .content-wrapper {
-                padding: 22px 16px 28px;
-            }
-            .otp-container {
-                gap: 6px;
-            }
-            .otp-input {
-                height: 46px;
-                font-size: 1.12rem;
-            }
-            .button-group {
-                flex-direction: column-reverse;
-                gap: 8px;
-            }
-            .auth-btn,
-            .auth-btn-secondary,
-            .bg-gray {
-                width: 100%;
-                flex: none;
-            }
-            .identity-chip {
-                max-width: 100%;
-            }
-        }
-
         .header {
             text-align: center;
             margin-bottom: 22px;
@@ -942,6 +831,117 @@
 
         .terms-text.hidden {
             display: none;
+        }
+
+        @media (max-width: 560px) {
+            body {
+                background: var(--surface-elevated);
+            }
+            .auth-stage {
+                padding: 0;
+                align-items: stretch;
+                justify-content: flex-start;
+            }
+            .auth-stage::before {
+                display: none;
+            }
+            .auth-container {
+                max-width: 100%;
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+                background: transparent;
+                border: none;
+                box-shadow: none;
+                overflow: visible;
+            }
+            .content-wrapper {
+                width: 100%;
+                max-width: 440px;
+                margin: auto;
+                padding: 28px max(20px, env(safe-area-inset-right)) 36px max(20px, env(safe-area-inset-left));
+            }
+            .auth-input {
+                height: 46px;
+                font-size: 1rem;
+            }
+            .gilos-input-wrap {
+                height: 46px;
+            }
+            .gilos-at-prefix {
+                flex: 0 0 42px;
+            }
+            .trailing-button {
+                flex: 0 0 46px;
+                width: 46px;
+            }
+            .auth-btn,
+            .auth-btn-secondary,
+            .bg-gray {
+                height: 46px;
+            }
+            .method-option {
+                height: 40px;
+                font-size: 0.84rem;
+                padding: 0 8px;
+                min-width: 0;
+            }
+            .radio-option {
+                padding: 13px 14px;
+            }
+            body .site-footer {
+                background: var(--surface-subtle);
+            }
+        }
+
+        @media (max-height: 680px) {
+            .auth-stage {
+                padding-top: 20px;
+                padding-bottom: 16px;
+            }
+            .header {
+                margin-bottom: 16px;
+            }
+            .auth-brand-row {
+                margin-bottom: 12px;
+            }
+            .auth-logo {
+                width: 40px;
+                height: 40px;
+            }
+        }
+
+        @media (max-height: 680px) and (max-width: 560px) {
+            .auth-stage {
+                padding-top: 0;
+                padding-bottom: 0;
+            }
+        }
+
+        @media (max-width: 380px) {
+            .content-wrapper {
+                padding: 22px 16px 28px;
+            }
+            .otp-container {
+                gap: 6px;
+            }
+            .otp-input {
+                height: 46px;
+                font-size: 1.12rem;
+            }
+            .button-group {
+                flex-direction: column-reverse;
+                gap: 8px;
+            }
+            .auth-btn,
+            .auth-btn-secondary,
+            .bg-gray {
+                width: 100%;
+                flex: none;
+            }
+            .identity-chip {
+                max-width: 100%;
+            }
         }
 
         .hidden {

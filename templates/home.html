@@ -279,12 +279,6 @@
         .console-main {
             padding: 18px 16px 36px;
         }
-        .console-card {
-            padding: 18px 16px;
-        }
-        .account-hero {
-            padding: 18px 16px;
-        }
     }
 
     .global-banner {
@@ -567,10 +561,6 @@
     @media (max-width: 560px) {
         .form-grid {
             grid-template-columns: 1fr;
-        }
-        .scope-check-row {
-            flex-wrap: wrap;
-            align-items: flex-start;
         }
     }
 
@@ -1563,32 +1553,6 @@
         flex-wrap: wrap;
     }
 
-    @media (max-width: 560px) {
-        .modal {
-            padding: 10px;
-        }
-        .modal-dialog {
-            max-height: calc(100dvh - 20px);
-        }
-        .modal-header {
-            padding: 16px 18px 14px;
-        }
-        .modal-body {
-            padding: 16px 18px;
-        }
-        .modal-footer {
-            padding: 14px 18px max(16px, env(safe-area-inset-bottom));
-        }
-        .console-input,
-        .console-textarea,
-        .console-select {
-            font-size: 1rem;
-        }
-        .otp-container {
-            gap: 6px;
-        }
-    }
-
     .modal-error {
         padding: 10px 12px;
         border-radius: 0px;
@@ -1964,6 +1928,45 @@
         gap: 8px;
         font-size: 0.85rem;
         font-weight: 600;
+    }
+
+    @media (max-width: 640px) {
+        .console-card {
+            padding: 18px 16px;
+        }
+        .account-hero {
+            padding: 18px 16px;
+        }
+    }
+
+    @media (max-width: 560px) {
+        .scope-check-row {
+            flex-wrap: wrap;
+            align-items: flex-start;
+        }
+        .modal {
+            padding: 10px;
+        }
+        .modal-dialog {
+            max-height: calc(100dvh - 20px);
+        }
+        .modal-header {
+            padding: 16px 18px 14px;
+        }
+        .modal-body {
+            padding: 16px 18px;
+        }
+        .modal-footer {
+            padding: 14px 18px max(16px, env(safe-area-inset-bottom));
+        }
+        .console-input,
+        .console-textarea,
+        .console-select {
+            font-size: 1rem;
+        }
+        .otp-container {
+            gap: 6px;
+        }
     }
 
     .hidden {
