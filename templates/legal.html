@@ -55,22 +55,25 @@
         display: inline-flex;
         align-items: center;
         padding: 7px 13px;
-        border-radius: var(--radius-pill);
+        border-radius: 0px;
         font-size: 0.84rem;
         font-weight: 500;
         color: var(--text-secondary);
         text-decoration: none;
-        border: 1px solid transparent;
+        border: 1px solid var(--border-default);
+        background: var(--surface-elevated);
         transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
     }
 
     .legal-nav-link:hover {
         background: var(--surface-subtle);
+        border-color: var(--border-strong);
         color: var(--text);
     }
 
     .legal-nav-link.active {
         background: var(--primary);
+        border-color: var(--primary);
         color: var(--primary-contrast);
         font-weight: 600;
     }
@@ -116,7 +119,7 @@
         display: inline-flex;
         align-items: center;
         padding: 5px 11px;
-        border-radius: var(--radius-pill);
+        border-radius: 0px;
         border: 1px solid var(--border-default);
         background: var(--surface-subtle);
         color: var(--text-secondary);

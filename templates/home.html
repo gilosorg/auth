@@ -406,22 +406,23 @@
     .hero-id-chip {
         display: inline-flex;
         align-items: center;
-        gap: 5px;
-        padding: 2px 9px;
-        border-radius: var(--radius-pill);
+        gap: 6px;
+        padding: 3px 9px;
+        border-radius: 0px;
         background: var(--surface-subtle);
-        border: 1px solid var(--border-subtle);
+        border: 1px solid var(--border-default);
         color: var(--text-secondary);
-        font-size: 0.78rem;
+        font-family: var(--font-mono);
+        font-size: 0.74rem;
         font-weight: 600;
         font-variant-numeric: tabular-nums;
         cursor: pointer;
-        transition: background-color 0.14s ease, border-color 0.14s ease;
+        transition: background-color 0.14s ease, border-color 0.14s ease, color 0.14s ease;
     }
 
     .hero-id-chip:hover {
         background: var(--surface-hover);
-        border-color: var(--border-default);
+        border-color: var(--border-strong);
         color: var(--text);
     }
 
@@ -533,8 +534,23 @@
     .input-wrap {
         position: relative;
         display: flex;
-        align-items: center;
+        align-items: stretch;
         width: 100%;
+        height: 42px;
+        border: 1.5px solid var(--border-default);
+        border-radius: 0px;
+        background: var(--surface-subtle);
+        transition: border-color 0.16s ease, background-color 0.16s ease, box-shadow 0.16s ease;
+    }
+
+    .input-wrap:hover {
+        border-color: var(--border-strong);
+    }
+
+    .input-wrap:focus-within {
+        background: var(--surface-elevated);
+        border-color: var(--accent);
+        box-shadow: 0 0 0 2px var(--focus-ring);
     }
 
     .console-input,
@@ -572,43 +588,94 @@
         padding-right: 42px;
     }
 
-    .console-input--prefixed {
-        padding-left: 30px;
-        padding-right: 40px;
+    .input-wrap .console-input {
+        flex: 1;
+        min-width: 0;
+        height: 100%;
+        border: none !important;
+        background: transparent !important;
+        box-shadow: none !important;
+        padding: 0 12px;
+    }
+
+    .input-wrap .console-input:focus {
+        outline: none !important;
+        border: none !important;
+        background: transparent !important;
+        box-shadow: none !important;
+    }
+
+    .console-input--prefixed,
+    .console-input--with-icon {
+        padding: 0 12px;
     }
 
     .input-prefix {
-        position: absolute;
-        left: 12px;
-        color: var(--text-muted);
-        font-weight: 600;
-        pointer-events: none;
-    }
-
-    .input-adornment-right {
-        position: absolute;
-        right: 10px;
+        position: static;
+        flex: 0 0 40px;
         display: inline-flex;
         align-items: center;
         justify-content: center;
+        border-right: 1px solid var(--border-default);
+        background: color-mix(in srgb, var(--surface-elevated) 48%, var(--surface-subtle));
+        font-family: var(--font-mono);
+        font-size: 0.88rem;
+        font-weight: 600;
+        line-height: 1;
+        color: var(--text-tertiary, var(--text-muted));
+        pointer-events: none;
+        user-select: none;
+        transition: color 0.16s ease, border-color 0.16s ease, background-color 0.16s ease;
+    }
+
+    .input-wrap:focus-within .input-prefix {
+        color: var(--accent);
+        border-right-color: color-mix(in srgb, var(--accent) 32%, var(--border-default));
+        background: color-mix(in srgb, var(--accent) 6%, var(--surface-elevated));
+    }
+
+    .input-adornment-right {
+        position: static;
+        flex: 0 0 auto;
+        display: inline-flex;
+        align-items: stretch;
+        justify-content: center;
+    }
+
+    #username-indicator:empty {
+        display: none;
+    }
+
+    #username-indicator:not(:empty) {
+        align-items: center;
+        padding: 0 11px;
+        border-left: 1px solid var(--border-subtle);
+        background: color-mix(in srgb, var(--surface-elevated) 35%, var(--surface-subtle));
     }
 
     .pw-eye-btn {
-        background: transparent;
+        background: color-mix(in srgb, var(--surface-elevated) 42%, var(--surface-subtle));
         border: none;
-        width: 32px;
-        height: 32px;
+        border-left: 1px solid var(--border-default);
+        width: 42px;
+        height: 100%;
         border-radius: 0px;
         color: var(--text-muted);
         display: inline-flex;
         align-items: center;
         justify-content: center;
         cursor: pointer;
+        transition: background-color 0.15s ease, color 0.15s ease;
     }
 
     .pw-eye-btn:hover {
-        background: var(--surface-subtle);
+        background: var(--surface-hover);
         color: var(--text);
+    }
+
+    .pw-eye-btn:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: -2px;
     }
 
     .field-status-note {
@@ -829,7 +896,9 @@
     .filter-pills {
         display: flex;
         align-items: center;
-        gap: 6px;
+        gap: 0;
+        border: 1px solid var(--border-default);
+        background: var(--surface-subtle);
         flex-wrap: wrap;
     }
 
@@ -837,34 +906,42 @@
         display: inline-flex;
         align-items: center;
         gap: 6px;
-        padding: 7px 13px;
-        border-radius: var(--radius-pill);
-        border: 1px solid var(--border-default);
-        background: var(--surface-elevated);
+        height: 34px;
+        padding: 0 12px;
+        border-radius: 0px;
+        border: none;
+        border-right: 1px solid var(--border-default);
+        background: transparent;
         color: var(--text-secondary);
-        font-size: 0.825rem;
+        font-size: 0.8125rem;
         font-weight: 500;
         cursor: pointer;
-        transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+        transition: background-color 0.15s ease, color 0.15s ease;
+    }
+
+    .filter-pill:last-child {
+        border-right: none;
     }
 
     .filter-pill:hover {
-        background: var(--surface-subtle);
+        background: var(--surface-hover);
         color: var(--text);
     }
 
     .filter-pill.active {
         background: var(--primary);
-        border-color: var(--primary);
         color: var(--primary-contrast);
         font-weight: 600;
     }
 
     .filter-pill-count {
-        font-size: 0.74rem;
-        padding: 1px 6px;
-        border-radius: var(--radius-pill);
-        background: rgba(128, 128, 128, 0.18);
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        padding: 1px 5px;
+        border-radius: 0px;
+        border: 1px solid currentColor;
+        border-color: color-mix(in srgb, currentColor 22%, transparent);
+        background: rgba(128, 128, 128, 0.12);
         font-variant-numeric: tabular-nums;
     }
 
@@ -901,7 +978,7 @@
     .console-search-input:focus {
         outline: none;
         border-color: var(--accent);
-        box-shadow: 0 0 0 3px var(--focus-ring);
+        box-shadow: 0 0 0 2px var(--focus-ring);
     }
 
     .console-search-clear {
@@ -963,12 +1040,13 @@
     }
 
     .entity-card:hover {
+        border-color: var(--border-strong);
         box-shadow: var(--card-shadow-hover);
     }
 
     .entity-card.is-current {
         border-color: var(--brand-green);
-        box-shadow: 0 0 0 1px var(--brand-green), var(--card-shadow);
+        box-shadow: inset 3px 0 0 var(--brand-green), var(--card-shadow);
     }
 
     .entity-head {

@@ -60,15 +60,16 @@
         width: 44px;
         height: 44px;
         border-radius: 0px;
+        border: 1px solid var(--border-strong);
         background: var(--primary);
         color: var(--primary-contrast);
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        font-size: 1.15rem;
+        font-family: var(--font-mono);
+        font-size: 1.05rem;
         font-weight: 700;
         flex-shrink: 0;
-        box-shadow: 0 2px 8px var(--primary-glow);
     }
 
     .oauth-app-info {
@@ -181,9 +182,11 @@
         align-self: flex-start;
         padding: 2px 8px;
         border-radius: 0px;
+        border: 1px solid var(--border-subtle);
         background: var(--surface-subtle);
         color: var(--text-secondary);
-        font-size: 0.78rem;
+        font-family: var(--font-mono);
+        font-size: 0.74rem;
         font-weight: 500;
         max-width: 100%;
         word-break: break-all;
@@ -330,6 +333,7 @@
         width: 100%;
         height: 54px;
         text-align: center;
+        font-family: var(--font-mono);
         font-size: 1.3rem;
         font-weight: 700;
         font-variant-numeric: tabular-nums;
@@ -343,7 +347,7 @@
     .otp-input:focus {
         outline: none;
         border-color: var(--accent);
-        box-shadow: 0 0 0 3px var(--focus-ring);
+        box-shadow: 0 0 0 2px var(--focus-ring);
     }
 
     .otp-input.error {
@@ -354,9 +358,11 @@
 
     .terms-text {
         font-size: 0.78rem;
-        color: var(--text-muted);
+        color: var(--text-tertiary);
         text-align: center;
-        line-height: 1.5;
+        line-height: 1.55;
+        max-width: 340px;
+        margin: 0 auto;
     }
 
     .terms-text a {
