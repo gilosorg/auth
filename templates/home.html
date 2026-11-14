@@ -340,9 +340,9 @@
         display: flex;
         align-items: center;
         justify-content: space-between;
-        gap: 20px;
+        gap: 18px;
         flex-wrap: wrap;
-        padding: 24px 26px;
+        padding: 22px 24px;
         background: var(--card-bg);
         border: 1px solid var(--card-border);
         border-radius: 0px;
@@ -493,7 +493,7 @@
     .console-grid {
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 20px;
+        gap: 18px;
     }
 
     @media (max-width: 900px) {
@@ -507,10 +507,10 @@
         border: 1px solid var(--card-border);
         border-radius: 0px;
         box-shadow: var(--card-shadow);
-        padding: 24px;
+        padding: 22px 24px;
         display: flex;
         flex-direction: column;
-        gap: 18px;
+        gap: 16px;
     }
 
     .console-card--full {
@@ -787,19 +787,21 @@
     .info-callout {
         display: flex;
         align-items: flex-start;
-        gap: 10px;
-        padding: 11px 13px;
+        gap: 8px;
+        padding: 2px 0 2px 10px;
         border-radius: 0px;
-        background: var(--surface-subtle);
-        border: 1px solid var(--border-subtle);
-        font-size: 0.8rem;
-        color: var(--text-secondary);
+        background: transparent;
+        border: none;
+        border-left: 2px solid var(--border-default);
+        font-size: 0.79rem;
+        color: var(--text-muted);
         line-height: 1.45;
     }
 
     .info-callout--warning {
+        padding: 11px 13px;
         background: var(--amber-50);
-        border-color: rgba(245, 158, 11, 0.25);
+        border: 1px solid rgba(245, 158, 11, 0.25);
         color: var(--amber-700);
     }
 
@@ -992,7 +994,10 @@
     }
 
     .filter-pills {
-        display: flex;
+        display: inline-flex;
+        width: fit-content;
+        max-width: 100%;
+        align-self: flex-start;
         align-items: center;
         gap: 0;
         border: 1px solid var(--border-subtle);
@@ -1163,7 +1168,7 @@
         border: 1px solid var(--card-border);
         border-radius: 0px;
         box-shadow: var(--card-shadow);
-        padding: 20px;
+        padding: 18px 20px;
         display: flex;
         flex-direction: column;
         gap: 14px;
@@ -1171,13 +1176,13 @@
     }
 
     .entity-card:hover {
-        border-color: var(--border-strong);
+        border-color: var(--border-default);
         box-shadow: var(--card-shadow-hover);
     }
 
     .entity-card.is-current {
-        border-color: var(--brand-green);
-        box-shadow: inset 3px 0 0 var(--brand-green), var(--card-shadow);
+        border-color: color-mix(in srgb, var(--brand-green) 42%, var(--card-border));
+        box-shadow: inset 2px 0 0 var(--brand-green), var(--card-shadow);
     }
 
     .entity-head {
@@ -1196,15 +1201,17 @@
     }
 
     .entity-icon {
-        width: 40px;
-        height: 40px;
+        width: 36px;
+        height: 36px;
         border-radius: 0px;
         background: var(--surface-subtle);
-        color: var(--text);
+        border: 1px solid var(--border-subtle);
+        color: var(--text-secondary);
         display: inline-flex;
         align-items: center;
         justify-content: center;
         flex-shrink: 0;
+        font-size: 0.9rem;
         font-weight: 700;
     }
 
@@ -1425,7 +1432,8 @@
         padding: 40px 20px;
         text-align: center;
         background: var(--card-bg);
-        border: 1px dashed var(--border-default);
+        border: 1px solid var(--card-border);
+        box-shadow: var(--card-shadow);
         border-radius: 0px;
         color: var(--text-muted);
         display: flex;
@@ -1589,7 +1597,7 @@
         display: flex;
         flex-direction: column;
         gap: 0;
-        border: 1px solid var(--border-default);
+        border: 1px solid var(--border-subtle);
         background: var(--surface-elevated);
     }
 
@@ -2804,7 +2812,6 @@
                                 <div class="card-title-group">
                                     <h3 class="card-title">
                                         <span>{{ if .AppIDLabel }}{{ .AppIDLabel }}{{ else }}Gilos Username{{ end }}</span>
-                                        <span class="badge badge-neutral">${escapeHtml(tr('username_changes_left', 'Changes remaining: %d/3').replace('%d', changesRemaining))}</span>
                                     </h3>
                                     <p class="card-desc">${escapeHtml(tr('gilos_id_desc', 'Your unique @username handle across all Gilos services.'))}</p>
                                 </div>
@@ -2812,7 +2819,10 @@
                             </div>
                             <form id="username-form" style="display:flex;flex-direction:column;gap:12px;">
                                 <div class="field">
-                                    <label for="new-username">${escapeHtml(tr('username', 'Username'))}</label>
+                                    <div class="field-head-row">
+                                        <label for="new-username">${escapeHtml(tr('username', 'Username'))}</label>
+                                        <span class="badge badge-neutral">${escapeHtml(tr('username_changes_left', 'Changes remaining: %d/3').replace('%d', changesRemaining))}</span>
+                                    </div>
                                     <div class="input-wrap">
                                         <span class="input-prefix">@</span>
                                         <input type="text" id="new-username" name="username" class="console-input console-input--prefixed"
@@ -4349,7 +4359,7 @@
                                     ${c.secret_created_at ? `<span style="display:block;font-size:0.72rem;color:var(--text-muted);margin-top:2px;">${escapeHtml(window.GilosUI.formatRelativeTime(c.secret_created_at, T))}</span>` : ''}
                                 </span>
                             </div>` : `
-                            <div class="info-callout" style="padding:8px 10px;font-size:0.76rem;">
+                            <div class="info-callout" style="font-size:0.76rem;">
                                 ${escapeHtml(tr('pkce_public_client', 'PKCE protected (Public client — no secret required)'))}
                             </div>`}
 
