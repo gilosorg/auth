@@ -243,5 +243,19 @@ func TestRenderedHTMLHeadStructureAndOAuthAvatar(t *testing.T) {
 		if name == "oauth.html" && !strings.Contains(out, `data-icon="/media/user/icon/42_sample.jpg"`) {
 			t.Errorf("oauth.html did not preserve User.Icon on #oauth-user-avatar")
 		}
+		if (name == "auth.html" || name == "home.html") && strings.Contains(out, `<span class="gilos-input-addon" aria-hidden="true">@</span>`) {
+			t.Errorf("%s unexpectedly rendered raw @ username addon instead of Fluent UI icon", name)
+		}
+		if (name == "auth.html" || name == "home.html") && !strings.Contains(out, `gilos-input-addon--icon`) {
+			t.Errorf("%s missing Fluent UI icon addon class gilos-input-addon--icon", name)
+		}
+		if name == "home.html" {
+			if !strings.Contains(out, "renderPaginationFooter") || !strings.Contains(out, "session-active-state") {
+				t.Errorf("home.html missing aligned pagination footer or session-active-state styling")
+			}
+			if !strings.Contains(out, `showing_of_total`) || !strings.Contains(out, `active_now`) {
+				t.Errorf("home.html missing pagination/active status translation keys")
+			}
+		}
 	}
 }

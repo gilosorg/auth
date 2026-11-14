@@ -144,12 +144,13 @@
     }
 
     .user-trigger-handle {
-        max-width: 130px;
+        max-width: 140px;
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
-        font-family: var(--font-mono);
-        font-size: 0.79rem;
+        font-family: inherit;
+        font-size: 0.825rem;
+        font-weight: 500;
     }
 
     .user-dropdown {
@@ -188,10 +189,13 @@
     }
 
     .dropdown-meta-handle {
-        font-family: var(--font-mono);
-        font-size: 0.75rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        font-family: inherit;
+        font-size: 0.78rem;
         color: var(--text-muted);
-        margin-top: 2px;
+        margin-top: 3px;
     }
 
     .dropdown-item {
@@ -454,17 +458,22 @@
         display: inline-flex;
         align-items: center;
         gap: 6px;
-        padding: 3px 9px;
+        padding: 4px 10px;
         border-radius: 0px;
         background: var(--surface-subtle);
         border: 1px solid var(--border-subtle);
         color: var(--text-secondary);
-        font-family: var(--font-mono);
-        font-size: 0.74rem;
+        font-family: inherit;
+        font-size: 0.78rem;
         font-weight: 600;
-        font-variant-numeric: tabular-nums;
         cursor: pointer;
         transition: background-color 0.14s ease, border-color 0.14s ease, color 0.14s ease;
+    }
+
+    .hero-id-chip--mono {
+        font-family: var(--font-mono);
+        font-size: 0.74rem;
+        font-variant-numeric: tabular-nums;
     }
 
     .hero-id-chip:hover {
@@ -1163,6 +1172,7 @@
         display: flex;
         flex-direction: column;
         gap: 8px;
+        flex: 1;
         font-size: 0.83rem;
     }
 
@@ -1308,10 +1318,20 @@
         align-items: center;
         justify-content: space-between;
         gap: 8px;
+        min-height: 45px;
         padding-top: 12px;
         border-top: 1px solid var(--border-subtle);
         margin-top: auto;
         flex-wrap: wrap;
+    }
+
+    .session-active-state {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        font-size: 0.79rem;
+        font-weight: 600;
+        color: var(--green-700);
     }
 
     .entity-footer-actions {
@@ -1360,8 +1380,35 @@
 
     .load-more-wrap {
         display: flex;
-        justify-content: center;
-        padding-top: 6px;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-top: 16px;
+        padding: 12px 16px;
+        background: var(--glass-surface);
+        backdrop-filter: var(--glass-backdrop);
+        -webkit-backdrop-filter: var(--glass-backdrop);
+        border: 1px solid var(--card-border);
+        border-radius: 0px;
+        box-shadow: var(--glass-highlight);
+    }
+
+    #activity-list-container .load-more-wrap {
+        margin-top: 12px;
+        padding: 12px 0 0;
+        background: transparent;
+        backdrop-filter: none;
+        -webkit-backdrop-filter: none;
+        border: none;
+        border-top: 1px solid var(--border-subtle);
+        box-shadow: none;
+    }
+
+    .load-more-meta {
+        font-size: 0.8125rem;
+        color: var(--text-muted);
+        font-variant-numeric: tabular-nums;
     }
 
     /* Modals */
@@ -1890,6 +1937,14 @@
         .otp-container {
             gap: 6px;
         }
+        .load-more-wrap {
+            flex-direction: column;
+            align-items: stretch;
+            text-align: center;
+        }
+        .load-more-wrap .btn {
+            width: 100%;
+        }
     }
 
     .hidden {
@@ -1934,13 +1989,16 @@
                         <img id="appbar-avatar-img" src="" alt="" style="display:none;">
                         <span id="appbar-avatar-initial">{{ if .User }}{{ upper (printf "%.1s" .User.Username) }}{{ else }}G{{ end }}</span>
                     </span>
-                    <span class="user-trigger-handle">@{{ if .User }}{{ .User.Username }}{{ end }}</span>
+                    <span class="user-trigger-handle">{{ if .User }}{{ .User.Username }}{{ end }}</span>
                     {{ icon "chevron-down" "fluent-icon--sm" }}
                 </button>
                 <div class="user-dropdown" id="account-dropdown" role="menu">
                     <div class="dropdown-meta">
                         <div class="dropdown-meta-name" id="dropdown-full-name">{{ if .User }}{{ .User.FirstName }} {{ .User.LastName }}{{ end }}</div>
-                        <div class="dropdown-meta-handle">@{{ if .User }}{{ .User.Username }}{{ end }}</div>
+                        <div class="dropdown-meta-handle">
+                            {{ icon "person" "fluent-icon--sm" }}
+                            <span>{{ if .User }}{{ .User.Username }}{{ end }}</span>
+                        </div>
                     </div>
                     <button type="button" class="dropdown-item" role="menuitem" onclick="setActiveTab('account'); closeDropdown();">
                         {{ icon "person" "fluent-icon--sm" }}
@@ -2222,7 +2280,7 @@
                     <div class="field">
                         <label for="delete-username-confirm">{{ index .T "username" }}</label>
                         <div class="gilos-input-group">
-                            <span class="gilos-input-addon" aria-hidden="true">@</span>
+                            <span class="gilos-input-addon gilos-input-addon--icon" aria-hidden="true">{{ icon "person" "fluent-icon--md" }}</span>
                             <input type="text" id="delete-username-confirm" class="gilos-input-control" placeholder="{{ index .T "username" }}" autocapitalize="none" spellcheck="false" oninput="validateDeleteInputs()">
                         </div>
                     </div>
@@ -2276,6 +2334,7 @@
         let sessionsPage = 1;
         let allSessions = [];
         let hasMoreSessions = true;
+        let sessionsTotal = 0;
         let sessionsFilter = 'all';
         let sessionsQuery = '';
         let allClients = [];
@@ -2284,6 +2343,7 @@
         let activityPage = 1;
         let allActivity = [];
         let hasMoreActivity = true;
+        let activityTotal = 0;
         let activityFilter = 'all';
 
         let currentUser = {};
@@ -2633,9 +2693,13 @@
                     appInit.textContent = (user.first_name || user.username || 'G').charAt(0).toUpperCase();
                 }
 
-                const fullName = [user.first_name, user.middle_name, user.last_name].filter(Boolean).join(' ') || '@' + user.username;
+                const fullName = [user.first_name, user.middle_name, user.last_name].filter(Boolean).join(' ') || user.username;
                 const ddName = document.getElementById('dropdown-full-name');
                 if (ddName) ddName.textContent = fullName;
+                const triggerHandle = document.querySelector('.user-trigger-handle');
+                if (triggerHandle && user.username) triggerHandle.textContent = user.username;
+                const ddHandle = document.querySelector('.dropdown-meta-handle span');
+                if (ddHandle && user.username) ddHandle.textContent = user.username;
 
                 const avatarInitial = escapeHtml((user.first_name || user.username || '?').charAt(0).toUpperCase());
                 const mfaActive = Boolean(user.mfa_totp_enabled || user.mfa_email_enabled || user.mfa_phone_enabled);
@@ -2666,11 +2730,12 @@
                                 <div class="hero-name">${escapeHtml(fullName)}</div>
                                 <div class="hero-subrow">
                                     <button type="button" class="hero-id-chip" data-copy-val="${escapeHtml(user.username)}" onclick="copyToClipboard(this.dataset.copyVal, this)" title="${escapeHtml(tr('copy', 'Copy'))}">
-                                        <span>@${escapeHtml(user.username)}</span>
+                                        ${window.GilosUI.icon('person', { size: 13 })}
+                                        <span>${escapeHtml(user.username)}</span>
                                         ${window.GilosUI.icon('copy', { size: 11 })}
                                     </button>
                                     <span>&middot;</span>
-                                    <button type="button" class="hero-id-chip" onclick="copyToClipboard('${escapeHtml(String(user.id))}', this)" title="${escapeHtml(tr('copy_id', 'Copy ID'))}">
+                                    <button type="button" class="hero-id-chip hero-id-chip--mono" onclick="copyToClipboard('${escapeHtml(String(user.id))}', this)" title="${escapeHtml(tr('copy_id', 'Copy ID'))}">
                                         <span>${escapeHtml(tr('account_id_label', 'User ID'))}: #${escapeHtml(String(user.id))}</span>
                                         ${window.GilosUI.icon('copy', { size: 11 })}
                                     </button>
@@ -2785,7 +2850,7 @@
                                         <span class="badge badge-neutral">${escapeHtml(tr('username_changes_left', 'Changes remaining: %d/3').replace('%d', changesRemaining))}</span>
                                     </div>
                                     <div class="gilos-input-group ${changesRemaining === 0 ? 'is-disabled' : ''}">
-                                        <span class="gilos-input-addon" aria-hidden="true">@</span>
+                                        <span class="gilos-input-addon gilos-input-addon--icon" aria-hidden="true">${window.GilosUI.icon('person', { size: 17 })}</span>
                                         <input type="text" id="new-username" name="username" class="gilos-input-control"
                                                value="${escapeHtml(user.username)}" required
                                                placeholder="${escapeHtml(tr('enter_new_gilos_id', 'Enter new username'))}"
@@ -3746,7 +3811,7 @@
                 : allActivity.filter(ev => getActivityCategory(ev.event_type) === activityFilter);
 
             const loadMoreHtml = hasMoreActivity
-                ? `<div class="load-more-wrap"><button type="button" class="btn btn-secondary btn-sm" id="activity-load-more-btn" onclick="loadActivity(${activityPage + 1}, this)">${escapeHtml(tr('load_more', 'Load more'))}</button></div>`
+                ? renderPaginationFooter(allActivity.length, activityTotal, `loadActivity(${activityPage + 1}, this)`, 'activity-load-more-btn')
                 : '';
 
             if (filtered.length === 0) {
@@ -3805,6 +3870,25 @@
             box.innerHTML = `<div class="activity-list">${rowsHtml}</div>` + loadMoreHtml;
         }
 
+        function renderPaginationFooter(shownCount, totalCount, onclickExpr, btnId = '') {
+            const safeTotal = Math.max(Number(totalCount) || 0, shownCount);
+            const metaText = safeTotal > 0
+                ? tr('showing_of_total', 'Showing {shown} of {total}')
+                    .replace('{shown}', String(shownCount))
+                    .replace('{total}', String(safeTotal))
+                : '';
+            const idAttr = btnId ? ` id="${escapeHtml(btnId)}"` : '';
+            return `
+                <div class="load-more-wrap">
+                    <span class="load-more-meta">${escapeHtml(metaText)}</span>
+                    <button type="button" class="btn btn-secondary btn-sm"${idAttr} onclick="${onclickExpr}">
+                        ${window.GilosUI.icon('chevron-down', { size: 15 })}
+                        <span>${escapeHtml(tr('load_more', 'Load more'))}</span>
+                    </button>
+                </div>
+            `;
+        }
+
         async function loadActivity(page = 1, triggerBtn = null) {
             const box = document.getElementById('activity-list-container');
             if (!box) return;
@@ -3820,6 +3904,7 @@
                     btn.setAttribute('aria-pressed', isActive ? 'true' : 'false');
                 });
                 allActivity = [];
+                activityTotal = 0;
                 box.innerHTML = `<div class="skeleton" style="height:52px;margin-bottom:8px;"></div><div class="skeleton" style="height:52px;"></div>`;
             }
 
@@ -3832,6 +3917,7 @@
                 const items = payload.data || [];
                 const pag = payload.pagination || {};
                 hasMoreActivity = Boolean(pag.has_next_page);
+                activityTotal = Number(pag.total || 0);
                 allActivity = page === 1 ? items : allActivity.concat(items);
                 renderActivityList();
             } catch (e) {
@@ -3887,6 +3973,7 @@
             }
             if (page === 1) {
                 allSessions = [];
+                sessionsTotal = 0;
                 container.innerHTML = `<div class="cards-grid"><div class="skeleton" style="height:210px;border-radius:0px;"></div><div class="skeleton" style="height:210px;border-radius:0px;"></div></div>`;
             }
 
@@ -3897,8 +3984,10 @@
 
                 const result = await parseJSONSafe(response, tr('failed_load_sessions', 'Failed to load sessions'));
                 const list = result.data || [];
+                const pag = result.pagination || {};
                 allSessions = page === 1 ? list : allSessions.concat(list);
-                hasMoreSessions = Boolean(result.pagination && result.pagination.has_next_page);
+                sessionsTotal = Number(pag.total || 0);
+                hasMoreSessions = Boolean(pag.has_next_page);
                 renderSessionsGrid();
             } catch (err) {
                 container.innerHTML = `<div class="empty-state"><p>${escapeHtml(tr('failed_load_sessions', 'Failed to load sessions.'))}</p><button type="button" class="btn btn-secondary btn-sm" onclick="loadSessions(1, this)">${escapeHtml(tr('refresh_list', 'Refresh'))}</button></div>`;
@@ -3993,7 +4082,7 @@
             });
 
             const loadMoreHtml = hasMoreSessions
-                ? `<div class="load-more-wrap"><button type="button" class="btn btn-secondary" onclick="loadSessions(${sessionsPage + 1})">${escapeHtml(tr('load_more', 'Load more'))}</button></div>`
+                ? renderPaginationFooter(allSessions.length, sessionsTotal, `loadSessions(${sessionsPage + 1}, this)`)
                 : '';
 
             if (allSessions.length === 0) {
@@ -4014,7 +4103,7 @@
                         <p style="font-weight:600;color:var(--text);margin-bottom:4px;">${escapeHtml(tr('sessions_no_matches', 'No sessions match your current filters.'))}</p>
                         <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:12px;">
                             <button type="button" class="btn btn-secondary btn-sm" onclick="clearSessionsFilters()">${escapeHtml(tr('clear_filters', 'Clear filters'))}</button>
-                            ${hasMoreSessions ? `<button type="button" class="btn btn-ghost btn-sm" onclick="loadSessions(${sessionsPage + 1})">${escapeHtml(tr('load_more', 'Load more'))}</button>` : ''}
+                            ${hasMoreSessions ? `<button type="button" class="btn btn-ghost btn-sm" onclick="loadSessions(${sessionsPage + 1}, this)">${escapeHtml(tr('load_more', 'Load more'))}</button>` : ''}
                         </div>
                     </div>`;
                 return;
@@ -4073,11 +4162,16 @@
                             </details>` : ''}
                         </div>
 
-                        ${session.type !== 'native' || !isCurrent ? `
                         <div class="entity-footer">
-                            ${session.type !== 'native' ? `<span class="badge badge-neutral">${escapeHtml(tr(session.type, session.type))}</span>` : '<span></span>'}
-                            ${!isCurrent ? `<button type="button" class="btn btn-danger-outline btn-sm" onclick="terminateSession(${Number(session.id)}, this)">${escapeHtml(tr('terminate', 'Terminate'))}</button>` : ''}
-                        </div>` : ''}
+                            ${session.type !== 'native'
+                                ? `<span class="badge badge-neutral">${escapeHtml(tr(session.type, session.type))}</span>`
+                                : (isCurrent
+                                    ? `<span class="session-active-state"><span class="status-live-dot" aria-hidden="true"></span>${escapeHtml(tr('active_now', 'Active now'))}</span>`
+                                    : '<span></span>')}
+                            ${!isCurrent
+                                ? `<button type="button" class="btn btn-danger-outline btn-sm" onclick="terminateSession(${Number(session.id)}, this)">${escapeHtml(tr('terminate', 'Terminate'))}</button>`
+                                : `<span class="entity-label tabular-nums">#${escapeHtml(String(session.id))}</span>`}
+                        </div>
                     </article>
                 `;
             }).join('');
@@ -4839,7 +4933,7 @@
             document.getElementById('delete-username-confirm').value = '';
             document.getElementById('delete-id-confirm').value = '';
             document.getElementById('perform-delete-btn').disabled = true;
-            document.getElementById('delete-confirm-desc').textContent = tr('delete_account_confirm_desc', 'Please enter your username (@%s) and User ID (%d) below.')
+            document.getElementById('delete-confirm-desc').textContent = tr('delete_account_confirm_desc', 'Please enter your username (%s) and User ID (%d) below.')
                 .replace('%s', currentUser.username || '')
                 .replace('%d', currentUser.id || 0);
             showModal('delete-modal');

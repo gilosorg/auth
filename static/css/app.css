@@ -748,9 +748,10 @@ input[type="radio"]:disabled {
 .identity-chip-handle {
     display: inline-flex;
     align-items: center;
+    gap: 5px;
     padding: 0 10px;
-    font-family: var(--font-mono);
-    font-size: 0.78rem;
+    font-family: inherit;
+    font-size: 0.8125rem;
     font-weight: 600;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -1517,18 +1518,25 @@ input[type="radio"]:disabled {
     background: var(--surface-subtle);
     border-right: 1px solid var(--border-subtle);
     color: var(--text-muted);
-    font-family: var(--font-mono);
-    font-size: 0.9rem;
+    font-family: inherit;
+    font-size: 0.875rem;
     font-weight: 600;
     line-height: 1;
     user-select: none;
+    transition: color var(--t-fast), background-color var(--t-fast), border-color var(--t-fast);
 }
 
 .gilos-input-addon--icon {
-    flex: 0 0 38px;
-    background: transparent;
+    flex: 0 0 40px;
+    background: var(--surface-subtle);
     border-right-color: var(--border-subtle);
-    color: var(--text-tertiary);
+    color: var(--text-muted);
+}
+
+.gilos-input-group:focus-within .gilos-input-addon--icon {
+    color: var(--accent);
+    background: var(--accent-soft);
+    border-right-color: var(--accent-subtle);
 }
 
 .gilos-input-control {

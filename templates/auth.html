@@ -136,8 +136,8 @@
 
         .target-notice strong {
             color: var(--text);
-            font-family: var(--font-mono);
-            font-size: 0.76rem;
+            font-family: inherit;
+            font-size: 0.79rem;
             font-weight: 600;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -160,7 +160,8 @@
         }
 
         .recovery-contact-value {
-            font-family: var(--font-mono);
+            font-family: inherit;
+            font-variant-numeric: tabular-nums;
             font-weight: 600;
             color: var(--text);
         }
@@ -318,9 +319,7 @@
         }
 
         .auth-input--gilos {
-            font-family: var(--font-mono);
             font-weight: 500;
-            letter-spacing: 0.01em;
         }
 
         .gilos-input-group:focus-within .gilos-input-addon {
@@ -839,7 +838,7 @@
                 <div id="identity-chip-wrap" class="identity-chip-wrap hidden">
                     <div class="identity-chip">
                         <span class="identity-chip-avatar" id="identity-chip-avatar">G</span>
-                        <span class="identity-chip-handle" id="identity-chip-handle">@</span>
+                        <span class="identity-chip-handle" id="identity-chip-handle"></span>
                         <button type="button" class="identity-chip-action" onclick="moveToState('gilos-id')">{{ index .T "change_id" }}</button>
                     </div>
                 </div>
@@ -858,7 +857,7 @@
                         <div class="form-element">
                             <label for="gilos-id" class="field-label">{{ if .AppIDLabel }}{{ .AppIDLabel }}{{ else }}Gilos Username{{ end }}</label>
                             <div class="gilos-input-group">
-                                <span class="gilos-input-addon" aria-hidden="true">@</span>
+                                <span class="gilos-input-addon gilos-input-addon--icon" aria-hidden="true">{{ icon "person" "fluent-icon--md" }}</span>
                                 <input type="text" id="gilos-id" name="username" class="gilos-input-control auth-input--gilos" required autocomplete="username" autocapitalize="none" spellcheck="false"
                                     placeholder="{{ index .T "enter_gilos_id" }}" oninput="cleanGilosID(this)" onchange="cleanGilosID(this)" aria-describedby="message gilos-id-hint">
                                 <button id="continue-button" type="button" onclick="checkGilosID()" class="gilos-input-action gilos-input-action--primary" aria-label="{{ index .T "continue" }}">
@@ -1265,7 +1264,7 @@
             if (chipWrap && chipAvatar && chipHandle) {
                 if (step !== 'gilos-id' && state.gilosID) {
                     chipAvatar.textContent = state.gilosID.charAt(0).toUpperCase();
-                    chipHandle.textContent = '@' + state.gilosID;
+                    chipHandle.textContent = state.gilosID;
                     chipWrap.classList.remove('hidden');
                 } else {
                     chipWrap.classList.add('hidden');
@@ -1575,7 +1574,7 @@
                     break;
                 }
                 case 'register-name':
-                    document.getElementById('register-info').textContent = (T.password_not_found_info || "@%s is available. Enter your name to continue.").replace('%s', state.gilosID);
+                    document.getElementById('register-info').textContent = (T.password_not_found_info || "%s is available. Enter your name to continue.").replace('%s', state.gilosID);
                     buttonContainer.innerHTML = `
                         <div class="button-group">
                             <button type="button" onclick="moveToState('gilos-id')" class="bg-gray">${backLabel}</button>
