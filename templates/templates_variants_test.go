@@ -228,11 +228,11 @@ func TestRenderedHTMLHeadStructureAndOAuthAvatar(t *testing.T) {
 		if strings.Contains(out, "<no value>") {
 			t.Errorf("%s rendered <no value>", name)
 		}
-		if name == "auth.html" && !strings.Contains(out, "auth-logo-frame") {
-			t.Errorf("auth.html missing auth-logo-frame")
+		if name == "auth.html" && strings.Contains(out, "auth-logo-frame") {
+			t.Errorf("auth.html unexpectedly rendered auth-logo-frame")
 		}
-		if name == "oauth.html" && !strings.Contains(out, "oauth-logo-frame") {
-			t.Errorf("oauth.html missing oauth-logo-frame")
+		if name == "oauth.html" && strings.Contains(out, "oauth-logo-frame") {
+			t.Errorf("oauth.html unexpectedly rendered oauth-logo-frame")
 		}
 		if name == "oauth.html" && !strings.Contains(out, `data-icon="/media/user/icon/42_sample.jpg"`) {
 			t.Errorf("oauth.html did not preserve User.Icon on #oauth-user-avatar")

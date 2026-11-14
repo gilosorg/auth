@@ -89,25 +89,13 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            margin-bottom: 20px;
+            margin-bottom: 18px;
             position: relative;
         }
 
-        .auth-logo-frame {
-            width: 64px;
-            height: 64px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            background: var(--surface-subtle);
-            border: 1px solid var(--border-default);
-            border-radius: 0px;
-            box-shadow: inset 0 1px 0 color-mix(in srgb, var(--surface-elevated) 75%, transparent);
-        }
-
         .auth-logo {
-            width: 42px;
-            height: 42px;
+            width: 48px;
+            height: 48px;
             object-fit: contain;
         }
 
@@ -874,10 +862,8 @@
             <div class="content-wrapper">
                 <div class="header">
                     <div class="auth-brand-row">
-                        <div class="auth-logo-frame">
-                            <img src="/static/img/logo.svg" alt="Gilos Logo" class="auth-logo theme-logo-light">
-                            <img src="/static/img/logo-dark.svg" alt="Gilos Logo" class="auth-logo theme-logo-dark">
-                        </div>
+                        <img src="/static/img/logo.svg" alt="Gilos Logo" class="auth-logo theme-logo-light">
+                        <img src="/static/img/logo-dark.svg" alt="Gilos Logo" class="auth-logo theme-logo-dark">
                     </div>
                     <div id="auth-step-pill" class="step-pill hidden"></div>
                     <h1 id="auth-header">{{ index .T "sign_in" }}</h1>
