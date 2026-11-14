@@ -492,6 +492,150 @@
         });
     }
 
+    function getOtpInputsList(container) {
+        if (!container) return [];
+        return Array.prototype.slice.call(container.querySelectorAll('.otp-input'));
+    }
+
+    function syncOtpFilledState(inputs) {
+        inputs.forEach(function (inp) {
+            inp.classList.toggle('is-filled', Boolean(inp.value && inp.value.length > 0));
+        });
+    }
+
+    function getOtpValue(container) {
+        return getOtpInputsList(container).map(function (i) { return i.value; }).join('');
+    }
+
+    function clearOtpInputs(container, focusFirst) {
+        var inputs = getOtpInputsList(container);
+        inputs.forEach(function (i) {
+            i.value = '';
+            i.classList.remove('error', 'is-filled');
+        });
+        if (focusFirst && inputs.length) {
+            inputs[0].focus({ preventScroll: true });
+        }
+    }
+
+    function shakeOtpContainer(container, markError) {
+        if (!container) return;
+        if (markError !== false) {
+            getOtpInputsList(container).forEach(function (i) { i.classList.add('error'); });
+        }
+        container.classList.remove('is-shake');
+        void container.offsetWidth;
+        container.classList.add('is-shake');
+    }
+
+    /**
+     * Binds single/multi-digit entry, SMS autofill spread, paste, Smart Backspace,
+     * arrow/Home/End navigation, .is-filled styling, and Enter-to-complete on an .otp-container.
+     */
+    function bindOtpInputs(container, options) {
+        if (!container) return;
+        container._gilosOtpOptions = options || {};
+        var inputs = getOtpInputsList(container);
+        syncOtpFilledState(inputs);
+        if (container.dataset.gilosOtpBound === '1') return;
+        container.dataset.gilosOtpBound = '1';
+
+        function notify(triggerCompleteIfFull) {
+            var opts = container._gilosOtpOptions || {};
+            syncOtpFilledState(inputs);
+            var code = getOtpValue(container);
+            if (typeof opts.onChange === 'function') {
+                opts.onChange(code, { container: container, inputs: inputs });
+            }
+            if (triggerCompleteIfFull && opts.autoSubmit !== false && code.length === inputs.length && typeof opts.onComplete === 'function') {
+                opts.onComplete(code);
+            }
+        }
+
+        inputs.forEach(function (input, idx) {
+            input.addEventListener('focus', function () {
+                if (input.value && typeof input.select === 'function') {
+                    input.select();
+                }
+            });
+
+            input.addEventListener('input', function (e) {
+                var opts = container._gilosOtpOptions || {};
+                if (typeof opts.isLocked === 'function' && opts.isLocked()) return;
+                var clean = (e.target.value || '').replace(/\D/g, '');
+                inputs.forEach(function (inp) { inp.classList.remove('error'); });
+
+                if (clean.length > 1) {
+                    var start = clean.length >= inputs.length ? 0 : idx;
+                    var count = Math.min(clean.length, inputs.length - start);
+                    for (var i = 0; i < count; i++) {
+                        inputs[start + i].value = clean[i];
+                    }
+                    var nextIdx = Math.min(start + count, inputs.length - 1);
+                    inputs[nextIdx].focus();
+                } else {
+                    e.target.value = clean;
+                    if (clean && idx < inputs.length - 1) {
+                        inputs[idx + 1].focus();
+                    }
+                }
+                notify(true);
+            });
+
+            input.addEventListener('paste', function (e) {
+                e.preventDefault();
+                var opts = container._gilosOtpOptions || {};
+                if (typeof opts.isLocked === 'function' && opts.isLocked()) return;
+                var raw = (e.clipboardData || window.clipboardData).getData('text') || '';
+                var clean = raw.replace(/\D/g, '').slice(0, inputs.length);
+                if (!clean) return;
+                inputs.forEach(function (inp) { inp.classList.remove('error'); });
+                if (clean.length === 1) {
+                    input.value = clean;
+                    if (idx < inputs.length - 1) {
+                        inputs[idx + 1].focus();
+                    }
+                } else {
+                    for (var i = 0; i < inputs.length; i++) {
+                        inputs[i].value = clean[i] || '';
+                    }
+                    inputs[Math.min(clean.length, inputs.length - 1)].focus();
+                }
+                notify(true);
+            });
+
+            input.addEventListener('keydown', function (e) {
+                var opts = container._gilosOtpOptions || {};
+                if (typeof opts.isLocked === 'function' && opts.isLocked()) {
+                    e.preventDefault();
+                    return;
+                }
+                if (e.key === 'Backspace' && !e.target.value && idx > 0) {
+                    e.preventDefault();
+                    inputs.forEach(function (inp) { inp.classList.remove('error'); });
+                    inputs[idx - 1].value = '';
+                    inputs[idx - 1].focus();
+                    notify(false);
+                } else if (e.key === 'ArrowLeft' && idx > 0) {
+                    e.preventDefault();
+                    inputs[idx - 1].focus();
+                } else if (e.key === 'ArrowRight' && idx < inputs.length - 1) {
+                    e.preventDefault();
+                    inputs[idx + 1].focus();
+                } else if (e.key === 'Home') {
+                    e.preventDefault();
+                    if (inputs[0]) inputs[0].focus();
+                } else if (e.key === 'End') {
+                    e.preventDefault();
+                    if (inputs.length) inputs[inputs.length - 1].focus();
+                } else if (e.key === 'Enter' && getOtpValue(container).length === inputs.length) {
+                    e.preventDefault();
+                    if (typeof opts.onComplete === 'function') opts.onComplete(getOtpValue(container));
+                }
+            });
+        });
+    }
+
     window.GilosUI = {
         escapeHtml: escapeHtml,
         toast: toast,
@@ -505,7 +649,11 @@
         attachPasswordStrength: attachPasswordStrength,
         attachCapsLockWarning: attachCapsLockWarning,
         bindModalA11y: bindModalA11y,
-        bindTablistA11y: bindTablistA11y
+        bindTablistA11y: bindTablistA11y,
+        bindOtpInputs: bindOtpInputs,
+        getOtpValue: getOtpValue,
+        clearOtpInputs: clearOtpInputs,
+        shakeOtpContainer: shakeOtpContainer
     };
 })(window);
 

@@ -223,5 +223,25 @@ func TestRenderedHTMLHeadStructureAndOAuthAvatar(t *testing.T) {
 		if name == "oauth.html" && !strings.Contains(out, `data-icon="/media/user/icon/42_sample.jpg"`) {
 			t.Errorf("oauth.html did not preserve User.Icon on #oauth-user-avatar")
 		}
+		if name == "auth.html" && !strings.Contains(out, `<button type="button" class="resend-link"`) {
+			t.Errorf("auth.html expected #resend-link to be rendered as a semantic <button>")
+		}
+		if name == "docs.html" && !strings.Contains(out, `id="sidebarCloseBtn"`) {
+			t.Errorf("docs.html missing #sidebarCloseBtn close trigger")
+		}
+	}
+
+	docsWithClientsData := baseData()
+	docsWithClientsData["Clients"] = []database.Client{{ID: 1, Name: "Test App", RedirectURIs: "https://app.example.com/callback", Scopes: "openid profile"}}
+	var docsClientsBuf bytes.Buffer
+	if err := tmpls.ExecuteTemplate(&docsClientsBuf, "docs.html", docsWithClientsData); err != nil {
+		t.Fatalf("ExecuteTemplate(docs.html with clients): %v", err)
+	}
+	docsClientsOut := docsClientsBuf.String()
+	if strings.Contains(docsClientsOut, "<no value>") {
+		t.Errorf("docs.html (with clients) rendered <no value>")
+	}
+	if !strings.Contains(docsClientsOut, `id="clearRedirectUrlBtn"`) || !strings.Contains(docsClientsOut, `aria-label="Clear input"`) {
+		t.Errorf("docs.html (with clients) missing accessible #clearRedirectUrlBtn control")
 	}
 }

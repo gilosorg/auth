@@ -58,6 +58,7 @@
     --red-600: #E02424;
     --red-700: #B91C1C;
     --green-50: #ECFDF3;
+    --green-100: rgba(34, 197, 94, 0.14);
     --green-500: #22C55E;
     --green-600: #16A34A;
     --green-700: #15803D;
@@ -130,10 +131,12 @@
     --slate-500: #828998;
 
     --red-50: rgba(255, 69, 58, 0.14);
+    --red-100: rgba(255, 69, 58, 0.18);
     --red-500: #FF453A;
     --red-600: #FF6961;
     --red-700: #FF8A80;
     --green-50: rgba(48, 209, 88, 0.13);
+    --green-100: rgba(48, 209, 88, 0.18);
     --green-500: #30D158;
     --green-600: #34D399;
     --green-700: #8CE99A;
@@ -191,10 +194,12 @@
         --slate-300: #383E4B;
         --slate-500: #828998;
         --red-50: rgba(255, 69, 58, 0.14);
+        --red-100: rgba(255, 69, 58, 0.18);
         --red-500: #FF453A;
         --red-600: #FF6961;
         --red-700: #FF8A80;
         --green-50: rgba(48, 209, 88, 0.13);
+        --green-100: rgba(48, 209, 88, 0.18);
         --green-500: #30D158;
         --green-600: #34D399;
         --green-700: #8CE99A;
@@ -1058,9 +1063,12 @@ input[type="radio"]:disabled {
     position: relative;
 }
 
-.iti--allow-dropdown input[type="tel"],
+.iti--allow-dropdown input[type="tel"] {
+    padding-left: 56px !important;
+}
+
 .iti--separate-dial-code input[type="tel"] {
-    padding-left: 96px !important;
+    padding-left: 94px !important;
 }
 
 .iti__country-list {
@@ -1071,7 +1079,8 @@ input[type="radio"]:disabled {
     padding: 4px;
     box-shadow: var(--popover-shadow);
     z-index: 10000 !important;
-    max-width: calc(100vw - 40px);
+    width: min(360px, calc(100vw - 32px));
+    max-width: calc(100vw - 32px);
     overflow-x: hidden;
 }
 
@@ -1139,6 +1148,11 @@ input[type="radio"]:disabled {
     color: var(--text-muted);
     font-family: var(--font-mono);
     font-size: 0.8125rem;
+}
+
+.iti__flag {
+    border-radius: 2px;
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1);
 }
 
 .iti__arrow {
@@ -1435,6 +1449,7 @@ input[type="radio"]:disabled {
 
 .gilos-input-group.is-valid {
     border-color: var(--green-600);
+    box-shadow: 0 0 0 2px var(--green-100);
 }
 
 .gilos-input-addon {
@@ -1551,6 +1566,16 @@ input[type="radio"]:disabled {
     flex: 0 0 30px;
     height: 30px;
     margin: 3px;
+}
+
+.otp-input.is-filled:not(.error) {
+    border-color: var(--border-strong);
+    background: var(--surface-subtle);
+}
+
+.otp-input.is-filled:focus:not(.error) {
+    border-color: var(--accent);
+    background: var(--surface-elevated);
 }
 
 

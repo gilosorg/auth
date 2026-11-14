@@ -78,10 +78,13 @@
         .docs-content li { margin-bottom: 8px; }
         .doc-heading-row { display: inline-flex; align-items: center; gap: 8px; }
         code { font-family: var(--font-mono); font-size: 0.86em; background: var(--doc-inline-code-bg); color: var(--doc-inline-code-text); padding: 2px 6px; border-radius: 5px; border: none; }
+        .code-block-wrap { position: relative; margin: 12px 0 20px; }
+        .code-block-wrap > pre { margin: 0; padding-right: 78px; }
         pre { background: var(--doc-code-bg); border-radius: var(--radius-md); padding: 18px 22px; overflow-x: auto; margin: 12px 0 20px; border: 1px solid var(--doc-border); position: relative; }
         pre code { background: none; color: var(--doc-code-text); padding: 0; border: none; font-size: 0.84rem; line-height: 1.65; }
-        .copy-btn { position: absolute; top: 10px; right: 10px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.16); color: #D4D4D8; padding: 5px 11px; border-radius: 6px; font-family: inherit; font-size: 0.74rem; font-weight: 500; cursor: pointer; transition: background-color 0.16s ease, color 0.16s ease; }
+        .copy-btn { position: absolute; top: 10px; right: 10px; z-index: 2; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.16); color: #D4D4D8; padding: 5px 11px; border-radius: 6px; font-family: inherit; font-size: 0.74rem; font-weight: 500; cursor: pointer; transition: background-color 0.16s ease, border-color 0.16s ease, color 0.16s ease; }
         .copy-btn:hover { background: rgba(255,255,255,0.18); color: #FFFFFF; }
+        .copy-btn.is-copied { background: var(--green-600); border-color: var(--green-600); color: #FFFFFF; }
         .copy-btn:active { transform: translateY(1px); }
         .copy-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
         .endpoint { background: var(--doc-content-bg); border: 1px solid var(--doc-border); border-radius: var(--radius-md); padding: 18px 20px; margin: 20px 0; box-shadow: var(--card-shadow); }
@@ -116,11 +119,16 @@
         .theme-toggle-btn { display: inline-flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: var(--radius-sm); border: 1px solid var(--doc-border); background: var(--doc-card-bg); color: var(--doc-text-secondary); font-family: inherit; font-size: 0.82rem; font-weight: 500; cursor: pointer; width: 100%; justify-content: center; transition: border-color 0.15s ease, color 0.15s ease, background-color 0.15s ease; }
         .theme-toggle-btn:hover { border-color: var(--border-strong); color: var(--doc-text); background: var(--surface-hover); }
         .theme-toggle-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+        .sidebar-close-btn { display: none; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: var(--radius-sm); border: 1px solid var(--doc-border); background: var(--doc-card-bg); color: var(--doc-text-secondary); cursor: pointer; transition: background-color 0.14s ease, color 0.14s ease, border-color 0.14s ease; }
+        .sidebar-close-btn:hover { background: var(--surface-hover); color: var(--doc-text); border-color: var(--border-strong); }
+        .sidebar-close-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
         @media (max-width: 900px) {
             .docs-wrapper { flex-direction: column; }
             .docs-mobile-bar { display: flex; }
             .docs-sidebar { transform: translateX(-100%); transition: transform 0.2s ease; z-index: 100; }
             .docs-sidebar.open { transform: translateX(0); }
+            .sidebar-close-btn { display: inline-flex; }
+            .sidebar-version { display: none; }
             .docs-main { margin-left: 0; max-width: 100%; padding: 24px 18px; }
             .docs-content section[id] { scroll-margin-top: 84px; }
         }
@@ -156,6 +164,10 @@
         .docs-content .btn-secondary { background: var(--surface-elevated); color: var(--text); border-color: var(--border-default); box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04); }
         .docs-content .btn-secondary:hover:not(:disabled) { background: var(--surface-subtle); border-color: var(--border-strong); }
         .docs-content .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+        .docs-content .btn.is-test-ok,
+        .docs-content .btn.is-test-ok:disabled { opacity: 1; background: var(--green-600); border-color: var(--green-600); color: #FFFFFF; }
+        .docs-content .btn.is-test-err,
+        .docs-content .btn.is-test-err:disabled { opacity: 1; background: var(--red-600); border-color: var(--red-600); color: #FFFFFF; }
         .docs-content .btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
         .interactive-box { background: var(--doc-content-bg); border: 1px solid var(--doc-border); border-radius: var(--radius-lg); padding: 22px; margin: 20px 0; box-shadow: var(--card-shadow); }
         .interactive-box.active { border-color: var(--accent); border-style: solid; }
@@ -163,6 +175,8 @@
         .input-group label { display: block; font-weight: 500; color: var(--doc-text); margin-bottom: 6px; font-size: 0.88rem; }
         .input-group input { width: 100%; padding: 11px 14px; border: 1px solid var(--doc-border); border-radius: var(--radius-sm); background: var(--doc-card-bg); color: var(--doc-text); font-family: var(--font-mono); font-size: 0.88rem; }
         .input-group input:focus { outline: none; background: var(--surface-elevated); border-color: var(--accent); box-shadow: 0 0 0 2px var(--focus-ring); }
+        .input-group .gilos-input-control { border: none; border-radius: 0; background: transparent; padding: 11px 14px; font-family: var(--font-mono); font-size: 0.88rem; }
+        .input-group .gilos-input-control:focus { box-shadow: none; background: transparent; }
         .lang-select-compact { appearance: none; -webkit-appearance: none; margin-top: 8px; width: 100%; padding: 7px 30px 7px 10px; border-radius: var(--radius-sm); border: 1px solid var(--doc-border); background: var(--doc-card-bg) var(--select-arrow) no-repeat right 10px center; color: var(--doc-text-secondary); font-size: 0.8rem; font-family: inherit; cursor: pointer; transition: border-color 0.15s ease, box-shadow 0.15s ease; }
         .lang-select-compact:hover { border-color: var(--border-strong); color: var(--doc-text); }
         .lang-select-compact:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 2px var(--focus-ring); }
@@ -205,6 +219,9 @@
                     <span>{{ if .AppName }}{{ .AppName }}{{ else }}Gilos Auth{{ end }}</span>
                 </a>
                 <a href="https://github.com/gilosorg/auth/releases/tag/{{.AppVersion}}" target="_blank" class="sidebar-version" rel="noopener noreferrer">{{.AppVersion}}</a>
+                <button type="button" class="sidebar-close-btn" id="sidebarCloseBtn" onclick="closeMobileSidebar(true)" aria-label="{{ index .T "close" }}">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
             </div>
 
             <div class="sidebar-search-wrap">
@@ -457,7 +474,12 @@
                         <p style="margin-bottom: 16px; color: var(--doc-text-secondary);">After authorization, paste the full URL you were redirected to:</p>
                         <div class="input-group">
                             <label for="redirectUrlInput">Redirect URL</label>
-                            <input type="text" id="redirectUrlInput" placeholder="https://yourapp.com/callback?code=abc123...&state=..." oninput="parseRedirectUrl()">
+                            <div class="gilos-input-group">
+                                <input type="text" id="redirectUrlInput" class="gilos-input-control" placeholder="https://yourapp.com/callback?code=abc123...&state=..." oninput="parseRedirectUrl()">
+                                <button type="button" id="clearRedirectUrlBtn" class="gilos-input-action" onclick="clearRedirectUrl()" aria-label="{{ index .T "clear_input" }}" title="{{ index .T "clear_input" }}" hidden>
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                                </button>
+                            </div>
                         </div>
                         <div id="extractedCodeInfo" class="hidden" style="margin-top: 12px; padding: 12px; background: var(--method-get-bg); border-radius: var(--radius-sm); display: flex; align-items: center; flex-wrap: wrap; gap: 8px;">
                             <span id="extractedCodeLabel" style="color: var(--method-get); font-weight: 600;">✓ Code extracted:</span>
@@ -1077,7 +1099,8 @@ func CallbackHandler(onSuccess AuthCallback) http.HandlerFunc {
             readyToTestShort: {{ index .T "ready_to_test_short" }},
             noCodeInUrl: {{ index .T "no_code_in_url" }},
             showPassword: {{ index .T "show_password" }},
-            hidePassword: {{ index .T "hide_password" }}
+            hidePassword: {{ index .T "hide_password" }},
+            clearInput: {{ index .T "clear_input" }}
         };
 
         const DOCS_THEME_ICONS = {
@@ -1106,13 +1129,22 @@ func CallbackHandler(onSuccess AuthCallback) http.HandlerFunc {
         window.addEventListener('gilos-theme-change', updateDocsThemeUI);
         updateDocsThemeUI();
 
+        let prevDocsOverflow = '';
         function toggleMobileSidebar() {
             const sidebar = document.getElementById('docsSidebar');
             const backdrop = document.getElementById('sidebarBackdrop');
             const btn = document.getElementById('mobileMenuBtn');
-            const isOpen = sidebar && sidebar.classList.toggle('open');
-            if (backdrop) backdrop.classList.toggle('open', !!isOpen);
+            const isOpen = Boolean(sidebar && sidebar.classList.toggle('open'));
+            if (backdrop) backdrop.classList.toggle('open', isOpen);
             if (btn) btn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+            if (isOpen) {
+                prevDocsOverflow = document.body.style.overflow;
+                document.body.style.overflow = 'hidden';
+                const closeBtn = document.getElementById('sidebarCloseBtn');
+                if (closeBtn) closeBtn.focus({ preventScroll: true });
+            } else {
+                document.body.style.overflow = prevDocsOverflow;
+            }
         }
 
         function closeMobileSidebar(restoreFocus = false) {
@@ -1122,11 +1154,19 @@ func CallbackHandler(onSuccess AuthCallback) http.HandlerFunc {
             const wasOpen = sidebar && sidebar.classList.contains('open');
             if (sidebar) sidebar.classList.remove('open');
             if (backdrop) backdrop.classList.remove('open');
+            if (wasOpen) document.body.style.overflow = prevDocsOverflow;
             if (btn) {
                 btn.setAttribute('aria-expanded', 'false');
                 if (restoreFocus && wasOpen && typeof btn.focus === 'function') btn.focus();
             }
         }
+
+        window.addEventListener('resize', () => {
+            if (window.innerWidth > 900) {
+                const sidebar = document.getElementById('docsSidebar');
+                if (sidebar && sidebar.classList.contains('open')) closeMobileSidebar(false);
+            }
+        });
 
         document.querySelectorAll('.sidebar-nav a').forEach(link => {
             link.addEventListener('click', () => {
@@ -1177,6 +1217,8 @@ func CallbackHandler(onSuccess AuthCallback) http.HandlerFunc {
             refreshToken = null;
             const redirInp = document.getElementById('redirectUrlInput');
             if (redirInp) redirInp.value = '';
+            const clearRedirBtn = document.getElementById('clearRedirectUrlBtn');
+            if (clearRedirBtn) clearRedirBtn.hidden = true;
             const infoBox = document.getElementById('extractedCodeInfo');
             if (infoBox) infoBox.classList.add('hidden');
             const codeEl = document.getElementById('extractedCode');
@@ -1364,9 +1406,18 @@ func CallbackHandler(onSuccess AuthCallback) http.HandlerFunc {
             });
         }
 
+        function clearRedirectUrl() {
+            const input = document.getElementById('redirectUrlInput');
+            if (!input) return;
+            input.value = '';
+            parseRedirectUrl();
+            input.focus({ preventScroll: true });
+        }
+
         // Parse redirect URL and extract code
         function parseRedirectUrl() {
             const input = document.getElementById('redirectUrlInput');
+            const clearBtn = document.getElementById('clearRedirectUrlBtn');
             const infoBox = document.getElementById('extractedCodeInfo');
             const codeLabel = document.getElementById('extractedCodeLabel');
             const codeEl = document.getElementById('extractedCode');
@@ -1375,6 +1426,7 @@ func CallbackHandler(onSuccess AuthCallback) http.HandlerFunc {
             const statusEl = document.getElementById('tokenTestStatus');
 
             if (!input) return;
+            if (clearBtn) clearBtn.hidden = input.value.length === 0;
 
             try {
                 const url = new URL(input.value.trim());
@@ -1450,6 +1502,9 @@ func CallbackHandler(onSuccess AuthCallback) http.HandlerFunc {
                 if (infoBox) infoBox.classList.add('hidden');
                 if (stateBadge) { stateBadge.classList.add('hidden'); stateBadge.textContent = ''; }
                 if (testBtn) testBtn.disabled = true;
+                if (statusEl && !input.value.trim()) {
+                    statusEl.textContent = statusEl.dataset.defaultText || 'Extract a code from Step 1 first';
+                }
                 document.querySelectorAll('.var-auth-code').forEach(el => {
                     el.textContent = 'AUTHORIZATION_CODE';
                     el.classList.remove('highlight');
@@ -1540,6 +1595,20 @@ func CallbackHandler(onSuccess AuthCallback) http.HandlerFunc {
             try { return JSON.parse(raw); } catch (_) { return { raw }; }
         }
 
+        function setDocsEndpointTestState(btn, ok, baseLabel) {
+            if (!btn) return;
+            btn.classList.remove('is-test-ok', 'is-test-err');
+            btn.classList.add(ok ? 'is-test-ok' : 'is-test-err');
+            btn.textContent = ok
+                ? ('✓ ' + (DOCS_I18N.testSuccess || 'Success'))
+                : (DOCS_I18N.testError || 'Error - Try Again');
+            setTimeout(() => {
+                btn.disabled = false;
+                btn.textContent = baseLabel;
+                btn.classList.remove('is-test-ok', 'is-test-err');
+            }, 3000);
+        }
+
         // Test token endpoint
         async function testTokenEndpoint() {
             if (!currentClient || !extractedCode) return;
@@ -1550,6 +1619,7 @@ func CallbackHandler(onSuccess AuthCallback) http.HandlerFunc {
 
             const baseLabel = btn.dataset.baseLabel || (btn.dataset.baseLabel = btn.textContent.trim());
             btn.disabled = true;
+            btn.classList.remove('is-test-ok', 'is-test-err');
             btn.textContent = DOCS_I18N.testingEndpoint || 'Testing...';
 
             try {
@@ -1609,26 +1679,17 @@ func CallbackHandler(onSuccess AuthCallback) http.HandlerFunc {
                         if (refreshStatus) refreshStatus.textContent = DOCS_I18N.refreshReadyHint || 'Refresh token ready! Click to test.';
                     }
 
-                    btn.textContent = '✓ ' + (DOCS_I18N.testSuccess || 'Success');
-                    btn.style.background = 'var(--success-color)';
+                    setDocsEndpointTestState(btn, true, baseLabel);
                 } else {
-                    btn.textContent = DOCS_I18N.testError || 'Error - Try Again';
-                    btn.style.background = 'var(--red-600)';
+                    setDocsEndpointTestState(btn, false, baseLabel);
                 }
             } catch (e) {
                 responseBox.classList.remove('hidden');
                 setDocsResponseStatus('tokenResponseStatus', { status: 'NET', statusText: 'ERR', ok: false });
                 responseCode.textContent = 'Error: ' + e.message;
                 renderJWTInspector('');
-                btn.textContent = DOCS_I18N.testError || 'Error - Try Again';
-                btn.style.background = 'var(--red-600)';
+                setDocsEndpointTestState(btn, false, baseLabel);
             }
-
-            setTimeout(() => {
-                btn.disabled = false;
-                btn.textContent = baseLabel;
-                btn.style.background = '';
-            }, 3000);
         }
 
         // Test UserInfo endpoint
@@ -1641,6 +1702,7 @@ func CallbackHandler(onSuccess AuthCallback) http.HandlerFunc {
 
             const baseLabel = btn.dataset.baseLabel || (btn.dataset.baseLabel = btn.textContent.trim());
             btn.disabled = true;
+            btn.classList.remove('is-test-ok', 'is-test-err');
             btn.textContent = DOCS_I18N.testingEndpoint || 'Testing...';
 
             try {
@@ -1654,26 +1716,13 @@ func CallbackHandler(onSuccess AuthCallback) http.HandlerFunc {
                 setDocsResponseStatus('userInfoResponseStatus', resp);
                 responseCode.textContent = JSON.stringify(data, null, 2);
 
-                if (resp.ok) {
-                    btn.textContent = '✓ ' + (DOCS_I18N.testSuccess || 'Success');
-                    btn.style.background = 'var(--success-color)';
-                } else {
-                    btn.textContent = DOCS_I18N.testError || 'Error - Try Again';
-                    btn.style.background = 'var(--red-600)';
-                }
+                setDocsEndpointTestState(btn, resp.ok, baseLabel);
             } catch (e) {
                 responseBox.classList.remove('hidden');
                 setDocsResponseStatus('userInfoResponseStatus', { status: 'NET', statusText: 'ERR', ok: false });
                 responseCode.textContent = 'Error: ' + e.message;
-                btn.textContent = DOCS_I18N.testError || 'Error - Try Again';
-                btn.style.background = 'var(--red-600)';
+                setDocsEndpointTestState(btn, false, baseLabel);
             }
-
-            setTimeout(() => {
-                btn.disabled = false;
-                btn.textContent = baseLabel;
-                btn.style.background = '';
-            }, 3000);
         }
 
         // Test refresh token endpoint
@@ -1686,6 +1735,7 @@ func CallbackHandler(onSuccess AuthCallback) http.HandlerFunc {
 
             const baseLabel = btn.dataset.baseLabel || (btn.dataset.baseLabel = btn.textContent.trim());
             btn.disabled = true;
+            btn.classList.remove('is-test-ok', 'is-test-err');
             btn.textContent = DOCS_I18N.testingEndpoint || 'Testing...';
 
             try {
@@ -1722,25 +1772,16 @@ func CallbackHandler(onSuccess AuthCallback) http.HandlerFunc {
                         });
                     }
 
-                    btn.textContent = '✓ ' + (DOCS_I18N.testSuccess || 'Success');
-                    btn.style.background = 'var(--success-color)';
+                    setDocsEndpointTestState(btn, true, baseLabel);
                 } else {
-                    btn.textContent = DOCS_I18N.testError || 'Error - Try Again';
-                    btn.style.background = 'var(--red-600)';
+                    setDocsEndpointTestState(btn, false, baseLabel);
                 }
             } catch (e) {
                 responseBox.classList.remove('hidden');
                 setDocsResponseStatus('refreshResponseStatus', { status: 'NET', statusText: 'ERR', ok: false });
                 responseCode.textContent = 'Error: ' + e.message;
-                btn.textContent = DOCS_I18N.testError || 'Error - Try Again';
-                btn.style.background = 'var(--red-600)';
+                setDocsEndpointTestState(btn, false, baseLabel);
             }
-
-            setTimeout(() => {
-                btn.disabled = false;
-                btn.textContent = baseLabel;
-                btn.style.background = '';
-            }, 3000);
         }
 
         function copyResponseJSON(codeElId, btn) {
@@ -1843,17 +1884,26 @@ func CallbackHandler(onSuccess AuthCallback) http.HandlerFunc {
         }
 
         function copyCode(btn) {
-            const pre = btn.closest('pre');
-            const code = pre.querySelector('code').textContent;
+            const container = btn.closest('.code-block-wrap') || btn.closest('pre');
+            const codeEl = container ? container.querySelector('code') : null;
+            const code = codeEl ? codeEl.textContent : '';
+            if (!code) return;
+            if (window.GilosUI && typeof window.GilosUI.copyText === 'function') {
+                window.GilosUI.copyText(code, {
+                    triggerEl: btn,
+                    copiedHtml: docsEscapeHtml(DOCS_I18N.copied || 'Copied'),
+                    silent: true,
+                    errorMsg: DOCS_I18N.copyFailed || 'Failed to copy'
+                });
+                return;
+            }
             navigator.clipboard.writeText(code).then(() => {
-                const original = btn.textContent;
+                const original = btn.dataset.baseLabel || (btn.dataset.baseLabel = btn.textContent);
                 btn.textContent = DOCS_I18N.copied || 'Copied';
-                btn.style.background = 'var(--success-color)';
-                btn.style.color = 'white';
+                btn.classList.add('is-copied');
                 setTimeout(() => {
                     btn.textContent = original;
-                    btn.style.background = '';
-                    btn.style.color = '';
+                    btn.classList.remove('is-copied');
                 }, 2000);
             }).catch(() => {
                 showDocsToast(DOCS_I18N.copyFailed || 'Failed to copy', true);
@@ -1862,13 +1912,24 @@ func CallbackHandler(onSuccess AuthCallback) http.HandlerFunc {
 
         document.querySelectorAll('.docs-content section pre').forEach(pre => {
             if (pre.closest('.response-preview') || pre.closest('.jwt-inspector')) return;
-            if (!pre.querySelector('.copy-btn') && pre.querySelector('code')) {
-                const btn = document.createElement('button');
+            if (!pre.querySelector('code')) return;
+            let wrap = pre.parentElement;
+            if (!wrap || !wrap.classList.contains('code-block-wrap')) {
+                wrap = document.createElement('div');
+                wrap.className = 'code-block-wrap';
+                pre.parentNode.insertBefore(wrap, pre);
+                wrap.appendChild(pre);
+            }
+            let btn = pre.querySelector('.copy-btn') || wrap.querySelector('.copy-btn');
+            if (!btn) {
+                btn = document.createElement('button');
                 btn.type = 'button';
                 btn.className = 'copy-btn';
                 btn.textContent = DOCS_I18N.copy || 'Copy';
                 btn.onclick = () => copyCode(btn);
-                pre.appendChild(btn);
+            }
+            if (btn.parentElement !== wrap) {
+                wrap.appendChild(btn);
             }
         });
 

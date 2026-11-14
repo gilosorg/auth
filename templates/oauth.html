@@ -706,23 +706,17 @@
         }
 
         function getOtpCode() {
-            const inputs = document.querySelectorAll('#totp-form .otp-input');
-            return Array.from(inputs).map(i => i.value).join('');
+            const container = document.getElementById('otp-inputs');
+            return window.GilosUI ? window.GilosUI.getOtpValue(container) : '';
         }
 
         function submitApprove() {
             if (isConsentSubmitting) return;
             if (userMFAEnabled) {
                 const otpContainer = document.getElementById('otp-inputs');
-                const otpInputs = document.querySelectorAll('#totp-form .otp-input');
                 const code = getOtpCode();
                 if (code.length !== 6) {
-                    otpInputs.forEach(i => i.classList.add('error'));
-                    if (otpContainer) {
-                        otpContainer.classList.remove('is-shake');
-                        void otpContainer.offsetWidth;
-                        otpContainer.classList.add('is-shake');
-                    }
+                    if (window.GilosUI) window.GilosUI.shakeOtpContainer(otpContainer, true);
                     showMessage(tr('enter_full_code', 'Please enter the full 6-digit verification code.'), true);
                     return;
                 }
@@ -741,74 +735,23 @@
         }
 
         function setupOTPInputs() {
-            const otpInputs = document.querySelectorAll('#totp-form .otp-input');
+            const container = document.getElementById('otp-inputs');
             const verifyBtn = document.getElementById('totp-verify-btn');
+            if (!container || !window.GilosUI) return;
 
-            function updateVerifyBtn() {
-                if (verifyBtn) verifyBtn.disabled = getOtpCode().length !== 6;
+            function updateVerifyBtn(code) {
+                if (verifyBtn) verifyBtn.disabled = code.length !== 6;
             }
 
-            otpInputs.forEach((input, idx) => {
-                input.addEventListener('input', (e) => {
-                    if (isConsentSubmitting) return;
-                    const clean = e.target.value.replace(/\D/g, '');
-                    if (clean.length > 1) {
-                        const count = Math.min(clean.length, otpInputs.length - idx);
-                        for (let i = 0; i < count; i++) {
-                            otpInputs[idx + i].value = clean[i];
-                        }
-                        otpInputs[Math.min(idx + count, otpInputs.length - 1)].focus();
-                    } else {
-                        e.target.value = clean;
-                        if (clean && idx < otpInputs.length - 1) {
-                            otpInputs[idx + 1].focus();
-                        }
-                    }
-                    otpInputs.forEach(i => i.classList.remove('error'));
+            window.GilosUI.bindOtpInputs(container, {
+                isLocked: () => isConsentSubmitting,
+                onChange: (code) => {
                     showMessage('', false);
-                    updateVerifyBtn();
-                    if (getOtpCode().length === 6) {
-                        submitApprove();
-                    }
-                });
-
-                input.addEventListener('keydown', (e) => {
-                    if (isConsentSubmitting) {
-                        e.preventDefault();
-                        return;
-                    }
-                    if (e.key === 'Backspace' && !e.target.value && idx > 0) {
-                        otpInputs[idx - 1].focus();
-                        otpInputs[idx - 1].value = '';
-                        updateVerifyBtn();
-                    } else if (e.key === 'ArrowLeft' && idx > 0) {
-                        e.preventDefault();
-                        otpInputs[idx - 1].focus();
-                    } else if (e.key === 'ArrowRight' && idx < otpInputs.length - 1) {
-                        e.preventDefault();
-                        otpInputs[idx + 1].focus();
-                    } else if (e.key === 'Enter' && getOtpCode().length === 6) {
-                        e.preventDefault();
-                        submitApprove();
-                    }
-                });
-
-                input.addEventListener('paste', (e) => {
-                    e.preventDefault();
-                    if (isConsentSubmitting) return;
-                    const pasteData = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '').slice(0, 6);
-                    if (!pasteData) return;
-                    for (let i = 0; i < otpInputs.length; i++) {
-                        otpInputs[i].classList.remove('error');
-                        otpInputs[i].value = pasteData[i] || '';
-                    }
-                    showMessage('', false);
-                    otpInputs[Math.min(pasteData.length, 5)].focus();
-                    updateVerifyBtn();
-                    if (pasteData.length === 6) {
-                        submitApprove();
-                    }
-                });
+                    updateVerifyBtn(code);
+                },
+                onComplete: () => {
+                    if (!isConsentSubmitting) submitApprove();
+                }
             });
         }
 
