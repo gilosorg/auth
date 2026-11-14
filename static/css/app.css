@@ -66,12 +66,12 @@
     --amber-600: #D97706;
     --amber-700: #B45309;
 
-    --radius-xs: 0px;
-    --radius-sm: 0px;
-    --radius-md: 0px;
-    --radius-lg: 0px;
-    --radius-xl: 0px;
-    --radius-pill: 0px;
+    --radius-xs: 4px;
+    --radius-sm: 8px;
+    --radius-md: 10px;
+    --radius-lg: 14px;
+    --radius-xl: 16px;
+    --radius-pill: 9999px;
 
     --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
 }
@@ -265,19 +265,19 @@ body {
 
 ::-webkit-scrollbar-thumb {
     background: var(--slate-300);
-    border-radius: 0px;
+    border-radius: var(--radius-pill);
 }
 
 ::-webkit-scrollbar-thumb:hover {
     background: var(--slate-500);
 }
 
-/* Brand UI geometry: zero corner radius on interactive & form primitives */
+/* Standard rounded geometry on interactive & form primitives */
 button,
 input,
 textarea,
 select {
-    border-radius: 0px;
+    border-radius: var(--radius-sm);
 }
 
 /* Keep browser credential autofill aligned with active Light/Dark input surfaces */
@@ -299,7 +299,7 @@ input[type="checkbox"] {
     width: 16px;
     height: 16px;
     border: 1px solid var(--border-strong);
-    border-radius: 0px;
+    border-radius: var(--radius-xs);
     background: var(--surface-elevated);
     cursor: pointer;
     position: relative;
@@ -439,14 +439,14 @@ input[type="radio"]:disabled {
 .btn-sm {
     font-size: 0.8125rem;
     padding: 7px 12px;
-    border-radius: 0px;
+    border-radius: 6px;
 }
 
 .btn-lg {
     font-size: 0.95rem;
     font-weight: 600;
     padding: 12px 20px;
-    border-radius: 0px;
+    border-radius: var(--radius-sm);
 }
 
 .btn-primary {
@@ -527,8 +527,8 @@ input[type="radio"]:disabled {
     display: inline-flex;
     align-items: center;
     gap: 5px;
-    padding: 3px 8px;
-    border-radius: 0px;
+    padding: 3px 10px;
+    border-radius: var(--radius-pill);
     border: 1px solid transparent;
     font-size: 0.72rem;
     font-weight: 600;
@@ -603,7 +603,7 @@ input[type="radio"]:disabled {
     inset: 0;
     background-color: var(--surface-hover);
     border: 1px solid var(--border-strong);
-    border-radius: 0px;
+    border-radius: var(--radius-pill);
     transition: background-color 0.2s var(--ease-out), border-color 0.2s var(--ease-out), opacity 0.2s ease;
     pointer-events: none;
 }
@@ -617,7 +617,8 @@ input[type="radio"]:disabled {
     top: 2px;
     background-color: #FFFFFF;
     border: 1px solid rgba(15, 23, 42, 0.12);
-    border-radius: 0px;
+    border-radius: 50%;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.12);
     transition: transform 0.2s var(--ease-out);
 }
 
@@ -647,13 +648,13 @@ input[type="radio"]:disabled {
 /* Identity chip for active username context */
 .identity-chip {
     display: inline-flex;
-    align-items: stretch;
-    gap: 0;
-    height: 32px;
-    padding: 0;
+    align-items: center;
+    gap: 8px;
+    height: 34px;
+    padding: 3px 4px;
     background: var(--surface-subtle);
     border: 1px solid var(--border-default);
-    border-radius: 0px;
+    border-radius: var(--radius-pill);
     font-size: 0.82rem;
     font-weight: 500;
     color: var(--text);
@@ -662,11 +663,10 @@ input[type="radio"]:disabled {
 }
 
 .identity-chip-avatar {
-    width: 30px;
-    height: 30px;
-    border-radius: 0px;
-    border-right: 1px solid var(--border-subtle);
-    background: color-mix(in srgb, var(--accent) 12%, var(--surface-elevated));
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: color-mix(in srgb, var(--accent) 14%, var(--surface-elevated));
     color: var(--accent);
     display: inline-flex;
     align-items: center;
@@ -686,7 +686,7 @@ input[type="radio"]:disabled {
 .identity-chip-handle {
     display: inline-flex;
     align-items: center;
-    padding: 0 10px;
+    padding: 0 2px;
     font-family: var(--font-mono);
     font-size: 0.78rem;
     font-weight: 600;
@@ -698,16 +698,16 @@ input[type="radio"]:disabled {
 .identity-chip-action {
     display: inline-flex;
     align-items: center;
+    height: 26px;
     background: var(--surface-elevated);
-    border: none;
-    border-left: 1px solid var(--border-default);
+    border: 1px solid var(--border-subtle);
     color: var(--accent);
     font-size: 0.76rem;
     font-weight: 600;
     cursor: pointer;
     padding: 0 10px;
-    border-radius: 0px;
-    transition: background-color 0.15s ease, color 0.15s ease;
+    border-radius: var(--radius-pill);
+    transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
     flex-shrink: 0;
 }
 
@@ -758,7 +758,7 @@ input[type="radio"]:disabled {
 }
 
 .pw-strength-segment {
-    border-radius: 0px;
+    border-radius: var(--radius-pill);
     background: var(--slate-200);
     transition: background-color 0.2s ease;
 }
@@ -884,8 +884,8 @@ input[type="radio"]:disabled {
     border: none;
     color: var(--text-muted);
     cursor: pointer;
-    padding: 2px;
-    border-radius: 0px;
+    padding: 3px;
+    border-radius: 6px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -923,7 +923,7 @@ input[type="radio"]:disabled {
     background: linear-gradient(90deg, var(--surface-subtle) 25%, var(--surface-hover) 50%, var(--surface-subtle) 75%);
     background-size: 200% 100%;
     animation: gilosSkeleton 1.4s ease-in-out infinite;
-    border-radius: 0px;
+    border-radius: var(--radius-md);
 }
 
 @keyframes gilosSkeleton {
@@ -960,7 +960,7 @@ input[type="radio"]:disabled {
     background: var(--surface-elevated) !important;
     color: var(--text) !important;
     border: 1px solid var(--border-default) !important;
-    border-radius: 0px !important;
+    border-radius: var(--radius-sm) !important;
     font-size: 0.92rem !important;
     box-shadow: none !important;
 }
@@ -975,7 +975,7 @@ input[type="radio"]:disabled {
 .swal2-validation-message {
     background: var(--red-50) !important;
     color: var(--red-700) !important;
-    border-radius: 0px !important;
+    border-radius: var(--radius-sm) !important;
     font-size: 0.84rem !important;
 }
 
@@ -986,16 +986,18 @@ input[type="radio"]:disabled {
 
 .swal2-confirm,
 .swal2-cancel,
-.swal2-deny,
-.swal2-close,
-.swal2-icon {
-    border-radius: 0px !important;
+.swal2-deny {
+    border-radius: var(--radius-sm) !important;
+}
+
+.swal2-close {
+    border-radius: 50% !important;
 }
 
 .swal2-confirm {
     background: var(--primary) !important;
     color: var(--primary-contrast) !important;
-    border-radius: 0px !important;
+    border-radius: var(--radius-sm) !important;
     padding: 10px 20px !important;
     font-weight: 500 !important;
     font-size: 0.9rem !important;
@@ -1065,7 +1067,8 @@ input[type="radio"]:disabled {
     background: var(--surface-elevated);
     color: var(--text);
     border: 1px solid var(--border-default);
-    border-radius: 0px !important;
+    border-radius: var(--radius-md) !important;
+    padding: 4px;
     box-shadow: var(--popover-shadow);
     z-index: 10000 !important;
     max-width: calc(100vw - 40px);
@@ -1074,11 +1077,11 @@ input[type="radio"]:disabled {
 
 .iti__search-input {
     width: calc(100% - 16px) !important;
-    margin: 8px !important;
+    margin: 6px 8px !important;
     padding: 8px 12px !important;
     background: var(--surface-subtle);
     border: 1px solid var(--border-default);
-    border-radius: 0px !important;
+    border-radius: var(--radius-sm) !important;
     color: var(--text);
     font-size: 0.875rem;
 }
@@ -1090,7 +1093,8 @@ input[type="radio"]:disabled {
 }
 
 .iti__country {
-    padding: 8px 12px;
+    padding: 8px 10px;
+    border-radius: 6px;
     color: var(--text);
     font-size: 0.875rem;
 }
@@ -1101,18 +1105,18 @@ input[type="radio"]:disabled {
 
 .iti__selected-flag,
 .iti--separate-dial-code .iti__selected-flag {
-    background: var(--surface-subtle) !important;
-    border-right: 1px solid var(--border-subtle);
-    padding: 0 9px 0 11px;
-    border-radius: 0px !important;
+    background: transparent !important;
+    border-right: none;
+    padding: 0 8px 0 12px;
+    border-radius: var(--radius-sm) 0 0 var(--radius-sm) !important;
     transition: background-color 0.14s ease, border-color 0.14s ease;
 }
 
 .iti__selected-flag:hover,
 .iti--separate-dial-code .iti__selected-flag:hover,
 .iti--allow-dropdown .iti__flag-container:hover .iti__selected-flag {
-    background: var(--surface-hover) !important;
-    border-radius: 0px !important;
+    background: var(--surface-subtle) !important;
+    border-radius: var(--radius-sm) 0 0 var(--radius-sm) !important;
 }
 
 .iti__selected-flag:focus-visible {
@@ -1121,7 +1125,7 @@ input[type="radio"]:disabled {
 }
 
 .iti__flag-container {
-    border-radius: 0px !important;
+    border-radius: var(--radius-sm) 0 0 var(--radius-sm) !important;
 }
 
 .iti__selected-dial-code {
@@ -1208,8 +1212,8 @@ input[type="radio"]:disabled {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    padding: 4px 10px;
-    border-radius: 0px;
+    padding: 4px 11px;
+    border-radius: var(--radius-pill);
     font-family: var(--font-mono);
     font-size: 0.74rem;
     font-weight: 600;
@@ -1228,8 +1232,8 @@ input[type="radio"]:disabled {
 
 .checkup-progress-track {
     width: 100%;
-    height: 3px;
-    border-radius: 0px;
+    height: 6px;
+    border-radius: var(--radius-pill);
     background: var(--surface-subtle);
     border: none;
     overflow: hidden;
@@ -1238,7 +1242,7 @@ input[type="radio"]:disabled {
 
 .checkup-progress-fill {
     height: 100%;
-    border-radius: 0px;
+    border-radius: var(--radius-pill);
     background: var(--accent);
     transition: width 0.35s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.25s ease;
 }
@@ -1285,7 +1289,7 @@ input[type="radio"]:disabled {
 .checkup-dot {
     width: 24px;
     height: 24px;
-    border-radius: 0px;
+    border-radius: 50%;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -1317,7 +1321,7 @@ input[type="radio"]:disabled {
     gap: 5px;
     padding: 2px 7px;
     margin: -2px -7px;
-    border-radius: 0px;
+    border-radius: 6px;
     border: 1px solid transparent;
     background: transparent;
     color: inherit;
@@ -1350,7 +1354,7 @@ input[type="radio"]:disabled {
 
     .swal2-popup {
         padding: 18px !important;
-        border-radius: 0px !important;
+        border-radius: var(--radius-lg) !important;
     }
 }
 
@@ -1358,7 +1362,7 @@ input[type="radio"]:disabled {
 .empty-state-icon {
     width: 48px;
     height: 48px;
-    border-radius: 0px;
+    border-radius: 50%;
     margin: 0 auto 12px;
     display: flex;
     align-items: center;
@@ -1399,15 +1403,16 @@ input[type="radio"]:disabled {
     }
 }
 
-/* Unified flex input groups & flush adornments */
+/* Unified flex input groups & clean inline adornments */
 .gilos-input-group {
     display: flex;
-    align-items: stretch;
+    align-items: center;
     width: 100%;
     min-height: 42px;
     border: 1px solid var(--border-default);
-    border-radius: 0px;
+    border-radius: var(--radius-sm);
     background: var(--surface-elevated);
+    overflow: hidden;
     transition: border-color 0.14s ease, background-color 0.14s ease, box-shadow 0.14s ease;
 }
 
@@ -1433,24 +1438,23 @@ input[type="radio"]:disabled {
 }
 
 .gilos-input-addon {
-    flex: 0 0 40px;
+    flex: 0 0 auto;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    background: var(--surface-subtle);
-    border-right: 1px solid var(--border-subtle);
-    color: var(--text-muted);
+    padding: 0 2px 0 13px;
+    background: transparent;
+    border-right: none;
+    color: var(--text-tertiary);
     font-family: var(--font-mono);
     font-size: 0.9rem;
-    font-weight: 600;
+    font-weight: 500;
     line-height: 1;
     user-select: none;
 }
 
 .gilos-input-addon--icon {
-    flex: 0 0 38px;
-    background: transparent;
-    border-right-color: var(--border-subtle);
+    padding: 0 4px 0 12px;
     color: var(--text-tertiary);
 }
 
@@ -1467,7 +1471,11 @@ input[type="radio"]:disabled {
     font-size: 0.92rem;
     line-height: 1.4;
     color: var(--text);
-    border-radius: 0px;
+    border-radius: 0;
+}
+
+.gilos-input-group:has(.gilos-input-addon) .gilos-input-control {
+    padding-left: 4px;
 }
 
 .gilos-input-control::placeholder {
@@ -1476,15 +1484,15 @@ input[type="radio"]:disabled {
 }
 
 .gilos-input-action {
-    flex: 0 0 42px;
+    flex: 0 0 34px;
+    height: 34px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    margin: 0;
+    margin: 4px;
     padding: 0;
     border: none;
-    border-left: 1px solid var(--border-subtle);
-    border-radius: 0px;
+    border-radius: 6px;
     background: transparent;
     color: var(--text-muted);
     cursor: pointer;
@@ -1492,7 +1500,7 @@ input[type="radio"]:disabled {
 }
 
 .gilos-input-action:hover:not(:disabled) {
-    background: var(--surface-hover);
+    background: var(--surface-subtle);
     color: var(--text);
 }
 
@@ -1508,7 +1516,6 @@ input[type="radio"]:disabled {
 .gilos-input-action--primary {
     background: var(--primary);
     color: var(--primary-contrast);
-    border-left-color: var(--primary);
 }
 
 .gilos-input-action--primary:hover:not(:disabled) {
@@ -1521,7 +1528,6 @@ input[type="radio"]:disabled {
     cursor: not-allowed;
     background: var(--surface-subtle);
     color: var(--text-tertiary);
-    border-left-color: var(--border-subtle);
 }
 
 .gilos-input-group--compact {
@@ -1533,12 +1539,18 @@ input[type="radio"]:disabled {
     font-size: 0.875rem;
 }
 
+.gilos-input-group--compact:has(.gilos-input-addon) .gilos-input-control {
+    padding-left: 4px;
+}
+
 .gilos-input-group--compact .gilos-input-addon {
-    flex: 0 0 38px;
+    padding: 0 2px 0 11px;
 }
 
 .gilos-input-group--compact .gilos-input-action {
-    flex: 0 0 38px;
+    flex: 0 0 30px;
+    height: 30px;
+    margin: 3px;
 }
 
 

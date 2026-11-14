@@ -51,9 +51,9 @@
         .sidebar-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--doc-text); }
         .sidebar-logo img { width: 26px; height: 26px; }
         .sidebar-logo span { font-weight: 700; font-size: 1.02rem; letter-spacing: -0.015em; }
-        .sidebar-version { display: inline-block; background: var(--surface-subtle); border: none; color: var(--text-secondary); font-family: var(--font-mono); font-size: 0.68rem; font-weight: 600; padding: 2px 7px; border-radius: 0px; letter-spacing: 0.03em; }
+        .sidebar-version { display: inline-block; background: var(--surface-subtle); border: none; color: var(--text-secondary); font-family: var(--font-mono); font-size: 0.68rem; font-weight: 600; padding: 2px 8px; border-radius: var(--radius-pill); letter-spacing: 0.03em; }
         .sidebar-search-wrap { padding: 0 16px 12px; }
-        .sidebar-search-input { width: 100%; height: 34px; padding: 0 10px; border-radius: 0px; border: 1px solid var(--doc-border); background: var(--doc-card-bg); color: var(--doc-text); font-family: inherit; font-size: 0.82rem; transition: border-color 0.15s ease, box-shadow 0.15s ease; }
+        .sidebar-search-input { width: 100%; height: 34px; padding: 0 11px; border-radius: var(--radius-sm); border: 1px solid var(--doc-border); background: var(--doc-card-bg); color: var(--doc-text); font-family: inherit; font-size: 0.82rem; transition: border-color 0.15s ease, box-shadow 0.15s ease; }
         .sidebar-search-input::placeholder { color: var(--doc-text-muted); }
         .sidebar-search-input:focus { outline: none; background: var(--surface-elevated); border-color: var(--accent); box-shadow: 0 0 0 2px var(--focus-ring); }
         .sidebar-no-matches { padding: 10px 20px; font-size: 0.82rem; color: var(--doc-text-muted); }
@@ -61,10 +61,10 @@
         .sidebar-section-title { font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--doc-text-muted); padding: 8px 10px 4px; }
         .sidebar-nav { list-style: none; margin: 0; padding: 0; }
         .sidebar-nav li { margin: 2px 0; }
-        .sidebar-nav a { display: block; padding: 7px 12px; color: var(--doc-text-secondary); text-decoration: none; font-size: 0.875rem; font-weight: 500; border-radius: 0px; border-left: 2px solid transparent; transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease; }
+        .sidebar-nav a { display: block; padding: 7px 12px; color: var(--doc-text-secondary); text-decoration: none; font-size: 0.875rem; font-weight: 500; border-radius: var(--radius-sm); transition: background-color 0.15s ease, color 0.15s ease; }
         .sidebar-nav a:hover { background: var(--doc-card-bg); color: var(--doc-text); }
         .sidebar-nav a:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
-        .sidebar-nav a.active { background: var(--accent-subtle); border-left-color: var(--accent); color: var(--accent); font-weight: 600; }
+        .sidebar-nav a.active { background: var(--accent-subtle); color: var(--accent); font-weight: 600; }
         .docs-main { flex: 1; min-width: 0; margin-left: 268px; padding: 44px 52px; max-width: calc(100% - 268px); }
         .docs-content { max-width: 900px; min-width: 0; }
         .docs-content section[id] { scroll-margin-top: 72px; }
@@ -77,16 +77,16 @@
         .docs-content ul, .docs-content ol { color: var(--doc-text-secondary); margin: 0 0 16px 24px; }
         .docs-content li { margin-bottom: 8px; }
         .doc-heading-row { display: inline-flex; align-items: center; gap: 8px; }
-        code { font-family: var(--font-mono); font-size: 0.86em; background: var(--doc-inline-code-bg); color: var(--doc-inline-code-text); padding: 2px 6px; border-radius: 0px; border: none; }
+        code { font-family: var(--font-mono); font-size: 0.86em; background: var(--doc-inline-code-bg); color: var(--doc-inline-code-text); padding: 2px 6px; border-radius: 5px; border: none; }
         pre { background: var(--doc-code-bg); border-radius: var(--radius-md); padding: 18px 22px; overflow-x: auto; margin: 12px 0 20px; border: 1px solid var(--doc-border); position: relative; }
         pre code { background: none; color: var(--doc-code-text); padding: 0; border: none; font-size: 0.84rem; line-height: 1.65; }
-        .copy-btn { position: absolute; top: 10px; right: 10px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.16); color: #D4D4D8; padding: 5px 11px; border-radius: 0px; font-family: inherit; font-size: 0.74rem; font-weight: 500; cursor: pointer; transition: background-color 0.16s ease, color 0.16s ease; }
+        .copy-btn { position: absolute; top: 10px; right: 10px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.16); color: #D4D4D8; padding: 5px 11px; border-radius: 6px; font-family: inherit; font-size: 0.74rem; font-weight: 500; cursor: pointer; transition: background-color 0.16s ease, color 0.16s ease; }
         .copy-btn:hover { background: rgba(255,255,255,0.18); color: #FFFFFF; }
         .copy-btn:active { transform: translateY(1px); }
         .copy-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
         .endpoint { background: var(--doc-content-bg); border: 1px solid var(--doc-border); border-radius: var(--radius-md); padding: 18px 20px; margin: 20px 0; box-shadow: var(--card-shadow); }
         .endpoint-header { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; flex-wrap: wrap; }
-        .method-badge { display: inline-flex; align-items: center; justify-content: center; padding: 4px 10px; border-radius: 0px; font-size: 0.74rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; font-family: var(--font-mono); }
+        .method-badge { display: inline-flex; align-items: center; justify-content: center; padding: 4px 10px; border-radius: 6px; font-size: 0.74rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; font-family: var(--font-mono); }
         .method-get { background: var(--method-get-bg); color: var(--method-get); }
         .method-post { background: var(--method-post-bg); color: var(--method-post); }
         .endpoint-path { font-family: var(--font-mono); font-size: 0.9rem; font-weight: 500; color: var(--doc-text); }
@@ -101,12 +101,12 @@
         .callout-warning { background: var(--warning-bg); border-left-color: var(--warning-color); }
         .callout-title { font-weight: 600; margin-bottom: 4px; color: var(--doc-text); }
         .callout p { margin: 0; font-size: 0.9rem; }
-        .step { display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; background: var(--accent-subtle); color: var(--accent); border: 1px solid color-mix(in srgb, var(--accent) 22%, transparent); font-family: var(--font-mono); font-weight: 700; font-size: 0.8rem; border-radius: 0px; margin-right: 12px; }
+        .step { display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; background: var(--accent-subtle); color: var(--accent); border: 1px solid color-mix(in srgb, var(--accent) 22%, transparent); font-family: var(--font-mono); font-weight: 700; font-size: 0.8rem; border-radius: 50%; margin-right: 12px; }
         .step-title { display: flex; align-items: center; font-size: 1.1rem; font-weight: 600; margin: 28px 0 12px; color: var(--doc-text); }
         .label { display: inline-block; font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--doc-text-muted); margin-bottom: 6px; }
         .label-success { color: var(--method-get); }
         .docs-mobile-bar { display: none; position: sticky; top: 0; z-index: 90; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px; background: color-mix(in srgb, var(--doc-sidebar-bg) 88%, transparent); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-bottom: 1px solid var(--doc-border); }
-        .mobile-menu-btn { display: inline-flex; align-items: center; justify-content: center; width: 38px; height: 38px; border-radius: 0px; border: 1px solid var(--doc-border); background: var(--doc-card-bg); color: var(--doc-text); cursor: pointer; transition: background-color 0.14s ease, border-color 0.14s ease, transform 0.08s ease; }
+        .mobile-menu-btn { display: inline-flex; align-items: center; justify-content: center; width: 38px; height: 38px; border-radius: var(--radius-sm); border: 1px solid var(--doc-border); background: var(--doc-card-bg); color: var(--doc-text); cursor: pointer; transition: background-color 0.14s ease, border-color 0.14s ease, transform 0.08s ease; }
         .mobile-menu-btn:hover { background: var(--surface-hover); border-color: var(--border-strong); }
         .mobile-menu-btn:active { transform: translateY(1px); }
         .mobile-menu-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
@@ -168,7 +168,7 @@
         .lang-select-compact:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 2px var(--focus-ring); }
         .response-preview { background: var(--doc-code-bg); border-radius: var(--radius-md); padding: 18px; margin-top: 16px; border: 1px solid var(--doc-border); }
         .response-preview pre { margin: 0; background: none; border: none; padding: 0; }
-        .http-status-pill { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 0px; font-family: var(--font-mono); font-size: 0.72rem; font-weight: 700; letter-spacing: 0.02em; }
+        .http-status-pill { display: inline-flex; align-items: center; padding: 2px 9px; border-radius: var(--radius-pill); font-family: var(--font-mono); font-size: 0.72rem; font-weight: 700; letter-spacing: 0.02em; }
         .http-status-ok { background: var(--method-get-bg); color: var(--method-get); }
         .http-status-err { background: var(--red-50); color: var(--red-600); }
         .jwt-inspector { margin-top: 12px; padding: 14px 16px; border-radius: var(--radius-md); border: 1px solid var(--doc-border); background: var(--doc-card-bg); }
@@ -459,7 +459,7 @@
                             <label for="redirectUrlInput">Redirect URL</label>
                             <input type="text" id="redirectUrlInput" placeholder="https://yourapp.com/callback?code=abc123...&state=..." oninput="parseRedirectUrl()">
                         </div>
-                        <div id="extractedCodeInfo" class="hidden" style="margin-top: 12px; padding: 12px; background: var(--method-get-bg); border-radius: 0px; display: flex; align-items: center; flex-wrap: wrap; gap: 8px;">
+                        <div id="extractedCodeInfo" class="hidden" style="margin-top: 12px; padding: 12px; background: var(--method-get-bg); border-radius: var(--radius-sm); display: flex; align-items: center; flex-wrap: wrap; gap: 8px;">
                             <span id="extractedCodeLabel" style="color: var(--method-get); font-weight: 600;">✓ Code extracted:</span>
                             <code id="extractedCode"></code>
                             <span id="extractedStateBadge" class="http-status-pill hidden"></span>
