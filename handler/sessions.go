@@ -57,11 +57,12 @@ func SessionsHandler(w http.ResponseWriter, r *http.Request) {
 	var sessions []database.Session
 	var total int64
 
-	// Count total sessions for metadata
-	database.DB.Model(&database.Session{}).Where("user_id = ?", userID).Count(&total)
+	// Count total active sessions for metadata
+	now := time.Now()
+	database.DB.Model(&database.Session{}).Where("user_id = ? AND expires_at > ?", userID, now).Count(&total)
 
 	if err := database.DB.Preload("Client").
-		Where("user_id = ?", userID).
+		Where("user_id = ? AND expires_at > ?", userID, now).
 		Order("id DESC").
 		Limit(limit).
 		Offset(offset).
@@ -77,6 +78,9 @@ func SessionsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	totalPages := int(math.Ceil(float64(total) / float64(limit)))
+	if totalPages < 1 {
+		totalPages = 1
+	}
 
 	response := PaginatedResponse{
 		Data: responseSessions,

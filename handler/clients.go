@@ -124,6 +124,9 @@ func ClientsHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		database.LogAuditEventWithUserID(database.AuditClientCreated, userID, r,
+			fmt.Sprintf("created %s client %q (%d)", client.Type, client.Name, client.ID))
+
 		// Build response based on client type
 		response := map[string]interface{}{
 			"success":     true,

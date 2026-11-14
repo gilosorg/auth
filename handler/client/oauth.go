@@ -319,7 +319,7 @@ func ApproveOAuthInquiryHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if !totp.Validate(req.TOTPCode, plainSecret) {
-			blocked, _, totpLeft := database.SM.RecordTOTPFailure(user.ID, sess)
+			blocked, _, failCount := database.SM.RecordTOTPFailure(user.ID, sess)
 			if attemptCount >= 3 || blocked {
 				_ = database.SM.ApplyBlock(fmt.Sprintf("user:%d:security", user.ID), sess, 24*time.Hour, "security")
 				_ = database.SM.DeleteData(sess, "oauth_totp_attempts")
@@ -329,8 +329,12 @@ func ApproveOAuthInquiryHandler(w http.ResponseWriter, r *http.Request) {
 			}
 			_ = database.SM.SetData(sess, "oauth_totp_attempts", attemptCount)
 			remaining := 3 - attemptCount
-			if int(totpLeft) < remaining {
-				remaining = int(totpLeft)
+			totpLeft := 5 - int(failCount)
+			if totpLeft < remaining {
+				remaining = totpLeft
+			}
+			if remaining < 0 {
+				remaining = 0
 			}
 			utils.WriteJSONResponse(w, http.StatusBadRequest, map[string]interface{}{
 				"error":              "invalid_totp",
@@ -369,9 +373,10 @@ func ApproveOAuthInquiryHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Store auth code and OAuth data in RawData
 	// C2: Store hashed auth code (matching browser flow security)
+	normalizedScope := strings.Join(requestedScopes, " ")
 	oauthSess.RawData["auth_code"] = utils.HashToken(code)
 	oauthSess.RawData["client_id"] = req.ClientID
-	oauthSess.RawData["scopes"] = req.Scope
+	oauthSess.RawData["scopes"] = normalizedScope
 	oauthSess.RawData["redirect_uri"] = req.RedirectURI
 	if req.Nonce != "" {
 		oauthSess.RawData["nonce"] = req.Nonce
@@ -390,7 +395,7 @@ func ApproveOAuthInquiryHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	database.LogAuditEventWithUserID(database.AuditOAuthAuthorized, userID, r,
-		fmt.Sprintf("authorized client %s for scopes: %s (browserless)", req.ClientID, req.Scope))
+		fmt.Sprintf("authorized client %s for scopes: %s (browserless)", req.ClientID, normalizedScope))
 
 	response := map[string]string{
 		"code":         code,

@@ -329,6 +329,8 @@ func UsernameUpdateHandler(w http.ResponseWriter, r *http.Request) {
 		OldUsername: oldUsername,
 		NewUsername: cleaned,
 	})
+	database.LogAuditEventWithUserID(database.AuditUsernameChanged, userID, r,
+		fmt.Sprintf("username changed from @%s to @%s", oldUsername, cleaned))
 
 	utils.WriteJSONResponse(w, http.StatusOK, map[string]bool{"success": true})
 }
@@ -458,15 +460,8 @@ func ProfileContactUpdateHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Check if user is blocked by ID
-	if blocked, until := database.SM.IsBlocked(fmt.Sprintf("user:%d:security", user.ID)); blocked {
-		utils.WriteJSONResponse(w, http.StatusTooManyRequests, map[string]interface{}{
-			"error":         fmt.Sprintf("your account is temporarily blocked for security until %s", until.Format(time.RFC3339)),
-			"is_blocked":    true,
-			"blocked_until": until.Format(time.RFC3339),
-		})
-		return
-	}
+	prevMFAEmail := user.MFAEmailEnabled
+	prevMFAPhone := user.MFAPhoneEnabled
 
 	email := strings.ToLower(strings.TrimSpace(r.Form.Get("email")))
 	phoneStr := strings.TrimSpace(r.Form.Get("phone"))
@@ -594,6 +589,16 @@ func ProfileContactUpdateHandler(w http.ResponseWriter, r *http.Request) {
 	if err := database.DB.Save(&user).Error; err != nil {
 		utils.WriteJSONResponse(w, http.StatusInternalServerError, map[string]string{"error": "failed to update contact info"})
 		return
+	}
+
+	if oldEmail != "" && user.Email == "" {
+		database.LogAuditEventWithUserID(database.AuditContactChanged, userID, r, "email unlinked")
+	}
+	if oldPhone != 0 && user.Phone == 0 {
+		database.LogAuditEventWithUserID(database.AuditContactChanged, userID, r, "phone unlinked")
+	}
+	if prevMFAEmail != user.MFAEmailEnabled || prevMFAPhone != user.MFAPhoneEnabled {
+		database.LogAuditEventWithUserID(database.AuditMFAChanged, userID, r, "contact MFA preferences updated")
 	}
 
 	response := map[string]interface{}{"success": true}
@@ -1042,6 +1047,13 @@ func ProfileContactVerifyHandler(w http.ResponseWriter, r *http.Request) {
 	if err := database.DB.Save(&user).Error; err != nil {
 		utils.WriteJSONResponse(w, http.StatusInternalServerError, map[string]string{"error": "failed to update contact info"})
 		return
+	}
+
+	if res, ok := results["email"].(map[string]interface{}); ok && res["success"] == true {
+		database.LogAuditEventWithUserID(database.AuditContactChanged, userID, r, "verified and updated primary email")
+	}
+	if res, ok := results["phone"].(map[string]interface{}); ok && res["success"] == true {
+		database.LogAuditEventWithUserID(database.AuditContactChanged, userID, r, "verified and updated primary phone")
 	}
 
 	utils.WriteJSONResponse(w, http.StatusOK, results)

@@ -41,7 +41,7 @@ func OIDCDiscoveryHandler(w http.ResponseWriter, r *http.Request) {
 		"scopes_supported":                                middleware.Scopes,
 		"claims_supported": []string{
 			"sub", "iss", "aud", "exp", "iat", "nonce", "at_hash",
-			"preferred_username", "given_name", "family_name",
+			"name", "preferred_username", "given_name", "family_name",
 			"middle_name", "nickname", "picture",
 			"email", "email_verified",
 			"phone_number", "phone_number_verified",
@@ -82,14 +82,21 @@ func buildOIDCUserClaims(user *database.User, scopes []string) map[string]interf
 	// Profile claims (OIDC Core §5.4)
 	if hasScope("profile") {
 		claims["preferred_username"] = user.Username
+		var nameParts []string
 		if user.FirstName != "" {
 			claims["given_name"] = user.FirstName
-		}
-		if user.LastName != "" {
-			claims["family_name"] = user.LastName
+			nameParts = append(nameParts, user.FirstName)
 		}
 		if user.MiddleName != "" {
 			claims["middle_name"] = user.MiddleName
+			nameParts = append(nameParts, user.MiddleName)
+		}
+		if user.LastName != "" {
+			claims["family_name"] = user.LastName
+			nameParts = append(nameParts, user.LastName)
+		}
+		if len(nameParts) > 0 {
+			claims["name"] = strings.Join(nameParts, " ")
 		}
 		if user.Nickname != "" {
 			claims["nickname"] = user.Nickname

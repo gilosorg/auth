@@ -326,7 +326,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 				database.SM.ClearTOTPFailures(user.ID)
 				mfaValid = true
 			} else if _, hasSessionOTP := database.SM.GetData(sess, "otp"); !hasSessionOTP {
-				blocked, until, attemptsLeft := database.SM.RecordTOTPFailure(user.ID, sess)
+				blocked, until, failCount := database.SM.RecordTOTPFailure(user.ID, sess)
 				if blocked {
 					database.LogAuditEventWithUserID(database.AuditBruteForceBlocked, user.ID, r, "24h block after max TOTP attempts")
 					utils.WriteJSONResponse(w, http.StatusTooManyRequests, map[string]interface{}{
@@ -337,7 +337,10 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 					return
 				}
 				if !(user.MFAEmailEnabled && user.Email != "") && !(user.MFAPhoneEnabled && user.Phone != 0) {
-					left := int(attemptsLeft)
+					left := 5 - int(failCount)
+					if left < 0 {
+						left = 0
+					}
 					utils.WriteJSONResponse(w, http.StatusBadRequest, map[string]string{
 						"error": fmt.Sprintf("invalid verification code, %d attempt%s left", left, utils.Pluralize(left)),
 					})
@@ -1327,7 +1330,7 @@ func VerifyOTPHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		valid = decryptAndValidateUserTOTP(&user, input.OTP)
 		if !valid {
-			blocked, until, totpLeft := database.SM.RecordTOTPFailure(user.ID, sess)
+			blocked, until, failCount := database.SM.RecordTOTPFailure(user.ID, sess)
 			if blocked {
 				database.LogAuditEventWithUserID(database.AuditBruteForceBlocked, user.ID, r, "24h block after max TOTP attempts")
 				utils.WriteJSONResponse(w, http.StatusTooManyRequests, map[string]interface{}{
@@ -1338,8 +1341,9 @@ func VerifyOTPHandler(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 			attemptsLeft := 3 - attemptCount
-			if int(totpLeft) < attemptsLeft {
-				attemptsLeft = int(totpLeft)
+			totpLeft := 5 - int(failCount)
+			if totpLeft < attemptsLeft {
+				attemptsLeft = totpLeft
 			}
 			if attemptsLeft < 0 {
 				attemptsLeft = 0

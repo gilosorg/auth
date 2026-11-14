@@ -73,12 +73,12 @@ func OAuthAuthorizeHandler(tmpls *template.Template) http.HandlerFunc {
 		}
 
 		// Step 7: Validate scopes
-		requestedScopes := strings.Fields(strings.ReplaceAll(scope, ",", " "))
+		requestedScopes := normalizeScopeList(scope)
 		if len(requestedScopes) == 0 {
 			http.Error(w, "Invalid scope", http.StatusBadRequest)
 			return
 		}
-		clientScopes := strings.Split(client.Scopes, ",")
+		clientScopes := normalizeScopeList(client.Scopes)
 		for _, s := range requestedScopes {
 			if !middleware.IsValidScope(s) || !slices.Contains(clientScopes, s) {
 				http.Error(w, "Invalid scope", http.StatusBadRequest)
@@ -187,7 +187,7 @@ func OAuthAuthorizeHandler(tmpls *template.Template) http.HandlerFunc {
 
 					// Verify TOTP (supporting encrypted secret at rest)
 					if !decryptAndValidateUserTOTP(&user, totpCode) {
-						blocked, _, totpLeft := database.SM.RecordTOTPFailure(user.ID, sess)
+						blocked, _, failCount := database.SM.RecordTOTPFailure(user.ID, sess)
 						if attemptCount >= 3 || blocked {
 							_ = database.SM.ApplyBlock(fmt.Sprintf("user:%d:security", user.ID), sess, 24*time.Hour, "security")
 							_ = database.SM.DeleteData(sess, "oauth_totp_attempts")
@@ -197,8 +197,12 @@ func OAuthAuthorizeHandler(tmpls *template.Template) http.HandlerFunc {
 						}
 						_ = database.SM.SetData(sess, "oauth_totp_attempts", attemptCount)
 						remaining := 3 - attemptCount
-						if int(totpLeft) < remaining {
-							remaining = int(totpLeft)
+						totpLeft := 5 - int(failCount)
+						if totpLeft < remaining {
+							remaining = totpLeft
+						}
+						if remaining < 0 {
+							remaining = 0
 						}
 						errMsg := translations["oauth_invalid_totp"]
 						if errMsg != "" {
@@ -233,10 +237,11 @@ func OAuthAuthorizeHandler(tmpls *template.Template) http.HandlerFunc {
 				}
 				database.SM.UpdateMetadata(&oauthSess, r)
 
-				// Store auth code and OAuth data in RawData
+				// Store auth code and normalized OAuth scopes in RawData
+				normalizedScope := strings.Join(requestedScopes, " ")
 				oauthSess.RawData["auth_code"] = utils.HashToken(code) // C2: Store hashed auth code
 				oauthSess.RawData["client_id"] = clientID
-				oauthSess.RawData["scopes"] = scope
+				oauthSess.RawData["scopes"] = normalizedScope
 				oauthSess.RawData["redirect_uri"] = redirectURI
 				// Store OIDC nonce for echo-back in id_token
 				if nonce != "" {
@@ -255,7 +260,7 @@ func OAuthAuthorizeHandler(tmpls *template.Template) http.HandlerFunc {
 				}
 
 				database.LogAuditEventWithUserID(database.AuditOAuthAuthorized, userID, r,
-					fmt.Sprintf("authorized client %s for scopes: %s", clientID, scope))
+					fmt.Sprintf("authorized client %s for scopes: %s", clientID, normalizedScope))
 
 				// Redirect with authorization code and state
 				redirectURL, err := url.Parse(redirectURI)
@@ -273,6 +278,9 @@ func OAuthAuthorizeHandler(tmpls *template.Template) http.HandlerFunc {
 				return
 			} else {
 				// Handle consent denial
+				database.LogAuditEventWithUserID(database.AuditOAuthDenied, userID, r,
+					fmt.Sprintf("denied client %s for scopes: %s", clientID, strings.Join(requestedScopes, " ")))
+
 				redirectURL, err := url.Parse(redirectURI)
 				if err != nil {
 					http.Error(w, "Invalid redirect URI", http.StatusBadRequest)
@@ -402,6 +410,11 @@ func OAuthTokenHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Cache-Control", "no-store")
 	w.Header().Set("Pragma", "no-cache")
 
+	if r.Method != http.MethodPost {
+		utils.WriteJSONResponse(w, http.StatusMethodNotAllowed, map[string]string{"error": "invalid_request", "error_description": "Method not allowed"})
+		return
+	}
+
 	if err := r.ParseForm(); err != nil {
 		utils.WriteJSONResponse(w, http.StatusBadRequest, map[string]string{"error": "invalid_request", "error_description": "Failed to parse form"})
 		return
@@ -475,7 +488,7 @@ func OAuthTokenHandler(w http.ResponseWriter, r *http.Request) {
 		rawScopes, _ := database.SM.GetData(&session, "scopes")
 		scopeStr := ""
 		if s, ok := rawScopes.(string); ok {
-			scopeStr = s
+			scopeStr = normalizeScopeString(s)
 		}
 
 		// Get user for OIDC claims and verify account is not suspended
@@ -568,7 +581,7 @@ func OAuthTokenHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// Add OIDC id_token if openid scope is requested
-		if strings.Contains(" "+scopeStr+" ", " openid ") {
+		if hasOAuthScope(scopeStr, "openid") {
 			idToken, err := GenerateIDToken(&user, clientID, scopeStr, accessTokenExpiresAt.Unix(), nonceFromAuthCode, accessToken)
 			if err == nil {
 				response["id_token"] = idToken
@@ -620,7 +633,7 @@ func OAuthTokenHandler(w http.ResponseWriter, r *http.Request) {
 
 		var scopeStr string
 		if session.Scopes != nil {
-			scopeStr = *session.Scopes
+			scopeStr = normalizeScopeString(*session.Scopes)
 		}
 
 		// Generate new JWT access token (iat will reflect current time)
@@ -671,7 +684,7 @@ func OAuthTokenHandler(w http.ResponseWriter, r *http.Request) {
 
 		// Add OIDC id_token if openid scope is requested
 		// Note: nonce is NOT echoed on refresh — it's only for the initial auth code exchange (OIDC Core §12.2)
-		if strings.Contains(" "+scopeStr+" ", " openid ") {
+		if hasOAuthScope(scopeStr, "openid") {
 			idToken, err := GenerateIDToken(&user, clientID, scopeStr, accessTokenExpiresAt.Unix(), "", accessToken)
 			if err == nil {
 				response["id_token"] = idToken
@@ -781,6 +794,11 @@ func OAuthIntrospectHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Cache-Control", "no-store")
 	w.Header().Set("Pragma", "no-cache")
 
+	if r.Method != http.MethodPost {
+		utils.WriteJSONResponse(w, http.StatusMethodNotAllowed, map[string]string{"error": "invalid_request", "error_description": "Method not allowed"})
+		return
+	}
+
 	client, err := authenticateClient(r)
 	if err != nil {
 		if _, _, hasBasic := r.BasicAuth(); hasBasic {
@@ -848,7 +866,7 @@ func OAuthIntrospectHandler(w http.ResponseWriter, r *http.Request) {
 		response["sub"] = fmt.Sprint(*session.UserID)
 	}
 	if scopes != "" {
-		response["scope"] = strings.ReplaceAll(scopes, ",", " ")
+		response["scope"] = normalizeScopeString(scopes)
 	}
 
 	utils.WriteJSONResponse(w, http.StatusOK, response)
@@ -859,6 +877,11 @@ func OAuthRevokeHandler(w http.ResponseWriter, r *http.Request) {
 	// Revocation responses MUST NOT be cached
 	w.Header().Set("Cache-Control", "no-store")
 	w.Header().Set("Pragma", "no-cache")
+
+	if r.Method != http.MethodPost {
+		utils.WriteJSONResponse(w, http.StatusMethodNotAllowed, map[string]string{"error": "invalid_request", "error_description": "Method not allowed"})
+		return
+	}
 
 	client, err := authenticateClient(r)
 	if err != nil {
@@ -897,4 +920,29 @@ func OAuthRevokeHandler(w http.ResponseWriter, r *http.Request) {
 
 	// RFC 7009 §2.2: Always return 200 OK
 	w.WriteHeader(http.StatusOK)
+}
+
+func normalizeScopeList(raw string) []string {
+	parts := strings.Fields(strings.ReplaceAll(raw, ",", " "))
+	seen := make(map[string]struct{}, len(parts))
+	out := make([]string, 0, len(parts))
+	for _, p := range parts {
+		if p == "" {
+			continue
+		}
+		if _, ok := seen[p]; ok {
+			continue
+		}
+		seen[p] = struct{}{}
+		out = append(out, p)
+	}
+	return out
+}
+
+func normalizeScopeString(raw string) string {
+	return strings.Join(normalizeScopeList(raw), " ")
+}
+
+func hasOAuthScope(scopeStr, target string) bool {
+	return slices.Contains(normalizeScopeList(scopeStr), target)
 }
