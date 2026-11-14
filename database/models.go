@@ -157,7 +157,8 @@ type Session struct {
 	Scopes               *string    `gorm:"size:255"`
 	Type                 string     `gorm:"size:15;not null;index:idx_type_expires"` // "native" or "client"
 	RawData              JSONData   `gorm:"type:text;not null;default:'{}'" json:"-"` // JSON key-value pairs — never expose in API
-	CookieToken          *string    `gorm:"size:64;uniqueIndex" json:"-"`    // Nullable cookie token for web sessions
+	CookieToken          *string    `gorm:"size:64;uniqueIndex" json:"-"`    // SHA-256 hex digest of cookie token for web sessions
+	RawCookieToken       string     `gorm:"-" json:"-"`                      // Transient plaintext cookie token for Set-Cookie headers
 	AccessToken          *string    `gorm:"size:64;index" json:"-"`          // SHA-256 hex (always 64 chars)
 	RefreshToken         *string    `gorm:"size:64;index" json:"-"`          // SHA-256 hex (always 64 chars)
 	PreviousRefreshToken *string    `gorm:"size:64;index" json:"-"`          // Previous rotated refresh token hash for reuse detection
@@ -168,6 +169,14 @@ type Session struct {
 	AccessTokenExpiresAt *time.Time `gorm:""`                                // Access token expiration time
 	CreatedAt            time.Time  `gorm:"autoCreateTime"`
 	UpdatedAt            time.Time  `gorm:"autoUpdateTime"`
+}
+
+// PlainCookieToken returns the transient plaintext cookie token for Set-Cookie headers.
+func (s *Session) PlainCookieToken() string {
+	if s == nil {
+		return ""
+	}
+	return s.RawCookieToken
 }
 
 // ClientSummary exposes non-sensitive client metadata on session DTOs.

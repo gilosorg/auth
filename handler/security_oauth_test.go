@@ -180,7 +180,7 @@ func createNativeSessionCookie(t *testing.T, userID uint64) (*http.Cookie, strin
 	if err != nil {
 		t.Fatalf("EnsureCSRFToken: %v", err)
 	}
-	return &http.Cookie{Name: "session_token", Value: *sess.CookieToken}, csrfToken, sess
+	return &http.Cookie{Name: "session_token", Value: sess.PlainCookieToken()}, csrfToken, sess
 }
 
 func pkcePair(verifier string) (string, string) {

@@ -50,9 +50,12 @@ func MigrateDatabase() error {
 		for _, stmt := range []string{
 			"CREATE UNIQUE INDEX IF NOT EXISTS idx_users_email_unique ON users(email) WHERE email != ''",
 			"CREATE UNIQUE INDEX IF NOT EXISTS idx_users_phone_unique ON users(phone) WHERE phone != 0",
+			"CREATE INDEX IF NOT EXISTS idx_sessions_expires_at ON sessions(expires_at)",
+			"CREATE INDEX IF NOT EXISTS idx_sessions_user_type ON sessions(user_id, type)",
+			"CREATE UNIQUE INDEX IF NOT EXISTS idx_account_deletion_pending_user ON account_deletion_requests(user_id) WHERE status = 'pending'",
 		} {
 			if _, idxErr := sqlDB.Exec(stmt); idxErr != nil {
-				return fmt.Errorf("failed to ensure partial unique index (%s): %w", stmt, idxErr)
+				return fmt.Errorf("failed to ensure index (%s): %w", stmt, idxErr)
 			}
 		}
 	}

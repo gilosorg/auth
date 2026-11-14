@@ -23,21 +23,13 @@ import (
 
 // updateSessionCookie updates the session cookie's expiration to match the session's ExpiresAt.
 func updateSessionCookie(w http.ResponseWriter, session *database.Session) {
-	if session.Type == "native" && session.CookieToken != nil {
-		database.SetSessionCookieHelper(w, *session.CookieToken, session.ExpiresAt)
+	if tok := session.PlainCookieToken(); session.Type == "native" && tok != "" {
+		database.SetSessionCookieHelper(w, tok, session.ExpiresAt)
 	}
 }
 
 func parseSessionTime(raw interface{}) time.Time {
-	switch v := raw.(type) {
-	case string:
-		t, _ := time.Parse(time.RFC3339, v)
-		return t
-	case time.Time:
-		return v
-	default:
-		return time.Time{}
-	}
+	return utils.ParseSessionTime(raw)
 }
 
 func authenticateUserPassword(user *database.User, cleanedUsername, password string, r *http.Request) (int, map[string]interface{}, bool) {
@@ -150,6 +142,9 @@ func getAuthStateResponse(sess *database.Session, user *database.User, successMe
 	}
 	if resends, exists := database.SM.GetData(sess, "resends"); exists {
 		response["resends"] = resends
+	}
+	if verified, exists := database.SM.GetData(sess, "password_verified"); exists && verified == true {
+		response["password_verified"] = true
 	}
 
 	if otpSentAt, exists := database.SM.GetData(sess, "otp_sent_at"); exists {
@@ -336,16 +331,14 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 					})
 					return
 				}
-				if !(user.MFAEmailEnabled && user.Email != "") && !(user.MFAPhoneEnabled && user.Phone != 0) {
-					left := 5 - int(failCount)
-					if left < 0 {
-						left = 0
-					}
-					utils.WriteJSONResponse(w, http.StatusBadRequest, map[string]string{
-						"error": fmt.Sprintf("invalid verification code, %d attempt%s left", left, utils.Pluralize(left)),
-					})
-					return
+				left := 5 - int(failCount)
+				if left < 0 {
+					left = 0
 				}
+				utils.WriteJSONResponse(w, http.StatusBadRequest, map[string]string{
+					"error": fmt.Sprintf("invalid verification code, %d attempt%s left", left, utils.Pluralize(left)),
+				})
+				return
 			}
 		}
 
@@ -385,11 +378,18 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 					return
 				}
 				if attemptCount >= 3 {
-					if err := database.SM.ClearAllData(sess); err != nil {
-						utils.WriteJSONResponse(w, http.StatusInternalServerError, map[string]string{"error": "failed to clear session data"})
-						return
+					identifier := cleanedUsername
+					if contactVal, cOk := database.SM.GetData(sess, "contact"); cOk && fmt.Sprint(contactVal) != "" {
+						identifier = fmt.Sprint(contactVal)
 					}
-					utils.WriteJSONResponse(w, http.StatusBadRequest, map[string]string{"error": "maximum OTP attempts reached"})
+					applyOTPFailureBlock(identifier, cleanedUsername, &user, sess)
+					database.LogAuditEventWithUserID(database.AuditBruteForceBlocked, user.ID, r, "24h block after max login OTP attempts")
+					_ = database.SM.ClearAllData(sess)
+					utils.WriteJSONResponse(w, http.StatusTooManyRequests, map[string]interface{}{
+						"error":         "maximum OTP attempts reached, blocked for 24 hours",
+						"is_blocked":    true,
+						"blocked_until": time.Now().Add(24 * time.Hour).Format(time.RFC3339),
+					})
 					return
 				}
 				attemptsLeft := 3 - attemptCount
@@ -691,8 +691,8 @@ func ResetPasswordHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	updateSessionCookie(w, newSess)
 
-	// Revoke all other web sessions for this user on password reset
-	_ = database.DB.Where("user_id = ? AND type = ? AND id != ?", user.ID, "native", newSess.ID).Delete(&database.Session{})
+	// Revoke all other sessions for this user on password reset
+	_ = database.DB.Where("user_id = ? AND id != ?", user.ID, newSess.ID).Delete(&database.Session{})
 
 	// Clear all session data after successful password reset
 	if err := database.SM.ClearAllData(newSess); err != nil {
@@ -916,14 +916,23 @@ func ContactVerifyHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Rate limit check
-	if otpSentAt, exists := database.SM.GetData(sess, "otp_sent_at"); exists {
-		var sentTime time.Time
-		if tStr, ok := otpSentAt.(string); ok {
-			sentTime, _ = time.Parse(time.RFC3339, tStr)
-		} else if t, ok := otpSentAt.(time.Time); ok {
-			sentTime = t
+	// Rate limit check and resend tracking
+	existingResends := 0
+	if resends, rExists := database.SM.GetData(sess, "resends"); rExists {
+		if count, ok := resends.(float64); ok {
+			existingResends = int(count)
 		}
+	}
+	existingAttempts := 0
+	if attempts, aExists := database.SM.GetData(sess, "attempts"); aExists {
+		if count, ok := attempts.(float64); ok {
+			existingAttempts = int(count)
+		}
+	}
+
+	_, alreadySent := database.SM.GetData(sess, "otp_sent_at")
+	if alreadySent {
+		sentTime := parseSessionTime(func() interface{} { v, _ := database.SM.GetData(sess, "otp_sent_at"); return v }())
 		if !sentTime.IsZero() && time.Since(sentTime) < 1*time.Minute {
 			timeLeft := 60 - int(time.Since(sentTime).Seconds())
 			utils.WriteJSONResponse(w, http.StatusTooManyRequests, map[string]interface{}{
@@ -933,16 +942,34 @@ func ContactVerifyHandler(w http.ResponseWriter, r *http.Request) {
 			})
 			return
 		}
+		existingResends++
+	}
+	if existingResends > 3 {
+		applyOTPFailureBlock(cleanedContact, cleanedUsername, &user, sess)
+		utils.WriteJSONResponse(w, http.StatusTooManyRequests, map[string]interface{}{
+			"error":         "maximum resend attempts reached, blocked for 24 hours",
+			"is_blocked":    true,
+			"blocked_until": time.Now().Add(24 * time.Hour).Format(time.RFC3339),
+		})
+		return
 	}
 
-	otp := utils.GenerateOTP()
+	otp, err := utils.GenerateOTP()
+	if err != nil {
+		utils.WriteJSONResponse(w, http.StatusInternalServerError, map[string]string{"error": "failed to generate OTP"})
+		return
+	}
 	sessionData := map[string]interface{}{
 		"otp":          utils.HashToken(otp),
 		"otp_sent_at":  time.Now().Format(time.RFC3339),
-		"attempts":     0,
-		"resends":      0,
+		"resends":      existingResends,
 		"contact_type": contactType,
 		"contact":      cleanedContact,
+	}
+	if !alreadySent {
+		sessionData["attempts"] = 0
+	} else {
+		sessionData["attempts"] = existingAttempts
 	}
 	if input.Step == "register-contact" {
 		if strings.TrimSpace(input.FirstName) != "" {
@@ -1167,7 +1194,8 @@ func SendOTPHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	if contactType != "totp" && (alreadySent || fmt.Sprint(currentStep) == "otp") {
+	isResend := alreadySent || fmt.Sprint(currentStep) == "otp"
+	if contactType != "totp" && isResend {
 		resendCount++
 	}
 	if resendCount > 3 && contactType != "totp" {
@@ -1182,13 +1210,20 @@ func SendOTPHandler(w http.ResponseWriter, r *http.Request) {
 
 	var otp string
 	sessionData := map[string]interface{}{
-		"attempts":     0,
 		"resends":      resendCount,
 		"contact_type": contactType,
 		"contact":      cleanedContact,
 	}
+	if !isResend {
+		sessionData["attempts"] = 0
+	}
 	if contactType != "totp" {
-		otp = utils.GenerateOTP()
+		var err error
+		otp, err = utils.GenerateOTP()
+		if err != nil {
+			utils.WriteJSONResponse(w, http.StatusInternalServerError, map[string]string{"error": "failed to generate OTP"})
+			return
+		}
 		sessionData["otp"] = utils.HashToken(otp)
 		sessionData["otp_sent_at"] = time.Now().Format(time.RFC3339)
 	}
@@ -1297,30 +1332,6 @@ func VerifyOTPHandler(w http.ResponseWriter, r *http.Request) {
 			attemptCount = int(count)
 		}
 	}
-	attemptCount++
-	if attemptCount > 3 {
-		identifier := ""
-		if contact, exists := database.SM.GetData(sess, "contact"); exists {
-			identifier = fmt.Sprint(contact)
-		} else {
-			identifier = cleanedUsername
-		}
-
-		applyOTPFailureBlock(identifier, cleanedUsername, &user, sess)
-		if user.ID != 0 {
-			database.LogAuditEventWithUserID(database.AuditBruteForceBlocked, user.ID, r, "24h block after max OTP attempts")
-		}
-		utils.WriteJSONResponse(w, http.StatusTooManyRequests, map[string]interface{}{
-			"error":         "maximum OTP attempts reached, blocked for 24 hours",
-			"is_blocked":    true,
-			"blocked_until": time.Now().Add(24 * time.Hour).Format(time.RFC3339),
-		})
-		return
-	}
-	if err := database.SM.SetData(sess, "attempts", attemptCount); err != nil {
-		utils.WriteJSONResponse(w, http.StatusInternalServerError, map[string]string{"error": "failed to store session data"})
-		return
-	}
 
 	valid := false
 	if fmt.Sprint(contactType) == "totp" {
@@ -1340,11 +1351,7 @@ func VerifyOTPHandler(w http.ResponseWriter, r *http.Request) {
 				})
 				return
 			}
-			attemptsLeft := 3 - attemptCount
-			totpLeft := 5 - int(failCount)
-			if totpLeft < attemptsLeft {
-				attemptsLeft = totpLeft
-			}
+			attemptsLeft := 5 - int(failCount)
 			if attemptsLeft < 0 {
 				attemptsLeft = 0
 			}
@@ -1364,8 +1371,46 @@ func VerifyOTPHandler(w http.ResponseWriter, r *http.Request) {
 			utils.WriteJSONResponse(w, http.StatusBadRequest, map[string]string{"error": "OTP has expired, please request a new code"})
 			return
 		}
+
+		blockOnMaxAttempts := func() {
+			identifier := ""
+			if contact, cExists := database.SM.GetData(sess, "contact"); cExists {
+				identifier = fmt.Sprint(contact)
+			} else {
+				identifier = cleanedUsername
+			}
+			applyOTPFailureBlock(identifier, cleanedUsername, &user, sess)
+			if user.ID != 0 {
+				database.LogAuditEventWithUserID(database.AuditBruteForceBlocked, user.ID, r, "24h block after max OTP attempts")
+			}
+			utils.WriteJSONResponse(w, http.StatusTooManyRequests, map[string]interface{}{
+				"error":         "maximum OTP attempts reached, blocked for 24 hours",
+				"is_blocked":    true,
+				"blocked_until": time.Now().Add(24 * time.Hour).Format(time.RFC3339),
+			})
+		}
+
+		if attemptCount >= 3 {
+			blockOnMaxAttempts()
+			return
+		}
+
 		// Compare hashed OTP (stored) with hash of submitted OTP
 		valid = utils.ConstantTimeOTPCompare(fmt.Sprint(storedOTPHash), utils.HashToken(input.OTP))
+		if !valid {
+			attemptCount++
+			if err := database.SM.SetData(sess, "attempts", attemptCount); err != nil {
+				utils.WriteJSONResponse(w, http.StatusInternalServerError, map[string]string{"error": "failed to store session data"})
+				return
+			}
+			if attemptCount >= 3 {
+				blockOnMaxAttempts()
+				return
+			}
+			attemptsLeft := 3 - attemptCount
+			utils.WriteJSONResponse(w, http.StatusBadRequest, map[string]string{"error": fmt.Sprintf("invalid OTP, %d attempt%s left", attemptsLeft, utils.Pluralize(attemptsLeft))})
+			return
+		}
 	}
 
 	if !valid {
@@ -1453,15 +1498,18 @@ func AuthStateHandler(w http.ResponseWriter, r *http.Request) {
 
 	if r.Method == http.MethodGet {
 		var user database.User
+		var userPtr *database.User
 		username, exists := database.SM.GetData(sess, "username")
 		currentStep, stepExists := database.SM.GetData(sess, "step")
 		if !stepExists {
 			currentStep = "gilos-id"
 		}
 		if exists {
-			database.DB.Where("username = ?", username).First(&user)
+			if err := database.DB.Where("username = ?", username).First(&user).Error; err == nil {
+				userPtr = &user
+			}
 		}
-		response := getAuthStateResponse(sess, &user, "", fmt.Sprint(currentStep))
+		response := getAuthStateResponse(sess, userPtr, "", fmt.Sprint(currentStep))
 		utils.WriteJSONResponse(w, http.StatusOK, response)
 		return
 	}
@@ -1704,16 +1752,15 @@ func LogoutHandler(w http.ResponseWriter, r *http.Request) {
 		database.DB.Where("refresh_token = ? OR access_token = ?", hashedToken, hashedToken).Delete(&database.Session{})
 	}
 
-	// 4. Delete matching native cookie session (cookie_token is stored as generated hex token)
+	// 4. Delete matching native cookie session (cookie_token is stored as a SHA-256 hash)
 	// Skip cookie session logout if CSRF validation was bypassed for an unauthenticated token logout.
 	if !middleware.CSRFBypassedForTokenLogout(r) {
 		if cookie, err := r.Cookie("session_token"); err == nil && cookie.Value != "" {
-			var webSess database.Session
-			if database.DB.Where("cookie_token = ?", cookie.Value).First(&webSess).Error == nil {
+			if webSess, sErr := database.SM.Get(cookie.Value, "native"); sErr == nil && webSess != nil {
 				if webSess.UserID != nil {
 					database.LogAuditEventWithUserID(database.AuditLogout, *webSess.UserID, r, "web session logout")
 				}
-				database.DB.Delete(&webSess)
+				_ = database.SM.Destroy(webSess)
 			}
 		}
 

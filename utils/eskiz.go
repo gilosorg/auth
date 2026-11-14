@@ -14,11 +14,21 @@ import (
 )
 
 var (
-	eskizToken string
-	loggedIn   bool
-	mutex      sync.RWMutex
-	loginMu    sync.Mutex
+	eskizToken      string
+	loggedIn        bool
+	mutex           sync.RWMutex
+	loginMu         sync.Mutex
+	eskizHTTPClient = &http.Client{Timeout: 10 * time.Second}
 )
+
+type eskizStatusError struct {
+	statusCode int
+	body       string
+}
+
+func (e *eskizStatusError) Error() string {
+	return fmt.Sprintf("SMS sending failed with status %d: %s", e.statusCode, e.body)
+}
 
 // SMSPayload represents the payload for sending an SMS.
 type SMSPayload struct {
@@ -54,15 +64,14 @@ func login() error {
 	}
 	data, _ := json.Marshal(payload)
 
-	client := &http.Client{Timeout: 10 * time.Second}
-	resp, err := client.Post("https://notify.eskiz.uz/api/auth/login", "application/json", bytes.NewBuffer(data))
+	resp, err := eskizHTTPClient.Post("https://notify.eskiz.uz/api/auth/login", "application/json", bytes.NewBuffer(data))
 	if err != nil {
 		return fmt.Errorf("failed to login: %v", err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		body, _ := io.ReadAll(resp.Body)
+		body, _ := io.ReadAll(io.LimitReader(resp.Body, 4096))
 		return fmt.Errorf("login failed with status %d: %s", resp.StatusCode, string(body))
 	}
 
@@ -120,16 +129,15 @@ func sendEskizSMS(phone, message string) error {
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
 	req.Header.Set("Content-Type", "application/json")
 
-	client := &http.Client{Timeout: 10 * time.Second}
-	resp, err := client.Do(req)
+	resp, err := eskizHTTPClient.Do(req)
 	if err != nil {
 		return fmt.Errorf("failed to send SMS: %v", err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		body, _ := io.ReadAll(resp.Body)
-		return fmt.Errorf("SMS sending failed with status %d: %s", resp.StatusCode, string(body))
+		body, _ := io.ReadAll(io.LimitReader(resp.Body, 4096))
+		return &eskizStatusError{statusCode: resp.StatusCode, body: string(body)}
 	}
 
 	return nil
@@ -151,8 +159,17 @@ func SendEskizSMSWithRetry(phone, message string, retries int) error {
 			if attempt == retries {
 				return fmt.Errorf("attempt %d: failed to send SMS: %v", attempt, err)
 			}
-			// Retry by logging in again
-			invalidateEskizSession()
+			// Re-authenticate only on expired/unauthorized bearer token (HTTP 401)
+			var statusErr *eskizStatusError
+			if errors.As(err, &statusErr) {
+				if statusErr.statusCode == http.StatusUnauthorized {
+					invalidateEskizSession()
+					continue
+				}
+				if statusErr.statusCode >= 400 && statusErr.statusCode < 500 {
+					return err
+				}
+			}
 			continue
 		}
 

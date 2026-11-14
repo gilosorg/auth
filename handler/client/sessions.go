@@ -1,6 +1,7 @@
 package client
 
 import (
+	"encoding/json"
 	"fmt"
 	"gilosauth/database"
 	"gilosauth/middleware"
@@ -8,6 +9,7 @@ import (
 	"math"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -107,12 +109,24 @@ func TerminateSessionHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Parse session ID
-	if err := r.ParseForm(); err != nil {
-		utils.WriteJSONResponse(w, http.StatusBadRequest, map[string]string{"error": "failed to parse form"})
-		return
+	// Parse session ID (JSON body or form-encoded)
+	var sessionIDStr string
+	if strings.Contains(r.Header.Get("Content-Type"), "application/json") {
+		var input struct {
+			SessionID json.RawMessage `json:"session_id"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+			utils.WriteJSONResponse(w, http.StatusBadRequest, map[string]string{"error": "invalid request body"})
+			return
+		}
+		sessionIDStr = strings.Trim(strings.TrimSpace(string(input.SessionID)), `"`)
+	} else {
+		if err := r.ParseForm(); err != nil {
+			utils.WriteJSONResponse(w, http.StatusBadRequest, map[string]string{"error": "failed to parse form"})
+			return
+		}
+		sessionIDStr = r.Form.Get("session_id")
 	}
-	sessionIDStr := r.Form.Get("session_id")
 	if sessionIDStr == "" {
 		utils.WriteJSONResponse(w, http.StatusBadRequest, map[string]string{"error": "session ID is required"})
 		return

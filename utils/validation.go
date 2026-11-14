@@ -6,13 +6,16 @@ import (
 	"net/url"
 	"regexp"
 	"strings"
+	"unicode/utf8"
+
+	"github.com/nyaruka/phonenumbers"
 )
 
 // Pre-compiled regex patterns for validation
 var (
 	usernameRegex      = regexp.MustCompile(`^[a-z0-9]+$`)
 	emailRegex         = regexp.MustCompile(`^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`)
-	phoneRegex         = regexp.MustCompile(`^\+?[1-9]\d{1,14}$`)
+	phoneRegex         = regexp.MustCompile(`^\+?[1-9]\d{6,14}$`)
 	pkceVerifierRegex  = regexp.MustCompile(`^[A-Za-z0-9\-._~]{43,128}$`)
 	pkceChallengeRegex = regexp.MustCompile(`^[A-Za-z0-9\-_]{43}$`)
 	customSchemeRegex  = regexp.MustCompile(`^[a-z][a-z0-9+.-]*$`)
@@ -45,6 +48,12 @@ func ValidateContact(contact string) (string, string, error) {
 		return strings.ToLower(contact), "email", nil
 	}
 	if phoneRegex.MatchString(contact) {
+		if strings.HasPrefix(contact, "+") {
+			num, err := phonenumbers.Parse(contact, "")
+			if err != nil || !phonenumbers.IsPossibleNumber(num) {
+				return "", "", fmt.Errorf("invalid email or phone number")
+			}
+		}
 		return contact, "phone", nil
 	}
 	return "", "", fmt.Errorf("invalid email or phone number")
@@ -75,7 +84,10 @@ func Pluralize(count int) string {
 // ValidatePassword enforces password complexity requirements.
 // Returns nil if the password meets all requirements, or an error describing the violation.
 func ValidatePassword(password string) error {
-	if len(password) < 8 {
+	if strings.TrimSpace(password) == "" {
+		return fmt.Errorf("password cannot be empty or whitespace")
+	}
+	if utf8.RuneCountInString(password) < 8 {
 		return fmt.Errorf("password must be at least 8 characters")
 	}
 	if len(password) > 72 {

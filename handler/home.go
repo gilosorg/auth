@@ -29,20 +29,11 @@ func HomeHandler(tmpls *template.Template) http.HandlerFunc {
 			return
 		}
 
-		// Get current session ID
+		// Retrieve authenticated session from context
 		var currentSessionID uint64
-		cookie, err := r.Cookie("session_token")
-		if err == nil {
-			var sess database.Session
-			if err := database.DB.Where("cookie_token = ?", cookie.Value).First(&sess).Error; err == nil {
-				currentSessionID = sess.ID
-			}
-		}
-
-		// Generate CSRF token for the session
 		var csrfToken string
-		sess, err := middleware.GetSession(r)
-		if err == nil {
+		if sess, err := middleware.GetSession(r); err == nil && sess != nil {
+			currentSessionID = sess.ID
 			csrfToken, err = middleware.EnsureCSRFToken(sess)
 			if err != nil {
 				log.Printf("Failed to generate CSRF token: %v", err)

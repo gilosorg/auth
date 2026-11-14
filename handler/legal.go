@@ -44,6 +44,7 @@ func renderLegalPage(tmpls *template.Template, pageType string) http.HandlerFunc
 			http.Error(w, "Template Error", http.StatusInternalServerError)
 			return
 		}
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		buf.WriteTo(w)
 	}
 }

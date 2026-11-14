@@ -137,7 +137,7 @@ func TerminateSessionHandler(w http.ResponseWriter, r *http.Request) {
 	// Check if terminating the current session
 	if session.Type == "native" && session.CookieToken != nil {
 		currentCookie, err := r.Cookie("session_token")
-		if err == nil && currentCookie.Value == *session.CookieToken {
+		if err == nil && (utils.HashToken(currentCookie.Value) == *session.CookieToken || currentCookie.Value == *session.CookieToken) {
 			database.SetSessionCookieHelper(w, "", time.Now().Add(-1*time.Hour))
 		}
 	}
@@ -166,21 +166,20 @@ func TerminateOthersHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Get current session token from cookie
-	currentCookie, err := r.Cookie("session_token")
+	currentSess, err := middleware.GetSession(r)
 	if err != nil {
 		utils.WriteJSONResponse(w, http.StatusBadRequest, map[string]string{"error": "no active session"})
 		return
 	}
 
 	// Delete all user sessions except the current one
-	res := database.DB.Where("user_id = ? AND (type != ? OR cookie_token != ?)", userID, "native", currentCookie.Value).Delete(&database.Session{})
+	res := database.DB.Where("user_id = ? AND id != ?", userID, currentSess.ID).Delete(&database.Session{})
 	if res.Error != nil {
 		utils.WriteJSONResponse(w, http.StatusInternalServerError, map[string]string{"error": "failed to terminate other sessions"})
 		return
 	}
 
-	database.LogAuditEventWithUserID(database.AuditSessionTerminated, userID, r, fmt.Sprintf("terminated %d other sessions", res.RowsAffected))
+	database.LogAuditEventWithUserID(database.AuditSessionsTerminated, userID, r, fmt.Sprintf("terminated %d other sessions", res.RowsAffected))
 
 	utils.WriteJSONResponse(w, http.StatusOK, map[string]bool{"success": true})
 }

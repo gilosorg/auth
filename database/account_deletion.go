@@ -219,15 +219,15 @@ func ProcessExpiredDeletionRequests(db *gorm.DB) error {
 	for _, req := range requests {
 		log.Printf("Processing expired deletion request %d for user %d", req.ID, req.UserID)
 
-		// Log audit event before purging
-		LogAuditEventWithUserID(AuditAccountDeletionCompleted, req.UserID, nil,
-			fmt.Sprintf("account deletion completed after 30-day grace period (reason: %s)", req.Reason))
-
 		// Purge all user data (also removes AccountDeletionRequest FK rows)
 		if err := PurgeUserData(db, req.UserID); err != nil {
 			log.Printf("Error purging user %d data: %v", req.UserID, err)
 			continue
 		}
+
+		// Record anonymized completion audit event only after the purge commits
+		LogAuditEvent(AuditAccountDeletionCompleted, nil, nil,
+			fmt.Sprintf("account deletion completed after 30-day grace period (user=%d, reason=%s)", req.UserID, req.Reason))
 
 		log.Printf("Successfully purged all data for user %d", req.UserID)
 	}

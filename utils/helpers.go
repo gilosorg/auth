@@ -12,6 +12,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 
 	"gilosauth/config"
 )
@@ -167,13 +168,25 @@ func isValidIP(ip string) bool {
 }
 
 // GenerateOTP generates a cryptographically secure 6-digit OTP.
-func GenerateOTP() string {
+func GenerateOTP() (string, error) {
 	n, err := rand.Int(rand.Reader, big.NewInt(1000000))
 	if err != nil {
-		// Fallback should never happen with crypto/rand, but be safe
-		return "000000"
+		return "", fmt.Errorf("failed to generate secure OTP: %w", err)
 	}
-	return fmt.Sprintf("%06d", n.Int64())
+	return fmt.Sprintf("%06d", n.Int64()), nil
+}
+
+// ParseSessionTime converts an RFC3339 string or time.Time stored in session RawData.
+func ParseSessionTime(raw interface{}) time.Time {
+	switch v := raw.(type) {
+	case string:
+		t, _ := time.Parse(time.RFC3339, v)
+		return t
+	case time.Time:
+		return v
+	default:
+		return time.Time{}
+	}
 }
 
 // ParsePhone parses a phone number string to uint64.

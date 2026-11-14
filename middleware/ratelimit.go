@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"gilosauth/utils"
+	"net"
 	"net/http"
 	"strings"
 	"sync"
@@ -114,7 +115,9 @@ func RateLimitMiddleware(next http.Handler) http.Handler {
 			key := "login:" + ip
 			if !LoginLimiter.Allow(key) {
 				w.Header().Set("Retry-After", "900") // 15 minutes
-				http.Error(w, `{"error":"too many login attempts, please try again later"}`, http.StatusTooManyRequests)
+				utils.WriteJSONResponse(w, http.StatusTooManyRequests, map[string]string{
+					"error": "too many login attempts, please try again later",
+				})
 				return
 			}
 		}
@@ -124,7 +127,9 @@ func RateLimitMiddleware(next http.Handler) http.Handler {
 			key := "auth:" + ip
 			if !AuthLimiter.Allow(key) {
 				w.Header().Set("Retry-After", "60")
-				http.Error(w, `{"error":"too many requests, please try again later"}`, http.StatusTooManyRequests)
+				utils.WriteJSONResponse(w, http.StatusTooManyRequests, map[string]string{
+					"error": "too many requests, please try again later",
+				})
 				return
 			}
 		}
@@ -132,7 +137,9 @@ func RateLimitMiddleware(next http.Handler) http.Handler {
 		// Global rate limiting
 		if !GlobalLimiter.Allow(ip) {
 			w.Header().Set("Retry-After", "60")
-			http.Error(w, `{"error":"too many requests"}`, http.StatusTooManyRequests)
+			utils.WriteJSONResponse(w, http.StatusTooManyRequests, map[string]string{
+				"error": "too many requests",
+			})
 			return
 		}
 
@@ -146,21 +153,33 @@ func isLoginRequest(r *http.Request) bool {
 		return false
 	}
 	switch r.URL.Path {
-	case "/auth/login", "/auth/otp/verify", "/auth/reset-password", "/profile/totp/verify":
+	case "/auth/state", "/auth/login", "/auth/otp/verify", "/auth/reset-password",
+		"/profile/totp/verify", "/api/profile/totp/verify",
+		"/o/authorize", "/api/o/approve":
 		return true
 	default:
 		return false
 	}
 }
 
-// isAuthPath checks if the path is an auth endpoint.
+// isAuthPath checks if the path is an auth, OAuth, or sensitive MFA endpoint.
 func isAuthPath(path string) bool {
-	return strings.HasPrefix(path, "/auth/") || path == "/o/token"
+	return strings.HasPrefix(path, "/auth/") ||
+		path == "/o/token" || path == "/o/introspect" || path == "/o/revoke" || path == "/o/authorize" ||
+		path == "/api/o/approve" ||
+		strings.HasPrefix(path, "/profile/totp/") ||
+		strings.HasPrefix(path, "/api/profile/totp/")
 }
 
-// getClientIPForRateLimit extracts the client IP for rate limiting.
-// Uses utils.GetClientIP which securely parses X-Forwarded-For and X-Real-IP
-// only when the direct connection is from a trusted proxy (such as Nginx on localhost).
+// getClientIPForRateLimit extracts the client IP for rate limiting, collapsing
+// IPv6 clients to their /64 prefix so address rotation cannot bypass limits.
 func getClientIPForRateLimit(r *http.Request) string {
-	return utils.GetClientIP(r)
+	ipStr := utils.GetClientIP(r)
+	parsed := net.ParseIP(ipStr)
+	if parsed != nil && parsed.To4() == nil {
+		if masked := parsed.Mask(net.CIDRMask(64, 128)); masked != nil {
+			return masked.String() + "/64"
+		}
+	}
+	return ipStr
 }

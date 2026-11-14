@@ -3,6 +3,8 @@ package database
 import (
 	"fmt"
 	"time"
+
+	"gorm.io/gorm"
 )
 
 // IsBlocked checks if an identifier (email, phone, or username) is currently blocked.
@@ -39,32 +41,37 @@ func (sm *SessionManager) ApplyBlock(identifier string, sess *Session, duration 
 		return err
 	}
 
-	// Also block by UserID if available in session
+	// Also block by UserID if available in session (avoid inserting a duplicate row)
 	if sess != nil && sess.UserID != nil {
-		userBlock := SecurityBlock{
-			Identifier:   fmt.Sprintf("user:%d:%s", *sess.UserID, blockType),
-			BlockedUntil: blockedUntil,
+		userIdentifier := fmt.Sprintf("user:%d:%s", *sess.UserID, blockType)
+		if userIdentifier != identifier {
+			userBlock := SecurityBlock{
+				Identifier:   userIdentifier,
+				BlockedUntil: blockedUntil,
+			}
+			_ = sm.db.Create(&userBlock).Error
 		}
-		sm.db.Create(&userBlock) // Ignore error if already blocked or so
 	}
 
-	// If a session is provided, update it to reflect the block
-	if sess != nil {
+	// Only propagate general security blocks onto pre-auth / active session metadata;
+	// username change cooldowns must never mark a session blocked or extend its expiry.
+	if sess != nil && blockType != "username" {
 		if sess.RawData == nil {
 			sess.RawData = make(JSONData)
 		}
 		sess.RawData["is_blocked"] = true
 		sess.RawData["blocked_until"] = blockedUntil.Format(time.RFC3339)
-		
-		// Extend session expiration to cover the block period
-		if sess.ExpiresAt.Before(blockedUntil) {
-			sess.ExpiresAt = blockedUntil.Add(1 * time.Hour)
+
+		updates := map[string]interface{}{
+			"raw_data": sess.RawData,
 		}
-		
-		if err := sm.db.Model(sess).Updates(map[string]interface{}{
-			"raw_data":   sess.RawData,
-			"expires_at": sess.ExpiresAt,
-		}).Error; err != nil {
+		// Only extend ephemeral unauthenticated pre-auth sessions so /auth/state preserves the notice
+		if sess.UserID == nil && sess.ExpiresAt.Before(blockedUntil) {
+			sess.ExpiresAt = blockedUntil.Add(1 * time.Hour)
+			updates["expires_at"] = sess.ExpiresAt
+		}
+
+		if err := sm.db.Model(sess).Updates(updates).Error; err != nil {
 			return err
 		}
 	}
@@ -77,12 +84,21 @@ func (sm *SessionManager) RecordTOTPFailure(userID uint64, sess *Session) (bool,
 	failKey := fmt.Sprintf("totp_fail:%d", userID)
 	now := time.Now()
 	var failCount int64
-	sm.db.Model(&SecurityBlock{}).Where("identifier = ? AND blocked_until > ?", failKey, now).Count(&failCount)
-	_ = sm.db.Create(&SecurityBlock{
-		Identifier:   failKey,
-		BlockedUntil: now.Add(1 * time.Hour),
-	}).Error
-	failCount++
+	if err := sm.db.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Model(&SecurityBlock{}).Where("identifier = ? AND blocked_until > ?", failKey, now).Count(&failCount).Error; err != nil {
+			return err
+		}
+		if err := tx.Create(&SecurityBlock{
+			Identifier:   failKey,
+			BlockedUntil: now.Add(1 * time.Hour),
+		}).Error; err != nil {
+			return err
+		}
+		failCount++
+		return nil
+	}); err != nil {
+		return false, time.Time{}, failCount
+	}
 	if failCount >= 5 {
 		until := now.Add(24 * time.Hour)
 		_ = sm.ApplyBlock(fmt.Sprintf("user:%d:security", userID), sess, 24*time.Hour, "security")

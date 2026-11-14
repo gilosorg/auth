@@ -126,7 +126,7 @@ func buildOIDCUserClaims(user *database.User, scopes []string) map[string]interf
 func UserInfoHandler(w http.ResponseWriter, r *http.Request) {
 	// Middleware should have already validated the access token and set session context
 	session, ok := r.Context().Value(database.SessionContextKey).(*database.Session)
-	if !ok || session.UserID == nil {
+	if !ok || session == nil || session.UserID == nil {
 		utils.WriteJSONResponse(w, http.StatusUnauthorized, map[string]string{"error": "unauthorized"})
 		return
 	}
@@ -164,6 +164,12 @@ func randomJTI(fallback string) string {
 
 // GenerateAccessToken creates a JWT access token for the given session.
 func GenerateAccessToken(session *database.Session, clientID uint64, scopes string) (string, error) {
+	if session == nil || session.UserID == nil {
+		return "", fmt.Errorf("missing user binding on session")
+	}
+	if session.AccessTokenExpiresAt == nil {
+		return "", fmt.Errorf("missing access token expiry on session")
+	}
 	now := time.Now()
 	jti := randomJTI(fmt.Sprintf("sess_%d_%d", session.ID, now.UnixNano()))
 	claims := map[string]interface{}{

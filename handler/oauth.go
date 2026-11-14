@@ -583,9 +583,11 @@ func OAuthTokenHandler(w http.ResponseWriter, r *http.Request) {
 		// Add OIDC id_token if openid scope is requested
 		if hasOAuthScope(scopeStr, "openid") {
 			idToken, err := GenerateIDToken(&user, clientID, scopeStr, accessTokenExpiresAt.Unix(), nonceFromAuthCode, accessToken)
-			if err == nil {
-				response["id_token"] = idToken
+			if err != nil {
+				utils.WriteJSONResponse(w, http.StatusInternalServerError, map[string]string{"error": "server_error", "error_description": "Failed to generate ID token"})
+				return
 			}
+			response["id_token"] = idToken
 		}
 
 		utils.WriteJSONResponse(w, http.StatusOK, response)
@@ -686,9 +688,11 @@ func OAuthTokenHandler(w http.ResponseWriter, r *http.Request) {
 		// Note: nonce is NOT echoed on refresh — it's only for the initial auth code exchange (OIDC Core §12.2)
 		if hasOAuthScope(scopeStr, "openid") {
 			idToken, err := GenerateIDToken(&user, clientID, scopeStr, accessTokenExpiresAt.Unix(), "", accessToken)
-			if err == nil {
-				response["id_token"] = idToken
+			if err != nil {
+				utils.WriteJSONResponse(w, http.StatusInternalServerError, map[string]string{"error": "server_error", "error_description": "Failed to generate ID token"})
+				return
 			}
+			response["id_token"] = idToken
 		}
 
 		utils.WriteJSONResponse(w, http.StatusOK, response)

@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -91,11 +92,41 @@ func setSessionCookie(w http.ResponseWriter, token string, expires time.Time) {
 		Name:     "session_token",
 		Value:    token,
 		Path:     "/",
+		Domain:   config.CookieDomain,
 		HttpOnly: true,
 		Secure:   config.SecureCookies,
 		SameSite: http.SameSiteLaxMode,
 		Expires:  expires,
 	})
+}
+
+// lookupNativeSession fetches an active native session by its SHA-256 token hash,
+// falling back once to legacy plaintext tokens and upgrading them in place.
+func lookupNativeSession(db *gorm.DB, rawToken string) (Session, error) {
+	var session Session
+	now := time.Now()
+	hashed := utils.HashToken(rawToken)
+	err := db.Where("cookie_token = ? AND type = ? AND expires_at > ?", hashed, "native", now).
+		First(&session).Error
+	if err == nil {
+		session.RawCookieToken = rawToken
+		return session, nil
+	}
+	if !errors.Is(err, gorm.ErrRecordNotFound) || rawToken == "" {
+		return session, err
+	}
+
+	// Legacy plaintext session upgrade for active live cookies
+	if legacyErr := db.Where("cookie_token = ? AND type = ? AND expires_at > ?", rawToken, "native", now).
+		First(&session).Error; legacyErr != nil {
+		return session, legacyErr
+	}
+	_ = db.Model(&Session{}).
+		Where("id = ? AND cookie_token = ?", session.ID, rawToken).
+		Update("cookie_token", hashed).Error
+	session.CookieToken = &hashed
+	session.RawCookieToken = rawToken
+	return session, nil
 }
 
 // SetSessionCookieHelper is the exported version of setSessionCookie for use by handler packages.
@@ -119,9 +150,9 @@ func (sm *SessionManager) Start(ctx context.Context, w http.ResponseWriter, r *h
 		// Check for existing session cookie
 		cookie, err := r.Cookie("session_token")
 		if err == nil && cookie.Value != "" {
-			// Try to find active, unexpired session by cookie token
-			if err := sm.db.Where("cookie_token = ? AND type = ? AND expires_at > ?", cookie.Value, "native", time.Now()).
-				First(&session).Error; err == nil {
+			// Try to find active, unexpired session by hashed (or legacy raw) cookie token
+			if found, err := lookupNativeSession(sm.db, cookie.Value); err == nil {
+				session = found
 				metadataChanged := sm.UpdateMetadata(&session, r)
 				shouldTouch := metadataChanged || time.Since(session.LastSeenAt) >= time.Minute
 				if shouldTouch {
@@ -140,9 +171,9 @@ func (sm *SessionManager) Start(ctx context.Context, w http.ResponseWriter, r *h
 						return nil, fmt.Errorf("failed to update session: %w", err)
 					}
 				}
-				// Keep browser cookie aligned with current expiration
-				if session.CookieToken != nil && (shouldTouch || session.UserID == nil) {
-					setSessionCookie(w, *session.CookieToken, session.ExpiresAt)
+				// Keep browser cookie aligned with current expiration using plaintext token
+				if shouldTouch || session.UserID == nil {
+					setSessionCookie(w, cookie.Value, session.ExpiresAt)
 				}
 				return &session, nil
 			}
@@ -150,6 +181,7 @@ func (sm *SessionManager) Start(ctx context.Context, w http.ResponseWriter, r *h
 	}
 
 	// Create new session
+	var rawToken string
 	var cookieToken *string
 	var expiresAt time.Time
 	if sessionType == "native" {
@@ -157,18 +189,21 @@ func (sm *SessionManager) Start(ctx context.Context, w http.ResponseWriter, r *h
 		if err != nil {
 			return nil, err
 		}
-		cookieToken = &token
+		rawToken = token
+		hashed := utils.HashToken(token)
+		cookieToken = &hashed
 		expiresAt = time.Now().Add(1 * time.Hour) // Default 1-hour expiration for non-user-bound
 	} else {
 		expiresAt = time.Now().Add(30 * 24 * time.Hour) // API sessions
 	}
 
 	session = Session{
-		CookieToken: cookieToken,
-		Type:        sessionType,
-		RawData:     make(JSONData),
-		LastSeenAt:  time.Now(),
-		ExpiresAt:   expiresAt,
+		CookieToken:    cookieToken,
+		RawCookieToken: rawToken,
+		Type:           sessionType,
+		RawData:        make(JSONData),
+		LastSeenAt:     time.Now(),
+		ExpiresAt:      expiresAt,
 	}
 	sm.UpdateMetadata(&session, r)
 
@@ -180,9 +215,9 @@ func (sm *SessionManager) Start(ctx context.Context, w http.ResponseWriter, r *h
 		return nil, fmt.Errorf("failed to create session: %w", err)
 	}
 
-	// Set session cookie for web sessions
-	if sessionType == "native" && cookieToken != nil {
-		setSessionCookie(w, *cookieToken, session.ExpiresAt)
+	// Set session cookie for web sessions with plaintext token
+	if sessionType == "native" && rawToken != "" {
+		setSessionCookie(w, rawToken, session.ExpiresAt)
 	}
 
 	return &session, nil
@@ -196,7 +231,7 @@ func (sm *SessionManager) Get(identifier string, sessionType string, r ...*http.
 	var err error
 
 	if sessionType == "native" {
-		err = sm.db.Where("cookie_token = ? AND type = ? AND expires_at > ?", identifier, "native", time.Now()).First(&session).Error
+		session, err = lookupNativeSession(sm.db, identifier)
 	} else {
 		var id uint64
 		if _, err := fmt.Sscanf(identifier, "%d", &id); err != nil {
@@ -317,36 +352,46 @@ func (sm *SessionManager) SetUser(session *Session, userID uint64) error {
 
 // RotateSession prevents session fixation by creating a new session with a fresh
 // cookie token after authentication, copying the user binding from the old session.
-// The old session is destroyed atomically inside a transaction to prevent reuse.
+// The old session is deleted atomically before inserting the new one to prevent double rotation.
 func (sm *SessionManager) RotateSession(w http.ResponseWriter, r *http.Request, oldSession *Session) (*Session, error) {
 	if oldSession.Type != "native" {
 		return oldSession, nil // Only rotate web sessions
 	}
 
-	// Generate new cookie token
+	// Generate new plaintext cookie token and mint a fresh CSRF token
 	newToken, err := generateCookieToken()
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate new cookie token: %w", err)
 	}
+	freshCSRF, err := generateCookieToken()
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate fresh CSRF token: %w", err)
+	}
+	hashedToken := utils.HashToken(newToken)
 
 	// Create new session with the same user binding
 	newSession := Session{
-		UserID:      oldSession.UserID,
-		ClientID:    oldSession.ClientID,
-		Type:        oldSession.Type,
-		CookieToken: &newToken,
-		RawData:     make(JSONData),
-		LastSeenAt:  time.Now(),
-		ExpiresAt:   oldSession.ExpiresAt,
+		UserID:         oldSession.UserID,
+		ClientID:       oldSession.ClientID,
+		Type:           oldSession.Type,
+		CookieToken:    &hashedToken,
+		RawCookieToken: newToken,
+		RawData:        JSONData{"csrf_token": freshCSRF},
+		LastSeenAt:     time.Now(),
+		ExpiresAt:      oldSession.ExpiresAt,
 	}
 	sm.UpdateMetadata(&newSession, r)
 
 	if err := sm.db.Transaction(func(tx *gorm.DB) error {
+		delRes := tx.Where("id = ?", oldSession.ID).Delete(&Session{})
+		if delRes.Error != nil {
+			return fmt.Errorf("failed to remove old session: %w", delRes.Error)
+		}
+		if delRes.RowsAffected != 1 {
+			return fmt.Errorf("old session no longer active")
+		}
 		if err := tx.Create(&newSession).Error; err != nil {
 			return fmt.Errorf("failed to create rotated session: %w", err)
-		}
-		if err := tx.Where("id = ?", oldSession.ID).Delete(&Session{}).Error; err != nil {
-			return fmt.Errorf("failed to remove old session: %w", err)
 		}
 		return nil
 	}); err != nil {

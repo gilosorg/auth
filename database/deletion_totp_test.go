@@ -8,6 +8,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"gilosauth/utils"
 )
 
 func TestDeletionRequestTransactionalLifecycle(t *testing.T) {
@@ -134,8 +136,11 @@ func TestRotateSessionAndTOTPFailures(t *testing.T) {
 			break
 		}
 	}
-	if newSess.CookieToken == nil || rotatedCookie != *newSess.CookieToken {
+	if newSess.CookieToken == nil || newSess.RawCookieToken == "" || rotatedCookie != newSess.RawCookieToken {
 		t.Fatalf("expected session_token cookie %q to match rotated session token", rotatedCookie)
+	}
+	if utils.HashToken(rotatedCookie) != *newSess.CookieToken {
+		t.Fatalf("expected stored CookieToken digest to equal SHA-256 of cookie")
 	}
 
 	// Verify TOTP failures count 1..4 without blocking, and ClearTOTPFailures resets the counter

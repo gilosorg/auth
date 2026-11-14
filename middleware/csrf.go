@@ -50,8 +50,9 @@ func CSRFMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		// Skip CSRF for pre-authentication endpoints (no session/CSRF token exists yet),
+		// Skip CSRF for pre-authentication JSON endpoints (no session/CSRF token exists yet),
 		// EXCEPT web-cookie logout requests without an explicit Bearer/refresh token.
+		// Requiring application/json blocks cross-origin HTML <form> Login CSRF attacks.
 		if path == "/auth/logout" {
 			if logoutHasExplicitToken(r) {
 				ctx := context.WithValue(r.Context(), csrfBypassedLogoutKey, true)
@@ -59,6 +60,11 @@ func CSRFMiddleware(next http.Handler) http.Handler {
 				return
 			}
 		} else if strings.HasPrefix(path, "/auth/") {
+			mediaType := strings.ToLower(strings.TrimSpace(strings.Split(r.Header.Get("Content-Type"), ";")[0]))
+			if mediaType != "application/json" {
+				utils.WriteJSONResponse(w, http.StatusUnsupportedMediaType, map[string]string{"error": "Content-Type must be application/json"})
+				return
+			}
 			next.ServeHTTP(w, r)
 			return
 		}
@@ -159,11 +165,13 @@ func logoutHasExplicitToken(r *http.Request) bool {
 	}
 	bodyBytes, err := io.ReadAll(r.Body)
 	if err != nil {
+		// Restore any bytes read so downstream error/body handlers can inspect MaxBytesError cleanly
+		r.Body = io.NopCloser(bytes.NewReader(bodyBytes))
 		return false
 	}
 	r.Body = io.NopCloser(bytes.NewReader(bodyBytes))
 
-	if strings.Contains(r.Header.Get("Content-Type"), "json") {
+	if strings.Contains(strings.ToLower(r.Header.Get("Content-Type")), "json") {
 		var payload struct {
 			RefreshToken string `json:"refreshToken"`
 			RefreshTok   string `json:"refresh_token"`
@@ -174,6 +182,7 @@ func logoutHasExplicitToken(r *http.Request) bool {
 				return true
 			}
 		}
+		return false
 	}
 
 	if err := r.ParseForm(); err == nil {

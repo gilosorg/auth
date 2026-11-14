@@ -49,7 +49,7 @@ func SendVerificationEmail(toEmail, code string) error {
 
 	appName := strings.TrimSpace(config.AppName)
 	if appName == "" {
-		appName = "Auth"
+		appName = "Gilos Auth"
 	}
 
 	idempotencyKey, err := newEmailIdempotencyKey("otp-verify")
@@ -147,7 +147,7 @@ func buildVerificationEmail(fromEmail, appName, toEmail, code string) *resend.Se
     .email-head { color: #FFFFFF !important; border-bottom-color: #383838 !important; }
     .email-body { color: #D4D4D4 !important; }
     .email-code { background-color: #202020 !important; border-color: #454545 !important; color: #60CDFF !important; }
-    .email-foot { color: #A0A0A0 !important; border-top-color: #383838 !important; }
+    .email-foot { color: #B4B4B4 !important; border-top-color: #3D3D3D !important; }
   }
 </style>
 </head>
@@ -173,7 +173,10 @@ func buildVerificationEmail(fromEmail, appName, toEmail, code string) *resend.Se
                   </td>
                 </tr>
                 <tr>
-                  <td class="email-foot" style="font-size:12px;line-height:18px;color:#6B7280;padding-top:18px;border-top:1px solid #E5E9F0;margin-top:18px;">
+                  <td style="height:18px;font-size:0;line-height:0;">&nbsp;</td>
+                </tr>
+                <tr>
+                  <td class="email-foot" style="font-size:12px;line-height:18px;color:#616161;padding-top:16px;border-top:1px solid #EFEFEF;">
                     This code expires in 5 minutes and can only be used once. Never share it with anyone.<br>
                     Sent automatically by auth.gilos.org &middot; Need help? Contact info@gilos.org.
                   </td>
@@ -189,7 +192,7 @@ func buildVerificationEmail(fromEmail, appName, toEmail, code string) *resend.Se
 </html>`, safeAppName, safeAppName, safeCode)
 
 	textBody := fmt.Sprintf(
-		"%s Verification Code\n\nEnter this one-time verification code to continue:\n\n%s\n\nThis code expires in 5 minutes. Never share it with anyone.\nSent by auth.gilos.org | Support: info@gilos.org\n",
+		"%s Verification Code\n\nEnter this one-time verification code to confirm your action:\n\n%s\n\nThis code expires in 5 minutes and can only be used once. Never share it with anyone.\nSent by auth.gilos.org | Support: info@gilos.org\n",
 		appName,
 		code,
 	)

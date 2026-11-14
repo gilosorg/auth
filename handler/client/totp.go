@@ -47,12 +47,14 @@ func sanitizeTotp(data TOTPData) TOTPData {
 }
 
 // Convert model to TOTPData
-func modelToData(m database.TOTPSecret) TOTPData {
+func modelToData(m database.TOTPSecret) (TOTPData, error) {
 	secret := m.Secret
 	if config.EncryptionKey != "" {
-		if decrypted, err := utils.DecryptAES(secret, config.EncryptionKey); err == nil {
-			secret = decrypted
+		decrypted, err := utils.DecryptAES(secret, config.EncryptionKey)
+		if err != nil {
+			return TOTPData{}, err
 		}
+		secret = decrypted
 	}
 	data := TOTPData{
 		UUID:      m.UUID,
@@ -67,7 +69,7 @@ func modelToData(m database.TOTPSecret) TOTPData {
 		data.Issuer = &m.Issuer
 	}
 	// Sanitize to handle defaults/invalid database values if any
-	return sanitizeTotp(data)
+	return sanitizeTotp(data), nil
 }
 
 
@@ -93,7 +95,12 @@ func ListTOTPsHandler(w http.ResponseWriter, r *http.Request) {
 
 	response := make(map[string]TOTPData)
 	for _, s := range secrets {
-		response[s.UUID] = modelToData(s)
+		item, err := modelToData(s)
+		if err != nil {
+			utils.WriteJSONResponse(w, http.StatusInternalServerError, map[string]string{"error": "failed to decrypt secrets"})
+			return
+		}
+		response[s.UUID] = item
 	}
 
 	utils.WriteJSONResponse(w, http.StatusOK, response)
@@ -331,9 +338,19 @@ func PullSyncHandler(w http.ResponseWriter, r *http.Request) {
 	for uuid, s := range currentUUIDs {
 		knownUpdatedAt, exists := known[uuid]
 		if !exists {
-			response.Inserts[uuid] = modelToData(*s)
+			item, err := modelToData(*s)
+			if err != nil {
+				utils.WriteJSONResponse(w, http.StatusInternalServerError, map[string]string{"error": "failed to decrypt secrets"})
+				return
+			}
+			response.Inserts[uuid] = item
 		} else if s.UpdatedAt > knownUpdatedAt {
-			response.Updates[uuid] = modelToData(*s)
+			item, err := modelToData(*s)
+			if err != nil {
+				utils.WriteJSONResponse(w, http.StatusInternalServerError, map[string]string{"error": "failed to decrypt secrets"})
+				return
+			}
+			response.Updates[uuid] = item
 		}
 	}
 

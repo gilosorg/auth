@@ -3,6 +3,7 @@ package middleware
 import (
 	"gilosauth/config"
 	"net/http"
+	"strings"
 )
 
 // SecurityHeaders adds standard HTTP security headers to every response.
@@ -25,6 +26,7 @@ func SecurityHeaders(next http.Handler) http.Handler {
 				"style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; "+
 				"img-src 'self' data: blob: https://cdn.jsdelivr.net; "+
 				"font-src 'self' https://fonts.gstatic.com; "+
+				"object-src 'none'; "+
 				"frame-ancestors 'none'; "+
 				"base-uri 'self'")
 
@@ -46,14 +48,18 @@ func SecurityHeaders(next http.Handler) http.Handler {
 	})
 }
 
+func hasPathSegment(path, prefix string) bool {
+	return path == prefix || strings.HasPrefix(path, prefix+"/")
+}
+
 // isAPIPath checks if the request path is an API, auth, or sensitive page
 // where responses must not be cached.
 func isAPIPath(path string) bool {
 	return path == "/home" ||
-		len(path) >= 4 && path[:4] == "/api" ||
-		len(path) >= 5 && path[:5] == "/auth" ||
-		len(path) >= 2 && path[:2] == "/o" ||
-		len(path) >= 9 && path[:9] == "/sessions" ||
-		len(path) >= 8 && path[:8] == "/clients" ||
-		len(path) >= 8 && path[:8] == "/profile"
+		hasPathSegment(path, "/api") ||
+		hasPathSegment(path, "/auth") ||
+		hasPathSegment(path, "/o") ||
+		hasPathSegment(path, "/sessions") ||
+		hasPathSegment(path, "/clients") ||
+		hasPathSegment(path, "/profile")
 }

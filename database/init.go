@@ -4,6 +4,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"gilosauth/config"
 
@@ -13,6 +14,19 @@ import (
 
 // DB is the global database connection
 var DB *gorm.DB
+
+// buildSQLiteDSN attaches critical per-connection PRAGMAs via DSN query parameters
+// so every pooled SQLite handle starts with foreign keys and busy_timeout enabled.
+func buildSQLiteDSN(dbPath string) string {
+	if dbPath == "" || dbPath == ":memory:" {
+		return dbPath
+	}
+	params := "_foreign_keys=on&_busy_timeout=5000&_journal_mode=WAL&_synchronous=NORMAL&_secure_delete=on"
+	if strings.Contains(dbPath, "?") {
+		return dbPath + "&" + params
+	}
+	return dbPath + "?" + params
+}
 
 // InitDatabase initializes the SQLite database connection
 func InitDatabase() {
@@ -27,7 +41,7 @@ func InitDatabase() {
 	}
 
 	// Connect to the database using GORM with SQLite
-	DB, err = gorm.Open(sqlite.Open(config.DBPath), &gorm.Config{})
+	DB, err = gorm.Open(sqlite.Open(buildSQLiteDSN(config.DBPath)), &gorm.Config{})
 	if err != nil {
 		log.Fatalf("Failed to connect to the database: %v", err)
 	}
