@@ -447,7 +447,7 @@
                 </div>
                 <div class="oauth-actions-stack">
                     <button type="button" class="btn btn-primary btn-lg" id="totp-verify-btn" onclick="submitApprove()" disabled>{{ index .T "verify" }}</button>
-                    <button type="button" class="btn btn-secondary" onclick="moveToState('consent')">{{ index .T "back" }}</button>
+                    <button type="button" class="btn btn-secondary" id="totp-back-btn" onclick="moveToState('consent')">{{ index .T "back" }}</button>
                 </div>
             </form>
 
@@ -583,6 +583,7 @@
         }
 
         function moveToState(target) {
+            if (isConsentSubmitting) return;
             const consentForm = document.getElementById('consent-form');
             const totpForm = document.getElementById('totp-form');
             const header = document.getElementById('auth-header');
@@ -605,7 +606,7 @@
         }
 
         document.addEventListener('keydown', (e) => {
-            if (e.key !== 'Escape') return;
+            if (e.key !== 'Escape' || isConsentSubmitting) return;
             const totpForm = document.getElementById('totp-form');
             if (!totpForm || totpForm.classList.contains('hidden')) return;
             if (document.querySelector('.swal2-container')) return;
@@ -619,9 +620,11 @@
             const approveBtn = document.getElementById('approve-btn');
             const denyBtn = document.getElementById('deny-btn');
             const totpBtn = document.getElementById('totp-verify-btn');
+            const totpBackBtn = document.getElementById('totp-back-btn');
             if (approveBtn) window.GilosUI.setButtonLoading(approveBtn, isConsentSubmitting, tr('loading', 'Loading...'));
             if (totpBtn) window.GilosUI.setButtonLoading(totpBtn, isConsentSubmitting, tr('loading', 'Loading...'));
             if (denyBtn) denyBtn.disabled = isConsentSubmitting;
+            if (totpBackBtn) totpBackBtn.disabled = isConsentSubmitting;
         }
 
         function handleApprove() {

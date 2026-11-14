@@ -174,63 +174,14 @@
             display: none;
         }
 
-        .identity-chip {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 4px 5px;
-            border-radius: 0px;
-            border: 1px solid var(--border-default);
-            background: var(--surface-subtle);
-            max-width: 100%;
-        }
-
-        .identity-chip-avatar {
-            width: 24px;
-            height: 24px;
-            border-radius: 0px;
-            background: var(--primary);
-            color: var(--primary-contrast);
-            font-size: 0.72rem;
-            font-weight: 700;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            text-transform: uppercase;
-            flex-shrink: 0;
-        }
-
         .identity-chip-handle {
+            max-width: 210px;
+        }
+
+        .recovery-contact-value {
             font-family: var(--font-mono);
-            font-size: 0.82rem;
             font-weight: 600;
             color: var(--text);
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-            max-width: 200px;
-        }
-
-        .identity-chip-change {
-            border: 1px solid var(--border-default);
-            background: var(--surface-elevated);
-            color: var(--accent);
-            font-family: inherit;
-            font-size: 0.75rem;
-            font-weight: 600;
-            padding: 3px 9px;
-            border-radius: 0px;
-            cursor: pointer;
-            transition: background-color 0.14s ease, border-color 0.14s ease, transform 0.08s ease;
-        }
-
-        .identity-chip-change:hover {
-            background: var(--accent-subtle);
-            border-color: color-mix(in srgb, var(--accent) 45%, var(--border-default));
-        }
-
-        .identity-chip-change:active {
-            transform: translateY(1px);
         }
 
         .auth-banner {
@@ -341,7 +292,7 @@
 
         .auth-input {
             width: 100%;
-            height: 46px;
+            height: 44px;
             padding: 0 14px;
             border: 1.5px solid var(--border-default);
             border-radius: var(--radius-md);
@@ -874,7 +825,7 @@
                     <div class="identity-chip">
                         <span class="identity-chip-avatar" id="identity-chip-avatar">G</span>
                         <span class="identity-chip-handle" id="identity-chip-handle">@</span>
-                        <button type="button" class="identity-chip-change" onclick="moveToState('gilos-id')">{{ index .T "change_id" }}</button>
+                        <button type="button" class="identity-chip-action" onclick="moveToState('gilos-id')">{{ index .T "change_id" }}</button>
                     </div>
                 </div>
 
@@ -1221,11 +1172,10 @@
                 inputs.forEach(function (input, index) {
                     input.addEventListener('input', function (e) {
                         const value = e.target.value.replace(/[^0-9]/g, '');
-                        e.target.classList.remove('error');
+                        inputs.forEach(function (inp) { inp.classList.remove('error'); });
                         if (value.length > 1) {
                             for (let i = 0; i < Math.min(value.length, inputs.length - index); i++) {
                                 inputs[index + i].value = value[i];
-                                inputs[index + i].classList.remove('error');
                             }
                             const nextIdx = Math.min(index + value.length, inputs.length - 1);
                             inputs[nextIdx].focus();
@@ -1241,9 +1191,9 @@
                     input.addEventListener('paste', function (e) {
                         e.preventDefault();
                         const paste = (e.clipboardData || window.clipboardData).getData('text').replace(/[^0-9]/g, '').slice(0, inputs.length);
+                        inputs.forEach(function (inp) { inp.classList.remove('error'); });
                         for (let i = 0; i < paste.length; i++) {
                             inputs[i].value = paste[i];
-                            inputs[i].classList.remove('error');
                         }
                         if (paste.length > 0) {
                             inputs[Math.min(paste.length, inputs.length - 1)].focus();
@@ -1253,6 +1203,7 @@
 
                     input.addEventListener('keydown', function (e) {
                         if (e.key === 'Backspace' && !e.target.value && index > 0) {
+                            inputs.forEach(function (inp) { inp.classList.remove('error'); });
                             inputs[index - 1].value = '';
                             inputs[index - 1].focus();
                             validateOTPForm();
@@ -1684,8 +1635,8 @@
                     let recoveryText = '';
                     if (data.has_email || data.has_phone) {
                         const options = [];
-                        if (data.email) options.push(`${escapeHtml(T.email || 'email')}: ${escapeHtml(data.email)}`);
-                        if (data.phone) options.push(`${escapeHtml(T.phone || 'phone')}: ${escapeHtml(data.phone)}`);
+                        if (data.email) options.push(`${escapeHtml(T.email || 'Email')}: <span class="recovery-contact-value">${escapeHtml(data.email)}</span>`);
+                        if (data.phone) options.push(`${escapeHtml(T.phone || 'Phone')}: <span class="recovery-contact-value">${escapeHtml(data.phone)}</span>`);
                         recoveryText = escapeHtml(T.recovery_options_set || 'Available recovery options: %s. Enter one to proceed.').replace('%s', options.join(` ${escapeHtml(T.or || 'or')} `));
                         if (recoveryMethodsWrap) recoveryMethodsWrap.classList.remove('hidden');
                         if (recEmailOpt) recEmailOpt.style.display = data.has_email ? 'inline-flex' : 'none';
@@ -1694,7 +1645,7 @@
                         if (data.has_email && !data.has_phone) switchMethod('recovery', 'email');
                         else if (!data.has_email && data.has_phone) switchMethod('recovery', 'phone');
                     } else {
-                        recoveryText = `${escapeHtml(T.recovery_no_options || 'No recovery options set, contact')} <a href="https://t.me/gilos247" class="support-link" target="_blank" rel="noopener noreferrer">${escapeHtml(T.support || 'support')}</a>.`;
+                        recoveryText = `${escapeHtml(T.recovery_no_options || 'No recovery options set, contact')} <a href="https://gilos.org/contact" class="support-link" target="_blank" rel="noopener noreferrer">${escapeHtml(T.support || 'support')}</a>.`;
                         if (recoveryMethodsWrap) recoveryMethodsWrap.classList.add('hidden');
                     }
                     recoveryInfo.innerHTML = recoveryText;
@@ -1723,7 +1674,7 @@
                 const blockedMsg = (T.security_block_active || 'Your account is temporarily blocked for security until %s.').replace('%s', blockedDate.toLocaleString());
                 showMessage(blockedMsg, false);
 
-                document.querySelectorAll('.auth-container input, .auth-container button:not(.bg-gray):not(.identity-chip-change), .auth-container .resend-link').forEach(function (el) {
+                document.querySelectorAll('.auth-container input, .auth-container button:not(.bg-gray):not(.identity-chip-action), .auth-container .resend-link').forEach(function (el) {
                     el.disabled = true;
                     if (el.classList.contains('resend-link')) el.style.pointerEvents = 'none';
                 });
@@ -1975,15 +1926,30 @@
             }
         }
 
+        function setAuthActionLoading(button, isLoading) {
+            if (!button) return;
+            if (window.GilosUI && typeof window.GilosUI.setButtonLoading === 'function') {
+                window.GilosUI.setButtonLoading(button, isLoading, isLoading ? (T.loading || 'Loading...') : undefined);
+                return;
+            }
+            if (isLoading) {
+                if (!button.dataset.origContent) button.dataset.origContent = button.innerHTML;
+                button.disabled = true;
+                button.innerHTML = '<span class="spinner"></span>';
+            } else {
+                button.disabled = false;
+                if (button.dataset.origContent) {
+                    button.innerHTML = button.dataset.origContent;
+                    delete button.dataset.origContent;
+                }
+            }
+        }
+
         async function submitPassword() {
             showMessage('', false);
             const button = document.getElementById('action-button');
-            const buttonText = button ? button.textContent : '';
             let stepChanged = false;
-            if (button) {
-                button.innerHTML = '<span class="spinner"></span>';
-                button.disabled = true;
-            }
+            setAuthActionLoading(button, true);
 
             try {
                 const response = await fetch('/auth/state', {
@@ -2023,7 +1989,7 @@
                 showMessage(T.network_error || 'Unable to proceed. Please try again.', false);
             } finally {
                 if (button && !stepChanged) {
-                    button.textContent = buttonText;
+                    setAuthActionLoading(button, false);
                     validateForm();
                 }
             }
@@ -2032,12 +1998,8 @@
         async function sendOTP() {
             showMessage('', false);
             const button = document.getElementById('action-button');
-            const buttonText = button ? button.textContent : '';
             let stepChanged = false;
-            if (button) {
-                button.innerHTML = '<span class="spinner"></span>';
-                button.disabled = true;
-            }
+            setAuthActionLoading(button, true);
 
             const checkedRadio = document.querySelector('input[name="contact_type"]:checked');
             const contactType = checkedRadio ? checkedRadio.value : state.contactType;
@@ -2074,7 +2036,7 @@
                 showMessage(T.network_error || 'Unable to send code. Please try again.', false);
             } finally {
                 if (button && !stepChanged) {
-                    button.textContent = buttonText;
+                    setAuthActionLoading(button, false);
                     validateForm();
                 }
             }
@@ -2088,12 +2050,8 @@
             }
             showMessage('', false);
             const button = document.getElementById('action-button');
-            const buttonText = button ? button.textContent : '';
             let stepChanged = false;
-            if (button) {
-                button.innerHTML = '<span class="spinner"></span>';
-                button.disabled = true;
-            }
+            setAuthActionLoading(button, true);
 
             try {
                 const response = await fetch('/auth/otp/verify', {
@@ -2139,7 +2097,7 @@
                 showMessage(T.network_error || 'Unable to verify code. Please try again.', false);
             } finally {
                 if (button && !stepChanged) {
-                    button.textContent = buttonText;
+                    setAuthActionLoading(button, false);
                     button.disabled = getOTPValue().length !== 6 || state.isBlocked;
                 }
             }
@@ -2197,12 +2155,8 @@
                 return;
             }
             const button = document.getElementById('action-button');
-            const buttonText = button ? button.textContent : '';
             let stepChanged = false;
-            if (button) {
-                button.innerHTML = '<span class="spinner"></span>';
-                button.disabled = true;
-            }
+            setAuthActionLoading(button, true);
 
             try {
                 const response = await fetch('/auth/state', {
@@ -2229,7 +2183,7 @@
                 showMessage(error.message, false);
             } finally {
                 if (button && !stepChanged) {
-                    button.textContent = buttonText;
+                    setAuthActionLoading(button, false);
                     validateForm();
                 }
             }
@@ -2238,12 +2192,8 @@
         async function submitContact() {
             showMessage('', false);
             const button = document.getElementById('action-button');
-            const buttonText = button ? button.textContent : '';
             let stepChanged = false;
-            if (button) {
-                button.innerHTML = '<span class="spinner"></span>';
-                button.disabled = true;
-            }
+            setAuthActionLoading(button, true);
 
             const isRegister = state.currentStep === 'register-contact';
             const method = isRegister ? state.registerMethod : state.recoveryMethod;
@@ -2254,14 +2204,16 @@
                 contactValue = document.getElementById(isRegister ? 'register-email' : 'recovery-email').value.trim();
                 if (!contactValue || !contactValue.includes('@')) {
                     showMessage(T.enter_valid_email || 'Please enter a valid email address.', false);
-                    if (button) { button.textContent = buttonText; validateForm(); }
+                    setAuthActionLoading(button, false);
+                    validateForm();
                     return;
                 }
             } else {
                 const phoneInput = document.getElementById(isRegister ? 'register-phone' : 'recovery-phone');
                 if (currentIti && !currentIti.isValidNumber()) {
                     showMessage(T.enter_valid_phone || 'Please enter a valid phone number.', false);
-                    if (button) { button.textContent = buttonText; validateForm(); }
+                    setAuthActionLoading(button, false);
+                    validateForm();
                     return;
                 }
                 contactValue = currentIti ? currentIti.getNumber() : phoneInput.value.trim();
@@ -2305,7 +2257,7 @@
                 showMessage(error.message, false);
             } finally {
                 if (button && !stepChanged) {
-                    button.textContent = buttonText;
+                    setAuthActionLoading(button, false);
                     validateForm();
                 }
             }
@@ -2314,12 +2266,8 @@
         async function submitRegister() {
             showMessage('', false);
             const button = document.getElementById('action-button');
-            const buttonText = button ? button.textContent : '';
             let redirected = false;
-            if (button) {
-                button.innerHTML = '<span class="spinner"></span>';
-                button.disabled = true;
-            }
+            setAuthActionLoading(button, true);
 
             const formData = {
                 username: document.getElementById('register-password-username').value,
@@ -2346,7 +2294,7 @@
                 showMessage(error.message, false);
             } finally {
                 if (button && !redirected) {
-                    button.textContent = buttonText;
+                    setAuthActionLoading(button, false);
                     validateForm();
                 }
             }
@@ -2355,11 +2303,7 @@
         async function submitResetPassword() {
             showMessage('', false);
             const button = document.getElementById('action-button');
-            const buttonText = button ? button.textContent : '';
-            if (button) {
-                button.innerHTML = '<span class="spinner"></span>';
-                button.disabled = true;
-            }
+            setAuthActionLoading(button, true);
 
             const formData = {
                 username: document.getElementById('reset-password-username').value,
@@ -2387,7 +2331,7 @@
                 showMessage(error.message, false);
             } finally {
                 if (button && !redirected) {
-                    button.textContent = buttonText;
+                    setAuthActionLoading(button, false);
                     validateForm();
                 }
             }
@@ -2496,8 +2440,11 @@
 
             document.addEventListener('keydown', function (event) {
                 if (event.key === 'Enter' && !event.isComposing) {
-                    const tag = event.target && event.target.tagName;
+                    const targetEl = event.target;
+                    const tag = targetEl && targetEl.tagName;
                     if (tag === 'A' || tag === 'BUTTON' || tag === 'SELECT' || tag === 'TEXTAREA') return;
+                    if (targetEl && typeof targetEl.closest === 'function' && targetEl.closest('.iti__selected-flag, .iti__country-list, .iti__search-input, .iti__dropdown-content, [role="menu"], [role="listbox"]')) return;
+                    if (document.querySelector('.iti__country-list:not(.iti__hide)')) return;
                     event.preventDefault();
                     const continueButton = document.getElementById('continue-button');
                     const actionButton = document.getElementById('action-button');

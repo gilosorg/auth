@@ -375,6 +375,7 @@
         font-weight: 700;
         overflow: hidden;
         border: 1px solid var(--border-strong);
+        box-shadow: var(--card-shadow);
     }
 
     .avatar-circle img {
@@ -385,12 +386,14 @@
 
     .avatar-edit-btn {
         position: absolute;
-        bottom: -2px;
-        right: -2px;
-        width: 30px;
-        height: 30px;
+        bottom: 0;
+        right: 0;
+        width: 28px;
+        height: 28px;
         border-radius: 0px;
-        border: 2px solid var(--surface-elevated);
+        border: none;
+        border-top: 1px solid var(--surface-elevated);
+        border-left: 1px solid var(--surface-elevated);
         background: var(--primary);
         color: var(--primary-contrast);
         display: inline-flex;
@@ -454,6 +457,12 @@
         background: var(--surface-hover);
         border-color: var(--border-strong);
         color: var(--text);
+    }
+
+    .hero-id-chip.is-copied {
+        color: var(--green-700);
+        background: var(--green-50);
+        border-color: color-mix(in srgb, var(--green-500) 35%, transparent);
     }
 
     .hero-badges {
@@ -566,7 +575,7 @@
         display: flex;
         align-items: stretch;
         width: 100%;
-        height: 42px;
+        height: 44px;
         border: 1.5px solid var(--border-default);
         border-radius: 0px;
         background: var(--surface-subtle);
@@ -575,6 +584,19 @@
 
     .input-wrap:hover {
         border-color: var(--border-strong);
+    }
+
+    .input-wrap:has(input:disabled) {
+        opacity: 0.72;
+        cursor: not-allowed;
+    }
+
+    .input-wrap:has(input:disabled):hover {
+        border-color: var(--border-default);
+    }
+
+    .input-wrap:has(input:disabled) .console-input {
+        cursor: not-allowed;
     }
 
     .input-wrap:focus-within {
@@ -1220,6 +1242,20 @@
         background: var(--surface-hover);
     }
 
+    .mono-chip.is-copied {
+        color: var(--green-700);
+        background: var(--green-50);
+        border-color: color-mix(in srgb, var(--green-500) 35%, transparent);
+    }
+
+    .mono-chip--static {
+        cursor: default;
+    }
+
+    .mono-chip--static:hover {
+        background: var(--surface-subtle);
+    }
+
     .scope-chips {
         display: flex;
         flex-wrap: wrap;
@@ -1290,6 +1326,16 @@
     }
 
     .uri-item:hover .uri-item-copy-icon {
+        opacity: 1;
+    }
+
+    .uri-item.is-copied {
+        color: var(--green-700);
+        background: var(--green-50);
+        border-color: color-mix(in srgb, var(--green-500) 35%, transparent);
+    }
+
+    .uri-item.is-copied .uri-item-copy-icon {
         opacity: 1;
     }
 
@@ -1707,6 +1753,12 @@
         background: var(--surface-subtle);
     }
 
+    .reason-option:has(input[type="radio"]:checked) {
+        background: var(--red-50);
+        border-color: color-mix(in srgb, var(--red-500) 42%, var(--border-default));
+        box-shadow: inset 3px 0 0 var(--red-600);
+    }
+
     .reason-option input[type="radio"]:checked {
         border-color: var(--red-600);
     }
@@ -1911,7 +1963,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" onclick="closeTOTPModal()">{{ index .T "cancel" }}</button>
-                <button type="button" class="btn btn-primary" onclick="verifyTOTP()" id="totp-verify-btn">{{ index .T "verify" }}</button>
+                <button type="button" class="btn btn-primary" onclick="verifyTOTP()" id="totp-verify-btn" disabled>{{ index .T "verify" }}</button>
             </div>
         </div>
     </div>
@@ -2053,8 +2105,11 @@
                 <p class="card-desc" id="delete-confirm-desc"></p>
                 <div class="form-grid">
                     <div class="field">
-                        <label for="delete-username-confirm">@{{ index .T "username" }}</label>
-                        <input type="text" id="delete-username-confirm" class="console-input" placeholder="{{ index .T "username" }}" oninput="validateDeleteInputs()">
+                        <label for="delete-username-confirm">{{ index .T "username" }}</label>
+                        <div class="input-wrap">
+                            <span class="input-prefix" aria-hidden="true">@</span>
+                            <input type="text" id="delete-username-confirm" class="console-input console-input--prefixed" placeholder="{{ index .T "username" }}" autocapitalize="none" spellcheck="false" oninput="validateDeleteInputs()">
+                        </div>
                     </div>
                     <div class="field">
                         <label for="delete-id-confirm">{{ index .T "enter_user_id" }}</label>
@@ -2510,6 +2565,7 @@
                                 <div class="hero-subrow">
                                     <button type="button" class="hero-id-chip" data-copy-val="${escapeHtml(user.username)}" onclick="copyToClipboard(this.dataset.copyVal, this)" title="${escapeHtml(tr('copy', 'Copy'))}">
                                         <span>@${escapeHtml(user.username)}</span>
+                                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
                                     </button>
                                     <span>&middot;</span>
                                     <button type="button" class="hero-id-chip" onclick="copyToClipboard('${escapeHtml(String(user.id))}', this)" title="${escapeHtml(tr('copy_id', 'Copy ID'))}">
@@ -2629,10 +2685,11 @@
                                         <input type="text" id="new-username" name="username" class="console-input console-input--prefixed"
                                                value="${escapeHtml(user.username)}" required
                                                placeholder="${escapeHtml(tr('enter_new_gilos_id', 'Enter new username'))}"
+                                               ${changesRemaining === 0 ? 'disabled' : ''}
                                                oninput="handleUsernameInput(this)">
                                         <span class="input-adornment-right" id="username-indicator"></span>
                                     </div>
-                                    <span id="username-status-msg" class="field-status-note">${escapeHtml(tr('username_requirements', 'Use 5-30 lowercase letters & numbers.'))}</span>
+                                    <span id="username-status-msg" class="field-status-note">${escapeHtml(changesRemaining === 0 ? tr('username_changes_left', 'Changes remaining: %d/3').replace('%d', '0') : tr('username_requirements', 'Use 5-30 lowercase letters & numbers.'))}</span>
                                 </div>
                                 <div class="info-callout">
                                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:1px;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
@@ -2793,13 +2850,13 @@
                                     <h3 class="card-title">${escapeHtml(tr('security_activity', 'Recent Security Activity'))}</h3>
                                     <p class="card-desc">${escapeHtml(tr('security_activity_desc', 'Review recent sign-ins, password changes, MFA updates, and app authorizations.'))}</p>
                                 </div>
-                                <button type="button" class="btn btn-secondary btn-sm" onclick="loadActivity(1)">${escapeHtml(tr('refresh_list', 'Refresh'))}</button>
+                                <button type="button" class="btn btn-secondary btn-sm" onclick="loadActivity(1, this)">${escapeHtml(tr('refresh_list', 'Refresh'))}</button>
                             </div>
                             <div class="filter-pills" id="activity-filter-bar">
-                                <button type="button" class="filter-pill active" data-activity-filter="all" onclick="setActivityFilter('all')">${escapeHtml(tr('activity_filter_all', 'All'))}</button>
-                                <button type="button" class="filter-pill" data-activity-filter="auth" onclick="setActivityFilter('auth')">${escapeHtml(tr('activity_filter_auth', 'Sign-ins'))}</button>
-                                <button type="button" class="filter-pill" data-activity-filter="security" onclick="setActivityFilter('security')">${escapeHtml(tr('activity_filter_security', 'Security & 2FA'))}</button>
-                                <button type="button" class="filter-pill" data-activity-filter="clients" onclick="setActivityFilter('clients')">${escapeHtml(tr('activity_filter_clients', 'Apps & Clients'))}</button>
+                                <button type="button" class="filter-pill active" data-activity-filter="all" aria-pressed="true" onclick="setActivityFilter('all')">${escapeHtml(tr('activity_filter_all', 'All'))}</button>
+                                <button type="button" class="filter-pill" data-activity-filter="auth" aria-pressed="false" onclick="setActivityFilter('auth')">${escapeHtml(tr('activity_filter_auth', 'Sign-ins'))}</button>
+                                <button type="button" class="filter-pill" data-activity-filter="security" aria-pressed="false" onclick="setActivityFilter('security')">${escapeHtml(tr('activity_filter_security', 'Security & 2FA'))}</button>
+                                <button type="button" class="filter-pill" data-activity-filter="clients" aria-pressed="false" onclick="setActivityFilter('clients')">${escapeHtml(tr('activity_filter_clients', 'Apps & Clients'))}</button>
                             </div>
                             <div id="activity-list-container">
                                 <div class="skeleton" style="height:56px;"></div>
@@ -2821,8 +2878,9 @@
 
                 initHomePasswordToggles();
 
+                let resetHomePwStrength = () => {};
                 if (window.GilosUI) {
-                    window.GilosUI.attachPasswordStrength(
+                    resetHomePwStrength = window.GilosUI.attachPasswordStrength(
                         document.getElementById('new-password'),
                         document.getElementById('home-pw-strength'),
                         T
@@ -2999,8 +3057,7 @@
                             window.GilosUI.toast(tr('password_updated', 'Password updated successfully'), 'success');
                             e.target.reset();
                             if (matchEl) matchEl.textContent = '';
-                            const strengthEl = document.getElementById('home-pw-strength');
-                            if (strengthEl) strengthEl.innerHTML = '';
+                            resetHomePwStrength();
                         } catch (err) {
                             Swal.fire(tr('error', 'Error'), err.message, 'error');
                         } finally {
@@ -3166,6 +3223,11 @@
             const remaining = Math.max(0, 3 - (currentUser.username_changes_count || 0));
 
             clearTimeout(usernameTimer);
+            if (remaining === 0) {
+                if (indicator) indicator.innerHTML = '';
+                if (saveBtn) saveBtn.disabled = true;
+                return;
+            }
             if (!val || val === currentUser.username) {
                 if (indicator) indicator.innerHTML = '';
                 if (msgEl) { msgEl.textContent = tr('username_requirements', 'Use 5-30 lowercase letters & numbers.'); msgEl.className = 'field-status-note'; }
@@ -3182,8 +3244,9 @@
             usernameTimer = setTimeout(async () => {
                 try {
                     const response = await fetch(`/profile/username/check?username=${encodeURIComponent(val)}`);
-                    if (!response.ok) return;
+                    if (!response.ok || input.value !== val) return;
                     const data = await parseJSONSafe(response, tr('update_failed', 'Check failed'));
+                    if (input.value !== val) return;
                     if (data.available) {
                         if (indicator) indicator.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--green-500)" stroke-width="2.4"><polyline points="20 6 9 17 4 12"/></svg>';
                         if (msgEl) { msgEl.textContent = tr('username_available', 'Username is available'); msgEl.className = 'field-status-note is-ok'; }
@@ -3263,6 +3326,7 @@
                 if (verifyBtn) {
                     verifyBtn.removeAttribute('aria-busy');
                     window.GilosUI.setButtonLoading(verifyBtn, false);
+                    verifyBtn.disabled = getOTPValue('totp-otp').length !== 6;
                 }
             }
         }
@@ -3538,7 +3602,9 @@
         function setActivityFilter(filter) {
             activityFilter = ['all', 'auth', 'security', 'clients'].includes(filter) ? filter : 'all';
             document.querySelectorAll('#activity-filter-bar .filter-pill').forEach(btn => {
-                btn.classList.toggle('active', btn.dataset.activityFilter === activityFilter);
+                const isActive = btn.dataset.activityFilter === activityFilter;
+                btn.classList.toggle('active', isActive);
+                btn.setAttribute('aria-pressed', isActive ? 'true' : 'false');
             });
             renderActivityList();
         }
@@ -3616,15 +3682,18 @@
             const box = document.getElementById('activity-list-container');
             if (!box) return;
             activityPage = page;
+            if (triggerBtn && window.GilosUI) {
+                window.GilosUI.setButtonLoading(triggerBtn, true, tr('loading', 'Loading...'));
+            }
             if (page === 1) {
                 activityFilter = 'all';
                 document.querySelectorAll('#activity-filter-bar .filter-pill').forEach(btn => {
-                    btn.classList.toggle('active', btn.dataset.activityFilter === 'all');
+                    const isActive = btn.dataset.activityFilter === 'all';
+                    btn.classList.toggle('active', isActive);
+                    btn.setAttribute('aria-pressed', isActive ? 'true' : 'false');
                 });
                 allActivity = [];
                 box.innerHTML = `<div class="skeleton" style="height:52px;margin-bottom:8px;"></div><div class="skeleton" style="height:52px;"></div>`;
-            } else if (triggerBtn && window.GilosUI) {
-                window.GilosUI.setButtonLoading(triggerBtn, true, tr('loading', 'Loading...'));
             }
 
             try {
@@ -3642,8 +3711,11 @@
                 if (page === 1) {
                     box.innerHTML = `<p class="card-desc">${escapeHtml(tr('failed_load_activity', 'Could not load recent activity.'))}</p>`;
                 } else {
-                    if (triggerBtn && window.GilosUI) window.GilosUI.setButtonLoading(triggerBtn, false);
                     window.GilosUI.toast(tr('failed_load_activity', 'Could not load recent activity.'), 'error');
+                }
+            } finally {
+                if (triggerBtn && window.GilosUI && document.body.contains(triggerBtn)) {
+                    window.GilosUI.setButtonLoading(triggerBtn, false);
                 }
             }
         }
@@ -3652,7 +3724,9 @@
         function setSessionsFilter(filter) {
             sessionsFilter = ['all', 'browser', 'apps'].includes(filter) ? filter : 'all';
             document.querySelectorAll('#sessions-filter-bar .filter-pill').forEach(btn => {
-                btn.classList.toggle('active', btn.dataset.sessionsFilter === sessionsFilter);
+                const isActive = btn.dataset.sessionsFilter === sessionsFilter;
+                btn.classList.toggle('active', isActive);
+                btn.setAttribute('aria-pressed', isActive ? 'true' : 'false');
             });
             renderSessionsCards();
         }
@@ -3673,13 +3747,17 @@
             if (clr) clr.classList.add('hidden');
             document.querySelectorAll('#sessions-filter-bar .filter-pill').forEach(btn => {
                 btn.classList.toggle('active', btn.dataset.sessionsFilter === 'all');
+                btn.setAttribute('aria-pressed', btn.dataset.sessionsFilter === 'all' ? 'true' : 'false');
             });
             renderSessionsCards();
         }
 
-        async function loadSessions(page = 1) {
+        async function loadSessions(page = 1, triggerBtn = null) {
             const container = document.getElementById('sessions-content');
             sessionsPage = page;
+            if (triggerBtn && window.GilosUI) {
+                window.GilosUI.setButtonLoading(triggerBtn, true, tr('loading', 'Loading...'));
+            }
             if (page === 1) {
                 allSessions = [];
                 container.innerHTML = `<div class="cards-grid"><div class="skeleton" style="height:210px;border-radius:0px;"></div><div class="skeleton" style="height:210px;border-radius:0px;"></div></div>`;
@@ -3696,7 +3774,11 @@
                 hasMoreSessions = Boolean(result.pagination && result.pagination.has_next_page);
                 renderSessionsGrid();
             } catch (err) {
-                container.innerHTML = `<div class="empty-state"><p>${escapeHtml(tr('failed_load_sessions', 'Failed to load sessions.'))}</p><button type="button" class="btn btn-secondary btn-sm" onclick="loadSessions(1)">${escapeHtml(tr('refresh_list', 'Refresh'))}</button></div>`;
+                container.innerHTML = `<div class="empty-state"><p>${escapeHtml(tr('failed_load_sessions', 'Failed to load sessions.'))}</p><button type="button" class="btn btn-secondary btn-sm" onclick="loadSessions(1, this)">${escapeHtml(tr('refresh_list', 'Refresh'))}</button></div>`;
+            } finally {
+                if (triggerBtn && window.GilosUI && document.body.contains(triggerBtn)) {
+                    window.GilosUI.setButtonLoading(triggerBtn, false);
+                }
             }
         }
 
@@ -3729,22 +3811,22 @@
                         <p>${escapeHtml(tr('sessions_subtitle', 'Manage browser sessions and connected applications with active OAuth access.'))}</p>
                     </div>
                     <div class="section-toolbar-actions">
-                        <button type="button" class="btn btn-secondary btn-sm" onclick="loadSessions(1)">${escapeHtml(tr('refresh_list', 'Refresh'))}</button>
+                        <button type="button" class="btn btn-secondary btn-sm" onclick="loadSessions(1, this)">${escapeHtml(tr('refresh_list', 'Refresh'))}</button>
                         ${hasOthers ? `<button type="button" class="btn btn-danger-outline btn-sm" onclick="terminateOtherSessions()">${escapeHtml(tr('terminate_all_others', 'Terminate all others'))}</button>` : ''}
                     </div>
                 </div>
                 ${allSessions.length > 0 ? `
                 <div class="filter-toolbar">
                     <div class="filter-pills" id="sessions-filter-bar">
-                        <button type="button" class="filter-pill ${sessionsFilter === 'all' ? 'active' : ''}" data-sessions-filter="all" onclick="setSessionsFilter('all')">
+                        <button type="button" class="filter-pill ${sessionsFilter === 'all' ? 'active' : ''}" data-sessions-filter="all" aria-pressed="${sessionsFilter === 'all' ? 'true' : 'false'}" onclick="setSessionsFilter('all')">
                             <span>${escapeHtml(tr('sessions_filter_all', 'All'))}</span>
                             <span class="filter-pill-count">${totalCount}</span>
                         </button>
-                        <button type="button" class="filter-pill ${sessionsFilter === 'browser' ? 'active' : ''}" data-sessions-filter="browser" onclick="setSessionsFilter('browser')">
+                        <button type="button" class="filter-pill ${sessionsFilter === 'browser' ? 'active' : ''}" data-sessions-filter="browser" aria-pressed="${sessionsFilter === 'browser' ? 'true' : 'false'}" onclick="setSessionsFilter('browser')">
                             <span>${escapeHtml(tr('sessions_filter_browser', 'Browser Sessions'))}</span>
                             <span class="filter-pill-count">${browserCount}</span>
                         </button>
-                        <button type="button" class="filter-pill ${sessionsFilter === 'apps' ? 'active' : ''}" data-sessions-filter="apps" onclick="setSessionsFilter('apps')">
+                        <button type="button" class="filter-pill ${sessionsFilter === 'apps' ? 'active' : ''}" data-sessions-filter="apps" aria-pressed="${sessionsFilter === 'apps' ? 'true' : 'false'}" onclick="setSessionsFilter('apps')">
                             <span>${escapeHtml(tr('sessions_filter_apps', 'Connected Apps'))}</span>
                             <span class="filter-pill-count">${appsCount}</span>
                         </button>
@@ -4113,7 +4195,7 @@
                             <div class="entity-row" style="align-items:center;">
                                 <span class="entity-label">${escapeHtml(tr('secret', 'Secret'))}</span>
                                 <span class="entity-val">
-                                    ${c.secret_prefix ? `<code class="mono-chip" style="cursor:default;">${escapeHtml(c.secret_prefix)}••••••••</code>` : escapeHtml(tr('no_prefix_regenerate', 'Regenerate to set prefix'))}
+                                    ${c.secret_prefix ? `<code class="mono-chip mono-chip--static">${escapeHtml(c.secret_prefix)}••••••••</code>` : escapeHtml(tr('no_prefix_regenerate', 'Regenerate to set prefix'))}
                                     ${c.secret_created_at ? `<span style="display:block;font-size:0.72rem;color:var(--text-muted);margin-top:2px;">${escapeHtml(window.GilosUI.formatRelativeTime(c.secret_created_at, T))}</span>` : ''}
                                 </span>
                             </div>` : `
@@ -4450,10 +4532,20 @@
         }
 
         // OTP Modal Utilities
+        function syncHomeOtpActionState(containerId) {
+            if (containerId === 'totp-otp') {
+                const verifyBtn = document.getElementById('totp-verify-btn');
+                if (verifyBtn && !isVerifyingTOTP) {
+                    verifyBtn.disabled = getOTPValue('totp-otp').length !== 6;
+                }
+            }
+        }
+
         function setupOTPInputs(containerId, onComplete) {
             const container = document.getElementById(containerId);
             if (!container) return;
             container._otpOnComplete = onComplete;
+            syncHomeOtpActionState(containerId);
             if (container.dataset.otpBound === '1') return;
             container.dataset.otpBound = '1';
             const inputs = container.querySelectorAll('.otp-input');
@@ -4463,6 +4555,7 @@
             inputs.forEach((inp, idx) => {
                 inp.addEventListener('input', (e) => {
                     const clean = e.target.value.replace(/\D/g, '');
+                    inputs.forEach(i => i.classList.remove('error'));
                     if (clean.length > 1) {
                         const count = Math.min(clean.length, inputs.length - idx);
                         for (let i = 0; i < count; i++) {
@@ -4478,12 +4571,15 @@
                         const errEl = document.getElementById('totp-error');
                         if (errEl) { errEl.textContent = ''; errEl.classList.remove('is-visible'); }
                     }
+                    syncHomeOtpActionState(containerId);
                     if (getOTPValue(containerId).length === 6) runComplete();
                 });
                 inp.addEventListener('keydown', (e) => {
                     if (e.key === 'Backspace' && !e.target.value && idx > 0) {
+                        inputs.forEach(i => i.classList.remove('error'));
                         inputs[idx - 1].focus();
                         inputs[idx - 1].value = '';
+                        syncHomeOtpActionState(containerId);
                     } else if (e.key === 'ArrowLeft' && idx > 0) {
                         e.preventDefault();
                         inputs[idx - 1].focus();
@@ -4499,8 +4595,10 @@
                     e.preventDefault();
                     const clip = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '').slice(0, 6);
                     if (!clip) return;
+                    inputs.forEach(i => i.classList.remove('error'));
                     clip.split('').forEach((c, ci) => { if (inputs[ci]) inputs[ci].value = c; });
                     if (inputs.length) inputs[Math.min(clip.length, inputs.length - 1)].focus();
+                    syncHomeOtpActionState(containerId);
                     if (clip.length === 6) runComplete();
                 });
             });
@@ -4515,7 +4613,11 @@
             const container = document.getElementById(containerId);
             if (!container) return;
             const inputs = container.querySelectorAll('.otp-input');
-            inputs.forEach(i => { i.value = ''; });
+            inputs.forEach(i => {
+                i.value = '';
+                i.classList.remove('error');
+            });
+            syncHomeOtpActionState(containerId);
             if (focusFirst && inputs.length && typeof container.closest === 'function' && container.closest('.modal.is-open')) {
                 inputs[0].focus();
             }

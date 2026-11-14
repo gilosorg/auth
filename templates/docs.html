@@ -116,6 +116,9 @@
             .docs-main { margin-left: 0; max-width: 100%; padding: 24px 18px; }
         }
         .docs-footer { margin-top: 52px; padding-top: 22px; border-top: 1px solid var(--doc-border); text-align: center; color: var(--doc-text-muted); font-size: 0.85rem; }
+        .docs-footer-links { display: inline-flex; align-items: center; flex-wrap: wrap; justify-content: center; gap: 6px 14px; margin-left: 8px; }
+        .docs-footer-link { color: var(--doc-text-secondary); text-decoration: none; transition: color 0.14s ease; }
+        .docs-footer-link:hover { color: var(--doc-text); text-decoration: underline; text-underline-offset: 3px; }
         .client-panel { background: var(--doc-content-bg); border: 1px solid var(--doc-border); border-radius: var(--radius-lg); padding: 20px; margin: 20px 0; box-shadow: var(--card-shadow); }
         .client-selector { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
         .client-selector label { font-weight: 600; color: var(--doc-text); }
@@ -312,7 +315,12 @@
                             <div class="client-info-item" id="infoSecretInputRow">
                                 <div class="client-info-label">Client Secret (for API testing)</div>
                                 <div class="client-info-value">
-                                    <input type="password" id="infoSecretInput" placeholder="Paste your client secret here" style="font-family:monospace;font-size:0.85rem;padding:6px 10px;border:1px solid var(--doc-border);border-radius:0px;background:var(--doc-bg);color:var(--doc-text);width:100%;max-width:420px;">
+                                    <div class="gilos-input-group gilos-input-group--compact" style="max-width:420px;">
+                                        <input type="password" id="infoSecretInput" class="gilos-input-control" style="font-family:var(--font-mono);font-size:0.84rem;" placeholder="Paste your client secret here" autocomplete="off">
+                                        <button type="button" class="gilos-input-action" id="toggleInfoSecretBtn" onclick="toggleDocsSecret()" aria-label="{{ index .T "show_password" }}">
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                             <div class="client-info-item hidden" id="infoPublicNoteRow">
@@ -1005,10 +1013,12 @@ func CallbackHandler(onSuccess AuthCallback) http.HandlerFunc {
 
                 <footer class="docs-footer">
                     <p>&copy; {{ if .Year }}{{ .Year }}{{ else }}2026{{ end }} {{ index .T "company_name_llc" }}.
-                        <a href="/terms" style="color: var(--doc-text-secondary); margin: 0 8px;">{{ index .T "terms" }}</a>
-                        <a href="/privacy" style="color: var(--doc-text-secondary); margin: 0 8px;">{{ index .T "privacy" }}</a>
-                        <a href="/home" style="color: var(--doc-text-secondary); margin: 0 8px;">{{ index .T "account" }}</a>
-                        <a href="https://gilos.org/contact" target="_blank" rel="noopener noreferrer" style="color: var(--doc-text-secondary); margin: 0 8px;">{{ index .T "help" }}</a>
+                        <span class="docs-footer-links">
+                            <a href="/terms" class="docs-footer-link">{{ index .T "terms" }}</a>
+                            <a href="/privacy" class="docs-footer-link">{{ index .T "privacy" }}</a>
+                            <a href="/home" class="docs-footer-link">{{ index .T "account" }}</a>
+                            <a href="https://gilos.org/contact" target="_blank" rel="noopener noreferrer" class="docs-footer-link">{{ index .T "help" }}</a>
+                        </span>
                     </p>
                 </footer>
             </div>
@@ -1042,7 +1052,9 @@ func CallbackHandler(onSuccess AuthCallback) http.HandlerFunc {
             stateMismatchWarn: {{ index .T "state_mismatch_warn" }},
             readyToTestPkce: {{ index .T "ready_to_test_pkce" }},
             readyToTestShort: {{ index .T "ready_to_test_short" }},
-            noCodeInUrl: {{ index .T "no_code_in_url" }}
+            noCodeInUrl: {{ index .T "no_code_in_url" }},
+            showPassword: {{ index .T "show_password" }},
+            hidePassword: {{ index .T "hide_password" }}
         };
 
         const DOCS_THEME_ICONS = {
@@ -1215,7 +1227,12 @@ func CallbackHandler(onSuccess AuthCallback) http.HandlerFunc {
                 document.getElementById('infoSecretPrefix').textContent = currentClient.secretPrefix || '????????';
                 document.getElementById('infoReturn').textContent = currentClient.return;
                 document.getElementById('infoScopes').textContent = currentClient.scopes;
-                document.getElementById('infoSecretInput').value = '';
+                const secretEl = document.getElementById('infoSecretInput');
+                if (secretEl) {
+                    secretEl.value = '';
+                    secretEl.type = 'password';
+                }
+                syncDocsSecretToggleIcon(false);
                 if (secretPrefixRow) secretPrefixRow.classList.toggle('hidden', isPublic);
                 if (secretInputRow) secretInputRow.classList.toggle('hidden', isPublic);
                 if (publicNoteRow) publicNoteRow.classList.toggle('hidden', !isPublic);
@@ -1232,6 +1249,24 @@ func CallbackHandler(onSuccess AuthCallback) http.HandlerFunc {
             }
 
             updateAllExamples();
+        }
+
+        function syncDocsSecretToggleIcon(isVisible) {
+            const btn = document.getElementById('toggleInfoSecretBtn');
+            if (!btn) return;
+            btn.setAttribute('aria-pressed', isVisible ? 'true' : 'false');
+            btn.setAttribute('aria-label', isVisible ? (DOCS_I18N.hidePassword || 'Hide secret') : (DOCS_I18N.showPassword || 'Show secret'));
+            btn.innerHTML = isVisible
+                ? '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>'
+                : '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
+        }
+
+        function toggleDocsSecret() {
+            const input = document.getElementById('infoSecretInput');
+            if (!input) return;
+            const show = input.type === 'password';
+            input.type = show ? 'text' : 'password';
+            syncDocsSecretToggleIcon(show);
         }
 
         // Re-update code examples when the user types/pastes their secret
