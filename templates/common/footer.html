@@ -220,6 +220,11 @@
         background: var(--surface-subtle);
     }
 
+    .lang-option:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: -2px;
+    }
+
     .lang-option.active {
         background: var(--surface-subtle);
         box-shadow: inset 3px 0 0 var(--accent);
@@ -258,10 +263,12 @@
             justify-content: center;
         }
         .lang-dropdown {
-            right: 0;
-            left: auto;
+            left: 50%;
+            right: auto;
+            width: min(172px, calc(100vw - 32px));
+            min-width: 0;
+            margin-left: calc(min(172px, calc(100vw - 32px)) / -2);
             transform: none;
-            max-width: calc(100vw - 32px);
         }
     }
 </style>
