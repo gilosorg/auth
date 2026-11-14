@@ -313,7 +313,7 @@ input[type="radio"] {
     width: 17px;
     height: 17px;
     border: 1.5px solid var(--border-strong);
-    border-radius: 0px;
+    border-radius: 50%;
     background: var(--surface-elevated);
     cursor: pointer;
     position: relative;
@@ -335,6 +335,7 @@ input[type="radio"]:checked::after {
     content: "";
     position: absolute;
     inset: 3.5px;
+    border-radius: 50%;
     background: var(--accent);
 }
 
@@ -463,12 +464,14 @@ input[type="radio"]:disabled {
     border-color: var(--red-500);
 }
 
+.btn-spinner,
 .btn .btn-spinner {
+    display: inline-block;
     width: 15px;
     height: 15px;
     border: 2px solid currentColor;
     border-right-color: transparent;
-    border-radius: 0px;
+    border-radius: 50%;
     animation: gilos-spin 0.65s linear infinite;
     flex-shrink: 0;
 }
@@ -740,7 +743,7 @@ input[type="radio"]:disabled {
 .pw-rule-dot {
     width: 14px;
     height: 14px;
-    border-radius: 0px;
+    border-radius: 50%;
     background: var(--slate-200);
     color: var(--text-muted);
     display: inline-flex;

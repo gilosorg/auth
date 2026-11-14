@@ -35,13 +35,13 @@ Email domains in Resend are separated by purpose to protect deliverability and i
 
 ## 4. UI Engineering & Brand Design Philosophy (CRITICAL)
 
-Gilos interfaces pair stark `0px` geometry with **Swiss architectural precision**. Square edges must never look like rounded interfaces with the corners sliced off; visual authority comes from unified grid alignment, flush joints, crisp `1px`/`1.5px` structural borders, and typographic restraint.
+Gilos interfaces blend **corporate Microsoft / Fluent structural discipline** (sharp rectangular containers, crisp hairline borders, clear grid hierarchy) with **Apple-inspired consumer calm** (generous breathing room, understated typography, translucent surfaces, tactile restraint, and natural human iconography). Square UI boxes should feel purposeful and modern—never brutalist, sterile, or robotic.
 
-### Sharp `0px` Geometry (Brand Face — MANDATORY)
-- Every UI element across this service MUST have square edges (`border-radius: 0px`).
-- Never use `border-radius > 0`, `50%`, pill radii (`9999px`), or `rx > 0` on rectangular SVG frames, cards, containers, inputs, textareas, selects, buttons, checkboxes, radio buttons, toggle switches, badges, status tags, avatars, skeletons, scrollbars, toast popups, modals, HTML OTP emails, or inline JS markup.
+### Sharp `0px` Box Geometry & Natural Iconography (Brand Face — MANDATORY)
+- **Containers & Interactive Surfaces (`0px`)**: Cards, containers, panels, inputs, textareas, selects, buttons, checkboxes, toggle switches, badges, status tags, avatars, dropdown menus, skeletons, scrollbars, toast popups, modals, and HTML OTP emails MUST have sharp square corners (`border-radius: 0px`).
 - All radius tokens in `static/css/app.css` (`--radius-xs`, `--radius-sm`, `--radius-md`, `--radius-lg`, `--radius-xl`, `--radius-pill`) MUST remain `0px`.
-- When integrating third-party UI libraries (SweetAlert2 `.swal2-*`, `intl-tel-input` `.iti__*`, CropperJS `.cropper-*`), explicitly override their corner radii with `border-radius: 0px !important`.
+- When integrating third-party UI libraries (SweetAlert2 `.swal2-*`, `intl-tel-input` `.iti__*`, CropperJS `.cropper-*`), explicitly override container/control corner radii with `border-radius: 0px !important`.
+- **Icons, Spinners & Semantic Dots Stay Natural**: **Do NOT** force `0px` blocky geometry onto icons or inherently circular micro-indicators. Pictographic SVG icons (devices, locks, envelopes, copy symbols, badges, shields) should preserve natural optical rounding (`rx="2"` on hardware/document rects, round stroke caps/joins). Rotating spinners (`.spinner`, `.btn-spinner`), radio buttons (`input[type="radio"]`), and tiny status dots (`.status-live-dot`, `.pw-rule-dot`) remain smoothly circular (`border-radius: 50%`) so icons read as icons and status cues stay human.
 
 ### Unified Flex Input Groups & Flush Adornments (CRITICAL)
 - **NEVER** position text prefixes (`@`), status indicators, eye toggles, or submit buttons inside `<input>` via `position: absolute` with hardcoded `padding-left`/`padding-right` (font metrics vary across glyphs such as Inter `@` vs `E` and cause baseline sag, tight kerning, and uneven top/right/bottom air gaps).
@@ -51,14 +51,14 @@ Gilos interfaces pair stark `0px` geometry with **Swiss architectural precision*
   - Style disabled docked buttons as intentional matte structural cells (`opacity: 1` with subtle background and `var(--text-tertiary)` icon color) rather than faded translucent boxes.
   - Apply hover, `:focus-within` (`border-color: var(--accent)`, `box-shadow: 0 0 0 2px var(--focus-ring)`), and error rings on the outer wrapper rather than the inner borderless input.
 
-### Structural Hierarchy, Typography & Deterministic Kinematics
-- **Seams Over Soft Shadows**: Use crisp `1px` structural borders, `gap: 0` segmented bars divided by internal hairline borders (`.method-selector`, `.filter-pills`), and `inset 3px 0 0` left/bottom active accent rails over diffuse glow shadows or floating inner pills.
-- **Hierarchy & Monospace Discipline**: Always define and verify text contrast tokens (`--text`, `--text-secondary`, `--text-muted`, `--text-tertiary`) in both Light and Dark themes so footer disclaimers, trust strips, placeholders, and prefixes never fall back to full-brightness body text. Pair `Inter` with `var(--font-mono)` (`'JetBrains Mono'`, system monospace) and `font-variant-numeric: tabular-nums` for `@` handles, numeric `User ID #...`, OTP digit grids, countdowns, client IDs, scopes, and HTTP status tags.
-- **Line Wrapping & Kinematics**: Constrain centered disclaimer/legal text (`max-width: 310px`–`340px`) to avoid single-word orphan wraps. Replace rubbery hover lifts/scale zooms with crisp border/tonal transitions and subtle tactile `translateY(1px)` click detents.
+### Structural Balance, Typography & Deterministic Kinematics
+- **Structured Calm**: Combine `1px` corporate hairlines, `gap: 0` segmented bars (`.method-selector`, `.filter-pills`), and `inset 3px 0 0` / `inset 0 -2px 0` active accent rails with subtle, restrained surface depth (`--card-shadow`, frosted translucent headers) and open padding so interfaces remain calm and breathable.
+- **Hierarchy & Monospace Discipline**: Always define and verify text contrast tokens (`--text`, `--text-secondary`, `--text-muted`, `--text-tertiary`) in both Light and Dark themes so footer disclaimers, placeholders, and prefixes remain subtle yet legible. Pair `Inter` with `var(--font-mono)` (`'JetBrains Mono'`, system monospace) and `font-variant-numeric: tabular-nums` for `@` handles, numeric `User ID #...`, OTP digit grids, countdowns, client IDs, scopes, and HTTP status tags.
+- **Line Wrapping & Kinematics**: Constrain centered disclaimer/legal text (`max-width: 310px`–`340px`) to avoid single-word orphan wraps. Prefer subtle border/tonal transitions and crisp `translateY(1px)` click detents over bouncy scale animations.
 
 ### Form Controls, Themes & Maintainability
-- Enforce `button, input, textarea, select { border-radius: 0px; }` globally.
-- Always style `input[type="checkbox"]` and `input[type="radio"]` using `appearance: none; -webkit-appearance: none; border-radius: 0px;` (angled square checkmark for checkboxes, centered inner square for radios), leaving `.toggle-switch` as a `1px`-bordered rectangular track with an exact-fit sliding square thumb.
+- Enforce `button, input, textarea, select { border-radius: 0px; }` globally (except `input[type="radio"]`, which keeps its classic `50%` circular ring so users can immediately distinguish single-choice radios from square multi-select checkboxes).
+- Style `input[type="checkbox"]` (`border-radius: 0px` with angled checkmark) and `input[type="radio"]` (`appearance: none; border-radius: 50%` with centered circular dot), leaving `.toggle-switch` as a `1px`-bordered rectangular track with an exact-fit sliding square thumb.
 - Build strictly with vanilla HTML/CSS/JS; do not add CSS frameworks.
 - Always consume CSS custom properties from `static/css/app.css` and verify every new component works cleanly in both Light mode and Dark mode (`:root[data-theme="dark"]` and `@media (prefers-color-scheme: dark)`).
 - Keep `:focus-visible` outlines clear (`2px solid var(--accent)`), maintain responsive behavior at mobile breakpoints (`375px`+), respect `prefers-reduced-motion`, and update all three translation files (`i18n/translations/en.json`, `ru.json`, `uz.json`) when adding user-facing copy.

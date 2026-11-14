@@ -823,7 +823,7 @@
             height: 16px;
             border: 2px solid color-mix(in srgb, currentColor 28%, transparent);
             border-top-color: currentColor;
-            border-radius: 0px;
+            border-radius: 50%;
             animation: gilos-spin 0.65s linear infinite;
         }
 
@@ -863,7 +863,7 @@
                     <p id="auth-subtitle" class="auth-subtitle">{{ index .T "sign_in_subtitle" }}</p>
                     <div id="target-notice" class="target-notice hidden">
                         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                            <rect x="3" y="11" width="18" height="11"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
                         </svg>
                         <span>{{ index .T "oauth_target_redirect_notice" }}</span>
                         <strong id="target-notice-dest"></strong>
@@ -934,7 +934,7 @@
                                     <input type="radio" id="two-step-email" name="contact_type" value="email" aria-label="{{ index .T "email" }}">
                                     <span class="radio-option-icon" aria-hidden="true">
                                         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                            <rect x="2" y="4" width="20" height="16"/><polyline points="22,6 12,13 2,6"/>
+                                            <rect x="2" y="4" width="20" height="16" rx="2"/><polyline points="22,6 12,13 2,6"/>
                                         </svg>
                                     </span>
                                     <span id="two-step-email-label" class="radio-option-label"></span>
@@ -943,7 +943,7 @@
                                     <input type="radio" id="two-step-phone" name="contact_type" value="phone" aria-label="{{ index .T "phone" }}">
                                     <span class="radio-option-icon" aria-hidden="true">
                                         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                            <rect x="5" y="2" width="14" height="20"/><line x1="12" y1="18" x2="12.01" y2="18"/>
+                                            <rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/>
                                         </svg>
                                     </span>
                                     <span id="two-step-phone-label" class="radio-option-label"></span>
