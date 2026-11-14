@@ -48,19 +48,19 @@
         width: 100%;
         position: relative;
         z-index: 20;
-        background: var(--surface-subtle);
-        border-bottom: 1px solid var(--border-default);
+        background: var(--card-bg);
+        border: 1px solid var(--card-border);
+        box-shadow: var(--card-shadow);
+        margin-bottom: 18px;
         transition: opacity 0.16s ease, transform 0.16s ease;
     }
 
     .ribbon-inner {
-        max-width: 1200px;
-        margin: 0 auto;
-        padding: 8px 24px;
+        padding: 10px 16px;
         display: flex;
         align-items: center;
         justify-content: space-between;
-        gap: 16px;
+        gap: 14px;
     }
 
     .ribbon-brand {
@@ -74,7 +74,7 @@
         width: 28px;
         height: 28px;
         border-radius: 0px;
-        border: 1px solid var(--border-default);
+        border: none;
         flex-shrink: 0;
         object-fit: cover;
     }
@@ -88,32 +88,32 @@
     }
 
     .ribbon-title {
-        font-size: 0.875rem;
+        font-size: 0.86rem;
         font-weight: 600;
         color: var(--text);
         letter-spacing: -0.01em;
     }
 
     .ribbon-subtitle {
-        font-size: 0.825rem;
+        font-size: 0.81rem;
         color: var(--text-muted);
     }
 
     .ribbon-actions {
         display: flex;
         align-items: center;
-        gap: 8px;
+        gap: 6px;
         flex-shrink: 0;
     }
 
     .ribbon-cta {
         display: inline-flex;
         align-items: center;
-        gap: 6px;
-        background: var(--surface-elevated);
-        color: var(--text);
-        border: 1px solid var(--border-strong);
-        padding: 6px 11px;
+        gap: 5px;
+        background: var(--accent-subtle);
+        color: var(--accent);
+        border: 1px solid transparent;
+        padding: 5px 10px;
         border-radius: 0px;
         font-size: 0.78rem;
         font-weight: 600;
@@ -124,9 +124,8 @@
     }
 
     .ribbon-cta:hover {
-        background: var(--accent-subtle);
-        border-color: var(--accent);
-        color: var(--accent);
+        background: var(--accent);
+        color: var(--accent-contrast);
     }
 
     .ribbon-cta:active {
@@ -139,24 +138,23 @@
     }
 
     .ribbon-close {
-        width: 30px;
-        height: 30px;
+        width: 28px;
+        height: 28px;
         padding: 0;
         margin: 0;
         border-radius: 0px;
-        border: 1px solid var(--border-default);
-        background: var(--surface-elevated);
+        border: none;
+        background: transparent;
         color: var(--text-muted);
         display: inline-flex;
         align-items: center;
         justify-content: center;
         cursor: pointer;
-        transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease, transform 0.08s ease;
+        transition: background-color 0.15s ease, color 0.15s ease, transform 0.08s ease;
     }
 
     .ribbon-close:hover {
         background: var(--surface-subtle);
-        border-color: var(--border-strong);
         color: var(--text);
     }
 
@@ -171,7 +169,7 @@
 
     @media (max-width: 600px) {
         .ribbon-inner {
-            padding: 10px 16px;
+            padding: 9px 14px;
         }
         .ribbon-subtitle {
             display: none;
@@ -180,7 +178,7 @@
 
     @media (max-width: 480px) {
         .ribbon-inner {
-            padding: 8px 14px;
+            padding: 8px 12px;
             gap: 10px;
         }
         .ribbon-cta {
