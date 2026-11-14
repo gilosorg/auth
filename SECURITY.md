@@ -45,10 +45,10 @@ The following are in scope:
 This project implements industry-standard security practices:
 
 - **Password Storage**: bcrypt with configurable cost factor
-- **Token Storage**: SHA-256 hashed (access tokens, refresh tokens, auth codes)
-- **Session Security**: HttpOnly, Secure, SameSite=Lax cookies with rotation on privilege changes
+- **Token Storage**: SHA-256 hashed (access tokens, refresh tokens, auth codes, session cookie tokens)
+- **Session Security**: HttpOnly, Secure, SameSite=Lax cookies with atomic rotation on privilege changes
 - **TOTP Secrets**: AES-256-GCM encrypted at rest
-- **PKCE**: Mandatory for all OAuth clients (OAuth 2.1)
-- **CSRF**: Double-submit cookie pattern with constant-time comparison
-- **Rate Limiting**: Per-IP and per-account with progressive blocking
+- **PKCE**: Mandatory `S256` challenge method for all OAuth clients (OAuth 2.1)
+- **CSRF**: Session-bound synchronizer token pattern with constant-time comparison
+- **Rate Limiting**: Per-IP (/64 IPv6 subnet) and per-account with progressive blocking
 - **Audit Logging**: All authentication events logged with IP, User-Agent, and request ID

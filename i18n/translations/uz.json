@@ -570,5 +570,9 @@
   "setting_group_account": "Hisob",
   "setting_group_security": "Xavfsizlik",
   "setting_group_personalization": "Shaxsiylashtirish",
-  "setting_group_developer": "Dasturchilar uchun"
+  "setting_group_developer": "Dasturchilar uchun",
+  "failed": "So‘rov bajarilmadi",
+  "security_block_active": "Hisobingiz xavfsizlik maqsadida %s gacha vaqtincha bloklandi.",
+  "resend_in": "%d soniyadan keyin qayta yuborish",
+  "session_expired_refresh": "Xavfsizlik seansi yangilandi. Sahifa yangilanmoqda..."
 }

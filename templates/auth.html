@@ -175,7 +175,7 @@
             border-radius: var(--radius-md);
             background: var(--red-50);
             border: 1px solid color-mix(in srgb, var(--red-500) 28%, transparent);
-            border-left: 3px solid var(--red-500);
+            box-shadow: inset 3px 0 0 var(--red-500);
             color: var(--red-700);
             font-size: 0.85rem;
             line-height: 1.45;
@@ -197,7 +197,7 @@
             padding: 10px 13px;
             background: var(--red-50);
             border: 1px solid color-mix(in srgb, var(--red-500) 28%, transparent);
-            border-left: 3px solid var(--red-500);
+            box-shadow: inset 3px 0 0 var(--red-500);
             color: var(--red-700);
             text-align: left;
             display: flex;
@@ -208,7 +208,7 @@
         .message-container.success:not(:empty) {
             background: var(--green-50);
             border-color: color-mix(in srgb, var(--green-500) 28%, transparent);
-            border-left-color: var(--green-500);
+            box-shadow: inset 3px 0 0 var(--green-500);
             color: var(--green-700);
         }
 
@@ -383,8 +383,21 @@
         .forgot-password:hover,
         .terms-link:hover,
         .support-link:hover,
-        .resend-link:hover {
+        .resend-link:hover:not(:disabled) {
             text-decoration: underline;
+        }
+
+        .resend-link {
+            background: none;
+            border: none;
+            padding: 0;
+            font-family: inherit;
+            cursor: pointer;
+        }
+
+        .resend-link:disabled {
+            cursor: default;
+            opacity: 0.5;
         }
 
         .radio-wrapper {
@@ -977,7 +990,7 @@
                                     <span>{{ or (index .T "expires_in") "Expires in" }}:</span>
                                     <span class="countdown-timer" id="otp-timer">05:00</span>
                                 </div>
-                                <a href="#" class="resend-link" onclick="resendOTP(); return false;" id="resend-link">{{ index .T "resend_otp" }}</a>
+                                <button type="button" class="resend-link" onclick="resendOTP();" id="resend-link">{{ index .T "resend_otp" }}</button>
                             </div>
                         </div>
                     </form>
@@ -1194,6 +1207,7 @@
                 } else {
                     emailWrapper.classList.add('hidden');
                     phoneWrapper.classList.remove('hidden');
+                    window.dispatchEvent(new Event('resize'));
                     if (!skipFocus) {
                         const el = document.getElementById(`${prefix}-phone`);
                         if (el && el.offsetParent !== null) el.focus({ preventScroll: true });
@@ -1596,9 +1610,9 @@
                             ? (T.resend_otp_count || 'Resend OTP (%d/3)').replace('%d', String(resendCount))
                             : (T.resend_otp || 'Resend OTP');
                     }
-                    const prevStep = (data.mfa_email_enabled || data.mfa_phone_enabled || data.mfa_totp_enabled)
+                    const prevStep = data.password_verified
                         ? 'two-step-select'
-                        : ((data.email || data.phone) ? 'register-contact' : 'forgot-password');
+                        : (data.user_status ? 'forgot-password' : 'register-contact');
                     buttonContainer.innerHTML = `
                         <div class="button-group">
                             <button type="button" onclick="moveToState('${prevStep}')" class="bg-gray">${backLabel}</button>
@@ -1773,10 +1787,12 @@
 
             if (resendLink) {
                 if (state.resendAvailableIn > 0) {
+                    resendLink.disabled = true;
                     resendLink.style.pointerEvents = 'none';
                     resendLink.style.opacity = '0.5';
                     resendLink.textContent = (T.resend_in || 'Resend in %ds').replace('%d', String(state.resendAvailableIn));
                 } else {
+                    resendLink.disabled = false;
                     resendLink.style.pointerEvents = 'auto';
                     resendLink.style.opacity = '1';
                     const resendCount = state.resends || 0;
@@ -2111,7 +2127,8 @@
 
         async function resendOTP() {
             const link = document.getElementById('resend-link');
-            if (!link) return;
+            if (!link || link.disabled) return;
+            link.disabled = true;
             link.innerHTML = '<span class="spinner"></span>';
             link.style.pointerEvents = 'none';
 

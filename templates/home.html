@@ -632,6 +632,8 @@
         }
         .header-search-wrap {
             max-width: none;
+            min-width: 0;
+            flex: 1 1 0;
         }
         .docs-header-btn {
             display: none;
@@ -647,6 +649,16 @@
             gap: 4px;
         }
         .user-trigger-handle {
+            display: none;
+        }
+    }
+
+    @media (max-width: 420px) {
+        .header-container {
+            padding: 0 10px;
+            gap: 8px;
+        }
+        .header-left span {
             display: none;
         }
     }
@@ -683,14 +695,14 @@
     .global-banner--info {
         background: var(--accent-subtle);
         border: 1px solid color-mix(in srgb, var(--accent) 28%, var(--border-default));
-        border-left: 3px solid var(--accent);
+        box-shadow: var(--card-shadow), inset 3px 0 0 var(--accent);
         color: var(--text);
     }
 
     .global-banner--warning {
         background: var(--amber-50);
         border: 1px solid color-mix(in srgb, var(--amber-500) 32%, var(--border-default));
-        border-left: 3px solid var(--amber-600);
+        box-shadow: var(--card-shadow), inset 3px 0 0 var(--amber-600);
         color: var(--amber-700);
     }
 
@@ -3160,7 +3172,8 @@
             if (!target) return;
             try {
                 const parsed = new URL(target, window.location.origin);
-                if (!parsed.pathname.startsWith('/o/authorize')) return;
+                if (parsed.origin !== window.location.origin || !parsed.pathname.startsWith('/o/authorize')) return;
+                const safeTarget = parsed.pathname + parsed.search + parsed.hash;
                 const redir = parsed.searchParams.get('redirect_uri') || '';
                 const host = redir ? new URL(redir).host : '';
                 const box = document.getElementById('oauth-target-banner');
@@ -3174,7 +3187,7 @@
                                 <div class="global-banner-desc">${escapeHtml(tr('review_permissions', 'Review the permissions this app is requesting before continuing.'))}</div>
                             </div>
                         </div>
-                        <a href="${escapeHtml(target)}" class="btn btn-primary btn-sm">${escapeHtml(tr('continue', 'Continue'))}</a>
+                        <a href="${escapeHtml(safeTarget)}" class="btn btn-primary btn-sm">${escapeHtml(tr('continue', 'Continue'))}</a>
                     </div>
                 `;
             } catch (e) {}
@@ -3302,6 +3315,20 @@
                             redirectOnSessionExpiry();
                         }
                     }
+                } else if (res && res.status === 403 && !isSessionRedirecting) {
+                    let errMsg = '';
+                    try {
+                        const cloned = await res.clone().json();
+                        if (cloned && typeof cloned.error === 'string') errMsg = cloned.error.toLowerCase();
+                    } catch (_) {}
+                    if (errMsg.includes('csrf')) {
+                        isSessionRedirecting = true;
+                        allowProgrammaticUnload = true;
+                        if (window.GilosUI) {
+                            window.GilosUI.toast(tr('session_expired_refresh', 'Security session expired. Refreshing page...'), 'warning');
+                        }
+                        setTimeout(() => { window.location.reload(); }, 900);
+                    }
                 }
                 return res;
             };
@@ -3339,23 +3366,33 @@
                 const railImg = document.getElementById('rail-avatar-img');
                 const railInit = document.getElementById('rail-avatar-initial');
                 const avatarFallback = (user.first_name || user.username || 'G').charAt(0).toUpperCase();
+                appInit.textContent = avatarFallback;
+                if (railInit) railInit.textContent = avatarFallback;
                 if (user.icon) {
+                    appImg.onerror = () => {
+                        appImg.style.display = 'none';
+                        appInit.style.display = 'inline';
+                    };
                     appImg.src = user.icon;
                     appImg.style.display = 'block';
                     appInit.style.display = 'none';
                     if (railImg && railInit) {
+                        railImg.onerror = () => {
+                            railImg.style.display = 'none';
+                            railInit.style.display = 'inline';
+                        };
                         railImg.src = user.icon;
                         railImg.style.display = 'block';
                         railInit.style.display = 'none';
                     }
                 } else {
+                    appImg.onerror = null;
                     appImg.style.display = 'none';
                     appInit.style.display = 'inline';
-                    appInit.textContent = avatarFallback;
                     if (railImg && railInit) {
+                        railImg.onerror = null;
                         railImg.style.display = 'none';
                         railInit.style.display = 'inline';
-                        railInit.textContent = avatarFallback;
                     }
                 }
 
@@ -3788,6 +3825,18 @@
                         </section>
                     </div>
                 `;
+
+                const heroImg = document.querySelector('#hero-avatar-display img');
+                if (heroImg) {
+                    heroImg.onerror = () => {
+                        const heroCircle = document.getElementById('hero-avatar-display');
+                        if (heroCircle) {
+                            const span = document.createElement('span');
+                            span.textContent = avatarFallback;
+                            heroCircle.replaceChildren(span);
+                        }
+                    };
+                }
 
                 initHomePasswordToggles();
 
@@ -4771,7 +4820,7 @@
             if (actionsEl && currentTab === 'sessions') {
                 actionsEl.innerHTML = `
                     <button type="button" class="btn btn-secondary btn-sm" onclick="loadSessions(1, this)">${escapeHtml(tr('refresh_list', 'Refresh'))}</button>
-                    ${hasOthers ? `<button type="button" class="btn btn-danger-outline btn-sm" onclick="terminateOtherSessions()">${escapeHtml(tr('terminate_all_others', 'Terminate all others'))}</button>` : ''}
+                    ${hasOthers ? `<button type="button" class="btn btn-danger-outline btn-sm" onclick="terminateOtherSessions(this)">${escapeHtml(tr('terminate_all_others', 'Terminate all others'))}</button>` : ''}
                 `;
             }
 
@@ -5193,12 +5242,12 @@
 
                         <div class="entity-footer">
                             <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
-                                ${isConf ? `<button type="button" class="btn btn-secondary btn-sm" onclick="regenerateSecret(${Number(c.id)})">${escapeHtml(tr('regenerate_secret', 'Regenerate'))}</button>` : ''}
+                                ${isConf ? `<button type="button" class="btn btn-secondary btn-sm" onclick="regenerateSecret(${Number(c.id)}, this)">${escapeHtml(tr('regenerate_secret', 'Regenerate'))}</button>` : ''}
                                 <a href="/docs?client_id=${Number(c.id)}#your-clients" class="btn btn-ghost btn-sm">${escapeHtml(tr('test_in_docs', 'Test flow'))}</a>
                             </div>
                             <div class="entity-footer-actions">
                                 <button type="button" class="btn btn-secondary btn-sm" onclick="openModal(${Number(c.id)})">${escapeHtml(tr('edit', 'Edit'))}</button>
-                                <button type="button" class="btn btn-danger-outline btn-sm" onclick="deleteClient(${Number(c.id)})">${escapeHtml(tr('delete', 'Delete'))}</button>
+                                <button type="button" class="btn btn-danger-outline btn-sm" onclick="deleteClient(${Number(c.id)}, this)">${escapeHtml(tr('delete', 'Delete'))}</button>
                             </div>
                         </div>
                     </article>
@@ -5553,25 +5602,38 @@
                 return;
             }
             const reader = new FileReader();
+            reader.onerror = () => {
+                window.GilosUI.toast(tr('image_load_error', 'Failed to load selected image.'), 'error');
+            };
             reader.onload = () => {
                 const img = document.getElementById('crop-image');
+                img.onload = () => {
+                    img.onload = null;
+                    img.onerror = null;
+                    showModal('crop-modal');
+                    setTimeout(() => {
+                        if (cropper) cropper.destroy();
+                        cropper = new Cropper(img, {
+                            aspectRatio: 1,
+                            viewMode: 2,
+                            dragMode: 'move',
+                            autoCropArea: 1,
+                            restore: false,
+                            guides: false,
+                            center: true,
+                            highlight: false,
+                            toggleDragModeOnDblclick: false,
+                            responsive: true
+                        });
+                    }, 60);
+                };
+                img.onerror = () => {
+                    img.onload = null;
+                    img.onerror = null;
+                    window.GilosUI.toast(tr('image_load_error', 'Failed to load selected image.'), 'error');
+                    closeCropModal();
+                };
                 img.src = reader.result;
-                showModal('crop-modal');
-                setTimeout(() => {
-                    if (cropper) cropper.destroy();
-                    cropper = new Cropper(img, {
-                        aspectRatio: 1,
-                        viewMode: 2,
-                        dragMode: 'move',
-                        autoCropArea: 1,
-                        restore: false,
-                        guides: false,
-                        center: true,
-                        highlight: false,
-                        toggleDragModeOnDblclick: false,
-                        responsive: true
-                    });
-                }, 60);
             };
             reader.readAsDataURL(file);
         }
@@ -5763,7 +5825,11 @@
                 window.GilosUI.bindModalA11y(document.getElementById('totp-modal'), closeTOTPModal);
                 window.GilosUI.bindModalA11y(document.getElementById('password-modal'), () => closePasswordModal(false));
                 window.GilosUI.bindModalA11y(document.getElementById('secret-reveal-modal'), () => closeSecretRevealModal(false), { closeOnBackdrop: false, closeOnEscape: false });
-                window.GilosUI.bindModalA11y(document.getElementById('contact-verify-modal'), cancelContactVerify);
+                window.GilosUI.bindModalA11y(document.getElementById('contact-verify-modal'), () => {
+                    Object.values(contactTimers).forEach(clearInterval);
+                    contactTimers = {};
+                    hideModal('contact-verify-modal');
+                });
                 window.GilosUI.bindModalA11y(document.getElementById('crop-modal'), closeCropModal);
                 window.GilosUI.bindModalA11y(document.getElementById('delete-modal'), closeDeleteModal);
                 window.GilosUI.attachCapsLockWarning(
@@ -5802,7 +5868,12 @@
                 const secretOpen = Boolean(document.getElementById('secret-reveal-modal')?.classList.contains('is-open') && !secretCopiedBeforeClose);
                 const namesDirty = document.getElementById('names-discard-btn') && !document.getElementById('names-discard-btn').classList.contains('hidden');
                 const contactDirty = document.getElementById('contact-discard-btn') && !document.getElementById('contact-discard-btn').classList.contains('hidden');
-                if (secretOpen || namesDirty || contactDirty) {
+                const usernameBtn = document.getElementById('username-update-btn');
+                const usernameDirty = Boolean(usernameBtn && !usernameBtn.disabled);
+                const newPwEl = document.getElementById('new-password');
+                const confirmPwEl = document.getElementById('confirm-new-password');
+                const passwordDirty = Boolean((newPwEl && newPwEl.value) || (confirmPwEl && confirmPwEl.value));
+                if (secretOpen || namesDirty || contactDirty || usernameDirty || passwordDirty) {
                     e.preventDefault();
                     e.returnValue = '';
                 }

@@ -454,9 +454,6 @@
     }
 
     @media (max-width: 560px) {
-        body {
-            background: var(--surface-elevated);
-        }
         .oauth-stage {
             padding: 0;
             align-items: stretch;
@@ -734,14 +731,22 @@
 
             if (btn && window.GilosUI) window.GilosUI.setButtonLoading(btn, true, tr('loading', 'Loading...'));
             try {
-                await fetch('/auth/logout', {
+                const resp = await fetch('/auth/logout', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'X-CSRF-Token': '{{.CSRFToken}}'
                     }
                 });
-            } catch (e) {}
+                if (!resp.ok) {
+                    throw new Error(tr('failed_logout', 'Failed to sign out'));
+                }
+            } catch (e) {
+                if (btn && window.GilosUI) window.GilosUI.setButtonLoading(btn, false);
+                switchingAccount = false;
+                showMessage((e && e.message) ? e.message : tr('failed_logout', 'Failed to sign out'), true);
+                return;
+            }
 
             window.location.href = `/?target=${encodeURIComponent(window.location.href)}`;
         }
@@ -779,15 +784,20 @@
         });
 
         let isConsentSubmitting = false;
-        function setConsentSubmitting(isSubmitting) {
+        function setConsentSubmitting(isSubmitting, action = 'approve') {
             isConsentSubmitting = Boolean(isSubmitting);
             const approveBtn = document.getElementById('approve-btn');
             const denyBtn = document.getElementById('deny-btn');
             const totpBtn = document.getElementById('totp-verify-btn');
             const totpBackBtn = document.getElementById('totp-back-btn');
-            if (approveBtn) window.GilosUI.setButtonLoading(approveBtn, isConsentSubmitting, tr('loading', 'Loading...'));
-            if (totpBtn) window.GilosUI.setButtonLoading(totpBtn, isConsentSubmitting, tr('loading', 'Loading...'));
-            if (denyBtn) denyBtn.disabled = isConsentSubmitting;
+            if (action === 'deny') {
+                if (denyBtn) window.GilosUI.setButtonLoading(denyBtn, isConsentSubmitting, tr('loading', 'Loading...'));
+                if (approveBtn) approveBtn.disabled = isConsentSubmitting || hasMissingRequired;
+            } else {
+                if (approveBtn) window.GilosUI.setButtonLoading(approveBtn, isConsentSubmitting, tr('loading', 'Loading...'));
+                if (totpBtn) window.GilosUI.setButtonLoading(totpBtn, isConsentSubmitting, tr('loading', 'Loading...'));
+                if (denyBtn) denyBtn.disabled = isConsentSubmitting;
+            }
             if (totpBackBtn) totpBackBtn.disabled = isConsentSubmitting;
         }
 
@@ -816,14 +826,14 @@
                 document.getElementById('final-totp-code').value = code;
             }
             document.getElementById('final-approve').value = 'true';
-            setConsentSubmitting(true);
+            setConsentSubmitting(true, 'approve');
             document.getElementById('final-form').submit();
         }
 
         function submitDeny() {
             if (isConsentSubmitting) return;
             document.getElementById('final-approve').value = 'false';
-            setConsentSubmitting(true);
+            setConsentSubmitting(true, 'deny');
             document.getElementById('final-form').submit();
         }
 

@@ -30,11 +30,11 @@ This is the authentication server used by [Gilos](https://gilos.org) products. W
 ### Security
 - Bcrypt password hashing (configurable cost)
 - AES-256-GCM encryption for TOTP secrets at rest
-- SHA-256 hashed tokens in database (access, refresh, auth codes)
-- CSRF protection with double-submit cookie pattern
-- Rate limiting with progressive blocking (per-IP and per-account)
+- SHA-256 hashed tokens in database (access, refresh, auth codes, session cookie tokens)
+- CSRF protection with session-bound synchronizer token pattern
+- Rate limiting with progressive blocking (per-IP/64 and per-account)
 - Security headers (HSTS, CSP, X-Frame-Options, etc.)
-- Session rotation on privilege changes
+- Atomic session rotation on privilege changes
 - Audit logging for all authentication events
 - HttpOnly, Secure, SameSite cookies
 
@@ -49,11 +49,11 @@ This is the authentication server used by [Gilos](https://gilos.org) products. W
 
 ### Setup
 
-**Prerequisites**: Go 1.23+, GCC (for SQLite CGO)
+**Prerequisites**: Go 1.26+, GCC (for SQLite CGO)
 
 ```bash
 # Clone and enter directory
-git clone https://github.com/example/auth.git
+git clone https://github.com/cherrysoftwares/auth.git
 cd auth
 
 # Install dependencies
@@ -71,7 +71,7 @@ openssl rand -hex 32
 go run .
 ```
 
-The server starts on `https://auth.gilos.org` by default.
+The server listens on `http://localhost:5001` by default (reverse-proxied at `https://auth.gilos.org`).
 
 ## Configuration
 
@@ -106,20 +106,25 @@ All configuration is via environment variables (or `.env` file). See [`.env.exam
 ### Authentication
 | Endpoint | Method | Description |
 |---|---|---|
-| `/api/auth/login` | POST | Login (username + password) |
-| `/api/auth/register` | POST | Register new account |
-| `/api/auth/send-otp` | POST | Send/resend OTP |
-| `/api/auth/verify-otp` | POST | Verify OTP |
-| `/api/auth/state` | GET/POST | Auth flow state machine |
-| `/api/auth/logout` | POST | Logout |
+| `/auth/check-user` | GET | Check username availability |
+| `/auth/login` | POST | Login (username + password + MFA) |
+| `/auth/register` | POST | Register new account |
+| `/auth/reset-password` | POST | Complete password reset |
+| `/auth/contact/verify` | POST | Start contact OTP verification |
+| `/auth/otp/send` | POST | Send/resend OTP |
+| `/auth/otp/verify` | POST | Verify OTP |
+| `/auth/state` | GET/POST | Auth flow state machine |
+| `/auth/logout` | POST | Logout |
 
-### Account Management
+### Account & OAuth Management (Session & Bearer APIs)
 | Endpoint | Method | Description |
 |---|---|---|
-| `/api/profile` | GET | Get profile |
-| `/api/profile/update` | POST | Update profile fields |
-| `/api/sessions` | GET | List sessions (paginated) |
-| `/api/sessions/terminate` | POST | Terminate a session |
+| `/profile`, `/api/profile` | GET | Get profile |
+| `/profile/names`, `/api/profile/names` | POST | Update name fields |
+| `/sessions`, `/api/sessions` | GET | List sessions (paginated) |
+| `/sessions/terminate`, `/api/sessions/terminate` | POST | Terminate a session |
+| `/clients` | GET/POST | List or create OAuth clients |
+| `/api/totps` | GET | List synced authenticator entries |
 
 ## Architecture
 
@@ -141,7 +146,7 @@ All configuration is via environment variables (or `.env` file). See [`.env.exam
 |---|---|
 | OAuth 2.0 (RFC 6749) | ✅ Authorization Code flow |
 | OAuth 2.1 | ✅ Mandatory PKCE, no implicit flow |
-| PKCE (RFC 7636) | ✅ S256 and plain |
+| PKCE (RFC 7636) | ✅ S256 mandatory |
 | OpenID Connect Core | ✅ Discovery, ID Tokens, UserInfo |
 | Token Introspection (RFC 7662) | ✅ |
 | Token Revocation (RFC 7009) | ✅ |

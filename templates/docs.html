@@ -271,12 +271,15 @@
                 <a href="{{ if .IsLoggedIn }}/home{{ else }}/{{ end }}" class="theme-toggle-btn" style="text-decoration: none; margin-bottom: 8px;">
                     {{ if .IsLoggedIn }}{{ index .T "account" }}{{ else }}{{ index .T "sign_in" }}{{ end }}
                 </a>
+                <a href="https://gilos.org" class="theme-toggle-btn" target="_blank" rel="noopener noreferrer" style="text-decoration: none; margin-bottom: 8px;">
+                    gilos.org
+                </a>
                 <button type="button" class="theme-toggle-btn" id="docsThemeToggleBtn" onclick="cycleDocsTheme()" aria-label="{{ index .T "switch_theme" }}" title="{{ index .T "switch_theme" }}">
                     <span id="docsThemeToggleIcon" aria-hidden="true"></span>
                     <span id="docsThemeToggleLabel">{{ index .T "theme_system" }}</span>
                 </button>
                 {{ if .Languages }}
-                <select class="lang-select-compact" aria-label="Language selector" onchange="setDocsLanguage(this.value)">
+                <select class="lang-select-compact" aria-label="{{ index .T "interface_language" }}" onchange="setDocsLanguage(this.value)">
                     {{ range .Languages }}
                     <option value="{{ .Code }}" {{ if eq .Code $.Lang }}selected{{ end }}>{{ .Name }}</option>
                     {{ end }}
@@ -1258,11 +1261,12 @@ func CallbackHandler(onSuccess AuthCallback) http.HandlerFunc {
                 return;
             }
 
+            const uris = (option.dataset.redirectUris || '').split(',').map(u => u.trim()).filter(Boolean);
             currentClient = {
                 id: option.value,
                 secretPrefix: option.dataset.secretPrefix || '',
                 redirectUris: option.dataset.redirectUris || '',
-                return: (option.dataset.redirectUris || '').split(',')[0] || '',
+                return: uris[0] || '',
                 scopes: (option.dataset.scopes || '').replace(/,/g, ' ').trim(),
                 name: option.dataset.name,
                 type: option.dataset.type || 'confidential'
@@ -1275,7 +1279,26 @@ func CallbackHandler(onSuccess AuthCallback) http.HandlerFunc {
                 clientInfo.classList.remove('hidden');
                 document.getElementById('infoClientId').textContent = currentClient.id;
                 document.getElementById('infoSecretPrefix').textContent = currentClient.secretPrefix || '????????';
-                document.getElementById('infoReturn').textContent = currentClient.return;
+                const infoReturnEl = document.getElementById('infoReturn');
+                infoReturnEl.innerHTML = '';
+                if (uris.length > 1) {
+                    const uriSelect = document.createElement('select');
+                    uriSelect.id = 'infoReturnSelect';
+                    uriSelect.style.cssText = 'max-width:100%;font-family:var(--font-mono);font-size:0.84rem;padding:4px 8px;border:1px solid var(--border-default);border-radius:var(--radius-sm);background:var(--surface-elevated);color:var(--text);';
+                    uris.forEach(uri => {
+                        const opt = document.createElement('option');
+                        opt.value = uri;
+                        opt.textContent = uri;
+                        uriSelect.appendChild(opt);
+                    });
+                    uriSelect.addEventListener('change', () => {
+                        currentClient.return = uriSelect.value;
+                        updateAllExamples();
+                    });
+                    infoReturnEl.appendChild(uriSelect);
+                } else {
+                    infoReturnEl.textContent = currentClient.return || '-';
+                }
                 document.getElementById('infoScopes').textContent = currentClient.scopes;
                 const secretEl = document.getElementById('infoSecretInput');
                 if (secretEl) {
@@ -1596,6 +1619,7 @@ func CallbackHandler(onSuccess AuthCallback) http.HandlerFunc {
             const responseBox = document.getElementById('tokenResponse');
             const responseCode = document.getElementById('tokenResponseCode');
 
+            if (btn._resetTimer) { clearTimeout(btn._resetTimer); btn._resetTimer = null; }
             const baseLabel = btn.dataset.baseLabel || (btn.dataset.baseLabel = btn.textContent.trim());
             btn.disabled = true;
             btn.textContent = DOCS_I18N.testingEndpoint || 'Testing...';
@@ -1672,10 +1696,12 @@ func CallbackHandler(onSuccess AuthCallback) http.HandlerFunc {
                 btn.style.background = 'var(--red-600)';
             }
 
-            setTimeout(() => {
-                btn.disabled = false;
+            btn.disabled = false;
+            if (btn._resetTimer) clearTimeout(btn._resetTimer);
+            btn._resetTimer = setTimeout(() => {
                 btn.textContent = baseLabel;
                 btn.style.background = '';
+                btn._resetTimer = null;
             }, 3000);
         }
 
@@ -1687,6 +1713,7 @@ func CallbackHandler(onSuccess AuthCallback) http.HandlerFunc {
             const responseBox = document.getElementById('userInfoResponse');
             const responseCode = document.getElementById('userInfoResponseCode');
 
+            if (btn._resetTimer) { clearTimeout(btn._resetTimer); btn._resetTimer = null; }
             const baseLabel = btn.dataset.baseLabel || (btn.dataset.baseLabel = btn.textContent.trim());
             btn.disabled = true;
             btn.textContent = DOCS_I18N.testingEndpoint || 'Testing...';
@@ -1717,10 +1744,11 @@ func CallbackHandler(onSuccess AuthCallback) http.HandlerFunc {
                 btn.style.background = 'var(--red-600)';
             }
 
-            setTimeout(() => {
-                btn.disabled = false;
+            btn.disabled = false;
+            btn._resetTimer = setTimeout(() => {
                 btn.textContent = baseLabel;
                 btn.style.background = '';
+                btn._resetTimer = null;
             }, 3000);
         }
 
@@ -1732,6 +1760,7 @@ func CallbackHandler(onSuccess AuthCallback) http.HandlerFunc {
             const responseBox = document.getElementById('refreshResponse');
             const responseCode = document.getElementById('refreshResponseCode');
 
+            if (btn._resetTimer) { clearTimeout(btn._resetTimer); btn._resetTimer = null; }
             const baseLabel = btn.dataset.baseLabel || (btn.dataset.baseLabel = btn.textContent.trim());
             btn.disabled = true;
             btn.textContent = DOCS_I18N.testingEndpoint || 'Testing...';
@@ -1784,10 +1813,11 @@ func CallbackHandler(onSuccess AuthCallback) http.HandlerFunc {
                 btn.style.background = 'var(--red-600)';
             }
 
-            setTimeout(() => {
-                btn.disabled = false;
+            btn.disabled = false;
+            btn._resetTimer = setTimeout(() => {
                 btn.textContent = baseLabel;
                 btn.style.background = '';
+                btn._resetTimer = null;
             }, 3000);
         }
 
@@ -1972,6 +2002,12 @@ func CallbackHandler(onSuccess AuthCallback) http.HandlerFunc {
                     const tag = e.target && e.target.tagName;
                     if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || (e.target && e.target.isContentEditable)) return;
                     e.preventDefault();
+                    if (window.innerWidth <= 900) {
+                        const sidebar = document.getElementById('docsSidebar');
+                        if (sidebar && !sidebar.classList.contains('open')) {
+                            toggleMobileSidebar();
+                        }
+                    }
                     filterInput.focus();
                     filterInput.select();
                 } else if (e.key === 'Escape' && document.activeElement === filterInput && filterInput.value) {

@@ -10,6 +10,13 @@ import (
 	"time"
 )
 
+var tashkentLoc = func() *time.Location {
+	if loc, err := time.LoadLocation("Asia/Tashkent"); err == nil {
+		return loc
+	}
+	return time.FixedZone("UZT", 5*3600)
+}()
+
 var FuncMap = template.FuncMap{
 	"sub":    func(a, b float64) float64 { return a - b },
 	"add":    func(x, y float64) float64 { return x + y },
@@ -21,9 +28,7 @@ var FuncMap = template.FuncMap{
 		return math.Round(result*100) / 100
 	},
 	"formatDate": func(t time.Time) string {
-		loc, _ := time.LoadLocation("Asia/Tashkent")
-		t = t.In(loc)
-		return t.Format("02.01.2006 15:04")
+		return t.In(tashkentLoc).Format("02.01.2006 15:04")
 	},
 	"join": func(intSlice []int64, sep string) string {
 		strSlice := make([]string, len(intSlice))

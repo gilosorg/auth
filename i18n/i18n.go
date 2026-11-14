@@ -10,8 +10,9 @@ import (
 )
 
 var (
-	translations = make(map[string]map[string]string)
-	mu           sync.RWMutex
+	translations       = make(map[string]map[string]string)
+	mergedTranslations = make(map[string]map[string]string)
+	mu                 sync.RWMutex
 )
 
 // Init loads all translation files from the translations directory
@@ -48,9 +49,26 @@ func loadFile(lang, path string) error {
 
 	mu.Lock()
 	translations[lang] = data
+	rebuildMergedCacheLocked()
 	mu.Unlock()
 
 	return nil
+}
+
+func rebuildMergedCacheLocked() {
+	def := translations[DefaultLang]
+	for _, lang := range languages {
+		merged := make(map[string]string, len(def))
+		for k, v := range def {
+			merged[k] = v
+		}
+		if trans, ok := translations[lang.Code]; ok {
+			for k, v := range trans {
+				merged[k] = v
+			}
+		}
+		mergedTranslations[lang.Code] = merged
+	}
 }
 
 // Translator provides translation functions for a specific language
@@ -128,30 +146,20 @@ func GetFromCookie(value string) string {
 	return NormalizeCode(value)
 }
 
-// GetTranslations returns the raw translation map for a language.
-// Used by templates for direct key lookup via {{index .T "key"}}.
+// GetTranslations returns the cached merged translation map for a language.
+// Used by templates for read-only key lookup via {{index .T "key"}}.
 func GetTranslations(lang string) map[string]string {
 	tr := New(lang)
 	mu.RLock()
 	defer mu.RUnlock()
 
-	result := make(map[string]string)
-
-	// Start with default language
-	if def, ok := translations[DefaultLang]; ok {
-		for k, v := range def {
-			result[k] = v
-		}
+	if cached, ok := mergedTranslations[tr.lang]; ok {
+		return cached
 	}
-
-	// Override with requested language
-	if trans, ok := translations[tr.lang]; ok {
-		for k, v := range trans {
-			result[k] = v
-		}
+	if def, ok := mergedTranslations[DefaultLang]; ok {
+		return def
 	}
-
-	return result
+	return map[string]string{}
 }
 
 // ScopeDescriptionKey maps an OAuth/OIDC scope identifier to its i18n description key.

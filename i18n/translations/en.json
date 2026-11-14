@@ -570,5 +570,9 @@
   "setting_group_account": "Account",
   "setting_group_security": "Security",
   "setting_group_personalization": "Personalization",
-  "setting_group_developer": "Developer"
+  "setting_group_developer": "Developer",
+  "failed": "Request failed",
+  "security_block_active": "Your account is temporarily blocked for security until %s.",
+  "resend_in": "Resend in %ds",
+  "session_expired_refresh": "Security session expired. Refreshing page..."
 }

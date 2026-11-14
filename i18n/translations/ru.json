@@ -2,7 +2,7 @@
   "company_name_llc": "ООО CHERRY SOFTWARES",
   "app_name": "Gilos Auth",
   "welcome": "Добро пожаловать",
-  "welcome_to": "Добро пожаловать в",
+  "welcome_to": "Добро пожаловать",
   "welcome_back": "С возвращением",
   "sign_in": "Войти",
   "create_account": "Создать аккаунт",
@@ -413,7 +413,7 @@
   "mfa_enabled_badge": "Включено",
   "mfa_not_enabled_badge": "Не настроено",
   "password_section_desc": "Используйте надёжный уникальный пароль. При смене остальные сеансы будут завершены.",
-  "gilos_id_desc": "Ваш уникальный идентификатор @username во всех сервисах Gilos.",
+  "gilos_id_desc": "Ваше уникальное имя пользователя @username во всех сервисах Gilos.",
   "security_activity": "Недавняя активность безопасности",
   "security_activity_desc": "Недавние входы, обновления защиты и доступы приложений.",
   "no_activity": "Недавних событий безопасности не найдено.",
@@ -570,5 +570,9 @@
   "setting_group_account": "Аккаунт",
   "setting_group_security": "Безопасность",
   "setting_group_personalization": "Персонализация",
-  "setting_group_developer": "Разработчикам"
+  "setting_group_developer": "Разработчикам",
+  "failed": "Не удалось выполнить запрос",
+  "security_block_active": "Ваш аккаунт временно заблокирован в целях безопасности до %s.",
+  "resend_in": "Повторить через %d с",
+  "session_expired_refresh": "Сеанс безопасности обновлён. Обновление страницы..."
 }
