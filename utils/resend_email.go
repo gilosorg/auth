@@ -142,33 +142,33 @@ func buildVerificationEmail(fromEmail, appName, toEmail, code string) *resend.Se
 <style>
   :root { color-scheme: light dark; supported-color-schemes: light dark; }
   @media (prefers-color-scheme: dark) {
-    .email-bg { background-color: #0D1117 !important; }
-    .email-card { background-color: #161B22 !important; border-color: #30363D !important; border-top-color: #479EF5 !important; }
-    .email-head { color: #F0F6FC !important; border-bottom-color: #262C36 !important; }
-    .email-body { color: #C9D1D9 !important; }
-    .email-code { background-color: #0D1117 !important; border-color: #30363D !important; color: #F0F6FC !important; }
-    .email-foot { color: #8B949E !important; border-top-color: #262C36 !important; }
+    .email-bg { background-color: #202020 !important; }
+    .email-card { background-color: #2B2B2B !important; border-color: #3D3D3D !important; }
+    .email-head { color: #FFFFFF !important; border-bottom-color: #383838 !important; }
+    .email-body { color: #D4D4D4 !important; }
+    .email-code { background-color: #202020 !important; border-color: #454545 !important; color: #60CDFF !important; }
+    .email-foot { color: #A0A0A0 !important; border-top-color: #383838 !important; }
   }
 </style>
 </head>
-<body class="email-bg" style="margin:0;padding:0;background-color:#F3F5F8;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Inter,Roboto,Helvetica,Arial,sans-serif;color:#111827;">
+<body class="email-bg" style="margin:0;padding:0;background-color:#F3F3F3;font-family:'Segoe UI Variable','Segoe UI',Inter,-apple-system,BlinkMacSystemFont,Roboto,Helvetica,Arial,sans-serif;color:#1B1B1B;">
   <table role="presentation" width="100%%" cellspacing="0" cellpadding="0">
     <tr>
       <td align="center" style="padding:36px 16px;">
-        <table role="presentation" width="100%%" cellspacing="0" cellpadding="0" class="email-card" style="max-width:460px;background-color:#FFFFFF;border:1px solid #D8DEE6;border-top:3px solid #0F6CBD;border-radius:0px;">
+        <table role="presentation" width="100%%" cellspacing="0" cellpadding="0" class="email-card" style="max-width:460px;background-color:#FFFFFF;border:1px solid #E5E5E5;border-radius:8px;overflow:hidden;">
           <tr>
             <td style="padding:28px 32px;">
               <table role="presentation" width="100%%" cellspacing="0" cellpadding="0">
                 <tr>
-                  <td class="email-head" style="font-size:16px;font-weight:700;letter-spacing:-0.015em;color:#111827;padding-bottom:14px;border-bottom:1px solid #E5E9F0;">%s</td>
+                  <td class="email-head" style="font-size:16px;font-weight:600;letter-spacing:-0.015em;color:#1B1B1B;padding-bottom:14px;border-bottom:1px solid #EFEFEF;">%s</td>
                 </tr>
                 <tr>
-                  <td class="email-body" style="font-size:14px;line-height:22px;color:#374151;padding:18px 0 16px 0;">
+                  <td class="email-body" style="font-size:14px;line-height:22px;color:#3B3B3B;padding:18px 0 16px 0;">
                     Enter this one-time verification code to confirm your action:
                   </td>
                 </tr>
                 <tr>
-                  <td align="center" class="email-code" style="padding:18px 20px 18px 28px;background-color:#F6F8FA;border:1px solid #D0D7DE;border-radius:0px;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:32px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:8px;color:#111827;">
+                  <td align="center" class="email-code" style="padding:18px 20px 18px 28px;background-color:#F9F9F9;border:1px solid #E0E0E0;border-radius:6px;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:32px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:8px;color:#005FB8;">
                     %s
                   </td>
                 </tr>
