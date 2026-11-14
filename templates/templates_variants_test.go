@@ -119,13 +119,15 @@ func TestTemplateVariantsAndMissingPlaceholders(t *testing.T) {
 		"CurrentLanguage": tr.Current(),
 		"Languages":       tr.All(),
 		"T":               trans,
-		"IsLoggedIn":      false,
+		"IsLoggedIn":      true,
 		"AppVersion":      "v1.0.0",
 		"AppName":         "Gilos Auth",
 		"AppIDLabel":      "Gilos Username",
 		"IssuerURL":       "https://auth.example.com",
-		"User":            nil,
-		"Clients":         []database.Client{},
+		"User":            database.User{ID: 1, Username: "alice", FirstName: "Alice"},
+		"Clients": []database.Client{
+			{ID: 1, Type: "confidential", Name: "Sample App", RedirectURIs: "https://app.example.com/cb", Scopes: "openid,profile"},
+		},
 	}
 	var docsBuf bytes.Buffer
 	if err := tmpls.ExecuteTemplate(&docsBuf, "docs.html", docsData); err != nil {
@@ -140,6 +142,9 @@ func TestTemplateVariantsAndMissingPlaceholders(t *testing.T) {
 	}
 	if !strings.Contains(docsOut, "error_description") {
 		t.Errorf("docs.html missing error_description field in error response example")
+	}
+	if !strings.Contains(docsOut, "docsFilterClearBtn") || !strings.Contains(docsOut, "clearRedirectUrlBtn") {
+		t.Errorf("docs.html missing filter/redirect clear controls")
 	}
 }
 
@@ -219,6 +224,15 @@ func TestRenderedHTMLHeadStructureAndOAuthAvatar(t *testing.T) {
 		firstStyle := strings.Index(out, "<style>")
 		if firstStyle != -1 && firstStyle > headEnd {
 			t.Errorf("%s page <style> appeared after </head>", name)
+		}
+		if strings.Contains(out, "<no value>") {
+			t.Errorf("%s rendered <no value>", name)
+		}
+		if name == "auth.html" && !strings.Contains(out, "auth-logo-frame") {
+			t.Errorf("auth.html missing auth-logo-frame")
+		}
+		if name == "oauth.html" && !strings.Contains(out, "oauth-logo-frame") {
+			t.Errorf("oauth.html missing oauth-logo-frame")
 		}
 		if name == "oauth.html" && !strings.Contains(out, `data-icon="/media/user/icon/42_sample.jpg"`) {
 			t.Errorf("oauth.html did not preserve User.Icon on #oauth-user-avatar")

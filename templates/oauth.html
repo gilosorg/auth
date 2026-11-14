@@ -35,9 +35,23 @@
         gap: 10px;
     }
 
+    .oauth-logo-frame {
+        width: 52px;
+        height: 52px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--surface-subtle);
+        border: 1px solid var(--border-default);
+        border-radius: 0px;
+        box-shadow: inset 0 1px 0 color-mix(in srgb, var(--surface-elevated) 75%, transparent);
+        margin-bottom: 2px;
+    }
+
     .oauth-logo {
-        height: 28px;
-        width: auto;
+        width: 34px;
+        height: 34px;
+        object-fit: contain;
     }
 
     .oauth-top h1 {
@@ -368,6 +382,11 @@
         box-shadow: 0 0 0 2px var(--focus-ring);
     }
 
+    .otp-input.is-filled:not(.error) {
+        border-color: var(--border-strong);
+        background: var(--surface-subtle);
+    }
+
     .otp-input.error {
         border-color: var(--red-500);
         background: var(--red-50);
@@ -420,8 +439,10 @@
     <main class="oauth-stage" id="main-content" tabindex="-1">
         <section class="oauth-card" aria-labelledby="auth-header">
             <div class="oauth-top">
-                <img src="/static/img/logo.svg" alt="Gilos Logo" class="oauth-logo theme-logo-light">
-                <img src="/static/img/logo-dark.svg" alt="Gilos Logo" class="oauth-logo theme-logo-dark">
+                <div class="oauth-logo-frame">
+                    <img src="/static/img/logo.svg" alt="Gilos Logo" class="oauth-logo theme-logo-light">
+                    <img src="/static/img/logo-dark.svg" alt="Gilos Logo" class="oauth-logo theme-logo-dark">
+                </div>
                 <h1 id="auth-header">{{ index .T "authorize" }}</h1>
                 {{if .User}}
                 <div class="identity-chip">
@@ -710,23 +731,15 @@
         }
 
         function getOtpCode() {
-            const inputs = document.querySelectorAll('#totp-form .otp-input');
-            return Array.from(inputs).map(i => i.value).join('');
+            return window.GilosUI.getOtpValue('otp-inputs');
         }
 
         function submitApprove() {
             if (isConsentSubmitting) return;
             if (userMFAEnabled) {
-                const otpContainer = document.getElementById('otp-inputs');
-                const otpInputs = document.querySelectorAll('#totp-form .otp-input');
                 const code = getOtpCode();
                 if (code.length !== 6) {
-                    otpInputs.forEach(i => i.classList.add('error'));
-                    if (otpContainer) {
-                        otpContainer.classList.remove('is-shake');
-                        void otpContainer.offsetWidth;
-                        otpContainer.classList.add('is-shake');
-                    }
+                    window.GilosUI.shakeOtpContainer('otp-inputs', true);
                     showMessage(tr('enter_full_code', 'Please enter the full 6-digit verification code.'), true);
                     return;
                 }
@@ -745,74 +758,19 @@
         }
 
         function setupOTPInputs() {
-            const otpInputs = document.querySelectorAll('#totp-form .otp-input');
             const verifyBtn = document.getElementById('totp-verify-btn');
-
             function updateVerifyBtn() {
                 if (verifyBtn) verifyBtn.disabled = getOtpCode().length !== 6;
             }
-
-            otpInputs.forEach((input, idx) => {
-                input.addEventListener('input', (e) => {
-                    if (isConsentSubmitting) return;
-                    const clean = e.target.value.replace(/\D/g, '');
-                    if (clean.length > 1) {
-                        const count = Math.min(clean.length, otpInputs.length - idx);
-                        for (let i = 0; i < count; i++) {
-                            otpInputs[idx + i].value = clean[i];
-                        }
-                        otpInputs[Math.min(idx + count, otpInputs.length - 1)].focus();
-                    } else {
-                        e.target.value = clean;
-                        if (clean && idx < otpInputs.length - 1) {
-                            otpInputs[idx + 1].focus();
-                        }
-                    }
-                    otpInputs.forEach(i => i.classList.remove('error'));
+            window.GilosUI.bindOtpInputs('otp-inputs', {
+                isDisabled: () => isConsentSubmitting,
+                onChange: () => {
                     showMessage('', false);
                     updateVerifyBtn();
-                    if (getOtpCode().length === 6) {
-                        submitApprove();
-                    }
-                });
-
-                input.addEventListener('keydown', (e) => {
-                    if (isConsentSubmitting) {
-                        e.preventDefault();
-                        return;
-                    }
-                    if (e.key === 'Backspace' && !e.target.value && idx > 0) {
-                        otpInputs[idx - 1].focus();
-                        otpInputs[idx - 1].value = '';
-                        updateVerifyBtn();
-                    } else if (e.key === 'ArrowLeft' && idx > 0) {
-                        e.preventDefault();
-                        otpInputs[idx - 1].focus();
-                    } else if (e.key === 'ArrowRight' && idx < otpInputs.length - 1) {
-                        e.preventDefault();
-                        otpInputs[idx + 1].focus();
-                    } else if (e.key === 'Enter' && getOtpCode().length === 6) {
-                        e.preventDefault();
-                        submitApprove();
-                    }
-                });
-
-                input.addEventListener('paste', (e) => {
-                    e.preventDefault();
-                    if (isConsentSubmitting) return;
-                    const pasteData = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '').slice(0, 6);
-                    if (!pasteData) return;
-                    for (let i = 0; i < otpInputs.length; i++) {
-                        otpInputs[i].classList.remove('error');
-                        otpInputs[i].value = pasteData[i] || '';
-                    }
-                    showMessage('', false);
-                    otpInputs[Math.min(pasteData.length, 5)].focus();
-                    updateVerifyBtn();
-                    if (pasteData.length === 6) {
-                        submitApprove();
-                    }
-                });
+                },
+                onComplete: () => {
+                    submitApprove();
+                }
             });
         }
 

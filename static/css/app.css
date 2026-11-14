@@ -58,6 +58,7 @@
     --red-600: #E02424;
     --red-700: #B91C1C;
     --green-50: #ECFDF3;
+    --green-100: rgba(34, 197, 94, 0.14);
     --green-500: #22C55E;
     --green-600: #16A34A;
     --green-700: #15803D;
@@ -130,10 +131,12 @@
     --slate-500: #828998;
 
     --red-50: rgba(255, 69, 58, 0.14);
+    --red-100: rgba(255, 69, 58, 0.18);
     --red-500: #FF453A;
     --red-600: #FF6961;
     --red-700: #FF8A80;
     --green-50: rgba(48, 209, 88, 0.13);
+    --green-100: rgba(48, 209, 88, 0.18);
     --green-500: #30D158;
     --green-600: #34D399;
     --green-700: #8CE99A;
@@ -191,10 +194,12 @@
         --slate-300: #383E4B;
         --slate-500: #828998;
         --red-50: rgba(255, 69, 58, 0.14);
+        --red-100: rgba(255, 69, 58, 0.18);
         --red-500: #FF453A;
         --red-600: #FF6961;
         --red-700: #FF8A80;
         --green-50: rgba(48, 209, 88, 0.13);
+        --green-100: rgba(48, 209, 88, 0.18);
         --green-500: #30D158;
         --green-600: #34D399;
         --green-700: #8CE99A;
@@ -1068,7 +1073,7 @@ input[type="radio"]:disabled {
     border-radius: 0px !important;
     box-shadow: var(--popover-shadow);
     z-index: 10000 !important;
-    max-width: calc(100vw - 40px);
+    max-width: min(360px, calc(100vw - 32px));
     overflow-x: hidden;
 }
 
@@ -1121,6 +1126,10 @@ input[type="radio"]:disabled {
 }
 
 .iti__flag-container {
+    border-radius: 0px !important;
+}
+
+.iti__flag {
     border-radius: 0px !important;
 }
 
@@ -1430,6 +1439,7 @@ input[type="radio"]:disabled {
 
 .gilos-input-group.is-valid {
     border-color: var(--green-600);
+    box-shadow: 0 0 0 2px var(--green-100);
 }
 
 .gilos-input-addon {
@@ -1489,6 +1499,15 @@ input[type="radio"]:disabled {
     color: var(--text-muted);
     cursor: pointer;
     transition: background-color 0.14s ease, color 0.14s ease, transform 0.08s ease;
+}
+
+.gilos-input-action[hidden] {
+    display: none;
+}
+
+input[type="search"].gilos-input-control::-webkit-search-cancel-button {
+    -webkit-appearance: none;
+    appearance: none;
 }
 
 .gilos-input-action:hover:not(:disabled) {

@@ -492,6 +492,149 @@
         });
     }
 
+    function resolveElement(target) {
+        if (!target) return null;
+        return typeof target === 'string' ? document.getElementById(target) : target;
+    }
+
+    function getOtpValue(containerOrId) {
+        var container = resolveElement(containerOrId);
+        if (!container) return '';
+        return Array.from(container.querySelectorAll('.otp-input')).map(function (i) { return i.value || ''; }).join('');
+    }
+
+    function syncOtpFilledState(container) {
+        if (!container) return;
+        container.querySelectorAll('.otp-input').forEach(function (inp) {
+            inp.classList.toggle('is-filled', Boolean(inp.value && inp.value.trim()));
+        });
+    }
+
+    function clearOtpInputs(containerOrId, focusFirst) {
+        var container = resolveElement(containerOrId);
+        if (!container) return;
+        var shouldFocus = focusFirst !== false;
+        var inputs = container.querySelectorAll('.otp-input');
+        inputs.forEach(function (inp) {
+            inp.value = '';
+            inp.classList.remove('error', 'is-filled');
+        });
+        if (container._otpOptions && typeof container._otpOptions.onChange === 'function') {
+            container._otpOptions.onChange('');
+        }
+        if (shouldFocus && inputs.length) {
+            inputs[0].focus();
+        }
+    }
+
+    function shakeOtpContainer(containerOrId, markError) {
+        var container = resolveElement(containerOrId);
+        if (!container) return;
+        var hasError = markError !== false;
+        container.querySelectorAll('.otp-input').forEach(function (inp) {
+            inp.classList.toggle('error', hasError);
+        });
+        container.classList.remove('is-shake');
+        void container.offsetWidth;
+        container.classList.add('is-shake');
+    }
+
+    function bindOtpInputs(containerOrId, options) {
+        var container = resolveElement(containerOrId);
+        if (!container) return;
+        container._otpOptions = options || {};
+        syncOtpFilledState(container);
+        if (container.dataset.otpBound === '1') {
+            if (typeof container._otpOptions.onChange === 'function') {
+                container._otpOptions.onChange(getOtpValue(container));
+            }
+            return;
+        }
+        container.dataset.otpBound = '1';
+
+        var inputs = container.querySelectorAll('.otp-input');
+        var notify = function (triggerComplete) {
+            syncOtpFilledState(container);
+            var opts = container._otpOptions || {};
+            var code = getOtpValue(container);
+            if (typeof opts.onChange === 'function') opts.onChange(code);
+            if (triggerComplete && code.length === inputs.length && typeof opts.onComplete === 'function') {
+                opts.onComplete(code);
+            }
+        };
+        var isLocked = function () {
+            var opts = container._otpOptions || {};
+            return typeof opts.isDisabled === 'function' && Boolean(opts.isDisabled());
+        };
+
+        inputs.forEach(function (input, idx) {
+            input.addEventListener('input', function (e) {
+                if (isLocked()) {
+                    e.target.value = e.target.value.replace(/[^0-9]/g, '').slice(0, 1);
+                    return;
+                }
+                var clean = e.target.value.replace(/[^0-9]/g, '');
+                inputs.forEach(function (inp) { inp.classList.remove('error'); });
+                if (clean.length > 1) {
+                    var count = Math.min(clean.length, inputs.length - idx);
+                    for (var i = 0; i < count; i++) {
+                        inputs[idx + i].value = clean[i];
+                    }
+                    inputs[Math.min(idx + count, inputs.length - 1)].focus();
+                } else {
+                    e.target.value = clean;
+                    if (clean && idx < inputs.length - 1) {
+                        inputs[idx + 1].focus();
+                    }
+                }
+                notify(true);
+            });
+
+            input.addEventListener('paste', function (e) {
+                e.preventDefault();
+                if (isLocked()) return;
+                var clip = ((e.clipboardData || window.clipboardData).getData('text') || '')
+                    .replace(/[^0-9]/g, '')
+                    .slice(0, inputs.length);
+                if (!clip) return;
+                inputs.forEach(function (inp) { inp.classList.remove('error'); });
+                for (var i = 0; i < inputs.length; i++) {
+                    inputs[i].value = clip[i] || '';
+                }
+                if (inputs.length) {
+                    inputs[Math.min(clip.length, inputs.length - 1)].focus();
+                }
+                notify(true);
+            });
+
+            input.addEventListener('keydown', function (e) {
+                if (isLocked()) {
+                    if (e.key !== 'Tab') e.preventDefault();
+                    return;
+                }
+                if (e.key === 'Backspace' && !e.target.value && idx > 0) {
+                    inputs.forEach(function (inp) { inp.classList.remove('error'); });
+                    inputs[idx - 1].value = '';
+                    inputs[idx - 1].focus();
+                    notify(false);
+                } else if (e.key === 'ArrowLeft' && idx > 0) {
+                    e.preventDefault();
+                    inputs[idx - 1].focus();
+                } else if (e.key === 'ArrowRight' && idx < inputs.length - 1) {
+                    e.preventDefault();
+                    inputs[idx + 1].focus();
+                } else if (e.key === 'Enter') {
+                    var code = getOtpValue(container);
+                    var opts = container._otpOptions || {};
+                    if (code.length === inputs.length && typeof opts.onComplete === 'function') {
+                        e.preventDefault();
+                        opts.onComplete(code);
+                    }
+                }
+            });
+        });
+    }
+
     window.GilosUI = {
         escapeHtml: escapeHtml,
         toast: toast,
@@ -505,7 +648,11 @@
         attachPasswordStrength: attachPasswordStrength,
         attachCapsLockWarning: attachCapsLockWarning,
         bindModalA11y: bindModalA11y,
-        bindTablistA11y: bindTablistA11y
+        bindTablistA11y: bindTablistA11y,
+        bindOtpInputs: bindOtpInputs,
+        getOtpValue: getOtpValue,
+        clearOtpInputs: clearOtpInputs,
+        shakeOtpContainer: shakeOtpContainer
     };
 })(window);
 

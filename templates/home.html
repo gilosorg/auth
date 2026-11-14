@@ -39,7 +39,7 @@
     }
 
     .header-left img {
-        height: 26px;
+        height: 28px;
         width: auto;
     }
 
@@ -278,6 +278,9 @@
     @media (max-width: 640px) {
         .console-main {
             padding: 18px 16px 36px;
+        }
+        .console-card {
+            padding: 18px 16px;
         }
     }
 
@@ -1795,6 +1798,11 @@
         outline: none;
         border-color: var(--accent);
         box-shadow: 0 0 0 2px var(--focus-ring);
+    }
+
+    .otp-input.is-filled:not(.error) {
+        border-color: var(--border-strong);
+        background: var(--surface-subtle);
     }
 
     .otp-input.error {
@@ -4704,92 +4712,33 @@
         function setupOTPInputs(containerId, onComplete) {
             const container = document.getElementById(containerId);
             if (!container) return;
-            container._otpOnComplete = onComplete;
-            syncHomeOtpActionState(containerId);
-            if (container.dataset.otpBound === '1') return;
-            container.dataset.otpBound = '1';
-            const inputs = container.querySelectorAll('.otp-input');
-            const runComplete = () => {
-                if (typeof container._otpOnComplete === 'function') container._otpOnComplete();
-            };
-            inputs.forEach((inp, idx) => {
-                inp.addEventListener('input', (e) => {
-                    const clean = e.target.value.replace(/\D/g, '');
-                    inputs.forEach(i => i.classList.remove('error'));
-                    if (clean.length > 1) {
-                        const count = Math.min(clean.length, inputs.length - idx);
-                        for (let i = 0; i < count; i++) {
-                            inputs[idx + i].value = clean[i];
-                        }
-                        const targetIdx = Math.min(idx + count, inputs.length - 1);
-                        inputs[targetIdx].focus();
-                    } else {
-                        e.target.value = clean;
-                        if (clean && idx < inputs.length - 1) inputs[idx + 1].focus();
-                    }
+            window.GilosUI.bindOtpInputs(container, {
+                onChange: () => {
                     if (containerId === 'totp-otp') {
                         const errEl = document.getElementById('totp-error');
                         if (errEl) { errEl.textContent = ''; errEl.classList.remove('is-visible'); }
                     }
                     syncHomeOtpActionState(containerId);
-                    if (getOTPValue(containerId).length === 6) runComplete();
-                });
-                inp.addEventListener('keydown', (e) => {
-                    if (e.key === 'Backspace' && !e.target.value && idx > 0) {
-                        inputs.forEach(i => i.classList.remove('error'));
-                        inputs[idx - 1].focus();
-                        inputs[idx - 1].value = '';
-                        syncHomeOtpActionState(containerId);
-                    } else if (e.key === 'ArrowLeft' && idx > 0) {
-                        e.preventDefault();
-                        inputs[idx - 1].focus();
-                    } else if (e.key === 'ArrowRight' && idx < inputs.length - 1) {
-                        e.preventDefault();
-                        inputs[idx + 1].focus();
-                    } else if (e.key === 'Enter' && getOTPValue(containerId).length === 6) {
-                        e.preventDefault();
-                        runComplete();
-                    }
-                });
-                inp.addEventListener('paste', (e) => {
-                    e.preventDefault();
-                    const clip = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '').slice(0, 6);
-                    if (!clip) return;
-                    inputs.forEach(i => i.classList.remove('error'));
-                    clip.split('').forEach((c, ci) => { if (inputs[ci]) inputs[ci].value = c; });
-                    if (inputs.length) inputs[Math.min(clip.length, inputs.length - 1)].focus();
-                    syncHomeOtpActionState(containerId);
-                    if (clip.length === 6) runComplete();
-                });
+                },
+                onComplete: () => {
+                    if (typeof onComplete === 'function') onComplete();
+                }
             });
         }
 
         function getOTPValue(containerId) {
-            const container = document.getElementById(containerId);
-            return container ? Array.from(container.querySelectorAll('.otp-input')).map(i => i.value).join('') : '';
+            return window.GilosUI.getOtpValue(containerId);
         }
 
         function shakeOTPContainer(containerId, markError = true) {
-            const container = document.getElementById(containerId);
-            if (!container) return;
-            if (markError) container.querySelectorAll('.otp-input').forEach(i => i.classList.add('error'));
-            container.classList.remove('is-shake');
-            void container.offsetWidth;
-            container.classList.add('is-shake');
+            window.GilosUI.shakeOtpContainer(containerId, markError);
         }
 
         function clearOTPInputs(containerId, focusFirst = true) {
             const container = document.getElementById(containerId);
-            if (!container) return;
-            const inputs = container.querySelectorAll('.otp-input');
-            inputs.forEach(i => {
-                i.value = '';
-                i.classList.remove('error');
-            });
+            const canFocus = Boolean(focusFirst && container && typeof container.closest === 'function' && container.closest('.modal.is-open'));
+            window.GilosUI.clearOtpInputs(containerId, canFocus);
             syncHomeOtpActionState(containerId);
-            if (focusFirst && inputs.length && typeof container.closest === 'function' && container.closest('.modal.is-open')) {
-                inputs[0].focus();
-            }
         }
 
         // Avatar Crop & Upload
