@@ -21,7 +21,11 @@
 </div>
 <script>
     (function () {
-        if (sessionStorage.getItem('gilos_ribbon_dismissed') === '1') {
+        var dismissed = false;
+        try {
+            dismissed = localStorage.getItem('gilos_ribbon_dismissed') === '1' || sessionStorage.getItem('gilos_ribbon_dismissed') === '1';
+        } catch (e) {}
+        if (dismissed) {
             var r = document.getElementById('app-ribbon');
             if (r) r.style.display = 'none';
         }
@@ -30,33 +34,29 @@
         var r = document.getElementById('app-ribbon');
         if (r) {
             r.style.opacity = '0';
-            r.style.transform = 'translateY(-6px)';
-            setTimeout(function () { r.style.display = 'none'; }, 180);
+            r.style.transform = 'translateY(-4px)';
+            setTimeout(function () { r.style.display = 'none'; }, 160);
         }
-        sessionStorage.setItem('gilos_ribbon_dismissed', '1');
+        try {
+            localStorage.setItem('gilos_ribbon_dismissed', '1');
+            sessionStorage.setItem('gilos_ribbon_dismissed', '1');
+        } catch (e) {}
     }
 </script>
 <style>
     .app-ribbon {
         width: 100%;
-        position: sticky;
-        top: 0;
-        z-index: 40;
-        background: rgba(255, 255, 255, 0.85);
-        backdrop-filter: blur(16px);
-        -webkit-backdrop-filter: blur(16px);
-        border-bottom: 1px solid var(--border-subtle);
-        transition: opacity 0.18s ease, transform 0.18s ease;
-    }
-
-    :root[data-theme="dark"] .app-ribbon {
-        background: rgba(22, 22, 25, 0.85);
+        position: relative;
+        z-index: 20;
+        background: var(--surface-subtle);
+        border-bottom: 1px solid var(--border-default);
+        transition: opacity 0.16s ease, transform 0.16s ease;
     }
 
     .ribbon-inner {
         max-width: 1200px;
         margin: 0 auto;
-        padding: 10px 24px;
+        padding: 8px 24px;
         display: flex;
         align-items: center;
         justify-content: space-between;
@@ -71,12 +71,12 @@
     }
 
     .ribbon-icon {
-        width: 30px;
-        height: 30px;
+        width: 28px;
+        height: 28px;
         border-radius: 0px;
+        border: 1px solid var(--border-default);
         flex-shrink: 0;
         object-fit: cover;
-        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
     }
 
     .ribbon-text {
@@ -127,6 +127,10 @@
         border-color: var(--primary-gradient-hover);
     }
 
+    .ribbon-cta:active {
+        transform: translateY(1px);
+    }
+
     .ribbon-close {
         width: 30px;
         height: 30px;
@@ -140,13 +144,17 @@
         align-items: center;
         justify-content: center;
         cursor: pointer;
-        transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+        transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease, transform 0.08s ease;
     }
 
     .ribbon-close:hover {
         background: var(--surface-subtle);
         border-color: var(--border-strong);
         color: var(--text);
+    }
+
+    .ribbon-close:active {
+        transform: translateY(1px);
     }
 
     @media (max-width: 600px) {

@@ -369,13 +369,15 @@
         align-items: center;
         justify-content: center;
         cursor: pointer;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-        transition: transform 0.15s ease, background-color 0.15s ease;
+        transition: background-color 0.14s ease, transform 0.08s ease;
     }
 
     .avatar-edit-btn:hover {
-        transform: scale(1.06);
         background: var(--primary-gradient-hover);
+    }
+
+    .avatar-edit-btn:active {
+        transform: translateY(1px);
     }
 
     .hero-meta {
@@ -581,7 +583,7 @@
     .console-textarea:focus {
         outline: none;
         border-color: var(--accent);
-        box-shadow: 0 0 0 3px var(--focus-ring);
+        box-shadow: 0 0 0 2px var(--focus-ring);
     }
 
     .console-input--with-icon {
@@ -671,6 +673,10 @@
     .pw-eye-btn:hover {
         background: var(--surface-hover);
         color: var(--text);
+    }
+
+    .pw-eye-btn:active {
+        transform: translateY(1px);
     }
 
     .pw-eye-btn:focus-visible {
@@ -946,60 +952,92 @@
     }
 
     .console-search-wrap {
-        position: relative;
         flex: 1 1 240px;
         max-width: 340px;
         min-width: 200px;
+        display: flex;
+        align-items: stretch;
+        height: 36px;
+        border-radius: 0px;
+        border: 1.5px solid var(--border-default);
+        background: var(--surface-subtle);
+        transition: border-color 0.14s ease, background-color 0.14s ease, box-shadow 0.14s ease;
+    }
+
+    .console-search-wrap:hover {
+        border-color: var(--border-strong);
+    }
+
+    .console-search-wrap:focus-within {
+        border-color: var(--accent);
+        background: var(--surface-elevated);
+        box-shadow: 0 0 0 2px var(--focus-ring);
     }
 
     .console-search-icon {
-        position: absolute;
-        left: 11px;
-        top: 50%;
-        transform: translateY(-50%);
-        color: var(--text-muted);
-        pointer-events: none;
+        flex: 0 0 36px;
         display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-right: 1px solid var(--border-subtle);
+        color: var(--text-tertiary);
+        pointer-events: none;
     }
 
     .console-search-input {
-        width: 100%;
-        height: 36px;
-        padding: 0 30px 0 33px;
+        flex: 1 1 auto;
+        min-width: 0;
+        height: 100%;
+        padding: 0 10px;
+        border: none;
         border-radius: 0px;
-        border: 1px solid var(--border-default);
-        background: var(--surface-elevated);
+        background: transparent;
         color: var(--text);
         font-size: 0.84rem;
         font-family: inherit;
-        transition: border-color 0.15s ease, box-shadow 0.15s ease;
     }
 
     .console-search-input:focus {
         outline: none;
-        border-color: var(--accent);
-        box-shadow: 0 0 0 2px var(--focus-ring);
     }
 
     .console-search-clear {
-        position: absolute;
-        right: 6px;
-        top: 50%;
-        transform: translateY(-50%);
+        flex: 0 0 34px;
         border: none;
+        border-left: 1px solid var(--border-default);
         background: transparent;
         color: var(--text-muted);
-        width: 24px;
-        height: 24px;
         border-radius: 0px;
         cursor: pointer;
         display: inline-flex;
         align-items: center;
         justify-content: center;
+        transition: background-color 0.14s ease, color 0.14s ease, transform 0.08s ease;
     }
 
     .console-search-clear:hover {
-        background: var(--surface-subtle);
+        background: var(--surface-hover);
+        color: var(--text);
+    }
+
+    .console-search-clear:active {
+        transform: translateY(1px);
+    }
+
+    .field-action-link {
+        background: none;
+        border: none;
+        padding: 0;
+        color: var(--accent);
+        font: inherit;
+        font-weight: 500;
+        cursor: pointer;
+        text-decoration: underline;
+        text-underline-offset: 2px;
+        text-align: left;
+    }
+
+    .field-action-link:hover {
         color: var(--text);
     }
 
@@ -1143,7 +1181,8 @@
         border-radius: 0px;
         background: var(--surface-subtle);
         border: 1px solid var(--border-subtle);
-        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        font-family: var(--font-mono);
+        font-variant-numeric: tabular-nums;
         font-size: 0.78rem;
         color: var(--text);
         cursor: pointer;
@@ -1191,7 +1230,7 @@
         width: 100%;
         border: 1px solid transparent;
         text-align: left;
-        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        font-family: var(--font-mono);
         font-size: 0.76rem;
         color: var(--text-secondary);
         background: var(--surface-subtle);
@@ -1326,8 +1365,8 @@
     }
 
     @keyframes gilosDialogIn {
-        from { opacity: 0; transform: translateY(8px) scale(0.98); }
-        to { opacity: 1; transform: translateY(0) scale(1); }
+        from { opacity: 0; transform: translateY(8px); }
+        to { opacity: 1; transform: translateY(0); }
     }
 
     .modal-header {
@@ -1497,7 +1536,7 @@
     }
 
     .totp-secret-code {
-        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        font-family: var(--font-mono);
         font-size: 0.86rem;
         font-weight: 600;
         letter-spacing: 0.06em;
@@ -1515,6 +1554,7 @@
         width: 100%;
         height: 48px;
         text-align: center;
+        font-family: var(--font-mono);
         font-size: 1.2rem;
         font-weight: 700;
         font-variant-numeric: tabular-nums;
@@ -1527,7 +1567,7 @@
     .otp-input:focus {
         outline: none;
         border-color: var(--accent);
-        box-shadow: 0 0 0 3px var(--focus-ring);
+        box-shadow: 0 0 0 2px var(--focus-ring);
     }
 
     .otp-input.error {
@@ -1540,7 +1580,7 @@
         border-radius: 0px;
         background: var(--surface-subtle);
         border: 1px solid var(--border-default);
-        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        font-family: var(--font-mono);
         font-size: 0.86rem;
         word-break: break-all;
         color: var(--text);
@@ -1567,7 +1607,7 @@
     .env-snippet-pre {
         margin: 0;
         padding: 10px 12px;
-        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        font-family: var(--font-mono);
         font-size: 0.76rem;
         line-height: 1.5;
         color: var(--text-secondary);
@@ -1661,7 +1701,7 @@
                     <span>{{ index .T "account" }}</span>
                 </button>
                 <button type="button" role="tab" aria-selected="false" tabindex="-1" class="tab-btn" data-tab="sessions" onclick="setActiveTab('sessions')">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="3" width="20" height="14"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
                     <span>{{ index .T "sessions" }}</span>
                 </button>
                 <button type="button" role="tab" aria-selected="false" tabindex="-1" class="tab-btn" data-tab="clients" onclick="setActiveTab('clients')">
@@ -1919,6 +1959,7 @@
                 <div class="crop-stage">
                     <img id="crop-image" src="" alt="" style="max-width:100%;display:block;">
                 </div>
+                <p class="field-status-note" style="margin-top:8px;">{{ index .T "photo_requirements" }}</p>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" onclick="closeCropModal()">{{ index .T "cancel" }}</button>
@@ -2417,10 +2458,9 @@
                                     <span>&middot;</span>
                                     <button type="button" class="hero-id-chip" onclick="copyToClipboard('${escapeHtml(String(user.id))}', this)" title="${escapeHtml(tr('copy_id', 'Copy ID'))}">
                                         <span>${escapeHtml(tr('account_id_label', 'User ID'))}: #${escapeHtml(String(user.id))}</span>
-                                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+                                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
                                     </button>
                                 </div>
-                                <span class="field-status-note">${escapeHtml(tr('photo_requirements', 'Square JPEG up to 100 KB.'))}</span>
                             </div>
                         </div>
                         <div class="hero-badges">
@@ -2443,39 +2483,36 @@
                         ];
                         const score = checkItems.filter(i => i.done).length;
                         const total = checkItems.length;
-                        const allDone = score === total;
+                        const pendingItems = checkItems.filter(i => !i.done);
+                        if (pendingItems.length === 0) return '';
                         const pct = Math.round((score / total) * 100);
-                        const scoreLabel = allDone
-                            ? tr('security_checkup_all_good', 'Your account meets all recommended security checks.')
-                            : tr('security_checkup_score', '{score} of {total} checks completed').replace('{score}', String(score)).replace('{total}', String(total));
-                        const checkSvg = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>';
+                        const scoreLabel = tr('security_checkup_score', '{score} of {total} checks completed').replace('{score}', String(score)).replace('{total}', String(total));
                         const warnSvg = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>';
                         return `
-                        <section class="security-checkup ${allDone ? 'is-collapsed' : ''}" id="security-checkup-box" aria-label="${escapeHtml(tr('security_checkup', 'Security checkup'))}">
+                        <section class="security-checkup" id="security-checkup-box" aria-label="${escapeHtml(tr('security_checkup', 'Security checkup'))}">
                             <div class="checkup-header">
                                 <div>
                                     <h3 class="checkup-title">
                                         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
                                         <span>${escapeHtml(tr('security_checkup', 'Security checkup'))}</span>
                                     </h3>
-                                    <p class="checkup-desc">${escapeHtml(allDone ? tr('security_checkup_all_good', 'Your account meets all recommended security checks.') : tr('security_checkup_desc', 'Review your account readiness and enable backup recovery and two-step verification.'))}</p>
+                                    <p class="checkup-desc">${escapeHtml(tr('security_checkup_desc', 'Add recovery methods and two-step verification to keep your account secure.'))}</p>
                                 </div>
                                 <div class="checkup-header-actions">
-                                    <span class="checkup-score-pill ${allDone ? 'is-complete' : ''}">${escapeHtml(scoreLabel)}</span>
-                                    ${allDone ? `<button type="button" class="btn btn-ghost btn-sm" aria-expanded="false" onclick="const box=document.getElementById('security-checkup-box'); if(box){const collapsed=box.classList.toggle('is-collapsed'); this.setAttribute('aria-expanded', String(!collapsed));}">${escapeHtml(tr('toggle_checkup_details', 'Details'))}</button>` : ''}
+                                    <span class="checkup-score-pill">${escapeHtml(scoreLabel)}</span>
                                 </div>
                             </div>
                             <div class="checkup-progress-track" aria-hidden="true">
-                                <div class="checkup-progress-fill ${allDone ? 'is-complete' : ''}" style="width: ${pct}%;"></div>
+                                <div class="checkup-progress-fill" style="width: ${pct}%;"></div>
                             </div>
                             <div class="checkup-grid">
-                                ${checkItems.map(item => `
-                                <div class="checkup-item ${item.done ? 'is-done' : 'is-pending'}">
+                                ${pendingItems.map(item => `
+                                <div class="checkup-item is-pending">
                                     <div class="checkup-item-main">
-                                        <span class="checkup-dot">${item.done ? checkSvg : warnSvg}</span>
+                                        <span class="checkup-dot">${warnSvg}</span>
                                         <span class="checkup-item-label">${escapeHtml(item.label)}</span>
                                     </div>
-                                    ${item.done ? '' : `<button type="button" class="btn btn-secondary btn-sm" onclick="focusHomeField('${item.targetId}')">${escapeHtml(item.actionLabel)}</button>`}
+                                    <button type="button" class="btn btn-secondary btn-sm" onclick="focusHomeField('${item.targetId}')">${escapeHtml(item.actionLabel)}</button>
                                 </div>`).join('')}
                             </div>
                         </section>`;
@@ -2488,13 +2525,12 @@
                                 <div class="card-title-group">
                                     <h3 class="card-title">
                                         <span>${escapeHtml(tr('your_names', 'Personal Info'))}</span>
-                                        <span class="badge badge-warning hidden" id="names-dirty-badge">${escapeHtml(tr('unsaved_changes', 'Unsaved changes'))}</span>
                                     </h3>
-                                    <p class="card-desc">${escapeHtml(tr('personal_info_desc', 'How your name and profile photo appear across connected apps.'))}</p>
+                                    <p class="card-desc">${escapeHtml(tr('personal_info_desc', 'Your display name across Gilos apps and services.'))}</p>
                                 </div>
                                 <div class="card-head-actions">
                                     <button type="button" class="btn btn-ghost btn-sm hidden" id="names-discard-btn">${escapeHtml(tr('discard_changes', 'Discard'))}</button>
-                                    <button type="submit" form="names-form" class="btn btn-primary btn-sm" id="names-save-btn">${escapeHtml(tr('save', 'Save'))}</button>
+                                    <button type="submit" form="names-form" class="btn btn-primary btn-sm" id="names-save-btn" disabled>${escapeHtml(tr('save', 'Save'))}</button>
                                 </div>
                             </div>
                             <form id="names-form" class="form-grid">
@@ -2527,7 +2563,7 @@
                                     </h3>
                                     <p class="card-desc">${escapeHtml(tr('gilos_id_desc', 'Your unique @username handle across all Gilos services.'))}</p>
                                 </div>
-                                <button type="submit" form="username-form" class="btn btn-primary btn-sm" id="username-update-btn" ${changesRemaining === 0 ? 'disabled' : ''}>${escapeHtml(tr('update', 'Update'))}</button>
+                                <button type="submit" form="username-form" class="btn btn-primary btn-sm" id="username-update-btn" disabled>${escapeHtml(tr('update', 'Update'))}</button>
                             </div>
                             <form id="username-form" style="display:flex;flex-direction:column;gap:12px;">
                                 <div class="field">
@@ -2555,13 +2591,12 @@
                                 <div class="card-title-group">
                                     <h3 class="card-title">
                                         <span>${escapeHtml(tr('contact_methods', 'Contact Methods'))}</span>
-                                        <span class="badge badge-warning hidden" id="contact-dirty-badge">${escapeHtml(tr('unsaved_changes', 'Unsaved changes'))}</span>
                                     </h3>
-                                    <p class="card-desc">${escapeHtml(tr('contact_methods_desc', 'Used for recovery and security verification. Changes require your current password and OTP confirmation.'))}</p>
+                                    <p class="card-desc">${escapeHtml(tr('contact_methods_desc', 'Recovery email and phone number for sign-in and account recovery.'))}</p>
                                 </div>
                                 <div class="card-head-actions">
                                     <button type="button" class="btn btn-ghost btn-sm hidden" id="contact-discard-btn">${escapeHtml(tr('discard_changes', 'Discard'))}</button>
-                                    <button type="submit" form="contact-form" class="btn btn-primary btn-sm" id="contact-save-btn">${escapeHtml(tr('save', 'Save'))}</button>
+                                    <button type="submit" form="contact-form" class="btn btn-primary btn-sm" id="contact-save-btn" disabled>${escapeHtml(tr('save', 'Save'))}</button>
                                 </div>
                             </div>
                             <div id="pending-contact-alert"></div>
@@ -2589,13 +2624,11 @@
                                 <div class="card-title-group">
                                     <h3 class="card-title">
                                         <span>${escapeHtml(tr('two_step_verification', 'Two-Step Verification'))}</span>
-                                        ${(() => {
-                                            const mfaCnt = (user.mfa_totp_enabled ? 1 : 0) + (user.mfa_email_enabled ? 1 : 0) + (user.mfa_phone_enabled ? 1 : 0);
-                                            const label = tr('mfa_active_count', '{count} of 3 active').replace('{count}', String(mfaCnt));
-                                            return `<span class="badge ${mfaCnt > 0 ? 'badge-success' : 'badge-neutral'}">${escapeHtml(label)}</span>`;
-                                        })()}
+                                        ${mfaActive
+                                            ? `<span class="badge badge-success">${escapeHtml(tr('mfa_enabled_badge', 'Enabled'))}</span>`
+                                            : `<span class="badge badge-neutral">${escapeHtml(tr('mfa_off', 'Two-step off'))}</span>`}
                                     </h3>
-                                    <p class="card-desc">${escapeHtml(tr('mfa_section_desc', 'Add a second verification step to protect your account even if someone learns your password.'))}</p>
+                                    <p class="card-desc">${escapeHtml(tr('mfa_section_desc', 'Add a second check at sign-in to keep your account protected.'))}</p>
                                 </div>
                             </div>
                             <div class="mfa-list">
@@ -2608,7 +2641,7 @@
                                         <div class="mfa-row-body">
                                             <div class="mfa-row-title-line">
                                                 <span>${escapeHtml(tr('authenticator_app', 'Authenticator App'))}</span>
-                                                <span class="badge ${user.mfa_totp_enabled ? 'badge-success' : 'badge-neutral'}">${escapeHtml(user.mfa_totp_enabled ? tr('mfa_enabled_badge', 'Enabled') : tr('mfa_not_enabled_badge', 'Not enabled'))}</span>
+                                                ${user.mfa_totp_enabled ? `<span class="badge badge-success">${escapeHtml(tr('mfa_enabled_badge', 'Enabled'))}</span>` : ''}
                                             </div>
                                             <span class="mfa-row-desc">${escapeHtml(tr('mfa_totp_desc', 'Generate time-based 6-digit codes offline using Gilos Authenticator or another TOTP app.'))}</span>
                                         </div>
@@ -2622,13 +2655,15 @@
                                 <div class="mfa-row">
                                     <div class="mfa-row-left">
                                         <span class="mfa-row-icon ${user.mfa_email_enabled ? 'is-active' : ''}">
-                                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+                                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
                                         </span>
                                         <div class="mfa-row-body">
                                             <div class="mfa-row-title-line">
                                                 <span>${escapeHtml(tr('email', 'Email'))}</span>
                                             </div>
-                                            <span class="mfa-row-desc">${escapeHtml(user.email ? tr('mfa_email_desc', 'Receive a one-time security code at your verified email when signing in.') : tr('mfa_add_email_first', 'Add an email address above to enable email verification.'))}</span>
+                                            <span class="mfa-row-desc">${user.email
+                                                ? escapeHtml(tr('mfa_email_desc', 'Receive a one-time security code at your email when signing in.'))
+                                                : `<button type="button" class="field-action-link" onclick="focusHomeField('email')">${escapeHtml(tr('mfa_add_email_first', 'Add an email address above first.'))}</button>`}</span>
                                         </div>
                                     </div>
                                     <label class="toggle-switch" title="${escapeHtml(tr('enable_two_step_email', 'Enable email verification'))}">
@@ -2641,13 +2676,15 @@
                                 <div class="mfa-row">
                                     <div class="mfa-row-left">
                                         <span class="mfa-row-icon ${user.mfa_phone_enabled ? 'is-active' : ''}">
-                                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/></svg>
+                                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="20" x="5" y="2"/><path d="M12 18h.01"/></svg>
                                         </span>
                                         <div class="mfa-row-body">
                                             <div class="mfa-row-title-line">
                                                 <span>${escapeHtml(tr('phone', 'Phone'))}</span>
                                             </div>
-                                            <span class="mfa-row-desc">${escapeHtml(user.phone ? tr('mfa_phone_desc', 'Receive a one-time SMS verification code on your phone number when signing in.') : tr('mfa_add_phone_first', 'Add a phone number above to enable SMS verification.'))}</span>
+                                            <span class="mfa-row-desc">${user.phone
+                                                ? escapeHtml(tr('mfa_phone_desc', 'Receive a one-time SMS code on your phone number when signing in.'))
+                                                : `<button type="button" class="field-action-link" onclick="focusHomeField('phone')">${escapeHtml(tr('mfa_add_phone_first', 'Add a phone number above first.'))}</button>`}</span>
                                         </div>
                                     </div>
                                     <label class="toggle-switch" title="${escapeHtml(tr('enable_two_step_phone', 'Enable phone verification'))}">
@@ -2768,11 +2805,11 @@
             if (namesForm) {
                 const nameFields = ['first-name', 'last-name', 'middle-name', 'nickname'];
                 const initialValues = Object.fromEntries(nameFields.map(id => [id, document.getElementById(id)?.value || '']));
-                const dirtyBadge = document.getElementById('names-dirty-badge');
+                const saveBtn = document.getElementById('names-save-btn');
                 const discardBtn = document.getElementById('names-discard-btn');
                 const syncNamesDirty = () => {
                     const isDirty = nameFields.some(id => (document.getElementById(id)?.value || '') !== initialValues[id]);
-                    if (dirtyBadge) dirtyBadge.classList.toggle('hidden', !isDirty);
+                    if (saveBtn) saveBtn.disabled = !isDirty;
                     if (discardBtn) discardBtn.classList.toggle('hidden', !isDirty);
                 };
                 nameFields.forEach(id => {
@@ -2788,6 +2825,7 @@
                         syncNamesDirty();
                     });
                 }
+                syncNamesDirty();
                 namesForm.addEventListener('submit', async (e) => {
                     e.preventDefault();
                     const btn = document.getElementById('names-save-btn');
@@ -2805,6 +2843,7 @@
                         window.GilosUI.toast(err.message, 'error');
                     } finally {
                         window.GilosUI.setButtonLoading(btn, false);
+                        syncNamesDirty();
                     }
                 });
             }
@@ -2915,7 +2954,7 @@
                 const phoneInput = document.getElementById('phone');
                 const initialEmail = (currentUser.email || '').trim();
                 const initialPhone = currentUser.phone ? ('+' + String(currentUser.phone)) : '';
-                const contactDirtyBadge = document.getElementById('contact-dirty-badge');
+                const contactSaveBtn = document.getElementById('contact-save-btn');
                 const contactDiscardBtn = document.getElementById('contact-discard-btn');
                 const getCurrentPhoneComparable = () => {
                     if (!phoneInput) return '';
@@ -2931,7 +2970,7 @@
                     const emailChanged = (emailInput ? emailInput.value.trim() : '') !== initialEmail;
                     const phoneChanged = getCurrentPhoneComparable() !== initialPhone.replace(/\s+/g, '');
                     const isDirty = emailChanged || phoneChanged;
-                    if (contactDirtyBadge) contactDirtyBadge.classList.toggle('hidden', !isDirty);
+                    if (contactSaveBtn) contactSaveBtn.disabled = !isDirty;
                     if (contactDiscardBtn) contactDiscardBtn.classList.toggle('hidden', !isDirty);
                 };
                 if (emailInput) emailInput.addEventListener('input', syncContactDirty);
@@ -2953,6 +2992,7 @@
                         syncContactDirty();
                     });
                 }
+                syncContactDirty();
                 contactForm.addEventListener('submit', async (e) => {
                     e.preventDefault();
                     const emailVal = document.getElementById('email').value.trim();
@@ -2993,7 +3033,6 @@
                                 if (handlePasswordError(data, attemptContact)) return;
                                 throw new Error(data.error || tr('failed_update_contact', 'Failed to update contact'));
                             }
-                            if (contactDirtyBadge) contactDirtyBadge.classList.add('hidden');
                             if (contactDiscardBtn) contactDiscardBtn.classList.add('hidden');
                             if (data.verification_needed && data.verification_needed.length > 0) {
                                 checkPendingVerifications(true);
@@ -3005,6 +3044,7 @@
                             Swal.fire(tr('error', 'Error'), err.message, 'error');
                         } finally {
                             window.GilosUI.setButtonLoading(contactBtn, false);
+                            syncContactDirty();
                         }
                     };
                     requirePassword(attemptContact);
@@ -3466,8 +3506,8 @@
                 login_failed: { cls: 'activity-dot--danger', svg: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>' },
                 security_blocked: { cls: 'activity-dot--danger', svg: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>' },
                 brute_force_blocked: { cls: 'activity-dot--danger', svg: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>' },
-                password_changed: { cls: 'activity-dot--warning', svg: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>' },
-                password_reset: { cls: 'activity-dot--warning', svg: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>' },
+                password_changed: { cls: 'activity-dot--warning', svg: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect width="18" height="11" x="3" y="11"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>' },
+                password_reset: { cls: 'activity-dot--warning', svg: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect width="18" height="11" x="3" y="11"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>' },
                 mfa_totp_enabled: { cls: 'activity-dot--success', svg: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>' },
                 mfa_totp_disabled: { cls: 'activity-dot--warning', svg: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>' },
                 oauth_authorized: { cls: 'activity-dot--info', svg: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>' },
@@ -3688,7 +3728,7 @@
                 region.innerHTML = `
                     <div class="empty-state">
                         <div class="empty-state-icon" aria-hidden="true">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
                         </div>
                         <p style="font-weight:600;color:var(--text);margin-bottom:4px;">${escapeHtml(tr('no_active_sessions', 'No active sessions found.'))}</p>
                         <p class="card-desc" style="margin:0 auto;">${escapeHtml(tr('empty_sessions_hint', 'Signed-in browsers and connected apps will appear here once authorized.'))}</p>
@@ -3762,7 +3802,7 @@
                         </div>
 
                         <div class="entity-footer">
-                            <span class="badge badge-neutral">${escapeHtml(tr(session.type, session.type))}</span>
+                            ${session.type !== 'native' ? `<span class="badge badge-neutral">${escapeHtml(tr(session.type, session.type))}</span>` : '<span></span>'}
                             ${!isCurrent ? `<button type="button" class="btn btn-danger-outline btn-sm" onclick="terminateSession(${Number(session.id)}, this)">${escapeHtml(tr('terminate', 'Terminate'))}</button>` : ''}
                         </div>
                     </article>
@@ -4001,7 +4041,7 @@
                                 <span class="entity-label">${escapeHtml(tr('client_id', 'Client ID'))}</span>
                                 <button type="button" class="mono-chip" onclick="copyToClipboard('${escapeHtml(String(c.id))}', this)" title="${escapeHtml(tr('copy', 'Copy'))}">
                                     <span>${escapeHtml(String(c.id))}</span>
-                                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+                                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect width="14" height="14" x="8" y="8"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
                                 </button>
                             </div>
 
@@ -4023,7 +4063,7 @@
                                     ${uris.map(u => `
                                         <button type="button" class="uri-item" data-uri="${escapeHtml(u)}" onclick="copyToClipboard(this.dataset.uri, this)" title="${escapeHtml(tr('copy_uri', 'Click to copy URI'))}: ${escapeHtml(u)}">
                                             <span class="uri-item-text">${escapeHtml(u)}</span>
-                                            <svg class="uri-item-copy-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+                                            <svg class="uri-item-copy-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect width="14" height="14" x="8" y="8"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
                                         </button>`).join('')}
                                 </div>
                             </div>
@@ -4662,8 +4702,8 @@
             window.addEventListener('beforeunload', (e) => {
                 if (allowProgrammaticUnload) return;
                 const secretOpen = Boolean(document.getElementById('secret-reveal-modal')?.classList.contains('is-open') && !secretCopiedBeforeClose);
-                const namesDirty = document.getElementById('names-dirty-badge') && !document.getElementById('names-dirty-badge').classList.contains('hidden');
-                const contactDirty = document.getElementById('contact-dirty-badge') && !document.getElementById('contact-dirty-badge').classList.contains('hidden');
+                const namesDirty = document.getElementById('names-discard-btn') && !document.getElementById('names-discard-btn').classList.contains('hidden');
+                const contactDirty = document.getElementById('contact-discard-btn') && !document.getElementById('contact-discard-btn').classList.contains('hidden');
                 if (secretOpen || namesDirty || contactDirty) {
                     e.preventDefault();
                     e.returnValue = '';

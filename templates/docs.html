@@ -6,7 +6,6 @@
     <title>{{ if .AppName }}{{ .AppName }}{{ else }}Gilos Auth{{ end }} - Developer Documentation</title>
     <meta name="description" content="Integrate Gilos Auth OAuth 2.1 and OpenID Connect into your application.">
     {{ template "common/head" . }}
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <style>
         :root {
             --doc-primary: var(--primary);
@@ -69,17 +68,18 @@
         .lead { font-size: 1.08rem; color: var(--doc-text-secondary); margin-bottom: 28px; }
         .docs-content ul, .docs-content ol { color: var(--doc-text-secondary); margin: 0 0 16px 24px; }
         .docs-content li { margin-bottom: 8px; }
-        code { font-family: 'JetBrains Mono', monospace; font-size: 0.86em; background: var(--doc-inline-code-bg); color: var(--doc-inline-code-text); padding: 2px 6px; border-radius: 0px; border: 1px solid var(--border-subtle); }
+        .doc-heading-row { display: inline-flex; align-items: center; gap: 8px; }
+        code { font-family: var(--font-mono); font-size: 0.86em; background: var(--doc-inline-code-bg); color: var(--doc-inline-code-text); padding: 2px 6px; border-radius: 0px; border: 1px solid var(--border-subtle); }
         pre { background: var(--doc-code-bg); border-radius: var(--radius-md); padding: 18px 22px; overflow-x: auto; margin: 12px 0 20px; border: 1px solid var(--doc-border); position: relative; }
         pre code { background: none; color: var(--doc-code-text); padding: 0; border: none; font-size: 0.84rem; line-height: 1.65; }
         .copy-btn { position: absolute; top: 10px; right: 10px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.16); color: #D4D4D8; padding: 5px 11px; border-radius: 0px; font-family: inherit; font-size: 0.74rem; font-weight: 500; cursor: pointer; transition: background-color 0.16s ease, color 0.16s ease; }
         .copy-btn:hover { background: rgba(255,255,255,0.18); color: #FFFFFF; }
         .endpoint { background: var(--doc-content-bg); border: 1px solid var(--doc-border); border-radius: var(--radius-md); padding: 18px 20px; margin: 20px 0; box-shadow: var(--card-shadow); }
         .endpoint-header { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; flex-wrap: wrap; }
-        .method-badge { display: inline-flex; align-items: center; justify-content: center; padding: 4px 10px; border-radius: 0px; font-size: 0.74rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; font-family: 'JetBrains Mono', monospace; }
+        .method-badge { display: inline-flex; align-items: center; justify-content: center; padding: 4px 10px; border-radius: 0px; font-size: 0.74rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; font-family: var(--font-mono); }
         .method-get { background: var(--method-get-bg); color: var(--method-get); }
         .method-post { background: var(--method-post-bg); color: var(--method-post); }
-        .endpoint-path { font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; font-weight: 500; color: var(--doc-text); }
+        .endpoint-path { font-family: var(--font-mono); font-size: 0.9rem; font-weight: 500; color: var(--doc-text); }
         .table-wrapper { overflow-x: auto; margin: 12px 0; border: 1px solid var(--doc-border); border-radius: var(--radius-md); background: var(--doc-content-bg); }
         table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
         th, td { text-align: left; padding: 11px 14px; border-bottom: 1px solid var(--doc-border); }
@@ -117,12 +117,13 @@
         .client-info { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--doc-border); display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
         .client-info-item { background: var(--doc-card-bg); padding: 12px; border-radius: var(--radius-sm); border: 1px solid var(--doc-border); }
         .client-info-label { font-size: 0.72rem; color: var(--doc-text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
-        .client-info-value { font-family: 'JetBrains Mono', monospace; font-size: 0.84rem; color: var(--doc-text); word-break: break-all; }
+        .client-info-value { font-family: var(--font-mono); font-size: 0.84rem; color: var(--doc-text); word-break: break-all; }
         .secret-toggle { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; color: var(--accent); font-size: 0.8rem; }
         .empty-state { text-align: center; padding: 42px 24px; background: var(--doc-content-bg); border: 1px solid var(--doc-border); border-radius: var(--radius-lg); margin: 24px 0; }
         .empty-state h3 { color: var(--doc-text); margin-bottom: 10px; }
         .empty-state p { color: var(--doc-text-secondary); margin-bottom: 18px; }
         .docs-content .btn { display: inline-flex; align-items: center; gap: 8px; padding: 10px 18px; border-radius: var(--radius-sm); font-weight: 600; font-size: 0.88rem; text-decoration: none; cursor: pointer; transition: background-color 0.16s ease, transform 0.1s ease; border: none; }
+        .docs-content .btn:active:not(:disabled) { transform: translateY(1px); }
         .docs-content .btn-primary { background: var(--doc-gradient); color: var(--doc-gradient-contrast); }
         .docs-content .btn-primary:hover:not(:disabled) { background: var(--doc-primary-dark); }
         .docs-content .btn:disabled { opacity: 0.45; cursor: not-allowed; }
@@ -130,12 +131,12 @@
         .interactive-box.active { border-color: var(--accent); border-style: solid; }
         .input-group { margin-bottom: 14px; }
         .input-group label { display: block; font-weight: 500; color: var(--doc-text); margin-bottom: 6px; font-size: 0.88rem; }
-        .input-group input { width: 100%; padding: 11px 14px; border: 1px solid var(--doc-border); border-radius: var(--radius-sm); background: var(--doc-card-bg); color: var(--doc-text); font-family: 'JetBrains Mono', monospace; font-size: 0.88rem; }
+        .input-group input { width: 100%; padding: 11px 14px; border: 1px solid var(--doc-border); border-radius: var(--radius-sm); background: var(--doc-card-bg); color: var(--doc-text); font-family: var(--font-mono); font-size: 0.88rem; }
         .input-group input:focus { outline: none; background: var(--surface-elevated); border-color: var(--accent); box-shadow: 0 0 0 2px var(--focus-ring); }
         .lang-select-compact { margin-top: 8px; width: 100%; padding: 7px 10px; border-radius: var(--radius-sm); border: 1px solid var(--doc-border); background: var(--doc-card-bg); color: var(--doc-text-secondary); font-size: 0.8rem; font-family: inherit; cursor: pointer; }
         .response-preview { background: var(--doc-code-bg); border-radius: var(--radius-md); padding: 18px; margin-top: 16px; border: 1px solid var(--doc-border); }
         .response-preview pre { margin: 0; background: none; border: none; padding: 0; }
-        .http-status-pill { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 0px; font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.02em; }
+        .http-status-pill { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 0px; font-family: var(--font-mono); font-size: 0.72rem; font-weight: 700; letter-spacing: 0.02em; }
         .http-status-ok { background: var(--method-get-bg); color: var(--method-get); }
         .http-status-err { background: var(--red-100, rgba(239, 68, 68, 0.14)); color: var(--red-600, #dc2626); }
         .jwt-inspector { margin-top: 12px; padding: 14px 16px; border-radius: var(--radius-md); border: 1px solid var(--doc-border); background: var(--doc-card-bg); }
@@ -326,7 +327,10 @@
                     </div>
                     
                     <div class="callout callout-success">
-                        <div class="callout-title">✨ Interactive Mode</div>
+                        <div class="callout-title doc-heading-row">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                            <span>Interactive Mode</span>
+                        </div>
                         <p>Select a client above and all code examples below will update with your actual credentials!</p>
                     </div>
                     {{ else }}
@@ -393,7 +397,10 @@
 
                     {{ if .IsLoggedIn }}{{ if .Clients }}
                     <div class="interactive-box" id="authInteractive">
-                        <h4>🚀 Try It Live</h4>
+                        <h4 class="doc-heading-row">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                            <span>Try It Live</span>
+                        </h4>
                         <p style="margin-bottom: 16px; color: var(--doc-text-secondary);">Select a client above, then click the button to start an OAuth 2.1 authorization flow (a fresh <code>state</code> and PKCE <code>S256</code> challenge are generated automatically):</p>
                         <button type="button" id="openAuthBtn" class="btn btn-primary" onclick="openAuthUrl()" disabled>
                             {{ index .T "select_client_placeholder" }}
@@ -406,7 +413,10 @@
 
                     {{ if .IsLoggedIn }}{{ if .Clients }}
                     <div class="interactive-box" id="redirectUrlBox">
-                        <h4>📋 Paste Your Redirect URL</h4>
+                        <h4 class="doc-heading-row">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+                            <span>Paste Your Redirect URL</span>
+                        </h4>
                         <p style="margin-bottom: 16px; color: var(--doc-text-secondary);">After authorization, paste the full URL you were redirected to:</p>
                         <div class="input-group">
                             <label for="redirectUrlInput">Redirect URL</label>
@@ -458,7 +468,10 @@ grant_type=authorization_code
                     <div class="interactive-box" id="tokenTestBox">
                         <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
                             <div>
-                                <h4 style="margin: 0;">🧪 Test Token Endpoint</h4>
+                                <h4 class="doc-heading-row" style="margin: 0;">
+                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
+                                    <span>Test Token Endpoint</span>
+                                </h4>
                                 <p id="tokenTestStatus" style="margin: 4px 0 0; font-size: 0.85rem; color: var(--doc-text-muted);">Extract a code from Step 1 first</p>
                             </div>
                             <button type="button" id="testTokenBtn" class="btn btn-primary" onclick="testTokenEndpoint()" disabled>
@@ -513,7 +526,10 @@ Authorization: Bearer <span class="var-access-token">YOUR_ACCESS_TOKEN</span></c
                     <div class="interactive-box" id="userInfoTestBox">
                         <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
                             <div>
-                                <h4 style="margin: 0;">👤 Test UserInfo Endpoint</h4>
+                                <h4 class="doc-heading-row" style="margin: 0;">
+                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 1 0-16 0"/></svg>
+                                    <span>Test UserInfo Endpoint</span>
+                                </h4>
                                 <p id="userInfoTestStatus" style="margin: 4px 0 0; font-size: 0.85rem; color: var(--doc-text-muted);">{{ index .T "token_step_wait" }}</p>
                             </div>
                             <button type="button" id="testUserInfoBtn" class="btn btn-primary" onclick="testUserInfoEndpoint()" disabled>
@@ -579,7 +595,10 @@ Authorization: Bearer <span class="var-access-token">YOUR_ACCESS_TOKEN</span></c
                     <div class="interactive-box" id="refreshTestBox">
                         <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
                             <div>
-                                <h4 style="margin: 0;">🔄 Test Refresh Token</h4>
+                                <h4 class="doc-heading-row" style="margin: 0;">
+                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+                                    <span>Test Refresh Token</span>
+                                </h4>
                                 <p id="refreshTestStatus" style="margin: 4px 0 0; font-size: 0.85rem; color: var(--doc-text-muted);">{{ index .T "refresh_step_wait" }}</p>
                             </div>
                             <button type="button" id="testRefreshBtn" class="btn btn-primary" onclick="testRefreshEndpoint()" disabled>
@@ -1021,7 +1040,7 @@ func CallbackHandler(onSuccess AuthCallback) http.HandlerFunc {
         };
 
         const DOCS_THEME_ICONS = {
-            system: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>',
+            system: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14"/><path d="M8 21h8M12 17v4"/></svg>',
             light: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>',
             dark: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>'
         };
@@ -1530,7 +1549,7 @@ func CallbackHandler(onSuccess AuthCallback) http.HandlerFunc {
                     btn.style.background = 'var(--success-color)';
                 } else {
                     btn.textContent = DOCS_I18N.testError || 'Error - Try Again';
-                    btn.style.background = '#EF4444';
+                    btn.style.background = 'var(--red-600)';
                 }
             } catch (e) {
                 responseBox.classList.remove('hidden');
@@ -1538,7 +1557,7 @@ func CallbackHandler(onSuccess AuthCallback) http.HandlerFunc {
                 responseCode.textContent = 'Error: ' + e.message;
                 renderJWTInspector('');
                 btn.textContent = DOCS_I18N.testError || 'Error - Try Again';
-                btn.style.background = '#EF4444';
+                btn.style.background = 'var(--red-600)';
             }
 
             setTimeout(() => {
@@ -1576,14 +1595,14 @@ func CallbackHandler(onSuccess AuthCallback) http.HandlerFunc {
                     btn.style.background = 'var(--success-color)';
                 } else {
                     btn.textContent = DOCS_I18N.testError || 'Error - Try Again';
-                    btn.style.background = '#EF4444';
+                    btn.style.background = 'var(--red-600)';
                 }
             } catch (e) {
                 responseBox.classList.remove('hidden');
                 setDocsResponseStatus('userInfoResponseStatus', { status: 'NET', statusText: 'ERR', ok: false });
                 responseCode.textContent = 'Error: ' + e.message;
                 btn.textContent = DOCS_I18N.testError || 'Error - Try Again';
-                btn.style.background = '#EF4444';
+                btn.style.background = 'var(--red-600)';
             }
 
             setTimeout(() => {
@@ -1643,14 +1662,14 @@ func CallbackHandler(onSuccess AuthCallback) http.HandlerFunc {
                     btn.style.background = 'var(--success-color)';
                 } else {
                     btn.textContent = DOCS_I18N.testError || 'Error - Try Again';
-                    btn.style.background = '#EF4444';
+                    btn.style.background = 'var(--red-600)';
                 }
             } catch (e) {
                 responseBox.classList.remove('hidden');
                 setDocsResponseStatus('refreshResponseStatus', { status: 'NET', statusText: 'ERR', ok: false });
                 responseCode.textContent = 'Error: ' + e.message;
                 btn.textContent = DOCS_I18N.testError || 'Error - Try Again';
-                btn.style.background = '#EF4444';
+                btn.style.background = 'var(--red-600)';
             }
 
             setTimeout(() => {

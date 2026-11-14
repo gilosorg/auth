@@ -141,7 +141,7 @@
             gap: 8px;
             margin: 14px auto 0;
             padding: 7px 12px;
-            border-radius: var(--radius-pill);
+            border-radius: 0px;
             background: var(--surface-subtle);
             border: 1px solid var(--border-default);
             font-size: 0.78rem;
@@ -155,17 +155,19 @@
 
         .target-notice strong {
             color: var(--text);
+            font-family: var(--font-mono);
+            font-size: 0.76rem;
             font-weight: 600;
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
-            max-width: 185px;
+            max-width: 195px;
         }
 
         .identity-chip-wrap {
             display: flex;
             justify-content: center;
-            margin-bottom: 18px;
+            margin-bottom: 16px;
         }
 
         .identity-chip-wrap.hidden {
@@ -176,8 +178,8 @@
             display: inline-flex;
             align-items: center;
             gap: 8px;
-            padding: 4px 6px 4px 5px;
-            border-radius: var(--radius-pill);
+            padding: 4px 5px;
+            border-radius: 0px;
             border: 1px solid var(--border-default);
             background: var(--surface-subtle);
             max-width: 100%;
@@ -199,31 +201,36 @@
         }
 
         .identity-chip-handle {
-            font-size: 0.84rem;
+            font-family: var(--font-mono);
+            font-size: 0.82rem;
             font-weight: 600;
             color: var(--text);
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
-            max-width: 190px;
+            max-width: 200px;
         }
 
         .identity-chip-change {
-            border: none;
+            border: 1px solid var(--border-default);
             background: var(--surface-elevated);
             color: var(--accent);
             font-family: inherit;
             font-size: 0.75rem;
             font-weight: 600;
             padding: 3px 9px;
-            border-radius: var(--radius-pill);
-            border: 1px solid var(--border-default);
+            border-radius: 0px;
             cursor: pointer;
-            transition: background-color 0.15s ease, color 0.15s ease;
+            transition: background-color 0.14s ease, border-color 0.14s ease, transform 0.08s ease;
         }
 
         .identity-chip-change:hover {
             background: var(--accent-subtle);
+            border-color: color-mix(in srgb, var(--accent) 45%, var(--border-default));
+        }
+
+        .identity-chip-change:active {
+            transform: translateY(1px);
         }
 
         .auth-banner {
@@ -320,6 +327,18 @@
             margin-bottom: 6px;
         }
 
+        .field-label-row {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 6px;
+        }
+
+        .field-label-row .field-label {
+            margin-bottom: 0;
+        }
+
         .auth-input {
             width: 100%;
             height: 46px;
@@ -358,7 +377,7 @@
             display: flex;
             align-items: stretch;
             width: 100%;
-            height: 46px;
+            height: 44px;
             border: 1.5px solid var(--border-default);
             border-radius: 0px;
             background: var(--surface-subtle);
@@ -426,8 +445,9 @@
             box-shadow: none;
         }
 
-        .auth-input--password {
-            padding-right: 46px;
+        .gilos-input-group:has(.error) {
+            border-color: var(--red-500);
+            box-shadow: 0 0 0 2px color-mix(in srgb, var(--red-500) 16%, transparent);
         }
 
         .field-hint {
@@ -478,6 +498,10 @@
             transform: translateX(1.5px);
         }
 
+        .trailing-button:active:not(:disabled) {
+            transform: translateY(1px);
+        }
+
         .trailing-button:focus-visible {
             outline: 2px solid var(--accent);
             outline-offset: -2px;
@@ -494,34 +518,6 @@
             width: 17px;
             height: 17px;
             transition: transform 0.16s ease;
-        }
-
-        .password-input-wrap {
-            position: relative;
-            width: 100%;
-        }
-
-        .password-toggle {
-            position: absolute;
-            right: 6px;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 34px;
-            height: 34px;
-            border-radius: 0px;
-            border: none;
-            background: transparent;
-            color: var(--text-tertiary);
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: color 0.15s ease, background-color 0.15s ease;
-        }
-
-        .password-toggle:hover {
-            color: var(--text);
-            background: var(--surface-subtle);
         }
 
         .verification-info,
@@ -688,6 +684,7 @@
         }
 
         .countdown-timer {
+            font-family: var(--font-mono);
             font-weight: 600;
             font-variant-numeric: tabular-nums;
             color: var(--text);
@@ -808,11 +805,10 @@
             background: var(--surface-hover);
             border-color: var(--border-strong);
         }
-        }
 
-        .auth-btn-secondary:hover:not(:disabled),
-        .bg-gray:hover:not(:disabled) {
-            background: var(--surface-hover);
+        .auth-btn-secondary:active:not(:disabled),
+        .bg-gray:active:not(:disabled) {
+            transform: translateY(1px);
         }
 
         .spinner {
@@ -822,11 +818,12 @@
             border: 2px solid color-mix(in srgb, currentColor 28%, transparent);
             border-top-color: currentColor;
             border-radius: 0px;
-            animation: gilosSpin 0.65s linear infinite;
+            animation: gilos-spin 0.65s linear infinite;
         }
 
         .terms-text {
-            margin-top: 18px;
+            margin: 18px auto 0;
+            max-width: 310px;
             font-size: 0.78rem;
             line-height: 1.5;
             color: var(--text-tertiary);
@@ -837,26 +834,12 @@
             display: none;
         }
 
-        .auth-trust-strip {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-            padding: 12px 24px;
-            background: var(--surface-subtle);
-            border-top: 1px solid var(--border-subtle);
-            font-size: 0.76rem;
-            color: var(--text-tertiary);
-            text-align: center;
-        }
-
         .hidden {
             display: none !important;
         }
     </style>
 </head>
 <body>
-    {{template "ribbon" .}}
     <a href="#main-content" class="skip-link">{{ index .T "skip_to_content" }}</a>
     <main class="auth-stage" id="main-content" tabindex="-1">
         <div class="auth-container">
@@ -870,11 +853,11 @@
                         <img src="/static/img/logo-dark.svg" alt="Gilos Logo" class="auth-logo theme-logo-dark">
                     </div>
                     <div id="auth-step-pill" class="step-pill hidden"></div>
-                    <h1 id="auth-header">{{ index .T "welcome" }}</h1>
+                    <h1 id="auth-header">{{ index .T "sign_in" }}</h1>
                     <p id="auth-subtitle" class="auth-subtitle">{{ index .T "sign_in_subtitle" }}</p>
                     <div id="target-notice" class="target-notice hidden">
                         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                            <rect x="3" y="11" width="18" height="11"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
                         </svg>
                         <span>{{ index .T "oauth_target_redirect_notice" }}</span>
                         <strong id="target-notice-dest"></strong>
@@ -921,16 +904,17 @@
                     <form id="password-form" class="form-container hidden" onsubmit="return false;">
                         <input type="hidden" name="username" id="password-username" autocomplete="username">
                         <div class="form-element">
-                            <p id="password-info" class="verification-info"></p>
-                            <div class="password-input-wrap">
-                                <input type="password" id="password" name="password" class="auth-input auth-input--password" required autocomplete="current-password"
-                                    placeholder="{{ index .T "enter_password" }}" oninput="validateForm()" onchange="validateForm()" aria-describedby="message password-caps-warning">
-                                <button type="button" class="password-toggle" onclick="togglePasswordField('password', this)" aria-label="{{ index .T "show_password" }}"></button>
-                            </div>
-                            <div id="password-caps-warning" class="caps-warning" hidden></div>
-                            <div class="forgot-row">
+                            <p id="password-info" class="verification-info hidden"></p>
+                            <div class="field-label-row">
+                                <label for="password" class="field-label">{{ index .T "password" }}</label>
                                 <a href="#" class="forgot-password" onclick="moveToState('forgot-password'); return false;">{{ index .T "forgot_password" }}</a>
                             </div>
+                            <div class="gilos-input-group">
+                                <input type="password" id="password" name="password" class="gilos-input-control" required autocomplete="current-password"
+                                    placeholder="{{ index .T "enter_password" }}" oninput="validateForm()" onchange="validateForm()" aria-describedby="message password-caps-warning">
+                                <button type="button" class="gilos-input-action password-toggle" onclick="togglePasswordField('password', this)" aria-label="{{ index .T "show_password" }}"></button>
+                            </div>
+                            <div id="password-caps-warning" class="caps-warning" hidden></div>
                         </div>
                     </form>
 
@@ -944,7 +928,7 @@
                                     <input type="radio" id="two-step-email" name="contact_type" value="email" aria-label="{{ index .T "email" }}">
                                     <span class="radio-option-icon" aria-hidden="true">
                                         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/>
+                                            <rect x="2" y="4" width="20" height="16"/><polyline points="22,6 12,13 2,6"/>
                                         </svg>
                                     </span>
                                     <span id="two-step-email-label" class="radio-option-label"></span>
@@ -953,7 +937,7 @@
                                     <input type="radio" id="two-step-phone" name="contact_type" value="phone" aria-label="{{ index .T "phone" }}">
                                     <span class="radio-option-icon" aria-hidden="true">
                                         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                            <rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/>
+                                            <rect x="5" y="2" width="14" height="20"/><line x1="12" y1="18" x2="12.01" y2="18"/>
                                         </svg>
                                     </span>
                                     <span id="two-step-phone-label" class="radio-option-label"></span>
@@ -1044,19 +1028,19 @@
                         <input type="hidden" name="last_name" id="register-password-last-name">
                         <input type="hidden" name="contact" id="register-password-contact">
                         <div class="form-element">
-                            <div class="password-input-wrap">
-                                <input type="password" id="register-password" name="password" class="auth-input auth-input--password" required autocomplete="new-password"
+                            <div class="gilos-input-group">
+                                <input type="password" id="register-password" name="password" class="gilos-input-control" required autocomplete="new-password"
                                     placeholder="{{ index .T "password" }}" oninput="validateForm(); validatePasswordMatch()" onchange="validateForm(); validatePasswordMatch()" aria-describedby="message register-pw-caps-warning">
-                                <button type="button" class="password-toggle" onclick="togglePasswordField('register-password', this)" aria-label="{{ index .T "show_password" }}"></button>
+                                <button type="button" class="gilos-input-action password-toggle" onclick="togglePasswordField('register-password', this)" aria-label="{{ index .T "show_password" }}"></button>
                             </div>
                             <div id="register-pw-caps-warning" class="caps-warning" hidden></div>
                             <div id="register-pw-meter" style="margin-top: 8px;"></div>
                         </div>
                         <div class="form-element">
-                            <div class="password-input-wrap">
-                                <input type="password" id="confirm-password" class="auth-input auth-input--password" required autocomplete="new-password" placeholder="{{ index .T "confirm_password" }}"
+                            <div class="gilos-input-group">
+                                <input type="password" id="confirm-password" class="gilos-input-control" required autocomplete="new-password" placeholder="{{ index .T "confirm_password" }}"
                                     oninput="validateForm(); validatePasswordMatch()" onchange="validateForm(); validatePasswordMatch()" aria-describedby="message register-confirm-caps-warning">
-                                <button type="button" class="password-toggle" onclick="togglePasswordField('confirm-password', this)" aria-label="{{ index .T "show_password" }}"></button>
+                                <button type="button" class="gilos-input-action password-toggle" onclick="togglePasswordField('confirm-password', this)" aria-label="{{ index .T "show_password" }}"></button>
                             </div>
                             <div id="register-confirm-caps-warning" class="caps-warning" hidden></div>
                         </div>
@@ -1096,19 +1080,19 @@
                         <input type="hidden" name="username" id="reset-password-username" autocomplete="username">
                         <input type="hidden" name="contact" id="reset-password-contact">
                         <div class="form-element">
-                            <div class="password-input-wrap">
-                                <input type="password" id="reset-password" name="password" class="auth-input auth-input--password" required autocomplete="new-password"
+                            <div class="gilos-input-group">
+                                <input type="password" id="reset-password" name="password" class="gilos-input-control" required autocomplete="new-password"
                                     placeholder="{{ index .T "new_password" }}" oninput="validateForm(); validateResetPasswordMatch()" onchange="validateForm(); validateResetPasswordMatch()" aria-describedby="message reset-pw-caps-warning">
-                                <button type="button" class="password-toggle" onclick="togglePasswordField('reset-password', this)" aria-label="{{ index .T "show_password" }}"></button>
+                                <button type="button" class="gilos-input-action password-toggle" onclick="togglePasswordField('reset-password', this)" aria-label="{{ index .T "show_password" }}"></button>
                             </div>
                             <div id="reset-pw-caps-warning" class="caps-warning" hidden></div>
                             <div id="reset-pw-meter" style="margin-top: 8px;"></div>
                         </div>
                         <div class="form-element">
-                            <div class="password-input-wrap">
-                                <input type="password" id="reset-confirm-password" class="auth-input auth-input--password" required autocomplete="new-password" placeholder="{{ index .T "confirm_new_password" }}"
+                            <div class="gilos-input-group">
+                                <input type="password" id="reset-confirm-password" class="gilos-input-control" required autocomplete="new-password" placeholder="{{ index .T "confirm_new_password" }}"
                                     oninput="validateForm(); validateResetPasswordMatch()" onchange="validateForm(); validateResetPasswordMatch()" aria-describedby="message reset-confirm-caps-warning">
-                                <button type="button" class="password-toggle" onclick="togglePasswordField('reset-confirm-password', this)" aria-label="{{ index .T "show_password" }}"></button>
+                                <button type="button" class="gilos-input-action password-toggle" onclick="togglePasswordField('reset-confirm-password', this)" aria-label="{{ index .T "show_password" }}"></button>
                             </div>
                             <div id="reset-confirm-caps-warning" class="caps-warning" hidden></div>
                         </div>
@@ -1117,13 +1101,6 @@
 
                 <div id="button-container" class="button-container"></div>
                 <div id="terms-text" class="terms-text"></div>
-            </div>
-
-            <div class="auth-trust-strip">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-                </svg>
-                <span>{{ index .T "trust_encrypted_notice" }}</span>
             </div>
         </div>
     </main>
@@ -1324,15 +1301,15 @@
             const chipHandle = document.getElementById('identity-chip-handle');
 
             const metaMap = {
-                'gilos-id': { pct: 20, step: 0, total: 0, sub: T.sign_in_subtitle || 'Use your Gilos Username to sign in across Gilos apps and connected services.' },
-                'password': { pct: 58, step: 2, total: 3, sub: '' },
-                'two-step-select': { pct: 76, step: 2, total: 3, sub: '' },
-                'otp': { pct: 90, step: 3, total: 3, sub: '' },
+                'gilos-id': { pct: 25, step: 0, total: 0, sub: T.sign_in_subtitle || 'Use one account across all Gilos apps and connected services.' },
+                'password': { pct: 65, step: 0, total: 0, sub: '' },
+                'two-step-select': { pct: 78, step: 0, total: 0, sub: '' },
+                'otp': { pct: 92, step: 0, total: 0, sub: '' },
                 'register-name': { pct: 35, step: 1, total: 3, sub: '' },
-                'register-contact': { pct: 65, step: 2, total: 3, sub: '' },
-                'register-password': { pct: 90, step: 3, total: 3, sub: '' },
+                'register-contact': { pct: 68, step: 2, total: 3, sub: '' },
+                'register-password': { pct: 92, step: 3, total: 3, sub: '' },
                 'forgot-password': { pct: 50, step: 1, total: 2, sub: '' },
-                'reset-password': { pct: 88, step: 2, total: 2, sub: '' }
+                'reset-password': { pct: 90, step: 2, total: 2, sub: '' }
             };
 
             const meta = metaMap[step] || metaMap['gilos-id'];
@@ -1371,12 +1348,15 @@
         function updateHeaderAndTitle(step) {
             const header = document.getElementById('auth-header');
             const title = document.querySelector('title');
-            let headerText = T.welcome || 'Welcome';
-            let titleText = T.welcome || 'Welcome';
+            let headerText = T.sign_in || 'Sign in';
+            let titleText = T.sign_in || 'Sign in';
 
-            if (['password', 'two-step-select', 'otp'].includes(step)) {
-                headerText = T.welcome_back || 'Welcome back';
+            if (step === 'password') {
+                headerText = T.sign_in || 'Sign in';
                 titleText = T.sign_in || 'Sign in';
+            } else if (step === 'two-step-select' || step === 'otp') {
+                headerText = T.two_step_verification || 'Two-Step Verification';
+                titleText = T.two_step_verification || 'Two-Step Verification';
             } else if (step === 'forgot-password') {
                 headerText = T.recover_account || 'Recover account';
                 titleText = T.recover_account || 'Recover account';
@@ -1392,18 +1372,15 @@
             if (title) title.textContent = titleText + ' - {{ if .AppName }}{{ .AppName }}{{ else }}Gilos{{ end }}';
         }
 
-        function updateGilosIdHint(val) {
+        function updateGilosIdHint(val, forceWarn) {
             const hint = document.getElementById('gilos-id-hint');
             if (!hint) return;
-            if (!val) {
+            if (val.length >= 5 || (!val && !forceWarn)) {
                 hint.className = 'field-hint hidden';
                 hint.textContent = '';
-            } else if (val.length < 5) {
+            } else if (forceWarn || !hint.classList.contains('hidden')) {
                 hint.className = 'field-hint is-warn';
                 hint.textContent = T.enter_at_least_5_chars || 'Please enter at least 5 characters.';
-            } else {
-                hint.className = 'field-hint is-valid';
-                hint.innerHTML = MSG_OK_SVG + '<span>' + escapeHtml(T.username_looks_good || 'Format looks valid') + '</span>';
             }
         }
 
@@ -1575,7 +1552,7 @@
                     updateGilosIdHint(state.gilosID);
                     break;
                 case 'password': {
-                    document.getElementById('password-info').textContent = (T.password_found_info || 'Enter the password for @%s to continue.').replace('%s', state.gilosID);
+                    document.getElementById('password-info').textContent = (T.password_found_info || 'Enter your password for @%s.').replace('%s', state.gilosID);
                     document.getElementById('password').placeholder = T.enter_password || 'Enter password';
                     buttonContainer.innerHTML = `
                         <div class="button-group">
@@ -1645,7 +1622,10 @@
                         resendLink.style.display = 'none';
                     } else {
                         resendLink.style.display = 'inline-block';
-                        resendLink.textContent = (T.resend_otp_count || 'Resend OTP (%d/3)').replace('%d', String(data.resends || 0));
+                        const resendCount = data.resends || 0;
+                        resendLink.textContent = resendCount > 0
+                            ? (T.resend_otp_count || 'Resend OTP (%d/3)').replace('%d', String(resendCount))
+                            : (T.resend_otp || 'Resend OTP');
                     }
                     const prevStep = (data.mfa_email_enabled || data.mfa_phone_enabled || data.mfa_totp_enabled)
                         ? 'two-step-select'
@@ -1828,7 +1808,10 @@
                 } else {
                     resendLink.style.pointerEvents = 'auto';
                     resendLink.style.opacity = '1';
-                    resendLink.textContent = (T.resend_otp_count || 'Resend OTP (%d/3)').replace('%d', String(state.resends || 0));
+                    const resendCount = state.resends || 0;
+                    resendLink.textContent = resendCount > 0
+                        ? (T.resend_otp_count || 'Resend OTP (%d/3)').replace('%d', String(resendCount))
+                        : (T.resend_otp || 'Resend OTP');
                 }
             }
         }
@@ -1939,12 +1922,9 @@
 
         async function checkGilosID() {
             if (state.gilosID.length < 5) {
-                updateGilosIdHint(state.gilosID || 'x'.slice(0, 1));
-                const hint = document.getElementById('gilos-id-hint');
-                if (hint) {
-                    hint.className = 'field-hint is-warn';
-                    hint.textContent = T.enter_at_least_5_chars || 'Please enter at least 5 characters.';
-                }
+                updateGilosIdHint(state.gilosID, true);
+                const idEl = document.getElementById('gilos-id');
+                if (idEl) idEl.focus();
                 return;
             }
             showMessage('', false);

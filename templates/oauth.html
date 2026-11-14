@@ -116,7 +116,9 @@
     .scope-list {
         display: flex;
         flex-direction: column;
-        gap: 8px;
+        gap: 0;
+        border: 1px solid var(--border-default);
+        background: var(--surface-elevated);
     }
 
     .scope-card {
@@ -125,13 +127,18 @@
         gap: 12px;
         padding: 12px 14px;
         border-radius: 0px;
-        border: 1px solid var(--border-default);
-        background: var(--surface-elevated);
-        transition: border-color 0.15s ease;
+        border: none;
+        border-bottom: 1px solid var(--border-subtle);
+        background: transparent;
+        transition: background-color 0.14s ease;
+    }
+
+    .scope-card:last-child {
+        border-bottom: none;
     }
 
     .scope-card.is-missing {
-        border-color: rgba(224, 36, 36, 0.35);
+        box-shadow: inset 3px 0 0 var(--error);
         background: var(--red-50);
     }
 
@@ -269,53 +276,6 @@
         gap: 8px;
     }
 
-    .oauth-hint {
-        font-size: 0.76rem;
-        color: var(--text-muted);
-        text-align: center;
-    }
-
-    .oauth-security-details {
-        border: 1px solid var(--border-default);
-        border-radius: 0px;
-        background: var(--surface-subtle);
-        padding: 10px 13px;
-        font-size: 0.8rem;
-        color: var(--text-secondary);
-    }
-
-    .oauth-security-details summary {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 8px;
-        font-weight: 600;
-        color: var(--text);
-        cursor: pointer;
-        list-style: none;
-    }
-
-    .oauth-security-details summary::-webkit-details-marker {
-        display: none;
-    }
-
-    .oauth-security-details[open] .oauth-chevron {
-        transform: rotate(180deg);
-    }
-
-    .oauth-chevron {
-        transition: transform 0.16s ease;
-        flex-shrink: 0;
-        color: var(--text-tertiary);
-    }
-
-    .oauth-security-body {
-        margin-top: 8px;
-        padding-top: 8px;
-        border-top: 1px solid var(--border-subtle);
-        line-height: 1.48;
-    }
-
     .otp-info {
         font-size: 0.875rem;
         color: var(--text-secondary);
@@ -361,7 +321,7 @@
         color: var(--text-tertiary);
         text-align: center;
         line-height: 1.55;
-        max-width: 340px;
+        max-width: 310px;
         margin: 0 auto;
     }
 
@@ -373,17 +333,6 @@
 
     .terms-text a:hover {
         text-decoration: underline;
-    }
-
-    .trust-foot {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 6px;
-        padding-top: 12px;
-        border-top: 1px solid var(--border-subtle);
-        font-size: 0.76rem;
-        color: var(--text-muted);
     }
 
     @media (max-width: 480px) {
@@ -407,7 +356,6 @@
 </style>
 
 <body>
-    {{template "ribbon" .}}
     <a href="#main-content" class="skip-link">{{ index .T "skip_to_content" }}</a>
 
     <main class="oauth-stage" id="main-content" tabindex="-1">
@@ -461,8 +409,6 @@
                                 <span class="scope-desc">{{.Description}}</span>
                                 {{if .IsRequired}}
                                 <span class="badge badge-neutral">{{index $.T "scope_required"}}</span>
-                                {{else}}
-                                <span class="badge badge-neutral" style="opacity:0.78;">{{index $.T "optional_badge"}}</span>
                                 {{end}}
                             </div>
                             {{if .MaskedValue}}
@@ -480,22 +426,10 @@
                 <div class="alert-box alert-box--warning" id="missing-warning"></div>
                 {{end}}
 
-                <details class="oauth-security-details">
-                    <summary>
-                        <span style="display:inline-flex;align-items:center;gap:7px;">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-                            <span>{{ index .T "oauth_security_summary" }}</span>
-                        </span>
-                        <svg class="oauth-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"/></svg>
-                    </summary>
-                    <div class="oauth-security-body">{{ index .T "oauth_security_detail" }}</div>
-                </details>
-
                 <div class="oauth-actions-row">
                     <button type="button" class="btn btn-secondary btn-lg" id="deny-btn" onclick="submitDeny()">{{ index .T "deny" }}</button>
                     <button type="button" class="btn btn-primary btn-lg" id="approve-btn" onclick="handleApprove()" {{if .HasMissingRequired}}disabled{{end}}>{{ index .T "approve" }}</button>
                 </div>
-                <p class="oauth-hint">{{ index .T "oauth_cancel_hint" }}</p>
             </form>
 
             <!-- Step 2: Optional Authenticator TOTP Confirmation -->
@@ -526,11 +460,6 @@
             </form>
 
             <div id="terms-text" class="terms-text"></div>
-
-            <div class="trust-foot">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-                <span>{{ index .T "trust_encrypted_notice" }}</span>
-            </div>
         </section>
     </main>
 
@@ -581,10 +510,10 @@
         function renderScopeIcons() {
             const icons = {
                 openid: '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 1 0-16 0"/></svg>',
-                email: '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>',
-                phone: '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/></svg>',
-                user_basic_info: '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="14" x="3" y="5" rx="2"/><line x1="7" y1="10" x2="11" y2="10"/><line x1="7" y1="14" x2="17" y2="14"/></svg>',
-                user_sessions: '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>',
+                email: '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>',
+                phone: '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="20" x="5" y="2"/><path d="M12 18h.01"/></svg>',
+                user_basic_info: '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="14" x="3" y="5"/><line x1="7" y1="10" x2="11" y2="10"/><line x1="7" y1="14" x2="17" y2="14"/></svg>',
+                user_sessions: '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>',
                 user_totps: '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>',
                 user_manage_account: '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>',
                 offline_access: '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>'
