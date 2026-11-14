@@ -125,8 +125,8 @@
         align-items: center;
         gap: 7px;
         height: 32px;
-        padding: 0 12px;
-        border-radius: var(--radius-sm);
+        padding: 0 11px;
+        border-radius: 0px;
         border: 1px solid var(--border-default);
         background: var(--surface-elevated);
         color: var(--text-secondary);
@@ -162,7 +162,7 @@
     .lang-flag {
         width: 15px;
         height: 11px;
-        border-radius: 2px;
+        border-radius: 0px;
         border: 1px solid var(--border-subtle);
         object-fit: cover;
         flex-shrink: 0;
@@ -173,14 +173,14 @@
         bottom: calc(100% + 6px);
         right: 0;
         min-width: 172px;
-        padding: 4px;
+        padding: 0;
         background: var(--surface-elevated);
-        border: 1px solid var(--border-default);
-        border-radius: var(--radius-md);
+        border: 1px solid var(--border-strong);
+        border-radius: 0px;
         box-shadow: var(--popover-shadow);
         display: none;
         flex-direction: column;
-        gap: 2px;
+        gap: 0;
         z-index: 200;
     }
 
@@ -199,9 +199,10 @@
         align-items: center;
         gap: 9px;
         width: 100%;
-        padding: 8px 10px;
+        padding: 9px 12px;
         border: none;
-        border-radius: 6px;
+        border-bottom: 1px solid var(--border-subtle);
+        border-radius: 0px;
         background: transparent;
         color: var(--text);
         font-size: 0.825rem;
@@ -209,6 +210,10 @@
         text-align: left;
         cursor: pointer;
         transition: background-color 0.14s ease;
+    }
+
+    .lang-option:last-child {
+        border-bottom: none;
     }
 
     .lang-option:hover {
@@ -222,14 +227,14 @@
 
     .lang-option.active {
         background: var(--surface-subtle);
-        color: var(--accent);
+        box-shadow: inset 3px 0 0 var(--accent);
         font-weight: 600;
     }
 
     .lang-option img {
         width: 16px;
         height: 12px;
-        border-radius: 2px;
+        border-radius: 0px;
         object-fit: cover;
         flex-shrink: 0;
     }

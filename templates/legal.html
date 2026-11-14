@@ -44,10 +44,10 @@
 
     .legal-nav {
         display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        border: none;
-        background: transparent;
+        align-items: stretch;
+        gap: 0;
+        border: 1px solid var(--border-subtle);
+        background: var(--surface-subtle);
         flex-wrap: wrap;
     }
 
@@ -55,18 +55,23 @@
         display: inline-flex;
         align-items: center;
         padding: 7px 14px;
-        border-radius: var(--radius-sm);
+        border-radius: 0px;
         font-size: 0.84rem;
         font-weight: 500;
         color: var(--text-muted);
         text-decoration: none;
         border: none;
+        border-right: 1px solid var(--border-subtle);
         background: transparent;
         transition: background-color 0.14s ease, color 0.14s ease, transform 0.08s ease;
     }
 
+    .legal-nav-link:last-child {
+        border-right: none;
+    }
+
     .legal-nav-link:hover {
-        background: var(--surface-subtle);
+        background: color-mix(in srgb, var(--surface-elevated) 55%, transparent);
         color: var(--text);
     }
 
@@ -76,13 +81,14 @@
 
     .legal-nav-link:focus-visible {
         outline: 2px solid var(--accent);
-        outline-offset: 1px;
+        outline-offset: -2px;
         z-index: 1;
     }
 
     .legal-nav-link.active {
-        background: var(--surface-subtle);
+        background: var(--surface-elevated);
         color: var(--text);
+        box-shadow: inset 0 -2px 0 var(--accent);
         font-weight: 600;
     }
 
@@ -97,7 +103,7 @@
     .legal-sheet {
         background: var(--card-bg);
         border: 1px solid var(--card-border);
-        border-radius: var(--radius-xl);
+        border-radius: 0px;
         box-shadow: var(--card-shadow);
         padding: 40px 38px;
     }
@@ -126,8 +132,8 @@
     .legal-toc-link {
         display: inline-flex;
         align-items: center;
-        padding: 5px 12px;
-        border-radius: var(--radius-pill);
+        padding: 5px 11px;
+        border-radius: 0px;
         border: 1px solid var(--border-subtle);
         background: var(--surface-subtle);
         color: var(--text-secondary);
@@ -223,7 +229,7 @@
         }
         .legal-sheet {
             padding: 26px 20px;
-            border-radius: var(--radius-lg);
+            border-radius: 0px;
         }
         .legal-title {
             font-size: 1.55rem;

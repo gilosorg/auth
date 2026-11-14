@@ -19,7 +19,7 @@
         max-width: 472px;
         background: var(--card-bg);
         border: 1px solid var(--card-border);
-        border-radius: var(--radius-xl);
+        border-radius: 0px;
         box-shadow: var(--card-shadow);
         padding: 36px 32px 28px;
         display: flex;
@@ -53,7 +53,7 @@
         align-items: center;
         gap: 14px;
         padding: 14px 16px;
-        border-radius: var(--radius-md);
+        border-radius: 0px;
         background: var(--surface-subtle);
         border: 1px solid var(--border-subtle);
     }
@@ -61,7 +61,7 @@
     .oauth-app-badge {
         width: 42px;
         height: 42px;
-        border-radius: var(--radius-sm);
+        border-radius: 0px;
         border: 1px solid color-mix(in srgb, var(--accent) 22%, var(--border-subtle));
         background: color-mix(in srgb, var(--accent) 12%, var(--surface-elevated));
         color: var(--accent);
@@ -122,8 +122,6 @@
         flex-direction: column;
         gap: 0;
         border: 1px solid var(--border-subtle);
-        border-radius: var(--radius-md);
-        overflow: hidden;
         background: var(--surface-elevated);
     }
 
@@ -132,6 +130,7 @@
         align-items: flex-start;
         gap: 12px;
         padding: 12px 14px;
+        border-radius: 0px;
         border: none;
         border-bottom: 1px solid var(--border-subtle);
         background: transparent;
@@ -143,13 +142,14 @@
     }
 
     .scope-card.is-missing {
+        box-shadow: inset 3px 0 0 var(--error);
         background: var(--red-50);
     }
 
     .scope-icon {
         width: 32px;
         height: 32px;
-        border-radius: var(--radius-sm);
+        border-radius: 0px;
         background: var(--surface-subtle);
         color: var(--text-secondary);
         display: inline-flex;
@@ -191,8 +191,8 @@
         display: inline-flex;
         align-items: center;
         align-self: flex-start;
-        padding: 2px 8px;
-        border-radius: 6px;
+        padding: 2px 7px;
+        border-radius: 0px;
         border: none;
         background: var(--surface-subtle);
         color: var(--text-secondary);
@@ -214,7 +214,7 @@
         align-items: flex-start;
         gap: 10px;
         padding: 12px 14px;
-        border-radius: var(--radius-sm);
+        border-radius: 0px;
         font-size: 0.85rem;
         font-weight: 500;
         line-height: 1.45;
@@ -224,12 +224,14 @@
         background: var(--red-50);
         color: var(--red-700);
         border: 1px solid color-mix(in srgb, var(--red-500) 28%, transparent);
+        border-left: 3px solid var(--red-500);
     }
 
     .alert-box--warning {
         background: var(--amber-50);
         color: var(--amber-700);
         border: 1px solid color-mix(in srgb, var(--amber-500) 32%, transparent);
+        border-left: 3px solid var(--amber-500);
     }
 
     .oauth-trust-note {
@@ -237,6 +239,7 @@
         align-items: flex-start;
         gap: 9px;
         padding: 2px 2px;
+        border-radius: 0px;
         border: none;
         background: transparent;
         font-size: 0.78rem;
@@ -275,7 +278,7 @@
         align-items: flex-start;
         gap: 10px;
         padding: 11px 14px;
-        border-radius: var(--radius-sm);
+        border-radius: 0px;
         font-size: 0.86rem;
         font-weight: 500;
     }
@@ -288,6 +291,7 @@
         background: var(--red-50);
         color: var(--red-700);
         border: 1px solid color-mix(in srgb, var(--red-500) 28%, transparent);
+        border-left: 3px solid var(--red-500);
     }
 
     .form-container {
@@ -354,7 +358,7 @@
         color: var(--text);
         background: var(--surface-elevated);
         border: 1px solid var(--border-default);
-        border-radius: var(--radius-sm);
+        border-radius: 0px;
         transition: border-color 0.16s ease, box-shadow 0.16s ease;
     }
 
@@ -395,7 +399,7 @@
         }
         .oauth-card {
             padding: 26px 20px 22px;
-            border-radius: var(--radius-lg);
+            border-radius: 0px;
         }
         .oauth-actions-row {
             grid-template-columns: 1fr;
@@ -706,17 +710,23 @@
         }
 
         function getOtpCode() {
-            const container = document.getElementById('otp-inputs');
-            return window.GilosUI ? window.GilosUI.getOtpValue(container) : '';
+            const inputs = document.querySelectorAll('#totp-form .otp-input');
+            return Array.from(inputs).map(i => i.value).join('');
         }
 
         function submitApprove() {
             if (isConsentSubmitting) return;
             if (userMFAEnabled) {
                 const otpContainer = document.getElementById('otp-inputs');
+                const otpInputs = document.querySelectorAll('#totp-form .otp-input');
                 const code = getOtpCode();
                 if (code.length !== 6) {
-                    if (window.GilosUI) window.GilosUI.shakeOtpContainer(otpContainer, true);
+                    otpInputs.forEach(i => i.classList.add('error'));
+                    if (otpContainer) {
+                        otpContainer.classList.remove('is-shake');
+                        void otpContainer.offsetWidth;
+                        otpContainer.classList.add('is-shake');
+                    }
                     showMessage(tr('enter_full_code', 'Please enter the full 6-digit verification code.'), true);
                     return;
                 }
@@ -735,23 +745,74 @@
         }
 
         function setupOTPInputs() {
-            const container = document.getElementById('otp-inputs');
+            const otpInputs = document.querySelectorAll('#totp-form .otp-input');
             const verifyBtn = document.getElementById('totp-verify-btn');
-            if (!container || !window.GilosUI) return;
 
-            function updateVerifyBtn(code) {
-                if (verifyBtn) verifyBtn.disabled = code.length !== 6;
+            function updateVerifyBtn() {
+                if (verifyBtn) verifyBtn.disabled = getOtpCode().length !== 6;
             }
 
-            window.GilosUI.bindOtpInputs(container, {
-                isLocked: () => isConsentSubmitting,
-                onChange: (code) => {
+            otpInputs.forEach((input, idx) => {
+                input.addEventListener('input', (e) => {
+                    if (isConsentSubmitting) return;
+                    const clean = e.target.value.replace(/\D/g, '');
+                    if (clean.length > 1) {
+                        const count = Math.min(clean.length, otpInputs.length - idx);
+                        for (let i = 0; i < count; i++) {
+                            otpInputs[idx + i].value = clean[i];
+                        }
+                        otpInputs[Math.min(idx + count, otpInputs.length - 1)].focus();
+                    } else {
+                        e.target.value = clean;
+                        if (clean && idx < otpInputs.length - 1) {
+                            otpInputs[idx + 1].focus();
+                        }
+                    }
+                    otpInputs.forEach(i => i.classList.remove('error'));
                     showMessage('', false);
-                    updateVerifyBtn(code);
-                },
-                onComplete: () => {
-                    if (!isConsentSubmitting) submitApprove();
-                }
+                    updateVerifyBtn();
+                    if (getOtpCode().length === 6) {
+                        submitApprove();
+                    }
+                });
+
+                input.addEventListener('keydown', (e) => {
+                    if (isConsentSubmitting) {
+                        e.preventDefault();
+                        return;
+                    }
+                    if (e.key === 'Backspace' && !e.target.value && idx > 0) {
+                        otpInputs[idx - 1].focus();
+                        otpInputs[idx - 1].value = '';
+                        updateVerifyBtn();
+                    } else if (e.key === 'ArrowLeft' && idx > 0) {
+                        e.preventDefault();
+                        otpInputs[idx - 1].focus();
+                    } else if (e.key === 'ArrowRight' && idx < otpInputs.length - 1) {
+                        e.preventDefault();
+                        otpInputs[idx + 1].focus();
+                    } else if (e.key === 'Enter' && getOtpCode().length === 6) {
+                        e.preventDefault();
+                        submitApprove();
+                    }
+                });
+
+                input.addEventListener('paste', (e) => {
+                    e.preventDefault();
+                    if (isConsentSubmitting) return;
+                    const pasteData = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '').slice(0, 6);
+                    if (!pasteData) return;
+                    for (let i = 0; i < otpInputs.length; i++) {
+                        otpInputs[i].classList.remove('error');
+                        otpInputs[i].value = pasteData[i] || '';
+                    }
+                    showMessage('', false);
+                    otpInputs[Math.min(pasteData.length, 5)].focus();
+                    updateVerifyBtn();
+                    if (pasteData.length === 6) {
+                        submitApprove();
+                    }
+                });
             });
         }
 

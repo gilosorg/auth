@@ -35,35 +35,30 @@ Email domains in Resend are separated by purpose to protect deliverability and i
 
 ## 4. UI Engineering & Brand Design Philosophy (CRITICAL)
 
-Gilos interfaces blend clean, approachable SaaS clarity (generous breathing room, soft rounded geometry, crisp `1px` borders, clear visual hierarchy) with Apple-inspired consumer calm (understated typography, translucent surfaces, tactile restraint, and natural human iconography). Controls should feel familiar, cohesive, and intuitive.
+Gilos interfaces blend **corporate Microsoft / Fluent structural discipline** (sharp rectangular containers, crisp hairline borders, clear grid hierarchy) with **Apple-inspired consumer calm** (generous breathing room, understated typography, translucent surfaces, tactile restraint, and natural human iconography). Square UI boxes should feel purposeful and modern—never brutalist, sterile, or robotic.
 
-### Rounded Geometry & Natural Iconography (MANDATORY)
-- **Containers & Interactive Surfaces**: Use standard rounded radius tokens in `static/css/app.css`:
-  - `--radius-xs: 4px` (checkboxes, subtle inline badges/flags)
-  - `--radius-sm: 8px` (buttons, inputs, textareas, selects, nav pills, list rows)
-  - `--radius-md: 10px` (toasts, dropdown menus, code blocks, callouts)
-  - `--radius-lg: 14px` (cards, entity tiles, modals)
-  - `--radius-xl: 16px` (primary auth/OAuth stage cards, legal sheet)
-  - `--radius-pill: 9999px` (status badges, toggle switches, filter pills, avatars, chips)
-- When integrating third-party UI libraries (SweetAlert2 `.swal2-*`, `intl-tel-input` `.iti__*`, CropperJS `.cropper-*`), match these standard rounded tokens (`var(--radius-lg)` for dialogs, `var(--radius-md)` for dropdown panels, `var(--radius-sm)` for inputs/buttons) and preserve natural circular warning/success icons.
-- **Icons, Spinners & Avatars**: Keep pictographic SVG icons natural (`rx="2"` on hardware/document rects, round stroke caps/joins). User avatars (`.avatar-circle`, `.user-trigger-avatar`, `.identity-chip-avatar`), spinners (`.spinner`, `.btn-spinner`), radio buttons (`input[type="radio"]`), toggle knobs, and status dots (`.status-live-dot`, `.pw-rule-dot`) use smooth circles (`border-radius: 50%`).
+### Sharp `0px` Box Geometry & Natural Iconography (Brand Face — MANDATORY)
+- **Containers & Interactive Surfaces (`0px`)**: Cards, containers, panels, inputs, textareas, selects, buttons, checkboxes, toggle switches, badges, status tags, avatars, dropdown menus, skeletons, scrollbars, toast popups, modals, and HTML OTP emails MUST have sharp square corners (`border-radius: 0px`).
+- All radius tokens in `static/css/app.css` (`--radius-xs`, `--radius-sm`, `--radius-md`, `--radius-lg`, `--radius-xl`, `--radius-pill`) MUST remain `0px`.
+- When integrating third-party UI libraries (SweetAlert2 `.swal2-*`, `intl-tel-input` `.iti__*`, CropperJS `.cropper-*`), explicitly override container/control corner radii with `border-radius: 0px !important`.
+- **Icons, Spinners & Semantic Dots Stay Natural**: **Do NOT** force `0px` blocky geometry onto icons or inherently circular micro-indicators. Pictographic SVG icons (devices, locks, envelopes, copy symbols, badges, shields) should preserve natural optical rounding (`rx="2"` on hardware/document rects, round stroke caps/joins). Rotating spinners (`.spinner`, `.btn-spinner`), radio buttons (`input[type="radio"]`), and tiny status dots (`.status-live-dot`, `.pw-rule-dot`) remain smoothly circular (`border-radius: 50%`) so icons read as icons and status cues stay human.
 
-### Unified Flex Inputs & Clean Inline Adornments (CRITICAL)
+### Unified Flex Input Groups & Flush Adornments (CRITICAL)
 - **NEVER** position text prefixes (`@`), status indicators, eye toggles, or submit buttons inside `<input>` via `position: absolute` with hardcoded `padding-left`/`padding-right` (font metrics vary across glyphs such as Inter `@` vs `E` and cause baseline sag, tight kerning, and uneven top/right/bottom air gaps).
-- **ALWAYS** construct bordered flex input groups (`display: flex; align-items: center; border: 1px solid var(--border-default); border-radius: var(--radius-sm); background: var(--surface-elevated); overflow: hidden`):
-  - Place inline sigils (`@` in `var(--font-mono)`) or search icons smoothly inline inside the input (`padding-left: 13px; padding-right: 4px; background: transparent; border-right: none`) aligned cleanly on the cross-axis before a borderless `flex: 1; min-width: 0` `<input>` (avoid hard vertical divider boxes).
-  - Tuck trailing actions (password visibility toggles, clear icons, compact primary arrow submit buttons) neatly inside the right edge (`margin: 4px; border-radius: 6px; border: none`) so inputs feel unified and effortless.
-  - Style disabled inline submit buttons cleanly (`background: var(--surface-subtle); color: var(--text-tertiary)`).
+- **ALWAYS** construct bordered flex input groups (`display: flex; align-items: stretch; border: 1.5px solid var(--border-default); background: var(--surface-subtle)`):
+  - Place static sigils (`@` in `var(--font-mono)`) in a stretch-height left addon cell (`flex: 0 0 40px`–`42px`, `border-right: 1px solid var(--border-default)`, subtle tonal fill) centered on the exact cross-axis as a borderless `flex: 1; min-width: 0` `<input>`.
+  - Dock trailing actions (submit buttons, password visibility toggles, clear actions) **flush** to the top, right, and bottom borders (`height: 100%`, `border-left: 1px solid var(--border-default)`), never floating inside an input with gaps.
+  - Style disabled docked buttons as intentional matte structural cells (`opacity: 1` with subtle background and `var(--text-tertiary)` icon color) rather than faded translucent boxes.
   - Apply hover, `:focus-within` (`border-color: var(--accent)`, `box-shadow: 0 0 0 2px var(--focus-ring)`), and error rings on the outer wrapper rather than the inner borderless input.
 
 ### Structural Balance, Typography & Deterministic Kinematics
-- **Calm Navigation & Segmented Controls**: Prefer clean spacing (`gap: 4px`–`8px`) and soft pill highlights (`.header-tabs`, `.filter-pills`, `.legal-nav`) or subtle segmented pill tracks (`.method-selector`) and individual rounded option cards (`.radio-option`) over joined table-like box strips.
+- **Structured Calm**: Combine `1px` corporate hairlines, `gap: 0` segmented bars (`.method-selector`, `.filter-pills`), and `inset 3px 0 0` / `inset 0 -2px 0` active accent rails with subtle, restrained surface depth (`--card-shadow`, frosted translucent headers) and open padding so interfaces remain calm and breathable.
 - **Hierarchy & Monospace Discipline**: Always define and verify text contrast tokens (`--text`, `--text-secondary`, `--text-muted`, `--text-tertiary`) in both Light and Dark themes so footer disclaimers, placeholders, and prefixes remain subtle yet legible. Pair `Inter` with `var(--font-mono)` (`'JetBrains Mono'`, system monospace) and `font-variant-numeric: tabular-nums` for `@` handles, numeric `User ID #...`, OTP digit grids, countdowns, client IDs, scopes, and HTTP status tags.
 - **Line Wrapping & Kinematics**: Constrain centered disclaimer/legal text (`max-width: 310px`–`340px`) to avoid single-word orphan wraps. Prefer subtle border/tonal transitions and crisp `translateY(1px)` click detents over bouncy scale animations.
 
 ### Form Controls, Themes & Maintainability
-- Enforce `button, input, textarea, select { border-radius: var(--radius-sm); }` globally (keeping `input[type="radio"]` as `50%` and `input[type="checkbox"]` as `var(--radius-xs)` / `4px`).
-- Style `input[type="checkbox"]` (`border-radius: var(--radius-xs)` with angled checkmark), `input[type="radio"]` (`appearance: none; border-radius: 50%` with centered circular dot), and `.toggle-switch` as a modern pill switch (`border-radius: var(--radius-pill)` track with circular `50%` sliding thumb).
+- Enforce `button, input, textarea, select { border-radius: 0px; }` globally (except `input[type="radio"]`, which keeps its classic `50%` circular ring so users can immediately distinguish single-choice radios from square multi-select checkboxes).
+- Style `input[type="checkbox"]` (`border-radius: 0px` with angled checkmark) and `input[type="radio"]` (`appearance: none; border-radius: 50%` with centered circular dot), leaving `.toggle-switch` as a `1px`-bordered rectangular track with an exact-fit sliding square thumb.
 - Build strictly with vanilla HTML/CSS/JS; do not add CSS frameworks.
 - Always consume CSS custom properties from `static/css/app.css` and verify every new component works cleanly in both Light mode and Dark mode (`:root[data-theme="dark"]` and `@media (prefers-color-scheme: dark)`).
 - Keep `:focus-visible` outlines clear (`2px solid var(--accent)`), maintain responsive behavior at mobile breakpoints (`375px`+), respect `prefers-reduced-motion`, and update all three translation files (`i18n/translations/en.json`, `ru.json`, `uz.json`) when adding user-facing copy.
