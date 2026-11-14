@@ -70,7 +70,33 @@
         }
 
         if (duration > 0) {
-            window.setTimeout(dismiss, duration);
+            var remaining = duration;
+            var startedAt = Date.now();
+            var timerId = null;
+
+            var startTimer = function () {
+                if (timerId !== null || remaining <= 0) return;
+                startedAt = Date.now();
+                timerId = window.setTimeout(dismiss, remaining);
+            };
+
+            var pauseTimer = function () {
+                if (timerId === null) return;
+                window.clearTimeout(timerId);
+                timerId = null;
+                remaining = Math.max(0, remaining - (Date.now() - startedAt));
+            };
+
+            el.addEventListener('mouseenter', pauseTimer);
+            el.addEventListener('focusin', pauseTimer);
+            el.addEventListener('mouseleave', startTimer);
+            el.addEventListener('focusout', function (e) {
+                if (!el.contains(e.relatedTarget)) {
+                    startTimer();
+                }
+            });
+
+            startTimer();
         }
     }
 
@@ -429,6 +455,43 @@
         });
     }
 
+    /**
+     * Enables standard WAI-ARIA arrow, Home, and End keyboard switching on a [role="tablist"].
+     * Triggers .click() on the target tab so existing panel switching and state logic stay in sync.
+     */
+    function bindTablistA11y(tablistEl) {
+        if (!tablistEl || tablistEl.dataset.gilosTablistBound === '1') return;
+        tablistEl.dataset.gilosTablistBound = '1';
+
+        tablistEl.addEventListener('keydown', function (e) {
+            if (['ArrowLeft', 'ArrowRight', 'Home', 'End'].indexOf(e.key) === -1) return;
+            var tabs = Array.prototype.slice.call(tablistEl.querySelectorAll('[role="tab"]:not([disabled])')).filter(function (tab) {
+                return !tab.hidden && tab.offsetParent !== null;
+            });
+            if (!tabs.length) return;
+            var currentIndex = tabs.indexOf(document.activeElement);
+            if (currentIndex === -1) {
+                currentIndex = tabs.findIndex(function (tab) {
+                    return tab.getAttribute('aria-selected') === 'true' || tab.classList.contains('active');
+                });
+                if (currentIndex === -1) currentIndex = 0;
+            }
+
+            var nextIndex = currentIndex;
+            if (e.key === 'ArrowRight') nextIndex = (currentIndex + 1) % tabs.length;
+            else if (e.key === 'ArrowLeft') nextIndex = (currentIndex - 1 + tabs.length) % tabs.length;
+            else if (e.key === 'Home') nextIndex = 0;
+            else if (e.key === 'End') nextIndex = tabs.length - 1;
+
+            e.preventDefault();
+            var targetTab = tabs[nextIndex];
+            if (targetTab) {
+                targetTab.focus();
+                targetTab.click();
+            }
+        });
+    }
+
     window.GilosUI = {
         escapeHtml: escapeHtml,
         toast: toast,
@@ -441,7 +504,8 @@
         evaluatePassword: evaluatePassword,
         attachPasswordStrength: attachPasswordStrength,
         attachCapsLockWarning: attachCapsLockWarning,
-        bindModalA11y: bindModalA11y
+        bindModalA11y: bindModalA11y,
+        bindTablistA11y: bindTablistA11y
     };
 })(window);
 

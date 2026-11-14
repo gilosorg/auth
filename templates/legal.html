@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="{{ .Lang }}">
-{{ template "common/head" . }}
+<head>
+    {{ template "common/head" . }}
+    <title>{{ if eq .PageType "privacy" }}{{ index .T "privacy_title" }}{{ else }}{{ index .T "terms_title" }}{{ end }} - {{ if .AppName }}{{ .AppName }}{{ else }}Gilos Auth{{ end }}</title>
 <style>
     .legal-header {
         position: sticky;
@@ -75,6 +77,12 @@
 
     .legal-nav-link:active {
         transform: translateY(1px);
+    }
+
+    .legal-nav-link:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: -2px;
+        z-index: 1;
     }
 
     .legal-nav-link.active {
@@ -228,6 +236,23 @@
         }
     }
 
+    @media (max-width: 480px) {
+        .legal-nav {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+        .legal-nav-link {
+            white-space: normal;
+            line-height: 1.25;
+            padding: 7px 6px;
+            font-size: 0.74rem;
+            min-width: 0;
+        }
+        .legal-sheet {
+            padding: 20px 16px;
+        }
+    }
+
     @media print {
         .legal-header, .site-footer, .legal-print-btn, .legal-toc {
             display: none !important;
@@ -239,6 +264,7 @@
         }
     }
 </style>
+</head>
 
 <body>
     <a href="#main-content" class="skip-link">{{ index .T "skip_to_content" }}</a>

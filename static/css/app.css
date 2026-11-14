@@ -33,10 +33,14 @@
     --text-muted: #5E5E66;
     --text-tertiary: #6C6C75;
     --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    --select-arrow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%235E5E66' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
 
     --accent: #2495F2;
     --accent-subtle: rgba(36, 149, 242, 0.1);
     --accent-contrast: #FFFFFF;
+    --danger-solid: #DC2626;
+    --danger-solid-hover: #B91C1C;
+    --danger-border: rgba(220, 38, 38, 0.34);
     --brand-green: #4DB153;
     --brand-green-subtle: rgba(77, 177, 83, 0.12);
 
@@ -106,9 +110,14 @@
     --text-secondary: #B8B8C0;
     --text-tertiary: #9696A1;
     --text-muted: #8E8E96;
+    --select-arrow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239696A1' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
 
     --accent: #3AA3FF;
     --accent-subtle: rgba(58, 163, 255, 0.14);
+    --accent-contrast: #0B0B0D;
+    --danger-solid: #DC2626;
+    --danger-solid-hover: #B91C1C;
+    --danger-border: rgba(255, 105, 97, 0.38);
     --brand-green: #58C95F;
     --brand-green-subtle: rgba(88, 201, 95, 0.14);
 
@@ -165,8 +174,13 @@
         --text-secondary: #B8B8C0;
         --text-tertiary: #9696A1;
         --text-muted: #8E8E96;
+        --select-arrow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239696A1' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
         --accent: #3AA3FF;
         --accent-subtle: rgba(58, 163, 255, 0.14);
+        --accent-contrast: #0B0B0D;
+        --danger-solid: #DC2626;
+        --danger-solid-hover: #B91C1C;
+        --danger-border: rgba(255, 105, 97, 0.38);
         --brand-green: #58C95F;
         --brand-green-subtle: rgba(88, 201, 95, 0.14);
         --error: #FF6961;
@@ -264,6 +278,19 @@ input,
 textarea,
 select {
     border-radius: 0px;
+}
+
+/* Keep browser credential autofill aligned with active Light/Dark input surfaces */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+textarea:-webkit-autofill,
+select:-webkit-autofill {
+    -webkit-text-fill-color: var(--text);
+    caret-color: var(--text);
+    -webkit-box-shadow: 0 0 0 1000px var(--surface-subtle) inset;
+    box-shadow: 0 0 0 1000px var(--surface-subtle) inset;
+    transition: background-color 9999s ease-out 0s;
 }
 
 input[type="checkbox"] {
@@ -455,18 +482,20 @@ input[type="radio"]:disabled {
 }
 
 .btn-danger {
-    background: var(--red-600);
+    background: var(--danger-solid);
     color: #FFFFFF;
+    border-color: var(--danger-solid);
 }
 
 .btn-danger:hover:not(:disabled) {
-    background: var(--red-700);
+    background: var(--danger-solid-hover);
+    border-color: var(--danger-solid-hover);
 }
 
 .btn-danger-outline {
     background: transparent;
     color: var(--red-600);
-    border-color: rgba(224, 36, 36, 0.3);
+    border-color: var(--danger-border);
 }
 
 .btn-danger-outline:hover:not(:disabled) {
@@ -984,11 +1013,11 @@ input[type="radio"]:disabled {
     padding: 10px 20px !important;
     font-weight: 500 !important;
     font-size: 0.9rem !important;
-    transition: background var(--transition-fast), border-color var(--transition-fast) !important;
+    transition: background-color 0.15s ease, border-color 0.15s ease !important;
 }
 
 .swal2-cancel:hover {
-    background: var(--surface-muted) !important;
+    background: var(--surface-hover) !important;
     border-color: var(--border-strong) !important;
 }
 
@@ -998,10 +1027,6 @@ input[type="radio"]:disabled {
     outline: 2px solid var(--accent) !important;
     outline-offset: 2px !important;
     box-shadow: none !important;
-}
-
-.swal2-cancel:hover {
-    background: var(--surface-hover) !important;
 }
 
 .swal2-icon.swal2-success {
@@ -1074,12 +1099,46 @@ input[type="radio"]:disabled {
 .iti__selected-flag {
     background: transparent !important;
     padding: 0 8px 0 12px;
+    border-radius: 0px !important;
 }
 
 .iti__selected-flag:hover,
 .iti--allow-dropdown .iti__flag-container:hover .iti__selected-flag {
     background: var(--surface-subtle) !important;
     border-radius: 0px !important;
+}
+
+.iti__selected-flag:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: -2px;
+}
+
+.iti__flag-container {
+    border-radius: 0px !important;
+}
+
+.iti__selected-dial-code {
+    color: var(--text-secondary);
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+}
+
+.iti__dial-code {
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+}
+
+.iti__arrow {
+    border-top-color: var(--text-muted);
+}
+
+.iti__arrow--up {
+    border-bottom-color: var(--text-muted);
+}
+
+.iti__divider {
+    border-bottom-color: var(--border-default);
 }
 
 /* Caps Lock inline warning */
@@ -1349,7 +1408,9 @@ input[type="radio"]:disabled {
     box-shadow: 0 0 0 2px var(--focus-ring);
 }
 
-.gilos-input-group.is-invalid {
+.gilos-input-group.is-invalid,
+.gilos-input-group:has(.error),
+.gilos-input-group:has(.is-invalid) {
     border-color: var(--error);
     box-shadow: 0 0 0 2px var(--red-100);
 }

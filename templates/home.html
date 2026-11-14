@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="{{ .Lang }}">
-{{ template "common/head" . }}
+<head>
+    {{ template "common/head" . }}
+    <title>{{ index .T "account" }} - {{ if .AppName }}{{ .AppName }}{{ else }}Gilos Auth{{ end }}</title>
 <style>
     .console-header {
         position: sticky;
@@ -414,6 +416,11 @@
         transform: translateY(1px);
     }
 
+    .avatar-edit-btn:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+    }
+
     .hero-meta {
         display: flex;
         flex-direction: column;
@@ -462,6 +469,15 @@
         color: var(--text);
     }
 
+    .hero-id-chip:active {
+        transform: translateY(1px);
+    }
+
+    .hero-id-chip:focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+    }
+
     .hero-id-chip.is-copied {
         color: var(--green-700);
         background: var(--green-50);
@@ -504,7 +520,7 @@
     }
 
     .console-card--danger {
-        border-color: rgba(224, 36, 36, 0.25);
+        border-color: var(--danger-border);
     }
 
     .card-head {
@@ -512,6 +528,7 @@
         align-items: flex-start;
         justify-content: space-between;
         gap: 12px;
+        flex-wrap: wrap;
     }
 
     .card-title-group {
@@ -546,6 +563,10 @@
     @media (max-width: 560px) {
         .form-grid {
             grid-template-columns: 1fr;
+        }
+        .scope-check-row {
+            flex-wrap: wrap;
+            align-items: flex-start;
         }
     }
 
@@ -623,6 +644,15 @@
 
     .console-input {
         height: 44px;
+    }
+
+    .console-select {
+        height: 44px;
+        padding: 0 34px 0 13px;
+        appearance: none;
+        -webkit-appearance: none;
+        background: var(--surface-elevated) var(--select-arrow) no-repeat right 12px center;
+        cursor: pointer;
     }
 
     .console-input:hover,
@@ -1525,8 +1555,24 @@
 
     .uri-row {
         display: flex;
-        align-items: center;
+        align-items: stretch;
         gap: 8px;
+    }
+
+    .uri-remove-btn {
+        flex: 0 0 44px;
+        width: 44px;
+        height: 44px;
+        padding: 0;
+        border: 1.5px solid var(--border-default);
+        background: var(--surface-subtle);
+        color: var(--text-muted);
+    }
+
+    .uri-remove-btn:hover:not(:disabled) {
+        background: var(--red-50);
+        border-color: var(--danger-border);
+        color: var(--red-600);
     }
 
     .scope-check-list {
@@ -1621,14 +1667,41 @@
     }
 
     .totp-qr-wrap {
+        position: relative;
         display: flex;
+        align-items: center;
         justify-content: center;
+        width: 214px;
+        height: 214px;
         padding: 14px;
         background: #FFFFFF;
         border-radius: 0px;
         border: 1px solid var(--border-default);
-        width: fit-content;
         margin: 0 auto;
+    }
+
+    .totp-qr-wrap.is-loading {
+        background: var(--surface-subtle);
+    }
+
+    .totp-qr-spinner {
+        display: none;
+        width: 22px;
+        height: 22px;
+        border: 2px solid color-mix(in srgb, var(--text-muted) 25%, transparent);
+        border-top-color: var(--text-secondary);
+        border-radius: 50%;
+        animation: gilos-spin 0.7s linear infinite;
+    }
+
+    .totp-qr-wrap.is-loading .totp-qr-spinner {
+        display: inline-block;
+    }
+
+    .totp-qr-wrap.is-loading img,
+    .totp-qr-wrap img[src=""],
+    .totp-qr-wrap img:not([src]) {
+        display: none;
     }
 
     .totp-qr-wrap img {
@@ -1673,6 +1746,17 @@
         display: grid;
         grid-template-columns: repeat(6, minmax(0, 1fr));
         gap: 8px;
+    }
+
+    .otp-container.is-shake {
+        animation: homeOtpShake 0.34s ease;
+    }
+
+    @keyframes homeOtpShake {
+        0%, 100% { transform: translateX(0); }
+        25% { transform: translateX(-5px); }
+        50% { transform: translateX(5px); }
+        75% { transform: translateX(-3px); }
     }
 
     .otp-input {
@@ -1748,10 +1832,23 @@
         overflow: hidden;
     }
 
+    .cropper-wrap-box,
+    .cropper-modal,
     .cropper-view-box,
     .cropper-face,
-    .cropper-point {
+    .cropper-line,
+    .cropper-point,
+    .cropper-dashed {
         border-radius: 0px !important;
+    }
+
+    .cropper-view-box {
+        outline-color: var(--accent);
+    }
+
+    .cropper-line,
+    .cropper-point {
+        background-color: var(--accent);
     }
 
     .reason-list {
@@ -1818,6 +1915,7 @@
         display: none !important;
     }
 </style>
+</head>
 
 <body>
     <a href="#main-content" class="skip-link">{{ index .T "skip_to_content" }}</a>
@@ -1880,9 +1978,18 @@
             </div>
         </div>
         <div class="mobile-tabs-bar" role="tablist">
-            <button type="button" role="tab" aria-selected="true" tabindex="0" class="tab-btn active" data-tab="account" onclick="setActiveTab('account')">{{ index .T "account" }}</button>
-            <button type="button" role="tab" aria-selected="false" tabindex="-1" class="tab-btn" data-tab="sessions" onclick="setActiveTab('sessions')">{{ index .T "sessions" }}</button>
-            <button type="button" role="tab" aria-selected="false" tabindex="-1" class="tab-btn" data-tab="clients" onclick="setActiveTab('clients')">{{ index .T "clients" }}</button>
+            <button type="button" role="tab" aria-selected="true" tabindex="0" class="tab-btn active" data-tab="account" onclick="setActiveTab('account')">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 1 0-16 0"/></svg>
+                <span>{{ index .T "account" }}</span>
+            </button>
+            <button type="button" role="tab" aria-selected="false" tabindex="-1" class="tab-btn" data-tab="sessions" onclick="setActiveTab('sessions')">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+                <span>{{ index .T "sessions" }}</span>
+            </button>
+            <button type="button" role="tab" aria-selected="false" tabindex="-1" class="tab-btn" data-tab="clients" onclick="setActiveTab('clients')">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+                <span>{{ index .T "clients" }}</span>
+            </button>
         </div>
     </header>
 
@@ -1966,8 +2073,9 @@
             </div>
             <div class="modal-body">
                 <p class="card-desc">{{ index .T "scan_qr_code" }}</p>
-                <div id="totp-qr-container" class="totp-qr-wrap">
-                    <img id="totp-qr" src="" alt="QR Code">
+                <div id="totp-qr-container" class="totp-qr-wrap is-loading">
+                    <span class="totp-qr-spinner" aria-hidden="true"></span>
+                    <img id="totp-qr" alt="QR Code">
                 </div>
                 <div class="field">
                     <label>{{ index .T "manual_secret_entry" }}</label>
@@ -2014,7 +2122,7 @@
                                placeholder="{{ index .T "current_password" }}"
                                onkeydown="if(event.key==='Enter'){event.preventDefault();confirmPasswordModal();}">
                         <span class="input-adornment-right">
-                            <button type="button" class="pw-eye-btn" onclick="toggleHomePassword('current-password-input', this)" aria-label="{{ index .T "show_password" }}"></button>
+                            <button type="button" class="pw-eye-btn" onclick="toggleHomePassword('current-password-input', this)" aria-label="{{ index .T "show_password" }}" aria-pressed="false"></button>
                         </span>
                     </div>
                     <div id="current-pw-caps" class="caps-warning" hidden></div>
@@ -2221,6 +2329,7 @@
         function initHomePasswordToggles() {
             document.querySelectorAll('.pw-eye-btn').forEach(btn => {
                 btn.innerHTML = EYE_SHOW;
+                btn.setAttribute('aria-pressed', 'false');
                 btn.setAttribute('aria-label', tr('show_password', 'Show password'));
             });
         }
@@ -2231,6 +2340,7 @@
             const show = inp.type === 'password';
             inp.type = show ? 'text' : 'password';
             btn.innerHTML = show ? EYE_HIDE : EYE_SHOW;
+            btn.setAttribute('aria-pressed', show ? 'true' : 'false');
             btn.setAttribute('aria-label', show ? tr('hide_password', 'Hide password') : tr('show_password', 'Show password'));
         }
 
@@ -2341,24 +2451,9 @@
         }
 
         function initTablistKeyboard() {
-            document.querySelectorAll('[role="tablist"]').forEach(tablist => {
-                const tabs = Array.from(tablist.querySelectorAll('[role="tab"]'));
-                tabs.forEach((tab, idx) => {
-                    tab.addEventListener('keydown', (e) => {
-                        let nextIdx = null;
-                        if (e.key === 'ArrowRight') nextIdx = (idx + 1) % tabs.length;
-                        else if (e.key === 'ArrowLeft') nextIdx = (idx - 1 + tabs.length) % tabs.length;
-                        else if (e.key === 'Home') nextIdx = 0;
-                        else if (e.key === 'End') nextIdx = tabs.length - 1;
-                        if (nextIdx === null) return;
-                        e.preventDefault();
-                        const nextTab = tabs[nextIdx];
-                        if (nextTab && nextTab.dataset.tab) {
-                            setActiveTab(nextTab.dataset.tab);
-                            nextTab.focus();
-                        }
-                    });
-                });
+            if (!window.GilosUI || typeof window.GilosUI.bindTablistA11y !== 'function') return;
+            document.querySelectorAll('[role="tablist"]').forEach(function (tablist) {
+                window.GilosUI.bindTablistA11y(tablist);
             });
         }
 
@@ -2893,13 +2988,14 @@
 
                         <!-- Danger Zone -->
                         <section class="console-card console-card--full console-card--danger">
-                            <div class="card-head">
+                            <div class="card-head" style="align-items:center;">
                                 <div class="card-title-group">
                                     <h3 class="card-title" style="color:var(--red-600);">${escapeHtml(tr('danger_zone', 'Danger Zone'))}</h3>
                                     <p class="card-desc">${escapeHtml(tr('delete_account_warning', 'Schedule permanent account deletion with a 30-day grace period to cancel.'))}</p>
                                 </div>
+                                <div id="danger-zone-head-action" class="card-head-actions"></div>
                             </div>
-                            <div id="deletion-status-container"></div>
+                            <div id="deletion-status-container" class="hidden"></div>
                         </section>
                     </div>
                 `;
@@ -3291,7 +3387,13 @@
         // Authenticator TOTP Modal
         function openTOTPModal() {
             const errEl = document.getElementById('totp-error');
+            const qrWrap = document.getElementById('totp-qr-container');
+            const qrImg = document.getElementById('totp-qr');
+            const secretEl = document.getElementById('totp-secret');
             if (errEl) { errEl.textContent = ''; errEl.classList.remove('is-visible'); }
+            if (qrWrap) qrWrap.classList.add('is-loading');
+            if (qrImg) qrImg.removeAttribute('src');
+            if (secretEl) secretEl.textContent = '...';
             clearOTPInputs('totp-otp');
             showModal('totp-modal');
             fetch('/profile/totp/generate')
@@ -3300,13 +3402,15 @@
                     return parseJSONSafe(r, tr('failed_load_qr', 'Failed to load QR code'));
                 })
                 .then(data => {
-                    document.getElementById('totp-qr').src = 'data:image/png;base64,' + data.qr_base64;
-                    document.getElementById('totp-secret').textContent = data.secret;
+                    if (qrImg) qrImg.src = 'data:image/png;base64,' + data.qr_base64;
+                    if (qrWrap) qrWrap.classList.remove('is-loading');
+                    if (secretEl) secretEl.textContent = data.secret;
                     setupOTPInputs('totp-otp', verifyTOTP);
                     const first = document.querySelector('#totp-otp .otp-input');
                     if (first) first.focus();
                 })
                 .catch(err => {
+                    if (qrWrap) qrWrap.classList.remove('is-loading');
                     if (errEl) { errEl.textContent = err.message; errEl.classList.add('is-visible'); }
                 });
         }
@@ -3327,6 +3431,7 @@
             const errEl = document.getElementById('totp-error');
             const verifyBtn = document.getElementById('totp-verify-btn');
             if (code.length !== 6) {
+                shakeOTPContainer('totp-otp', true);
                 if (errEl) { errEl.textContent = tr('enter_all_6_digits', 'Enter all 6 digits'); errEl.classList.add('is-visible'); }
                 return;
             }
@@ -3349,6 +3454,7 @@
             } catch (err) {
                 if (errEl) { errEl.textContent = err.message; errEl.classList.add('is-visible'); }
                 clearOTPInputs('totp-otp');
+                shakeOTPContainer('totp-otp', false);
             } finally {
                 isVerifyingTOTP = false;
                 if (verifyBtn) {
@@ -3441,12 +3547,12 @@
                         <span class="badge badge-neutral tabular-nums" id="timer-${typ}">05:00</span>
                     </div>
                     <div class="otp-container" id="otp-${typ}">
-                        <input type="text" class="otp-input" maxlength="6" pattern="[0-9]*" inputmode="numeric" autocomplete="one-time-code">
-                        <input type="text" class="otp-input" maxlength="1" pattern="[0-9]*" inputmode="numeric">
-                        <input type="text" class="otp-input" maxlength="1" pattern="[0-9]*" inputmode="numeric">
-                        <input type="text" class="otp-input" maxlength="1" pattern="[0-9]*" inputmode="numeric">
-                        <input type="text" class="otp-input" maxlength="1" pattern="[0-9]*" inputmode="numeric">
-                        <input type="text" class="otp-input" maxlength="1" pattern="[0-9]*" inputmode="numeric">
+                        <input type="text" class="otp-input" maxlength="6" pattern="[0-9]*" inputmode="numeric" autocomplete="one-time-code" aria-label="Digit 1">
+                        <input type="text" class="otp-input" maxlength="1" pattern="[0-9]*" inputmode="numeric" aria-label="Digit 2">
+                        <input type="text" class="otp-input" maxlength="1" pattern="[0-9]*" inputmode="numeric" aria-label="Digit 3">
+                        <input type="text" class="otp-input" maxlength="1" pattern="[0-9]*" inputmode="numeric" aria-label="Digit 4">
+                        <input type="text" class="otp-input" maxlength="1" pattern="[0-9]*" inputmode="numeric" aria-label="Digit 5">
+                        <input type="text" class="otp-input" maxlength="1" pattern="[0-9]*" inputmode="numeric" aria-label="Digit 6">
                     </div>
                     <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:0.8rem;">
                         <span id="message-${typ}" style="color:var(--red-600);"></span>
@@ -3593,6 +3699,7 @@
                         if (msgEl) { msgEl.style.color = 'var(--green-700)'; msgEl.textContent = tr('verified', 'Verified!'); }
                     } else {
                         allDone = false;
+                        shakeOTPContainer(`otp-${typ}`, true);
                         if (msgEl) { msgEl.style.color = 'var(--red-600)'; msgEl.textContent = res.error || tr('invalid_otp', 'Invalid code'); }
                     }
                 }
@@ -3975,10 +4082,11 @@
                             </details>` : ''}
                         </div>
 
+                        ${session.type !== 'native' || !isCurrent ? `
                         <div class="entity-footer">
                             ${session.type !== 'native' ? `<span class="badge badge-neutral">${escapeHtml(tr(session.type, session.type))}</span>` : '<span></span>'}
                             ${!isCurrent ? `<button type="button" class="btn btn-danger-outline btn-sm" onclick="terminateSession(${Number(session.id)}, this)">${escapeHtml(tr('terminate', 'Terminate'))}</button>` : ''}
-                        </div>
+                        </div>` : ''}
                     </article>
                 `;
             }).join('');
@@ -4057,7 +4165,9 @@
         function setClientsFilter(filter) {
             clientsFilter = ['all', 'confidential', 'public'].includes(filter) ? filter : 'all';
             document.querySelectorAll('#clients-filter-bar .filter-pill').forEach(btn => {
-                btn.classList.toggle('active', btn.dataset.clientsFilter === clientsFilter);
+                const isActive = btn.dataset.clientsFilter === clientsFilter;
+                btn.classList.toggle('active', isActive);
+                btn.setAttribute('aria-pressed', isActive ? 'true' : 'false');
             });
             renderClientsCards();
         }
@@ -4077,7 +4187,9 @@
             const clr = document.getElementById('clients-search-clear');
             if (clr) clr.classList.add('hidden');
             document.querySelectorAll('#clients-filter-bar .filter-pill').forEach(btn => {
-                btn.classList.toggle('active', btn.dataset.clientsFilter === 'all');
+                const isActive = btn.dataset.clientsFilter === 'all';
+                btn.classList.toggle('active', isActive);
+                btn.setAttribute('aria-pressed', isActive ? 'true' : 'false');
             });
             renderClientsCards();
         }
@@ -4119,15 +4231,15 @@
                 ${allClients.length > 0 ? `
                 <div class="filter-toolbar">
                     <div class="filter-pills" id="clients-filter-bar">
-                        <button type="button" class="filter-pill ${clientsFilter === 'all' ? 'active' : ''}" data-clients-filter="all" onclick="setClientsFilter('all')">
+                        <button type="button" class="filter-pill ${clientsFilter === 'all' ? 'active' : ''}" data-clients-filter="all" aria-pressed="${clientsFilter === 'all' ? 'true' : 'false'}" onclick="setClientsFilter('all')">
                             <span>${escapeHtml(tr('clients_filter_all', 'All'))}</span>
                             <span class="filter-pill-count">${totalCount}</span>
                         </button>
-                        <button type="button" class="filter-pill ${clientsFilter === 'confidential' ? 'active' : ''}" data-clients-filter="confidential" onclick="setClientsFilter('confidential')">
+                        <button type="button" class="filter-pill ${clientsFilter === 'confidential' ? 'active' : ''}" data-clients-filter="confidential" aria-pressed="${clientsFilter === 'confidential' ? 'true' : 'false'}" onclick="setClientsFilter('confidential')">
                             <span>${escapeHtml(tr('clients_filter_confidential', 'Confidential'))}</span>
                             <span class="filter-pill-count">${confCount}</span>
                         </button>
-                        <button type="button" class="filter-pill ${clientsFilter === 'public' ? 'active' : ''}" data-clients-filter="public" onclick="setClientsFilter('public')">
+                        <button type="button" class="filter-pill ${clientsFilter === 'public' ? 'active' : ''}" data-clients-filter="public" aria-pressed="${clientsFilter === 'public' ? 'true' : 'false'}" onclick="setClientsFilter('public')">
                             <span>${escapeHtml(tr('clients_filter_public', 'Public'))}</span>
                             <span class="filter-pill-count">${pubCount}</span>
                         </button>
@@ -4319,7 +4431,7 @@
             row.className = 'uri-row';
             row.innerHTML = `
                 <input type="url" class="console-input uri-input" value="${escapeHtml(value)}" placeholder="https://example.com/callback" required>
-                <button type="button" class="btn btn-ghost btn-sm" onclick="removeURIRow(this)" aria-label="${escapeHtml(tr('delete', 'Delete'))}">
+                <button type="button" class="btn uri-remove-btn" onclick="removeURIRow(this)" aria-label="${escapeHtml(tr('delete', 'Delete'))}">
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                 </button>
             `;
@@ -4637,6 +4749,15 @@
             return container ? Array.from(container.querySelectorAll('.otp-input')).map(i => i.value).join('') : '';
         }
 
+        function shakeOTPContainer(containerId, markError = true) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+            if (markError) container.querySelectorAll('.otp-input').forEach(i => i.classList.add('error'));
+            container.classList.remove('is-shake');
+            void container.offsetWidth;
+            container.classList.add('is-shake');
+        }
+
         function clearOTPInputs(containerId, focusFirst = true) {
             const container = document.getElementById(containerId);
             if (!container) return;
@@ -4754,15 +4875,18 @@
         }
 
         function renderDeletionIdle(container) {
-            container.innerHTML = `
-                <div style="display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;">
-                    <span class="card-desc">${escapeHtml(tr('deletion_grace_period_info', 'You have a 30-day grace period to cancel before permanent erasure.'))}</span>
-                    <button type="button" class="btn btn-danger btn-sm" onclick="openDeleteModal()">${escapeHtml(tr('delete_account', 'Delete Account'))}</button>
-                </div>
-            `;
+            const headSlot = document.getElementById('danger-zone-head-action');
+            if (headSlot) {
+                headSlot.innerHTML = `<button type="button" class="btn btn-danger btn-sm" onclick="openDeleteModal()">${escapeHtml(tr('delete_account', 'Delete Account'))}</button>`;
+            }
+            container.innerHTML = '';
+            container.classList.add('hidden');
         }
 
         function renderDeletionPending(container, data) {
+            const headSlot = document.getElementById('danger-zone-head-action');
+            if (headSlot) headSlot.innerHTML = '';
+            container.classList.remove('hidden');
             const scheduled = data.scheduled_at ? window.GilosUI.formatExactTime(data.scheduled_at) : '';
             const days = Number(data.days_remaining) || 0;
             container.innerHTML = `
@@ -4802,7 +4926,7 @@
         function validateDeleteInputs() {
             const reason = document.querySelector('input[name="deletion_reason"]:checked')?.value || '';
             const u = document.getElementById('delete-username-confirm').value.trim().replace(/^@/, '');
-            const id = document.getElementById('delete-id-confirm').value.trim();
+            const id = document.getElementById('delete-id-confirm').value.trim().replace(/^#/, '');
             const ok = Boolean(reason) && u === currentUser.username && id === String(currentUser.id);
             document.getElementById('perform-delete-btn').disabled = !ok;
         }

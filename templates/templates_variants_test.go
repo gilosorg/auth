@@ -143,3 +143,85 @@ func TestTemplateVariantsAndMissingPlaceholders(t *testing.T) {
 	}
 }
 
+func TestRenderedHTMLHeadStructureAndOAuthAvatar(t *testing.T) {
+	origWD, err := os.Getwd()
+	if err == nil {
+		if _, statErr := os.Stat("templates"); statErr != nil {
+			if chErr := os.Chdir(".."); chErr == nil {
+				t.Cleanup(func() { _ = os.Chdir(origWD) })
+			}
+		}
+	}
+
+	if err := i18n.Init(); err != nil {
+		t.Fatalf("i18n.Init: %v", err)
+	}
+	tmpls, err := ParseTemplates()
+	if err != nil {
+		t.Fatalf("ParseTemplates: %v", err)
+	}
+
+	tr := i18n.New("en")
+	trans := i18n.GetTranslations("en")
+	mockUser := database.User{
+		ID:        42,
+		Username:  "alice",
+		FirstName: "Alice",
+		Icon:      "/media/user/icon/42_sample.jpg",
+	}
+
+	baseData := func() map[string]interface{} {
+		return map[string]interface{}{
+			"Year":               time.Now().Year(),
+			"Lang":               "en",
+			"CurrentLanguage":    tr.Current(),
+			"Languages":          tr.All(),
+			"T":                  trans,
+			"AppVersion":         "v1.0.0",
+			"AppName":            "Gilos Auth",
+			"AppIDLabel":         "Gilos Username",
+			"IssuerURL":          "https://auth.example.com",
+			"User":               mockUser,
+			"CurrentSessionID":   uint64(1),
+			"ValidScopes":        middleware.Scopes,
+			"CSRFToken":          "csrf-test",
+			"Client":             database.Client{ID: 1, Name: "Test App"},
+			"ScopeDetails":       []map[string]interface{}{},
+			"RedirectURI":        "https://app.example.com/callback",
+			"State":              "xyz",
+			"Error":              "",
+			"HasMissingRequired": false,
+			"MissingFields":      []string{},
+			"AuthError":          "",
+			"PageType":           "terms",
+			"IsLoggedIn":         true,
+			"Clients":            []database.Client{},
+		}
+	}
+
+	for _, name := range []string{"auth.html", "home.html", "oauth.html", "docs.html", "legal.html"} {
+		var buf bytes.Buffer
+		if err := tmpls.ExecuteTemplate(&buf, name, baseData()); err != nil {
+			t.Fatalf("ExecuteTemplate(%s): %v", name, err)
+		}
+		out := buf.String()
+		if cnt := strings.Count(out, "<head>"); cnt != 1 {
+			t.Errorf("%s expected exactly 1 <head>, got %d", name, cnt)
+		}
+		if cnt := strings.Count(out, "</head>"); cnt != 1 {
+			t.Errorf("%s expected exactly 1 </head>, got %d", name, cnt)
+		}
+		headEnd := strings.Index(out, "</head>")
+		bodyStart := strings.Index(out, "<body>")
+		if headEnd == -1 || bodyStart == -1 || headEnd > bodyStart {
+			t.Errorf("%s invalid </head> before <body> placement (headEnd=%d, bodyStart=%d)", name, headEnd, bodyStart)
+		}
+		firstStyle := strings.Index(out, "<style>")
+		if firstStyle != -1 && firstStyle > headEnd {
+			t.Errorf("%s page <style> appeared after </head>", name)
+		}
+		if name == "oauth.html" && !strings.Contains(out, `data-icon="/media/user/icon/42_sample.jpg"`) {
+			t.Errorf("oauth.html did not preserve User.Icon on #oauth-user-avatar")
+		}
+	}
+}

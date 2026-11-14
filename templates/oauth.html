@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="{{ .Lang }}">
-{{ template "common/head" . }}
+<head>
+    {{ template "common/head" . }}
+    <title>{{ index .T "authorize" }} - {{ if .AppName }}{{ .AppName }}{{ else }}Gilos Auth{{ end }}</title>
 <style>
     .oauth-stage {
         flex: 1;
@@ -222,13 +224,48 @@
     .alert-box--error {
         background: var(--red-50);
         color: var(--red-700);
-        border: 1px solid rgba(224, 36, 36, 0.22);
+        border: 1px solid color-mix(in srgb, var(--red-500) 28%, transparent);
+        border-left: 3px solid var(--red-500);
     }
 
     .alert-box--warning {
         background: var(--amber-50);
         color: var(--amber-700);
-        border: 1px solid rgba(245, 158, 11, 0.28);
+        border: 1px solid color-mix(in srgb, var(--amber-500) 32%, transparent);
+        border-left: 3px solid var(--amber-500);
+    }
+
+    .oauth-trust-note {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        padding: 11px 13px;
+        border-radius: 0px;
+        border: 1px solid var(--border-default);
+        background: var(--surface-subtle);
+        font-size: 0.79rem;
+        line-height: 1.45;
+        color: var(--text-secondary);
+    }
+
+    .oauth-trust-note svg {
+        flex-shrink: 0;
+        color: var(--accent);
+        margin-top: 2px;
+    }
+
+    .oauth-trust-title {
+        font-weight: 600;
+        color: var(--text);
+        margin-bottom: 2px;
+    }
+
+    .oauth-cancel-hint {
+        margin: -6px 0 0;
+        font-size: 0.76rem;
+        color: var(--text-tertiary);
+        text-align: center;
+        line-height: 1.4;
     }
 
     .alert-box a {
@@ -254,7 +291,8 @@
     .message-container.is-error {
         background: var(--red-50);
         color: var(--red-700);
-        border: 1px solid rgba(224, 36, 36, 0.22);
+        border: 1px solid color-mix(in srgb, var(--red-500) 28%, transparent);
+        border-left: 3px solid var(--red-500);
     }
 
     .form-container {
@@ -290,6 +328,17 @@
         display: grid;
         grid-template-columns: repeat(6, minmax(0, 1fr));
         gap: 8px;
+    }
+
+    .otp-container.is-shake {
+        animation: oauthOtpShake 0.34s ease;
+    }
+
+    @keyframes oauthOtpShake {
+        0%, 100% { transform: translateX(0); }
+        25% { transform: translateX(-5px); }
+        50% { transform: translateX(5px); }
+        75% { transform: translateX(-3px); }
     }
 
     .otp-input {
@@ -357,6 +406,7 @@
         }
     }
 </style>
+</head>
 
 <body>
     <a href="#main-content" class="skip-link">{{ index .T "skip_to_content" }}</a>
@@ -369,7 +419,7 @@
                 <h1 id="auth-header">{{ index .T "authorize" }}</h1>
                 {{if .User}}
                 <div class="identity-chip">
-                    <span class="identity-chip-avatar" id="oauth-user-avatar" data-username="{{.User.Username}}" data-has-icon="{{if .User.Icon}}1{{else}}0{{end}}">
+                    <span class="identity-chip-avatar" id="oauth-user-avatar" data-icon="{{.User.Icon}}">
                         {{upper (printf "%.1s" .User.Username)}}
                     </span>
                     <span class="identity-chip-handle">{{ printf (index .T "signed_in_as") .User.Username }}</span>
@@ -429,10 +479,21 @@
                 <div class="alert-box alert-box--warning" id="missing-warning"></div>
                 {{end}}
 
+                <div class="oauth-trust-note">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                    </svg>
+                    <div>
+                        <div class="oauth-trust-title">{{ index .T "oauth_security_summary" }}</div>
+                        <div>{{ index .T "oauth_security_detail" }}</div>
+                    </div>
+                </div>
+
                 <div class="oauth-actions-row">
                     <button type="button" class="btn btn-secondary btn-lg" id="deny-btn" onclick="submitDeny()">{{ index .T "deny" }}</button>
                     <button type="button" class="btn btn-primary btn-lg" id="approve-btn" onclick="handleApprove()" {{if .HasMissingRequired}}disabled{{end}}>{{ index .T "approve" }}</button>
                 </div>
+                <p class="oauth-cancel-hint">{{ index .T "oauth_cancel_hint" }}</p>
             </form>
 
             <!-- Step 2: Optional Authenticator TOTP Confirmation -->
@@ -500,11 +561,16 @@
             }
 
             const avatarEl = document.getElementById('oauth-user-avatar');
-            if (avatarEl && avatarEl.dataset.hasIcon === '1' && avatarEl.dataset.username) {
+            const iconPath = avatarEl && avatarEl.dataset ? avatarEl.dataset.icon : '';
+            if (avatarEl && iconPath) {
+                const initialText = avatarEl.textContent.trim();
                 const img = document.createElement('img');
-                img.src = `/media/user/icon/${encodeURIComponent(avatarEl.dataset.username)}.png`;
+                img.src = iconPath;
                 img.alt = '';
-                img.onerror = function () { this.remove(); };
+                img.onerror = function () {
+                    this.remove();
+                    avatarEl.textContent = initialText;
+                };
                 avatarEl.textContent = '';
                 avatarEl.appendChild(img);
             }
@@ -545,7 +611,7 @@
         async function switchAccount(triggerBtn = null) {
             if (switchingAccount) return;
             switchingAccount = true;
-            const btn = triggerBtn || (typeof event !== 'undefined' && event && event.currentTarget && event.currentTarget.tagName === 'BUTTON' ? event.currentTarget : null);
+            const btn = triggerBtn && triggerBtn.tagName === 'BUTTON' ? triggerBtn : null;
             const username = "{{if .User}}{{.User.Username}}{{end}}";
             const confirmMsg = tr('switch_account_confirm', 'Sign out of @%s and sign in with another account?').replace('%s', username);
 
@@ -645,10 +711,16 @@
         function submitApprove() {
             if (isConsentSubmitting) return;
             if (userMFAEnabled) {
+                const otpContainer = document.getElementById('otp-inputs');
                 const otpInputs = document.querySelectorAll('#totp-form .otp-input');
                 const code = getOtpCode();
                 if (code.length !== 6) {
                     otpInputs.forEach(i => i.classList.add('error'));
+                    if (otpContainer) {
+                        otpContainer.classList.remove('is-shake');
+                        void otpContainer.offsetWidth;
+                        otpContainer.classList.add('is-shake');
+                    }
                     showMessage(tr('enter_full_code', 'Please enter the full 6-digit verification code.'), true);
                     return;
                 }

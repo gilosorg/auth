@@ -1,10 +1,8 @@
 <!DOCTYPE html>
 <html lang="{{ .Lang }}">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ index .T "welcome" }} - {{ if .AppName }}{{ .AppName }}{{ else }}Gilos Auth{{ end }}</title>
     {{ template "common/head" . }}
+    <title>{{ index .T "sign_in" }} - {{ if .AppName }}{{ .AppName }}{{ else }}Gilos Auth{{ end }}</title>
     <style>
         body {
             min-height: 100vh;
@@ -74,6 +72,11 @@
             }
             .content-wrapper {
                 padding: 26px 20px 22px;
+            }
+            .method-option {
+                font-size: 0.8rem;
+                padding: 0 8px;
+                min-width: 0;
             }
         }
 
@@ -331,6 +334,11 @@
             box-shadow: 0 0 0 2px color-mix(in srgb, var(--red-500) 16%, transparent);
         }
 
+        .auth-input:disabled {
+            opacity: 0.68;
+            cursor: not-allowed;
+        }
+
         .gilos-input-wrap {
             position: relative;
             display: flex;
@@ -580,15 +588,27 @@
             color: var(--accent);
         }
 
+        .radio-option-content {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            flex: 1;
+            min-width: 0;
+        }
+
         .radio-option-label {
             font-size: 0.9rem;
             font-weight: 500;
             color: var(--text);
             cursor: pointer;
-            flex: 1;
-            min-width: 0;
             overflow: hidden;
             text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .radio-option-sub {
+            font-size: 0.78rem;
+            color: var(--text-muted);
         }
 
         .otp-container {
@@ -897,7 +917,7 @@
                             <div class="gilos-input-group">
                                 <input type="password" id="password" name="password" class="gilos-input-control" required autocomplete="current-password"
                                     placeholder="{{ index .T "enter_password" }}" oninput="validateForm()" onchange="validateForm()" aria-describedby="message password-caps-warning">
-                                <button type="button" class="gilos-input-action password-toggle" onclick="togglePasswordField('password', this)" aria-label="{{ index .T "show_password" }}"></button>
+                                <button type="button" class="gilos-input-action password-toggle" onclick="togglePasswordField('password', this)" aria-label="{{ index .T "show_password" }}" aria-pressed="false"></button>
                             </div>
                             <div id="password-caps-warning" class="caps-warning" hidden></div>
                         </div>
@@ -916,7 +936,10 @@
                                             <rect x="2" y="4" width="20" height="16" rx="2"/><polyline points="22,6 12,13 2,6"/>
                                         </svg>
                                     </span>
-                                    <span id="two-step-email-label" class="radio-option-label"></span>
+                                    <span class="radio-option-content">
+                                        <span id="two-step-email-label" class="radio-option-label"></span>
+                                        <span class="radio-option-sub">{{ index .T "use_email_code" }}</span>
+                                    </span>
                                 </label>
                                 <label class="radio-option" id="two-step-phone-option" for="two-step-phone">
                                     <input type="radio" id="two-step-phone" name="contact_type" value="phone" aria-label="{{ index .T "phone" }}">
@@ -925,7 +948,10 @@
                                             <rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/>
                                         </svg>
                                     </span>
-                                    <span id="two-step-phone-label" class="radio-option-label"></span>
+                                    <span class="radio-option-content">
+                                        <span id="two-step-phone-label" class="radio-option-label"></span>
+                                        <span class="radio-option-sub">{{ index .T "use_phone_code" }}</span>
+                                    </span>
                                 </label>
                                 <label class="radio-option" id="two-step-totp-option" for="two-step-totp">
                                     <input type="radio" id="two-step-totp" name="contact_type" value="totp" aria-label="{{ index .T "authenticator_app" }}">
@@ -934,7 +960,10 @@
                                             <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
                                         </svg>
                                     </span>
-                                    <span id="two-step-totp-label" class="radio-option-label">{{ index .T "authenticator_app" }}</span>
+                                    <span class="radio-option-content">
+                                        <span id="two-step-totp-label" class="radio-option-label">{{ index .T "authenticator_app" }}</span>
+                                        <span class="radio-option-sub">{{ index .T "use_authenticator_code" }}</span>
+                                    </span>
                                 </label>
                             </div>
                         </div>
@@ -1022,17 +1051,17 @@
                             <div class="gilos-input-group">
                                 <input type="password" id="register-password" name="password" class="gilos-input-control" required autocomplete="new-password"
                                     placeholder="{{ index .T "password" }}" oninput="validateForm(); validatePasswordMatch()" onchange="validateForm(); validatePasswordMatch(true)" onblur="validatePasswordMatch(true)" aria-describedby="message register-pw-caps-warning">
-                                <button type="button" class="gilos-input-action password-toggle" onclick="togglePasswordField('register-password', this)" aria-label="{{ index .T "show_password" }}"></button>
+                                <button type="button" class="gilos-input-action password-toggle" onclick="togglePasswordField('register-password', this)" aria-label="{{ index .T "show_password" }}" aria-pressed="false"></button>
                             </div>
                             <div id="register-pw-caps-warning" class="caps-warning" hidden></div>
-                            <div id="register-pw-meter" style="margin-top: 8px;"></div>
+                            <div id="register-pw-meter"></div>
                         </div>
                         <div class="form-element">
                             <label for="confirm-password" class="field-label">{{ index .T "confirm_password" }}</label>
                             <div class="gilos-input-group">
                                 <input type="password" id="confirm-password" class="gilos-input-control" required autocomplete="new-password" placeholder="{{ index .T "confirm_password" }}"
                                     oninput="validateForm(); validatePasswordMatch()" onchange="validateForm(); validatePasswordMatch(true)" onblur="validatePasswordMatch(true)" aria-describedby="message register-confirm-caps-warning">
-                                <button type="button" class="gilos-input-action password-toggle" onclick="togglePasswordField('confirm-password', this)" aria-label="{{ index .T "show_password" }}"></button>
+                                <button type="button" class="gilos-input-action password-toggle" onclick="togglePasswordField('confirm-password', this)" aria-label="{{ index .T "show_password" }}" aria-pressed="false"></button>
                             </div>
                             <div id="register-confirm-caps-warning" class="caps-warning" hidden></div>
                         </div>
@@ -1076,17 +1105,17 @@
                             <div class="gilos-input-group">
                                 <input type="password" id="reset-password" name="password" class="gilos-input-control" required autocomplete="new-password"
                                     placeholder="{{ index .T "new_password" }}" oninput="validateForm(); validateResetPasswordMatch()" onchange="validateForm(); validateResetPasswordMatch(true)" onblur="validateResetPasswordMatch(true)" aria-describedby="message reset-pw-caps-warning">
-                                <button type="button" class="gilos-input-action password-toggle" onclick="togglePasswordField('reset-password', this)" aria-label="{{ index .T "show_password" }}"></button>
+                                <button type="button" class="gilos-input-action password-toggle" onclick="togglePasswordField('reset-password', this)" aria-label="{{ index .T "show_password" }}" aria-pressed="false"></button>
                             </div>
                             <div id="reset-pw-caps-warning" class="caps-warning" hidden></div>
-                            <div id="reset-pw-meter" style="margin-top: 8px;"></div>
+                            <div id="reset-pw-meter"></div>
                         </div>
                         <div class="form-element">
                             <label for="reset-confirm-password" class="field-label">{{ index .T "confirm_new_password" }}</label>
                             <div class="gilos-input-group">
                                 <input type="password" id="reset-confirm-password" class="gilos-input-control" required autocomplete="new-password" placeholder="{{ index .T "confirm_new_password" }}"
                                     oninput="validateForm(); validateResetPasswordMatch()" onchange="validateForm(); validateResetPasswordMatch(true)" onblur="validateResetPasswordMatch(true)" aria-describedby="message reset-confirm-caps-warning">
-                                <button type="button" class="gilos-input-action password-toggle" onclick="togglePasswordField('reset-confirm-password', this)" aria-label="{{ index .T "show_password" }}"></button>
+                                <button type="button" class="gilos-input-action password-toggle" onclick="togglePasswordField('reset-confirm-password', this)" aria-label="{{ index .T "show_password" }}" aria-pressed="false"></button>
                             </div>
                             <div id="reset-confirm-caps-warning" class="caps-warning" hidden></div>
                         </div>
@@ -1145,6 +1174,7 @@
         function initPasswordToggles() {
             document.querySelectorAll('.password-toggle').forEach(function (btn) {
                 if (!btn.innerHTML.trim()) btn.innerHTML = EYE_OPEN_SVG;
+                btn.setAttribute('aria-pressed', 'false');
             });
         }
 
@@ -1154,10 +1184,12 @@
             const revealing = input.type === 'password';
             input.type = revealing ? 'text' : 'password';
             btn.innerHTML = revealing ? EYE_CLOSED_SVG : EYE_OPEN_SVG;
+            btn.setAttribute('aria-pressed', revealing ? 'true' : 'false');
             btn.setAttribute('aria-label', revealing ? (T.hide_password || 'Hide password') : (T.show_password || 'Show password'));
         }
 
-        function switchMethod(prefix, method) {
+        function switchMethod(prefix, method, options) {
+            const skipFocus = Boolean(options && options.skipFocus);
             state[`${prefix}Method`] = method;
             const selector = document.getElementById(`${prefix}-method-selector`);
             if (selector) {
@@ -1174,17 +1206,17 @@
                 if (method === 'email') {
                     emailWrapper.classList.remove('hidden');
                     phoneWrapper.classList.add('hidden');
-                    setTimeout(function () {
+                    if (!skipFocus) {
                         const el = document.getElementById(`${prefix}-email`);
-                        if (el && el.offsetParent !== null) el.focus();
-                    }, 50);
+                        if (el && el.offsetParent !== null) el.focus({ preventScroll: true });
+                    }
                 } else {
                     emailWrapper.classList.add('hidden');
                     phoneWrapper.classList.remove('hidden');
-                    setTimeout(function () {
+                    if (!skipFocus) {
                         const el = document.getElementById(`${prefix}-phone`);
-                        if (el && el.offsetParent !== null) el.focus();
-                    }, 50);
+                        if (el && el.offsetParent !== null) el.focus({ preventScroll: true });
+                    }
                 }
             }
             validateForm();
@@ -1251,12 +1283,19 @@
         }
 
         function getOTPValue() {
-            return Array.from(document.querySelectorAll('.otp-input')).map(function (i) { return i.value; }).join('');
+            return Array.from(document.querySelectorAll('#otp .otp-input')).map(function (i) { return i.value; }).join('');
+        }
+
+        function clearOTPInputs() {
+            document.querySelectorAll('#otp .otp-input').forEach(function (i) {
+                i.value = '';
+                i.classList.remove('error');
+            });
         }
 
         function setOTPError(isError) {
             const container = document.getElementById('otp');
-            document.querySelectorAll('.otp-input').forEach(function (i) { i.classList.toggle('error', isError); });
+            document.querySelectorAll('#otp .otp-input').forEach(function (i) { i.classList.toggle('error', isError); });
             if (isError && container) {
                 container.classList.remove('is-shake');
                 void container.offsetWidth;
@@ -1363,7 +1402,7 @@
             }
 
             if (header) header.textContent = headerText;
-            if (title) title.textContent = titleText + ' - {{ if .AppName }}{{ .AppName }}{{ else }}Gilos{{ end }}';
+            if (title) title.textContent = titleText + ' - {{ if .AppName }}{{ .AppName }}{{ else }}Gilos Auth{{ end }}';
         }
 
         function updateGilosIdHint(val, forceWarn) {
@@ -1481,15 +1520,15 @@
                 if (data.contact.includes('@')) {
                     document.getElementById('register-email').value = data.contact;
                     document.getElementById('recovery-email').value = data.contact;
-                    switchMethod('register', 'email');
-                    switchMethod('recovery', 'email');
+                    switchMethod('register', 'email', { skipFocus: true });
+                    switchMethod('recovery', 'email', { skipFocus: true });
                 } else {
                     document.getElementById('register-phone').value = data.contact;
                     document.getElementById('recovery-phone').value = data.contact;
                     if (itiRegister && data.phone_raw) itiRegister.setNumber(data.phone_raw);
                     if (itiRecovery && data.phone_raw) itiRecovery.setNumber(data.phone_raw);
-                    switchMethod('register', 'phone');
-                    switchMethod('recovery', 'phone');
+                    switchMethod('register', 'phone', { skipFocus: true });
+                    switchMethod('recovery', 'phone', { skipFocus: true });
                 }
                 document.getElementById('register-contact').value = data.contact;
                 document.getElementById('register-password-contact').value = data.contact;
@@ -1530,6 +1569,10 @@
             });
 
             state.currentStep = step;
+            if (step !== 'otp' && countdownInterval) {
+                clearInterval(countdownInterval);
+                countdownInterval = null;
+            }
             updateHeaderAndTitle(step);
             updateStepProgressAndChrome(step);
 
@@ -1600,14 +1643,19 @@
                     break;
                 }
                 case 'otp': {
+                    clearOTPInputs();
+                    const otpCountdown = document.getElementById('otp-countdown-container');
                     let otpHintText;
                     if (data.contact_type === 'totp') {
                         otpHintText = T.otp_enter_authenticator || 'Enter the code from your authenticator app';
-                        if (countdownInterval) clearInterval(countdownInterval);
-                        const otpCountdown = document.getElementById('otp-countdown-container');
+                        if (countdownInterval) {
+                            clearInterval(countdownInterval);
+                            countdownInterval = null;
+                        }
                         if (otpCountdown) otpCountdown.style.display = 'none';
                     } else {
                         otpHintText = (T.otp_sent_to || 'Enter the code sent to %s').replace('%s', data.contact || state.contact || '');
+                        if (otpCountdown) otpCountdown.style.display = '';
                     }
                     document.getElementById('otp-hint').textContent = otpHintText;
                     const resendLink = document.getElementById('resend-link');
@@ -1672,8 +1720,8 @@
                         if (recEmailOpt) recEmailOpt.style.display = data.has_email ? 'inline-flex' : 'none';
                         if (recPhoneOpt) recPhoneOpt.style.display = data.has_phone ? 'inline-flex' : 'none';
                         if (recSelector) recSelector.style.display = (data.has_email && data.has_phone) ? 'grid' : 'none';
-                        if (data.has_email && !data.has_phone) switchMethod('recovery', 'email');
-                        else if (!data.has_email && data.has_phone) switchMethod('recovery', 'phone');
+                        if (data.has_email && !data.has_phone) switchMethod('recovery', 'email', { skipFocus: true });
+                        else if (!data.has_email && data.has_phone) switchMethod('recovery', 'phone', { skipFocus: true });
                     } else {
                         recoveryText = `${escapeHtml(T.recovery_no_options || 'No recovery options set, contact')} <a href="https://gilos.org/contact" class="support-link" target="_blank" rel="noopener noreferrer">${escapeHtml(T.support || 'support')}</a>.`;
                         if (recoveryMethodsWrap) recoveryMethodsWrap.classList.add('hidden');
@@ -2407,7 +2455,14 @@
                             const redir = parsedDisplay.searchParams.get('redirect_uri') || '';
                             try { appNameHint = redir ? new URL(redir).host : ''; } catch (e) {}
                         }
-                        destEl.textContent = appNameHint || parsedDisplay.pathname;
+                        if (!appNameHint) {
+                            if (parsedDisplay.pathname === '/home') {
+                                appNameHint = '{{ if .AppName }}{{ .AppName }}{{ else }}Gilos Auth{{ end }}';
+                            } else if (parsedDisplay.pathname === '/docs') {
+                                appNameHint = T.docs || 'Docs';
+                            }
+                        }
+                        destEl.textContent = appNameHint || parsedDisplay.pathname.replace(/^\//, '') || parsedDisplay.host;
                         notice.classList.remove('hidden');
                     }
                 } catch (error) {
@@ -2416,6 +2471,10 @@
             }
 
             if (window.GilosUI) {
+                if (typeof window.GilosUI.bindTablistA11y === 'function') {
+                    window.GilosUI.bindTablistA11y(document.getElementById('register-method-selector'));
+                    window.GilosUI.bindTablistA11y(document.getElementById('recovery-method-selector'));
+                }
                 const capsLabel = T.caps_lock_on || 'Caps Lock is on';
                 window.GilosUI.attachCapsLockWarning(document.getElementById('password'), document.getElementById('password-caps-warning'), capsLabel);
                 window.GilosUI.attachCapsLockWarning(document.getElementById('register-password'), document.getElementById('register-pw-caps-warning'), capsLabel);

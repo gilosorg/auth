@@ -49,7 +49,7 @@
                         </button>
                         {{ end }}
                         {{ else }}
-                        <button type="button" class="lang-option active" role="menuitem" onclick="setLanguage('en')">
+                        <button type="button" class="lang-option active" role="menuitemradio" aria-checked="true" onclick="setLanguage('en')">
                             <img src="/static/img/i18n/gb.svg" alt="">
                             <span>English</span>
                         </button>
@@ -321,6 +321,10 @@
         var willShow = !dropdown.classList.contains('show');
         dropdown.classList.toggle('show', willShow);
         if (btn) btn.setAttribute('aria-expanded', willShow ? 'true' : 'false');
+        if (willShow && event && event.detail === 0) {
+            var activeOpt = dropdown.querySelector('.lang-option.active') || dropdown.querySelector('.lang-option');
+            if (activeOpt) activeOpt.focus();
+        }
     }
 
     document.addEventListener('click', function (event) {
@@ -334,15 +338,45 @@
     });
 
     document.addEventListener('keydown', function (event) {
-        if (event.key === 'Escape') {
-            var dropdown = document.getElementById('lang-dropdown');
-            var btn = document.getElementById('lang-btn');
-            if (dropdown && dropdown.classList.contains('show')) {
-                dropdown.classList.remove('show');
-                if (btn) {
-                    btn.setAttribute('aria-expanded', 'false');
-                    btn.focus();
-                }
+        var dropdown = document.getElementById('lang-dropdown');
+        var btn = document.getElementById('lang-btn');
+        var switcher = document.getElementById('lang-switcher');
+        if (!dropdown || !btn || !switcher) return;
+
+        var isOpen = dropdown.classList.contains('show');
+        var options = Array.prototype.slice.call(dropdown.querySelectorAll('.lang-option'));
+
+        if (event.key === 'Escape' && isOpen) {
+            dropdown.classList.remove('show');
+            btn.setAttribute('aria-expanded', 'false');
+            btn.focus();
+            return;
+        }
+
+        if (!isOpen && document.activeElement === btn && (event.key === 'ArrowDown' || event.key === 'ArrowUp')) {
+            event.preventDefault();
+            dropdown.classList.add('show');
+            btn.setAttribute('aria-expanded', 'true');
+            if (options.length) {
+                (event.key === 'ArrowUp' ? options[options.length - 1] : options[0]).focus();
+            }
+            return;
+        }
+
+        if (isOpen && switcher.contains(document.activeElement) && options.length) {
+            var idx = options.indexOf(document.activeElement);
+            if (event.key === 'ArrowDown') {
+                event.preventDefault();
+                options[(idx + 1) % options.length].focus();
+            } else if (event.key === 'ArrowUp') {
+                event.preventDefault();
+                options[(idx <= 0 ? options.length - 1 : idx - 1)].focus();
+            } else if (event.key === 'Home') {
+                event.preventDefault();
+                options[0].focus();
+            } else if (event.key === 'End') {
+                event.preventDefault();
+                options[options.length - 1].focus();
             }
         }
     });
