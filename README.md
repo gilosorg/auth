@@ -53,7 +53,7 @@ This is the authentication server used by [Gilos](https://gilos.org) products. W
 
 ```bash
 # Clone and enter directory
-git clone https://github.com/cherrysoftwares/auth.git
+git clone https://github.com/gilosorg/auth.git
 cd auth
 
 # Install dependencies
