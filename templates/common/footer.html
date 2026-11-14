@@ -40,7 +40,7 @@
                     <div class="lang-dropdown" id="lang-dropdown" role="menu">
                         {{ if .Languages }}
                         {{ range .Languages }}
-                        <button type="button" class="lang-option {{ if eq .Code $.Lang }}active{{ end }}" role="menuitem" onclick="setLanguage('{{ .Code }}')">
+                        <button type="button" class="lang-option {{ if eq .Code $.Lang }}active{{ end }}" role="menuitemradio" aria-checked="{{ if eq .Code $.Lang }}true{{ else }}false{{ end }}" onclick="setLanguage('{{ .Code }}')">
                             <img src="{{ .Flag }}" alt="">
                             <span>{{ .Name }}</span>
                             {{ if eq .Code $.Lang }}
@@ -258,9 +258,10 @@
             justify-content: center;
         }
         .lang-dropdown {
-            left: 50%;
-            right: auto;
-            transform: translateX(-50%);
+            right: 0;
+            left: auto;
+            transform: none;
+            max-width: calc(100vw - 32px);
         }
     }
 </style>
@@ -331,7 +332,10 @@
             var btn = document.getElementById('lang-btn');
             if (dropdown && dropdown.classList.contains('show')) {
                 dropdown.classList.remove('show');
-                if (btn) btn.setAttribute('aria-expanded', 'false');
+                if (btn) {
+                    btn.setAttribute('aria-expanded', 'false');
+                    btn.focus();
+                }
             }
         }
     });

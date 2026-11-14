@@ -861,7 +861,6 @@
                     <form id="password-form" class="form-container hidden" onsubmit="return false;">
                         <input type="hidden" name="username" id="password-username" autocomplete="username">
                         <div class="form-element">
-                            <p id="password-info" class="verification-info hidden"></p>
                             <div class="field-label-row">
                                 <label for="password" class="field-label">{{ index .T "password" }}</label>
                                 <a href="#" class="forgot-password" onclick="moveToState('forgot-password'); return false;">{{ index .T "forgot_password" }}</a>
@@ -1515,7 +1514,6 @@
                     updateGilosIdHint(state.gilosID);
                     break;
                 case 'password': {
-                    document.getElementById('password-info').textContent = (T.password_found_info || 'Enter your password for @%s.').replace('%s', state.gilosID);
                     document.getElementById('password').placeholder = T.enter_password || 'Enter password';
                     buttonContainer.innerHTML = `
                         <div class="button-group">
@@ -1602,7 +1600,7 @@
                     break;
                 }
                 case 'register-name':
-                    document.getElementById('register-info').textContent = (T.password_not_found_info || "We didn't find @%s. Create an account with it or go back to edit.").replace('%s', state.gilosID);
+                    document.getElementById('register-info').textContent = (T.password_not_found_info || "@%s is available. Enter your name to continue.").replace('%s', state.gilosID);
                     buttonContainer.innerHTML = `
                         <div class="button-group">
                             <button type="button" onclick="moveToState('gilos-id')" class="bg-gray">${backLabel}</button>

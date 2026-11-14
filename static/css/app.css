@@ -364,6 +364,16 @@ input[type="radio"]:disabled {
     display: block;
 }
 
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .theme-logo-light {
+        display: none;
+    }
+
+    :root:not([data-theme="light"]) .theme-logo-dark {
+        display: block;
+    }
+}
+
 .container {
     width: 100%;
     max-width: 1200px;
@@ -676,7 +686,7 @@ input[type="radio"]:disabled {
 }
 
 .identity-chip-action:active {
-    background: var(--accent-soft);
+    background: color-mix(in srgb, var(--accent) 18%, transparent);
 }
 
 .identity-chip-action:focus-visible {
@@ -822,6 +832,11 @@ input[type="radio"]:disabled {
     flex-shrink: 0;
 }
 
+.gilos-toast--success { border-left: 3px solid var(--green-500); }
+.gilos-toast--error { border-left: 3px solid var(--red-500); }
+.gilos-toast--warning { border-left: 3px solid var(--amber-500); }
+.gilos-toast--info { border-left: 3px solid var(--accent); }
+
 .gilos-toast--success .gilos-toast-icon { color: var(--green-500); }
 .gilos-toast--error .gilos-toast-icon { color: var(--red-500); }
 .gilos-toast--warning .gilos-toast-icon { color: var(--amber-500); }
@@ -854,6 +869,11 @@ input[type="radio"]:disabled {
 
 .gilos-toast-close:active {
     transform: translateY(1px);
+}
+
+.gilos-toast-close:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
 }
 
 @keyframes gilosToastIn {
@@ -964,6 +984,20 @@ input[type="radio"]:disabled {
     padding: 10px 20px !important;
     font-weight: 500 !important;
     font-size: 0.9rem !important;
+    transition: background var(--transition-fast), border-color var(--transition-fast) !important;
+}
+
+.swal2-cancel:hover {
+    background: var(--surface-muted) !important;
+    border-color: var(--border-strong) !important;
+}
+
+.swal2-confirm:focus-visible,
+.swal2-cancel:focus-visible,
+.swal2-deny:focus-visible {
+    outline: 2px solid var(--accent) !important;
+    outline-offset: 2px !important;
+    box-shadow: none !important;
 }
 
 .swal2-cancel:hover {

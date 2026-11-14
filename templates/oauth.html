@@ -17,6 +17,7 @@
         max-width: 480px;
         background: var(--card-bg);
         border: 1px solid var(--card-border);
+        border-top: 3px solid var(--accent);
         border-radius: 0px;
         box-shadow: var(--card-shadow);
         padding: 32px 28px 26px;
@@ -675,6 +676,7 @@
 
             otpInputs.forEach((input, idx) => {
                 input.addEventListener('input', (e) => {
+                    if (isConsentSubmitting) return;
                     const clean = e.target.value.replace(/\D/g, '');
                     if (clean.length > 1) {
                         const count = Math.min(clean.length, otpInputs.length - idx);
@@ -697,6 +699,10 @@
                 });
 
                 input.addEventListener('keydown', (e) => {
+                    if (isConsentSubmitting) {
+                        e.preventDefault();
+                        return;
+                    }
                     if (e.key === 'Backspace' && !e.target.value && idx > 0) {
                         otpInputs[idx - 1].focus();
                         otpInputs[idx - 1].value = '';
@@ -715,11 +721,14 @@
 
                 input.addEventListener('paste', (e) => {
                     e.preventDefault();
+                    if (isConsentSubmitting) return;
                     const pasteData = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '').slice(0, 6);
                     if (!pasteData) return;
-                    pasteData.split('').forEach((char, cIdx) => {
-                        if (otpInputs[cIdx]) otpInputs[cIdx].value = char;
-                    });
+                    for (let i = 0; i < otpInputs.length; i++) {
+                        otpInputs[i].classList.remove('error');
+                        otpInputs[i].value = pasteData[i] || '';
+                    }
+                    showMessage('', false);
                     otpInputs[Math.min(pasteData.length, 5)].focus();
                     updateVerifyBtn();
                     if (pasteData.length === 6) {
